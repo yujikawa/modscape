@@ -34,6 +34,7 @@ interface AppState {
   // YAML Input (Sidebar State)
   yamlInput: string;
   baselineYaml: string;
+  baselineTimestamp: number;
   setYamlInput: (yaml: string) => void;
   syncToYamlInput: () => void;
   
@@ -183,6 +184,7 @@ export const useStore = create<AppState>()(persist(
   // YAML Input
   yamlInput: '',
   baselineYaml: '',
+  baselineTimestamp: 0,
   setYamlInput: (yaml) => {
     set({ yamlInput: yaml, lastUpdateSource: 'user', lastSavedAt: Date.now() });
     get().saveSchema();
@@ -227,7 +229,7 @@ export const useStore = create<AppState>()(persist(
   setSchema: (schema) => {
     const normalized = normalizeSchema(schema);
     const baselineYaml = yaml.dump(normalized, { indent: 2, lineWidth: -1, noRefs: true });
-    set({ schema: normalized, baselineYaml });
+    set({ schema: normalized, baselineYaml, baselineTimestamp: Date.now() });
     get().syncToYamlInput();
   },
 
@@ -433,7 +435,7 @@ export const useStore = create<AppState>()(persist(
       });
       // Update YAML viewer without triggering a redundant write-back to disk
       const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
-      set({ yamlInput: yamlString, baselineYaml: yamlString, lastUpdateSource: 'visual' });
+      set({ yamlInput: yamlString, baselineYaml: yamlString, baselineTimestamp: Date.now(), lastUpdateSource: 'visual' });
     } catch (e: any) {
       set({ error: e.message });
     }
@@ -1068,7 +1070,7 @@ export const useStore = create<AppState>()(persist(
       }
       const loadedSchema = normalizeSchema(data);
       const loadedYaml = yaml.dump(loadedSchema, { indent: 2, lineWidth: -1, noRefs: true });
-      set({ schema: loadedSchema, currentModelSlug: slug, selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null, isModelLoading: false, undoStack: [], redoStack: [], baselineYaml: loadedYaml });
+      set({ schema: loadedSchema, currentModelSlug: slug, selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null, isModelLoading: false, undoStack: [], redoStack: [], baselineYaml: loadedYaml, baselineTimestamp: Date.now() });
       get().syncToYamlInput();
       const searchParams = new URLSearchParams(window.location.search);
       searchParams.set('model', slug);

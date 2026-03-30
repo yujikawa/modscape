@@ -7,12 +7,15 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { Transaction } from '@codemirror/state'
 import { computeDiff } from '../../lib/diff'
 
+const CONTEXT_LINES = 3
+
 const EditorTab = () => {
   const {
     error,
     isCliMode,
     yamlInput,
     baselineYaml,
+    baselineTimestamp,
     savingStatus,
     theme,
     currentModelSlug,
@@ -46,8 +49,6 @@ const EditorTab = () => {
       annotations: Transaction.addToHistory.of(false)
     });
   }, [currentModelSlug])
-
-  const CONTEXT_LINES = 3
 
   const diffLines = useMemo(() => {
     if (!diffMode) return null
@@ -113,7 +114,7 @@ const EditorTab = () => {
           {/* Diff toggle */}
           <button
             onClick={() => setDiffMode(v => !v)}
-            title="Toggle Diff"
+            title={diffMode && baselineTimestamp ? `Comparing against snapshot loaded at ${new Date(baselineTimestamp).toLocaleTimeString()}` : 'Toggle Diff'}
             className={`flex items-center px-2 py-1 rounded transition-colors ${
               diffMode
                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
@@ -153,6 +154,11 @@ const EditorTab = () => {
       }`}>
         {diffMode ? (
           <div className="flex-1 overflow-auto text-[12px] font-mono leading-5">
+            <div className={`px-3 py-1.5 text-[10px] border-b ${
+              theme === 'dark' ? 'text-slate-500 border-slate-700 bg-slate-800/40' : 'text-slate-400 border-slate-200 bg-slate-50'
+            }`}>
+              Comparing against snapshot loaded at {baselineTimestamp ? new Date(baselineTimestamp).toLocaleTimeString() : '—'}
+            </div>
             {!hasChanges ? (
               <div className={`flex items-center justify-center h-full text-[11px] font-medium ${
                 theme === 'dark' ? 'text-slate-500' : 'text-slate-400'
