@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2026-03-30
+
+### Fixed
+- **YAML diff viewer context lines** — The diff viewer now shows 3 lines of context around each changed line, with `···` separators between non-adjacent hunks and line numbers on each row. Previously only the changed lines were shown with no surrounding context, making it difficult to identify where changes occurred.
+
 ## [2.4.0] - 2026-03-29
 
 ### Added
