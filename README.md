@@ -32,9 +32,11 @@ In modern data analysis platforms, data modeling is no longer just about drawing
   - **Semantic Edge Badges**: Visually identify cardinality with `( 1 )` and `[ N ]` badges at the connection points.
   - **Data Lineage Mode**: Visualize data flow with animated dashed arrows.
   - **Domain-Grouped Navigation**: Organize tables into visual business domains and navigate them via a structured sidebar.
-- **Unified Undo/Redo & Auto-save**: 
-  - Visual actions (dragging, formatting, editing) are synchronized with the built-in CodeMirror editor's history.
+- **Unified Undo/Redo & Auto-save**:
+  - Graph-level Undo/Redo (`Ctrl+Z` / `Ctrl+Shift+Z`) for visual operations on the canvas.
   - Optional **Auto-save** ensures your local YAML is always up-to-date.
+- **YAML Sidebar**: Read-only YAML viewer with a **Diff toggle** to highlight changes since the last disk load, and a **Download** button to export the current model as a YAML file. To edit the YAML directly, open the file in your external editor (VS Code, etc.) — changes are synced automatically.
+- **Rich Detail Panel**: Edit table and column metadata directly from the UI — including ID rename (with full cross-reference update), appearance icon & color, and column role toggles (`isPrimaryKey`, `isForeignKey`, `isPartitionKey`).
 - **Dark/Light Mode Support**: Switch between themes seamlessly for better eye comfort or documentation exports.
 - **Specialized Modeling Types**: Native support for entity types like `fact`, `dimension`, `mart`, `hub`, `link`, `satellite`, and generic `table`.
 - **AI-Agent Ready**: Built-in scaffolding for **Gemini CLI, Claude Code, and Codex** — both for modeling (`/modscape:modeling`) and implementation code generation (`/modscape:codegen`).
