@@ -8,6 +8,8 @@ import RightPanel from './components/RightPanel/RightPanel'
 import CommandPalette from './components/CommandPalette'
 import SelectionToolbar from './components/SelectionToolbar'
 import CanvasViewToolbar from './components/CanvasViewToolbar'
+import DrawOverlay, { type DrawOverlayHandle } from './components/DrawOverlay'
+import DrawToolbar from './components/DrawToolbar'
 import { LINEAGE_BASE } from './lib/colors'
 
 // ── Flow (Canvas area) ────────────────────────────────────────────────
@@ -78,6 +80,12 @@ function Flow() {
     setConnectMode: s.setConnectMode,
     currentModelSlug: s.currentModelSlug,
   })))
+
+  // Draw mode state
+  const [drawTool, setDrawTool] = useState<'pen' | 'eraser'>('pen')
+  const [drawColor, setDrawColor] = useState('#ef4444')
+  const [drawLineWidth, setDrawLineWidth] = useState(4)
+  const drawOverlayRef = useRef<DrawOverlayHandle | null>(null)
 
   // Callbacks exposed by CytoscapeCanvas
   const fitViewFnRef = useRef<(() => void) | null>(null)
@@ -163,6 +171,7 @@ function Flow() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (useStore.getState().isDrawMode) { useStore.getState().setIsDrawMode(false); return }
         if (useStore.getState().connectMode) { useStore.getState().setConnectMode(null); return }
         useStore.getState().setPathFinderResult(null)
         setSelectedTableId(null)
@@ -193,6 +202,18 @@ function Flow() {
       }
 
       const key = e.key.toLowerCase()
+
+      if (key === 'p') {
+        e.preventDefault()
+        useStore.getState().setIsDrawMode(!useStore.getState().isDrawMode)
+        return
+      }
+
+      if (key === 'f') {
+        e.preventDefault()
+        fitViewFnRef.current?.()
+        return
+      }
 
       if (key === '/' ) {
         e.preventDefault()
@@ -378,6 +399,22 @@ function Flow() {
             </div>
           </div>
         )}
+
+        <DrawOverlay
+          ref={drawOverlayRef}
+          tool={drawTool}
+          color={drawColor}
+          lineWidth={drawLineWidth}
+        />
+        <DrawToolbar
+          tool={drawTool}
+          setTool={setDrawTool}
+          color={drawColor}
+          setColor={setDrawColor}
+          lineWidth={drawLineWidth}
+          setLineWidth={setDrawLineWidth}
+          overlayRef={drawOverlayRef}
+        />
 
         {!error && schema && (
           <CytoscapeCanvas

@@ -12,6 +12,7 @@ import {
   Spline,
   Tag,
   FileChartColumnIncreasing,
+  Pencil,
 } from 'lucide-react'
 import logo from '/favicon.svg?url'
 
@@ -29,7 +30,9 @@ const ActivityBar = () => {
     setShowAnnotations,
     theme,
     getSelectedTable,
-    getSelectedDomain
+    getSelectedDomain,
+    isDrawMode,
+    setIsDrawMode,
   } = useStore()
 
   const [showHelp, setShowHelp] = useState(false)
@@ -177,6 +180,12 @@ const ActivityBar = () => {
               </div>
               <Tooltip text={connectMode === 'er' ? "Exit ER Mode (Esc)" : "Draw ER Edge"} />
             </button>
+
+            {/* Draw mode button */}
+            <button onClick={() => setIsDrawMode(!isDrawMode)} className={iconClass(isDrawMode, 'text-pink-400')}>
+              <Pencil size={20} />
+              <Tooltip text={isDrawMode ? "Exit Draw Mode" : "Draw Mode"} />
+            </button>
           </div>
         </div>
 
@@ -223,10 +232,12 @@ const ActivityBar = () => {
                 <ShortcutRow label="New Domain" keys={['D']} />
                 <ShortcutRow label="New Consumer" keys={['U']} />
                 <ShortcutRow label="New Sticky Note" keys={['S']} />
+                <ShortcutRow label="Draw Mode" keys={['P']} />
               </section>
 
               <section>
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Canvas Control</h3>
+                <ShortcutRow label="Fit View" keys={['F']} />
                 <ShortcutRow label="Pan / Scroll" keys={['↑', '↓', '←', '→']} />
                 <ShortcutRow label="Clear Selection" keys={['Esc']} />
                 <ShortcutRow label="Delete Selected" keys={['Del', '⌫']} />

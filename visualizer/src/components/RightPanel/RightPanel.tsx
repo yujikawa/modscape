@@ -61,15 +61,39 @@ const RightPanel = memo(() => {
     const filename = `modscape-export.${exportFormat}`
     const themeBg = theme === 'dark' ? '#020617' : '#f8fafc'
     try {
-      const dataUrl = exportFormat === 'png'
+      const pixelRatio = 2
+      const baseDataUrl = exportFormat === 'png'
         ? await toPng(container, {
-            pixelRatio: 2,
+            pixelRatio,
             backgroundColor: exportTransparent ? undefined : themeBg,
           })
-        : await toJpeg(container, { pixelRatio: 2, quality: 0.95, backgroundColor: themeBg })
+        : await toJpeg(container, { pixelRatio, quality: 0.95, backgroundColor: themeBg })
+
+      // Composite drawing overlay on top if it has content
+      const drawCanvas = (window as any).__modscapeDrawCanvas as HTMLCanvasElement | null
+      let finalDataUrl = baseDataUrl
+
+      if (drawCanvas && drawCanvas.width > 0 && drawCanvas.height > 0) {
+        const w = container.offsetWidth * pixelRatio
+        const h = container.offsetHeight * pixelRatio
+        const composite = document.createElement('canvas')
+        composite.width = w
+        composite.height = h
+        const ctx = composite.getContext('2d')!
+
+        const base = new Image()
+        base.src = baseDataUrl
+        await new Promise<void>(resolve => { base.onload = () => resolve() })
+        ctx.drawImage(base, 0, 0)
+        ctx.drawImage(drawCanvas, 0, 0, w, h)
+
+        finalDataUrl = exportFormat === 'png'
+          ? composite.toDataURL('image/png')
+          : composite.toDataURL('image/jpeg', 0.95)
+      }
 
       const a = document.createElement('a')
-      a.href = dataUrl
+      a.href = finalDataUrl
       a.download = filename
       a.click()
     } catch (e) {

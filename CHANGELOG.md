@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [2.4.0] - 2026-03-29
 
 ### Added
+- **Draw Mode** — Freehand drawing overlay for communicating over data model diagrams. Press `P` or click the pencil icon in the ActivityBar to enter draw mode. Features pen / eraser tools, color picker, line width input, and clear-all. Drawings persist when toggling between draw mode and normal mode (Cytoscape interactions remain fully functional). The eraser brush is 4× the pen line width with a circle cursor for size feedback. Drawings are included in image exports (PNG/JPG). Exit with `P` or `Esc`.
+- **Fit View shortcut (`F`)** — Press `F` to fit the entire graph in view.
 - **Graph-level Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)** — Visual operations on the canvas (add/delete table, domain, relationship, lineage, annotation; drag move; layout apply; domain assignment) can now be undone and redone with keyboard shortcuts. History is scoped per file (resets on file switch) and capped at 50 steps. Text field edits are handled by the browser natively.
 - **UI Navigation Redesign**:
   - Moved View/Auto-layout toggles to a floating canvas toolbar for better workspace accessibility.

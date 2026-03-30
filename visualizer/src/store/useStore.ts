@@ -54,6 +54,7 @@ interface AppState {
   showAnnotations: boolean;
   isCompactMode: boolean;
   connectMode: 'lineage' | 'er' | null;
+  isDrawMode: boolean;
   theme: 'dark' | 'light';
   isDetailPanelSuppressed: boolean;
   isDetailPanelMinimized: boolean;
@@ -74,6 +75,7 @@ interface AppState {
   setShowAnnotations: (show: boolean) => void;
   setIsCompactMode: (v: boolean) => void;
   setConnectMode: (mode: 'lineage' | 'er' | null) => void;
+  setIsDrawMode: (v: boolean) => void;
   setIsAutoSaveEnabled: (enabled: boolean) => void;
   setLastUpdateSource: (source: 'user' | 'visual' | 'undo') => void;
   undo: () => void;
@@ -212,6 +214,7 @@ export const useStore = create<AppState>()(persist(
   showAnnotations: true,
   isCompactMode: false,
   connectMode: null,
+  isDrawMode: false,
   theme: 'dark',
   isDetailPanelSuppressed: false,
   isDetailPanelMinimized: true,
@@ -308,6 +311,7 @@ export const useStore = create<AppState>()(persist(
   setShowAnnotations: (show) => set({ showAnnotations: show }),
   setIsCompactMode: (v: boolean) => set({ isCompactMode: v }),
   setConnectMode: (mode) => set({ connectMode: mode }),
+  setIsDrawMode: (v) => set({ isDrawMode: v }),
 
   updateNodePosition: (id, x, y, parentId) => {
     pushHistory(get, set);
