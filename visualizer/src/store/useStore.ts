@@ -33,6 +33,7 @@ interface AppState {
 
   // YAML Input (Sidebar State)
   yamlInput: string;
+  baselineYaml: string;
   setYamlInput: (yaml: string) => void;
   syncToYamlInput: () => void;
   
@@ -181,6 +182,7 @@ export const useStore = create<AppState>()(persist(
 
   // YAML Input
   yamlInput: '',
+  baselineYaml: '',
   setYamlInput: (yaml) => {
     set({ yamlInput: yaml, lastUpdateSource: 'user', lastSavedAt: Date.now() });
     get().saveSchema();
@@ -224,7 +226,8 @@ export const useStore = create<AppState>()(persist(
 
   setSchema: (schema) => {
     const normalized = normalizeSchema(schema);
-    set({ schema: normalized });
+    const baselineYaml = yaml.dump(normalized, { indent: 2, lineWidth: -1, noRefs: true });
+    set({ schema: normalized, baselineYaml });
     get().syncToYamlInput();
   },
 
@@ -430,7 +433,7 @@ export const useStore = create<AppState>()(persist(
       });
       // Update YAML viewer without triggering a redundant write-back to disk
       const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
-      set({ yamlInput: yamlString, lastUpdateSource: 'visual' });
+      set({ yamlInput: yamlString, baselineYaml: yamlString, lastUpdateSource: 'visual' });
     } catch (e: any) {
       set({ error: e.message });
     }
@@ -1063,7 +1066,9 @@ export const useStore = create<AppState>()(persist(
         }
         data = await res.json();
       }
-      set({ schema: normalizeSchema(data), currentModelSlug: slug, selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null, isModelLoading: false, undoStack: [], redoStack: [] });
+      const loadedSchema = normalizeSchema(data);
+      const loadedYaml = yaml.dump(loadedSchema, { indent: 2, lineWidth: -1, noRefs: true });
+      set({ schema: loadedSchema, currentModelSlug: slug, selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null, isModelLoading: false, undoStack: [], redoStack: [], baselineYaml: loadedYaml });
       get().syncToYamlInput();
       const searchParams = new URLSearchParams(window.location.search);
       searchParams.set('model', slug);

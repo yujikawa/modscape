@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - **DetailPanel auto-close** — The detail panel no longer closes when an external file change is received via WebSocket. Selection is preserved if the selected table still exists in the refreshed schema.
 - **Spurious save on model refresh** — Receiving an external file update no longer triggers a redundant write-back to disk.
 - **Removed unused schema fields** — `conceptual.businessDefinitions` and `columns[].logical.isMetadata` have been removed from the schema, templates, and documentation.
+- **YAML diff viewer** — Added a "Diff" toggle button to the YAML sidebar tab. When enabled, shows a unified diff (added lines in green `+`, removed lines in red `-`) between the last disk-loaded state and the current in-memory model. No diff computation occurs when the toggle is off.
 
 ---
 
