@@ -1,11 +1,10 @@
 import { memo } from 'react'
 import EditorTab from './EditorTab'
-import FileSelector from './FileSelector'
-import QuickConnectTab from './QuickConnectTab'
+import StatsTab from './StatsTab'
 import ActivityBar from './ActivityBar'
 import { useStore } from '../../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { FileText, Zap } from 'lucide-react'
+import { FileText, BarChart2 } from 'lucide-react'
 import logo from '/favicon.svg?url'
 
 const Sidebar = memo(() => {
@@ -18,8 +17,11 @@ const Sidebar = memo(() => {
     setActiveTab: s.setActiveTab,
   })))
 
+  // Fallback for stale localStorage values
+  const safeTab = (activeTab === 'yaml' || activeTab === 'stats') ? activeTab : 'yaml'
+
   return (
-    <div 
+    <div
       className={`relative h-full flex flex-row border-r transition-all duration-300 ease-in-out shadow-2xl z-50 ${
         isSidebarOpen ? 'w-[456px]' : 'w-14'
       } ${
@@ -27,7 +29,7 @@ const Sidebar = memo(() => {
       }`}
     >
       {/* 1. Main Content Panel (Left) */}
-      <div 
+      <div
         className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 sidebar-content ${
           theme === 'dark' ? 'bg-slate-900' : 'bg-white'
         } ${
@@ -56,42 +58,37 @@ const Sidebar = memo(() => {
           )}
         </div>
 
-        {/* Multi-file selector */}
-        <div className="mt-4">
-          <FileSelector />
-        </div>
-
         {/* Tab Selection */}
         <div className="px-4 mt-6">
           <div className={`flex p-1 rounded-xl ${theme === 'dark' ? 'bg-slate-800/50' : 'bg-slate-100'}`}>
             <button
-              onClick={() => setActiveTab('editor')}
+              onClick={() => setActiveTab('yaml')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeTab === 'editor'
+                safeTab === 'yaml'
                   ? (theme === 'dark' ? 'bg-slate-700 text-blue-400 shadow-lg' : 'bg-white text-blue-600 shadow-sm')
                   : 'text-slate-500 hover:text-slate-400'
               }`}
             >
               <FileText size={14} />
-              Editor
+              YAML
             </button>
             <button
-              onClick={() => setActiveTab('connect')}
+              onClick={() => setActiveTab('stats')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeTab === 'connect'
+                safeTab === 'stats'
                   ? (theme === 'dark' ? 'bg-slate-700 text-blue-400 shadow-lg' : 'bg-white text-blue-600 shadow-sm')
                   : 'text-slate-500 hover:text-slate-400'
               }`}
             >
-              <Zap size={14} />
-              Connect
+              <BarChart2 size={14} />
+              Stats
             </button>
           </div>
         </div>
 
-        {/* Dynamic Content: Editor or Quick Connect */}
+        {/* Tab Content */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden mt-4">
-          {activeTab === 'connect' ? <QuickConnectTab /> : <EditorTab />}
+          {safeTab === 'stats' ? <StatsTab /> : <EditorTab />}
         </div>
 
         {/* Footer */}
@@ -99,7 +96,7 @@ const Sidebar = memo(() => {
           theme === 'dark' ? 'border-slate-800 bg-slate-950/20' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <p className="text-[10px] text-slate-500 font-medium px-1">
-            Modscape v2.3.0
+            Modscape v2.4.0
           </p>
         </div>
       </div>

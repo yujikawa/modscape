@@ -35,16 +35,16 @@ test.describe.serial('Modscape Main E2E Suite', () => {
   test('Sidebar: Elements and Tab Switching', async ({ page }) => {
     const sidebar = page.locator('.sidebar-content').first();
     await expect(sidebar.locator('h1:has-text("Modscape")')).toBeVisible();
-    
-    // Default tab should be Editor
+
+    // Default tab should be YAML viewer
     await expect(page.locator('.cm-editor')).toBeVisible();
-    
-    // Switch to Connect tab
-    await page.getByRole('button', { name: 'Connect' }).click();
-    await expect(page.locator('input[placeholder="table.column"]')).toBeVisible();
-    
-    // Switch back to Editor
-    await page.getByRole('button', { name: 'Editor' }).click();
+
+    // Switch to Stats tab
+    await page.getByRole('button', { name: 'Stats' }).click();
+    await expect(page.locator('text=Overview')).toBeVisible();
+
+    // Switch back to YAML tab
+    await page.getByRole('button', { name: 'YAML' }).click();
     await expect(page.locator('.cm-editor')).toBeVisible();
   });
 

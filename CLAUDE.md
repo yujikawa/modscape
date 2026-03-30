@@ -194,8 +194,6 @@ tables:
     conceptual:        # Business context for AI agents (optional)
       description: "One row = one order line item."
       tags: [WHAT, HOW_MUCH]   # BEAM* tags: WHO|WHAT|WHEN|WHERE|HOW|COUNT|HOW_MUCH
-      businessDefinitions:
-        revenue: "Net sales after discount"
     implementation:    # AI codegen hints (optional); inferred from appearance.type if omitted
       materialization: incremental          # table|view|incremental|ephemeral
       incremental_strategy: merge          # merge|append|delete+insert
@@ -216,7 +214,6 @@ tables:
           isPrimaryKey: true
           isForeignKey: false
           isPartitionKey: false
-          isMetadata: false    # true for audit columns
           additivity: fully    # fully|semi|non
         physical:              # Override physical definition (optional)
           name: order_id

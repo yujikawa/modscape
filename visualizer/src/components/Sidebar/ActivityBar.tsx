@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import {
-  Tag,
   Grid,
   Layout,
   Network,
@@ -11,9 +10,9 @@ import {
   X,
   Command,
   Spline,
-  AlignJustify,
-  Workflow,
+  Tag,
   FileChartColumnIncreasing,
+  Pencil,
 } from 'lucide-react'
 import logo from '/favicon.svg?url'
 
@@ -21,23 +20,19 @@ const ActivityBar = () => {
   const {
     isSidebarOpen,
     setIsSidebarOpen,
-    showAnnotations,
-    setShowAnnotations,
-    showER,
-    setShowER,
-    showLineage,
-    setShowLineage,
     connectMode,
     setConnectMode,
-    isCompactMode,
-    setIsCompactMode,
     addTable,
     addDomain,
     addConsumer,
     addAnnotation,
+    showAnnotations,
+    setShowAnnotations,
     theme,
     getSelectedTable,
-    getSelectedDomain
+    getSelectedDomain,
+    isDrawMode,
+    setIsDrawMode,
   } = useStore()
 
   const [showHelp, setShowHelp] = useState(false)
@@ -131,74 +126,65 @@ const ActivityBar = () => {
           )}
         </button>
 
-        {/* View Section */}
-        <div className="flex flex-col items-center mb-4 gap-2">
-          <div className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter opacity-80 mb-1">
-            View
-          </div>
-          <div className="flex flex-col gap-2">
-            <button onClick={() => setShowLineage(!showLineage)} className={iconClass(showLineage, 'text-blue-400')}>
-              <Spline size={20} />
-              <Tooltip text={showLineage ? "Hide Lineage Edges" : "Show Lineage Edges"} />
-            </button>
-            <button onClick={() => setShowER(!showER)} className={iconClass(showER, 'text-slate-400')}>
-              <Network size={20} />
-              <Tooltip text={showER ? "Hide ER Edges" : "Show ER Edges"} />
-            </button>
-            <button onClick={() => setShowAnnotations(!showAnnotations)} className={iconClass(showAnnotations, 'text-amber-500')}>
-              <Tag size={20} />
-              <Tooltip text={showAnnotations ? "Hide Annotations" : "Show Annotations"} />
-            </button>
-            <button onClick={() => setIsCompactMode(!isCompactMode)} className={iconClass(!isCompactMode, 'text-slate-400')}>
-              <AlignJustify size={20} />
-              <Tooltip text={isCompactMode ? "Show Columns" : "Hide Columns"} />
-            </button>
-          </div>
-        </div>
-
-        <div className={`w-8 border-t mb-4 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`} />
-
         {/* Add Section */}
         <div className="flex flex-col items-center mb-4 gap-2">
-          <div className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter opacity-80 mb-1">
-            Add
-          </div>
           <div className="flex flex-col gap-2">
-            <button 
-              onClick={handleAddDomain} 
+            <button
+              onClick={handleAddDomain}
               className={iconClass(false, 'text-blue-400')}
             >
-              <Layout size={20} />
+              <div className="relative">
+                <Layout size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
               <Tooltip text="Add Domain (D)" />
             </button>
             <button
               onClick={handleAddTable}
               className={iconClass(false, 'text-emerald-400')}
             >
-              <Grid size={20} />
+              <div className="relative">
+                <Grid size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
               <Tooltip text="Add Table (T)" />
             </button>
             <button
               onClick={handleAddConsumer}
               className={iconClass(false, 'text-violet-400')}
             >
-              <FileChartColumnIncreasing size={20} />
+              <div className="relative">
+                <FileChartColumnIncreasing size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
               <Tooltip text="Add Consumer (U)" />
             </button>
             <button onClick={handleAddAnnotation} className={iconClass(false, 'text-amber-400')}>
               <div className="relative">
                 <Tag size={20} />
-                <Plus size={10} className="absolute -bottom-1 -right-1 text-amber-500 font-bold stroke-[3px]" />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
               </div>
               <Tooltip text="Add Sticky Note (S)" />
             </button>
             <button onClick={() => setConnectMode(connectMode === 'lineage' ? null : 'lineage')} className={iconClass(connectMode === 'lineage', 'text-blue-400')}>
-              <Spline size={20} />
+              <div className="relative">
+                <Spline size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
               <Tooltip text={connectMode === 'lineage' ? "Exit Lineage Mode (Esc)" : "Draw Lineage Edge (C)"} />
             </button>
             <button onClick={() => setConnectMode(connectMode === 'er' ? null : 'er')} className={iconClass(connectMode === 'er', 'text-emerald-400')}>
-              <Network size={20} />
+              <div className="relative">
+                <Network size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
               <Tooltip text={connectMode === 'er' ? "Exit ER Mode (Esc)" : "Draw ER Edge"} />
+            </button>
+
+            {/* Draw mode button */}
+            <button onClick={() => setIsDrawMode(!isDrawMode)} className={iconClass(isDrawMode, 'text-pink-400')}>
+              <Pencil size={20} />
+              <Tooltip text={isDrawMode ? "Exit Draw Mode" : "Draw Mode"} />
             </button>
           </div>
         </div>
@@ -206,10 +192,6 @@ const ActivityBar = () => {
         <div className={`w-8 border-t mb-6 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`} />
 
         <div className="mt-auto flex flex-col gap-2">
-          <button onClick={() => (window as any).__modscapeAutoLayout?.()} className={iconClass(false, 'text-orange-400')}>
-            <Workflow size={20} />
-            <Tooltip text="Auto Layout (left → right)" />
-          </button>
           <button onClick={() => setShowHelp(true)} className={iconClass(showHelp)}>
             <CircleHelp size={20} />
             <Tooltip text="Shortcut Guide" />
@@ -240,7 +222,6 @@ const ActivityBar = () => {
               <section>
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">General</h3>
                 <ShortcutRow label="Command Palette" keys={['Ctrl', 'K']} />
-                <ShortcutRow label="Quick Connect" keys={['L']} />
                 <ShortcutRow label="Find Entities" keys={['/']} />
                 <ShortcutRow label="Switch Theme" keys={['\\']} />
               </section>
@@ -251,10 +232,12 @@ const ActivityBar = () => {
                 <ShortcutRow label="New Domain" keys={['D']} />
                 <ShortcutRow label="New Consumer" keys={['U']} />
                 <ShortcutRow label="New Sticky Note" keys={['S']} />
+                <ShortcutRow label="Draw Mode" keys={['P']} />
               </section>
 
               <section>
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Canvas Control</h3>
+                <ShortcutRow label="Fit View" keys={['F']} />
                 <ShortcutRow label="Pan / Scroll" keys={['↑', '↓', '←', '→']} />
                 <ShortcutRow label="Clear Selection" keys={['Esc']} />
                 <ShortcutRow label="Delete Selected" keys={['Del', '⌫']} />

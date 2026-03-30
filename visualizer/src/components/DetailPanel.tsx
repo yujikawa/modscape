@@ -15,12 +15,16 @@ const DetailPanel = memo(() => {
     getSelectedRelationship,
     getSelectedAnnotation,
     updateTable,
+    renameTableId,
+    renameColumnId,
     updateDomain,
     updateConsumer,
     updateRelationship,
     updateLineageDescription,
     updateAnnotation,
     assignTableToDomain,
+    error,
+    setError,
     theme,
     isDetailPanelSuppressed,
     isDetailPanelMinimized,
@@ -33,12 +37,16 @@ const DetailPanel = memo(() => {
     getSelectedRelationship: s.getSelectedRelationship,
     getSelectedAnnotation: s.getSelectedAnnotation,
     updateTable: s.updateTable,
+    renameTableId: s.renameTableId,
+    renameColumnId: s.renameColumnId,
     updateDomain: s.updateDomain,
     updateConsumer: s.updateConsumer,
     updateRelationship: s.updateRelationship,
     updateLineageDescription: s.updateLineageDescription,
     updateAnnotation: s.updateAnnotation,
     assignTableToDomain: s.assignTableToDomain,
+    error: s.error,
+    setError: s.setError,
     theme: s.theme,
     isDetailPanelSuppressed: s.isDetailPanelSuppressed,
     isDetailPanelMinimized: s.isDetailPanelMinimized,
@@ -48,7 +56,7 @@ const DetailPanel = memo(() => {
     selectedEdgeId: s.selectedEdgeId,
     selectedAnnotationId: s.selectedAnnotationId,
   })))
-  
+
   const table = getSelectedTable()
   const domain = getSelectedDomain()
   const consumer = getSelectedConsumer()
@@ -988,11 +996,11 @@ const DetailPanel = memo(() => {
               onBlur={(e) => { if (!e.target.value) handleUpdateTable({ name: 'UNNAMED_TABLE' }) }}
               readOnly={!!table!.isImported}
               title="Conceptual Table Name"
-              style={{ 
-                fontSize: '18px', 
-                fontWeight: 'bold', 
-                color: 'var(--text-primary)', 
-                backgroundColor: 'transparent', 
+              style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                color: 'var(--text-primary)',
+                backgroundColor: 'transparent',
                 border: 'none',
                 borderBottom: '1px solid transparent',
                 padding: '2px 0',
@@ -1003,6 +1011,42 @@ const DetailPanel = memo(() => {
               onFocus={(e) => (e.target as HTMLInputElement).style.borderBottom = `1px solid ${LINEAGE_BASE}`}
             />
           </div>
+
+          {/* ID field */}
+          {!table!.isImported && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>ID</span>
+              <input
+                key={table!.id}
+                defaultValue={table!.id}
+                onBlur={(e) => {
+                  const newId = e.target.value.trim()
+                  if (newId && newId !== table!.id) renameTableId(table!.id, newId)
+                  else e.target.value = table!.id
+                }}
+                onChange={() => { if (error) setError(null) }}
+                readOnly={!!table!.isImported}
+                title="Table ID"
+                style={{
+                  fontSize: '11px',
+                  fontFamily: 'monospace',
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderBottom: '1px solid transparent',
+                  padding: '1px 0',
+                  outline: 'none',
+                  width: '100%',
+                  maxWidth: '400px',
+                }}
+                onFocus={(e) => (e.target as HTMLInputElement).style.borderBottom = `1px solid ${LINEAGE_BASE}`}
+                onBlurCapture={(e) => (e.target as HTMLInputElement).style.borderBottom = '1px solid transparent'}
+              />
+              {error && (
+                <span style={{ fontSize: '10px', color: '#ef4444', flexShrink: 0 }}>{error}</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Quick Access Metadata Selectors */}
@@ -1066,6 +1110,44 @@ const DetailPanel = memo(() => {
             <option value="type6">SCD Type 6</option>
             <option value="type7">SCD Type 7</option>
           </select>
+
+          {/* Icon input */}
+          {!table!.isImported && (
+            <input
+              value={table!.appearance?.icon || ''}
+              onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, icon: e.target.value || undefined } })}
+              placeholder="Icon"
+              title="Appearance Icon (emoji)"
+              maxLength={4}
+              className={`border rounded text-[13px] px-2 py-1 outline-none transition-colors w-14 text-center ${
+                theme === 'dark'
+                  ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
+                  : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
+              }`}
+            />
+          )}
+
+          {/* Color picker */}
+          {!table!.isImported && (
+            <div className="flex items-center gap-1" title="Header Color">
+              <input
+                type="color"
+                value={themeColor}
+                onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, color: e.target.value } })}
+                style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}
+              />
+              <input
+                value={table!.appearance?.color || ''}
+                onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, color: e.target.value || undefined } })}
+                placeholder={typeConfig?.color || '#334155'}
+                className={`border rounded text-[10px] px-2 py-1 outline-none font-mono w-24 ${
+                  theme === 'dark'
+                    ? 'bg-slate-800 border-slate-700 text-slate-300'
+                    : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
@@ -1231,36 +1313,58 @@ const DetailPanel = memo(() => {
                     <tr key={col.id} style={{ borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--node-bg)' }}>
                       <td style={{ padding: '6px 16px' }}>
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={() => handleUpdateLogicalColumn(col.id, { isPrimaryKey: !col.logical?.isPrimaryKey })}
                             title="Primary Key"
                             className={`transition-opacity ${col.logical?.isPrimaryKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
                           >🔑</button>
-                          <input 
-                            value={col.logical?.name ?? ''}
-                            onChange={(e) => handleUpdateLogicalColumn(col.id, { name: e.target.value })}
-                            onBlur={(e) => { if (!e.target.value) handleUpdateLogicalColumn(col.id, { name: col.id }) }}
-                            className={`bg-transparent border-none w-full outline-none p-1 rounded font-medium transition-colors ${
-                              theme === 'dark' ? 'text-white focus:bg-slate-800' : 'text-slate-900 focus:bg-slate-50'
-                            }`}
-                          />
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <input
+                              value={col.logical?.name ?? ''}
+                              onChange={(e) => handleUpdateLogicalColumn(col.id, { name: e.target.value })}
+                              onBlur={(e) => { if (!e.target.value) handleUpdateLogicalColumn(col.id, { name: col.id }) }}
+                              className={`bg-transparent border-none w-full outline-none p-1 rounded font-medium transition-colors ${
+                                theme === 'dark' ? 'text-white focus:bg-slate-800' : 'text-slate-900 focus:bg-slate-50'
+                              }`}
+                            />
+                            <input
+                              key={col.id}
+                              defaultValue={col.id}
+                              onBlur={(e) => {
+                                const newId = e.target.value.trim()
+                                if (newId && newId !== col.id) renameColumnId(table!.id, col.id, newId)
+                                else e.target.value = col.id
+                              }}
+                              onChange={() => { if (error) setError(null) }}
+                              title="Column ID"
+                              style={{ fontSize: '10px', fontFamily: 'monospace' }}
+                              className={`bg-transparent border-none w-full outline-none px-1 rounded transition-colors ${
+                                theme === 'dark' ? 'text-slate-500 focus:bg-slate-800' : 'text-slate-400 focus:bg-slate-50'
+                              }`}
+                            />
+                          </div>
                         </div>
                       </td>
                       <td style={{ padding: '6px 16px' }}>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleUpdateLogicalColumn(col.id, { isMetadata: !col.logical?.isMetadata })}
-                            title="Metadata/Audit"
-                            className={`transition-opacity text-sm ${col.logical?.isMetadata ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
-                          >🕒</button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => handleUpdateLogicalColumn(col.id, { isForeignKey: !col.logical?.isForeignKey })}
+                            title="Foreign Key"
+                            className={`transition-opacity text-sm ${col.logical?.isForeignKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
+                          >🔩</button>
+                          <button
+                            onClick={() => handleUpdateLogicalColumn(col.id, { isPartitionKey: !col.logical?.isPartitionKey })}
+                            title="Partition Key"
+                            className={`transition-opacity text-sm ${col.logical?.isPartitionKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
+                          >📂</button>
                           <select
                             value={col.logical?.additivity || ''}
                             onChange={(e) => handleUpdateLogicalColumn(col.id, { additivity: (e.target.value || undefined) as any })}
                             title="Additivity (for Measures)"
                             style={{ fontSize: '10px' }}
                             className={`border rounded outline-none transition-colors ${
-                              theme === 'dark' 
-                                ? 'bg-slate-800 border-slate-700 text-slate-400' 
+                              theme === 'dark'
+                                ? 'bg-slate-800 border-slate-700 text-slate-400'
                                 : 'bg-white border-slate-200 text-slate-600'
                             }`}
                           >

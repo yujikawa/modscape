@@ -3,7 +3,6 @@ import { toPng, toJpeg } from 'html-to-image'
 import { useStore } from '../../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
 import {
-  ListTree,
   ChevronRight,
   ChevronLeft,
   Route,
@@ -12,13 +11,10 @@ import {
   Moon,
   Search,
   Download,
-  BarChart2,
 } from 'lucide-react'
-import TablesTab from './TablesTab'
+import SearchTab from './SearchTab'
 import PathFinderTab from './PathFinderTab'
 import NoteSearchTab from './NoteSearchTab'
-import InformationSearchTab from './InformationSearchTab'
-import ModelStatsTab from './ModelStatsTab'
 
 const RightPanel = memo(() => {
   const {
@@ -65,15 +61,39 @@ const RightPanel = memo(() => {
     const filename = `modscape-export.${exportFormat}`
     const themeBg = theme === 'dark' ? '#020617' : '#f8fafc'
     try {
-      const dataUrl = exportFormat === 'png'
+      const pixelRatio = 2
+      const baseDataUrl = exportFormat === 'png'
         ? await toPng(container, {
-            pixelRatio: 2,
+            pixelRatio,
             backgroundColor: exportTransparent ? undefined : themeBg,
           })
-        : await toJpeg(container, { pixelRatio: 2, quality: 0.95, backgroundColor: themeBg })
+        : await toJpeg(container, { pixelRatio, quality: 0.95, backgroundColor: themeBg })
+
+      // Composite drawing overlay on top if it has content
+      const drawCanvas = (window as any).__modscapeDrawCanvas as HTMLCanvasElement | null
+      let finalDataUrl = baseDataUrl
+
+      if (drawCanvas && drawCanvas.width > 0 && drawCanvas.height > 0) {
+        const w = container.offsetWidth * pixelRatio
+        const h = container.offsetHeight * pixelRatio
+        const composite = document.createElement('canvas')
+        composite.width = w
+        composite.height = h
+        const ctx = composite.getContext('2d')!
+
+        const base = new Image()
+        base.src = baseDataUrl
+        await new Promise<void>(resolve => { base.onload = () => resolve() })
+        ctx.drawImage(base, 0, 0)
+        ctx.drawImage(drawCanvas, 0, 0, w, h)
+
+        finalDataUrl = exportFormat === 'png'
+          ? composite.toDataURL('image/png')
+          : composite.toDataURL('image/jpeg', 0.95)
+      }
 
       const a = document.createElement('a')
-      a.href = dataUrl
+      a.href = finalDataUrl
       a.download = filename
       a.click()
     } catch (e) {
@@ -118,19 +138,11 @@ const RightPanel = memo(() => {
 
         <div className="flex flex-col gap-2 mb-6">
           <button
-            onClick={() => { setActiveRightPanelTab('information-search'); setIsRightPanelOpen(true); }}
-            className={iconClass(activeRightPanelTab === 'information-search' && isRightPanelOpen)}
+            onClick={() => { setActiveRightPanelTab('search'); setIsRightPanelOpen(true); }}
+            className={iconClass(activeRightPanelTab === 'search' && isRightPanelOpen)}
           >
             <Search size={20} />
-            <Tooltip text="Information Search" />
-          </button>
-
-          <button
-            onClick={() => { setActiveRightPanelTab('tables'); setIsRightPanelOpen(true); }}
-            className={iconClass(activeRightPanelTab === 'tables' && isRightPanelOpen)}
-          >
-            <ListTree size={20} />
-            <Tooltip text="Tables & Entities" />
+            <Tooltip text="Search" />
           </button>
 
           <button
@@ -149,13 +161,6 @@ const RightPanel = memo(() => {
             <Tooltip text="Note Search" />
           </button>
 
-          <button
-            onClick={() => { setActiveRightPanelTab('stats'); setIsRightPanelOpen(true); }}
-            className={iconClass(activeRightPanelTab === 'stats' && isRightPanelOpen)}
-          >
-            <BarChart2 size={20} />
-            <Tooltip text="Model Stats" />
-          </button>
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pb-2">
@@ -246,20 +251,16 @@ const RightPanel = memo(() => {
           theme === 'dark' ? 'border-slate-800' : 'border-slate-100'
         }`}>
           <h2 className={`text-sm font-bold tracking-tight uppercase ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-            {activeRightPanelTab === 'information-search' && 'Information Search'}
-            {activeRightPanelTab === 'tables' && 'Tables'}
+            {activeRightPanelTab === 'search' && 'Search'}
             {activeRightPanelTab === 'path' && 'Path Finder'}
             {activeRightPanelTab === 'notes' && 'Note Search'}
-            {activeRightPanelTab === 'stats' && 'Model Stats'}
           </h2>
         </div>
 
         {/* Tab Content */}
-        {activeRightPanelTab === 'information-search' && <InformationSearchTab />}
-        {activeRightPanelTab === 'tables' && <TablesTab />}
+        {activeRightPanelTab === 'search' && <SearchTab />}
         {activeRightPanelTab === 'path' && <PathFinderTab />}
         {activeRightPanelTab === 'notes' && <NoteSearchTab />}
-        {activeRightPanelTab === 'stats' && <ModelStatsTab />}
       </div>
     </div>
   )

@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-03-29
+
+### Added
+- **Draw Mode** — Freehand drawing overlay for communicating over data model diagrams. Press `P` or click the pencil icon in the ActivityBar to enter draw mode. Features pen / eraser tools, color picker, line width input, and clear-all. Drawings persist when toggling between draw mode and normal mode (Cytoscape interactions remain fully functional). The eraser brush is 4× the pen line width with a circle cursor for size feedback. Drawings are included in image exports (PNG/JPG). Exit with `P` or `Esc`.
+- **Fit View shortcut (`F`)** — Press `F` to fit the entire graph in view.
+- **Graph-level Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)** — Visual operations on the canvas (add/delete table, domain, relationship, lineage, annotation; drag move; layout apply; domain assignment) can now be undone and redone with keyboard shortcuts. History is scoped per file (resets on file switch) and capped at 50 steps. Text field edits are handled by the browser natively.
+- **UI Navigation Redesign**:
+  - Moved View/Auto-layout toggles to a floating canvas toolbar for better workspace accessibility.
+  - Simplified Sidebar to a 2-tab layout: "YAML" for schema viewing and "Stats" for model statistics.
+  - Unified Search Tab in the Right Panel, combining hierarchical domain tree and full-text search.
+  - Integrated Relationship Creation (Connect mode) into the Command Palette (Ctrl+K), deprecating the dedicated Connect tab.
+  - Updated Command Palette with dedicated modes for Pipeline, Connect ER, and Connect Flow with improved candidate grouping.
+
+### Changed
+- **YAML tab is now read-only** — The in-app YAML editor has been replaced with a read-only viewer. YAML editing is intended to be done in an external editor (VS Code, etc.) or via AI agents. The sidebar tab label has been renamed from "Editor" to "YAML".
+
+### Added (patch)
+- **Table/Column ID rename** — Table and column IDs can now be renamed directly from the DetailPanel. All references (layout, domains, relationships, lineage, annotations) are updated atomically. Duplicate ID detection shows an inline error.
+- **Appearance icon & color editing** — `appearance.icon` (emoji) and `appearance.color` (color picker) are now editable from the DetailPanel header. The color picker defaults to the type's built-in color when no custom color is set.
+- **isForeignKey / isPartitionKey toggles** — Added toggle buttons (🔩 / 📂) for `isForeignKey` and `isPartitionKey` in the Logical tab column rows.
+
+### Fixed (patch)
+- **DetailPanel auto-close** — The detail panel no longer closes when an external file change is received via WebSocket. Selection is preserved if the selected table still exists in the refreshed schema.
+- **Spurious save on model refresh** — Receiving an external file update no longer triggers a redundant write-back to disk.
+- **Removed unused schema fields** — `conceptual.businessDefinitions` and `columns[].logical.isMetadata` have been removed from the schema, templates, and documentation.
+- **YAML diff viewer** — Added a "Diff" toggle button to the YAML sidebar tab. When enabled, shows a unified diff (added lines in green `+`, removed lines in red `-`) between the last disk-loaded state and the current in-memory model. No diff computation occurs when the toggle is off.
+
+---
+
 ## [2.3.1] - 2026-03-29
 
 ### Fixed

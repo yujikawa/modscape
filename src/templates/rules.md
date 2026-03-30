@@ -88,8 +88,6 @@ appearance:
 conceptual:
   description: "One row per order line item."
   tags: [WHAT, HOW_MUCH]   # BEAM* tags: WHO | WHAT | WHEN | WHERE | HOW | COUNT | HOW_MUCH
-  businessDefinitions:
-    revenue: "Net revenue after discounts and returns."
 ```
 
 ### 2-4. `columns` Fields
@@ -106,7 +104,6 @@ columns:
       isPrimaryKey: true   # optional. default false.
       isForeignKey: false  # optional. default false.
       isPartitionKey: false # optional. default false.
-      isMetadata: false    # optional. true for audit cols: load_date, record_source, hash_diff
       additivity: fully    # optional. fully=summable | semi=balance/stock | non=price/rate/ID
     physical:              # optional. override when warehouse names/types differ.
       name: order_id_pk
@@ -861,7 +858,7 @@ tables:
       - id: customer_name
         logical: { name: "Name", type: String }
       - id: dw_valid_from
-        logical: { name: "Valid From", type: Timestamp, isMetadata: true }
+        logical: { name: "Valid From", type: Timestamp }
     sampleData:
       - [1, "Acme Corp", "2024-01-01T00:00:00Z"]
       - [2, "Beta Ltd",  "2024-03-15T00:00:00Z"]

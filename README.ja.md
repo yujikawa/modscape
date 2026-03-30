@@ -35,9 +35,11 @@ https://yujikawa.github.io/modscape/
   - **意味的なエッジバッジ**: 接続点に `( 1 )` や `[ N ]` バッジを表示し、カーディナリティ（多重度）を視覚化。
   - **データリネージ・モード**: データの流れをアニメーション付きの点線矢印で可視化。
   - **ドメイン階層ナビゲーション**: テーブルをビジネスドメインごとに整理し、構造化されたサイドバーから素早くアクセス。
-- **統合 Undo/Redo & オートセーブ**: 
-  - ドラッグや自動整列、編集などの操作が内蔵エディタの履歴と同期。
+- **統合 Undo/Redo & オートセーブ**:
+  - キャンバス上の操作（追加・削除・移動など）をグラフレベルで Undo/Redo（`Ctrl+Z` / `Ctrl+Shift+Z`）可能。
   - オートセーブにより、ローカルのYAMLを常に最新の状態に維持。
+- **YAMLサイドバー**: 読み取り専用のYAMLビューアに **Diff トグル**（最後のディスク読み込みからの差分をハイライト）と **ダウンロードボタン**（現在のモデルをYAMLファイルとしてエクスポート）を搭載。YAMLを直接編集したい場合は、外部エディタ（VS Codeなど）でファイルを開いてください。変更は自動的に同期されます。
+- **詳細パネル（Detail Panel）**: テーブル・カラムのメタデータをUI上で直接編集可能。IDのリネーム（関連参照を一括更新）、外観アイコン・カラーの設定、カラムロールトグル（`isPrimaryKey`・`isForeignKey`・`isPartitionKey`）に対応。
 - **ダーク/ライトモード対応**: 利用環境やドキュメント作成の用途に合わせて、ワンクリックでテーマを切り替え可能。
 - **データ分析特化のモデリング**: `fact`, `dimension`, `mart`, `hub`, `link`, `satellite` に加え、汎用的な `table` タイプを標準サポート。
 - **AIエージェント対応**: **Gemini CLI, Claude Code, Codex** 用の雛形を内蔵。モデリング（`/modscape:modeling`）と実装コード生成（`/modscape:codegen`）の両方でLLMを活用できます。
@@ -133,8 +135,6 @@ tables:
     conceptual:  # 任意 – AIエージェント向けビジネスコンテキスト
       description: "1行 = 1注文明細。"
       tags: [WHO, WHAT, WHEN]  # BEAM* タグ
-      businessDefinitions:
-        revenue: "割引・返品後の純売上"
 
     implementation:  # 任意 – AIコード生成へのヒント
       materialization: incremental  # table | view | incremental | ephemeral
@@ -159,7 +159,6 @@ tables:
           isPrimaryKey: true
           isForeignKey: false
           isPartitionKey: false
-          isMetadata: false  # 監査カラム(load_date, record_source)は true
           additivity: fully  # fully | semi | non
         physical:  # 任意 – ウェアハウスの物理定義を上書き
           name: order_id

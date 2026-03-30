@@ -283,11 +283,6 @@ const TableCard = ({
                               {col.logical?.isPartitionKey && (
                                 <span style={{ opacity: 0.8 }}>📂</span>
                               )}
-                              {col.logical?.isMetadata && (
-                                <span style={{ opacity: 0.8 }} title="Metadata/Audit Column">
-                                  🕒
-                                </span>
-                              )}
                               {col.logical?.additivity === 'fully' && (
                                 <span style={{ color: '#4ade80' }} title="Fully Additive">
                                   Σ

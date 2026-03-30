@@ -28,9 +28,12 @@ interface AppState {
   lastSavedAt: number;
   savingStatus: 'idle' | 'saving' | 'saved' | 'error';
   lastUpdateSource: 'user' | 'visual' | 'undo';
-  
+  undoStack: Schema[];
+  redoStack: Schema[];
+
   // YAML Input (Sidebar State)
   yamlInput: string;
+  baselineYaml: string;
   setYamlInput: (yaml: string) => void;
   syncToYamlInput: () => void;
   
@@ -43,8 +46,8 @@ interface AppState {
   isRightPanelOpen: boolean;
   isQuickConnectBarOpen: boolean;
   isCommandPaletteOpen: boolean;
-  activeTab: 'editor' | 'entities' | 'connect';
-  activeRightPanelTab: 'tables' | 'path' | 'notes' | 'information-search' | 'stats';
+  activeTab: 'yaml' | 'stats';
+  activeRightPanelTab: 'search' | 'path' | 'notes';
   focusNodeId: string | null;
   pathFinderResult: { nodeIds: string[], edgeIds: string[] } | null;
   showER: boolean;
@@ -52,6 +55,7 @@ interface AppState {
   showAnnotations: boolean;
   isCompactMode: boolean;
   connectMode: 'lineage' | 'er' | null;
+  isDrawMode: boolean;
   theme: 'dark' | 'light';
   isDetailPanelSuppressed: boolean;
   isDetailPanelMinimized: boolean;
@@ -72,8 +76,11 @@ interface AppState {
   setShowAnnotations: (show: boolean) => void;
   setIsCompactMode: (v: boolean) => void;
   setConnectMode: (mode: 'lineage' | 'er' | null) => void;
+  setIsDrawMode: (v: boolean) => void;
   setIsAutoSaveEnabled: (enabled: boolean) => void;
   setLastUpdateSource: (source: 'user' | 'visual' | 'undo') => void;
+  undo: () => void;
+  redo: () => void;
   parseAndSetSchema: (yaml: string) => void;
   setError: (error: string | null) => void;
   updateNodePosition: (id: string, x: number, y: number, parentId?: string | null) => void;
@@ -95,6 +102,8 @@ interface AppState {
   removeNode: (id: string) => void;
   bulkRemoveTables: (ids: string[]) => void;
   updateTable: (id: string, updates: Partial<Table>) => void;
+  renameTableId: (oldId: string, newId: string) => void;
+  renameColumnId: (tableId: string, oldId: string, newId: string) => void;
   updateDomain: (id: string, updates: Partial<Domain>) => void;
   assignTableToDomain: (tableId: string, domainId?: string | null) => void;
   bulkAssignTablesToDomain: (tableIds: string[], domainId: string | null) => void;
@@ -119,8 +128,8 @@ interface AppState {
   setIsRightPanelOpen: (isOpen: boolean) => void;
   setIsQuickConnectBarOpen: (isOpen: boolean) => void;
   setIsCommandPaletteOpen: (isOpen: boolean) => void;
-  setActiveTab: (tab: 'editor' | 'entities' | 'connect') => void;
-  setActiveRightPanelTab: (tab: 'tables' | 'path' | 'notes' | 'information-search' | 'stats') => void;
+  setActiveTab: (tab: 'yaml' | 'stats') => void;
+  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
   setFocusNodeId: (id: string | null) => void;
   toggleTheme: () => void;
@@ -140,6 +149,18 @@ interface AppState {
 
 let saveTimeout: any = null;
 
+const HISTORY_LIMIT = 50;
+
+// Push current schema onto the undo stack, clearing the redo stack (new action invalidates future).
+const pushHistory = (get: () => AppState, set: (partial: Partial<AppState>) => void) => {
+  const { schema, undoStack } = get();
+  if (!schema) return;
+  const snapshot = JSON.parse(JSON.stringify(schema)) as Schema;
+  const newStack = [...undoStack, snapshot];
+  const trimmed = newStack.length > HISTORY_LIMIT ? newStack.slice(newStack.length - HISTORY_LIMIT) : newStack;
+  set({ undoStack: trimmed, redoStack: [] });
+};
+
 export const useStore = create<AppState>()(persist(
   (set, get) => ({
   schema: null,
@@ -156,9 +177,12 @@ export const useStore = create<AppState>()(persist(
   lastSavedAt: 0,
   savingStatus: 'idle',
   lastUpdateSource: 'visual',
+  undoStack: [],
+  redoStack: [],
 
   // YAML Input
   yamlInput: '',
+  baselineYaml: '',
   setYamlInput: (yaml) => {
     set({ yamlInput: yaml, lastUpdateSource: 'user', lastSavedAt: Date.now() });
     get().saveSchema();
@@ -185,8 +209,8 @@ export const useStore = create<AppState>()(persist(
   isRightPanelOpen: false,
   isQuickConnectBarOpen: false,
   isCommandPaletteOpen: false,
-  activeTab: 'editor',
-  activeRightPanelTab: 'tables',
+  activeTab: 'yaml',
+  activeRightPanelTab: 'search',
   focusNodeId: null,
   pathFinderResult: null,
   showER: true,
@@ -194,6 +218,7 @@ export const useStore = create<AppState>()(persist(
   showAnnotations: true,
   isCompactMode: false,
   connectMode: null,
+  isDrawMode: false,
   theme: 'dark',
   isDetailPanelSuppressed: false,
   isDetailPanelMinimized: true,
@@ -201,7 +226,8 @@ export const useStore = create<AppState>()(persist(
 
   setSchema: (schema) => {
     const normalized = normalizeSchema(schema);
-    set({ schema: normalized });
+    const baselineYaml = yaml.dump(normalized, { indent: 2, lineWidth: -1, noRefs: true });
+    set({ schema: normalized, baselineYaml });
     get().syncToYamlInput();
   },
 
@@ -257,6 +283,29 @@ export const useStore = create<AppState>()(persist(
   setIsAutoSaveEnabled: (enabled) => set({ isAutoSaveEnabled: enabled }),
   setCyInstance: (cy) => set({ cyInstance: cy }),
   setLastUpdateSource: (source) => set({ lastUpdateSource: source }),
+
+  undo: () => {
+    const { schema, undoStack, redoStack } = get();
+    if (undoStack.length === 0) return;
+    const prevSchema = undoStack[undoStack.length - 1];
+    const newUndoStack = undoStack.slice(0, -1);
+    const newRedoStack = schema ? [...redoStack, JSON.parse(JSON.stringify(schema)) as Schema] : redoStack;
+    set({ schema: prevSchema, undoStack: newUndoStack, redoStack: newRedoStack, lastUpdateSource: 'undo' });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  redo: () => {
+    const { schema, undoStack, redoStack } = get();
+    if (redoStack.length === 0) return;
+    const nextSchema = redoStack[redoStack.length - 1];
+    const newRedoStack = redoStack.slice(0, -1);
+    const newUndoStack = schema ? [...undoStack, JSON.parse(JSON.stringify(schema)) as Schema] : undoStack;
+    set({ schema: nextSchema, undoStack: newUndoStack, redoStack: newRedoStack, lastUpdateSource: 'visual' });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
   setPathFinderResult: (result) => set({ pathFinderResult: result }),
   setFocusNodeId: (id) => set({ focusNodeId: id }),
 
@@ -267,8 +316,10 @@ export const useStore = create<AppState>()(persist(
   setShowAnnotations: (show) => set({ showAnnotations: show }),
   setIsCompactMode: (v: boolean) => set({ isCompactMode: v }),
   setConnectMode: (mode) => set({ connectMode: mode }),
+  setIsDrawMode: (v) => set({ isDrawMode: v }),
 
   updateNodePosition: (id, x, y, parentId) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const currentLayout = schema.layout || {};
@@ -283,6 +334,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   updateNodesPosition: (updates) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const currentLayout = schema.layout || {};
@@ -361,14 +413,34 @@ export const useStore = create<AppState>()(persist(
         return;
       }
       const data = await res.json();
-      set({ schema: normalizeSchema(data), selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null });
-      get().syncToYamlInput();
+      const newSchema = normalizeSchema(data);
+      const { selectedTableId } = get();
+      // Preserve table/domain/consumer selection if the entity still exists in the refreshed schema
+      const entityIds = new Set([
+        ...(newSchema.tables || []).map(t => t.id),
+        ...(newSchema.domains || []).map(d => d.id),
+        ...(newSchema.consumers || []).map(c => c.id),
+      ]);
+      const nextSelectedTableId = selectedTableId && entityIds.has(selectedTableId) ? selectedTableId : null;
+      set({
+        schema: newSchema,
+        selectedTableId: nextSelectedTableId,
+        selectedEdgeId: null,
+        selectedAnnotationId: null,
+        error: null,
+        // Close panel only if the selected entity no longer exists
+        isDetailPanelMinimized: nextSelectedTableId ? get().isDetailPanelMinimized : true,
+      });
+      // Update YAML viewer without triggering a redundant write-back to disk
+      const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
+      set({ yamlInput: yamlString, baselineYaml: yamlString, lastUpdateSource: 'visual' });
     } catch (e: any) {
       set({ error: e.message });
     }
   },
 
   addTable: (x, y, name) => {
+    pushHistory(get, set);
     const schema = get().schema || { tables: [], relationships: [], domains: [], layout: {} };
     const newId = name ? name.toLowerCase().replace(/\s+/g, '_') : `new_table_${Date.now()}`;
     const newTable: Table = {
@@ -388,6 +460,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   addDomain: (x, y, name) => {
+    pushHistory(get, set);
     const schema = get().schema || { tables: [], relationships: [], domains: [], layout: {} };
     const newId = name ? name.toLowerCase().replace(/\s+/g, '_') : `new_domain_${Date.now()}`;
     const newDomain = {
@@ -408,6 +481,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   addConsumer: (x, y, name) => {
+    pushHistory(get, set);
     const schema = get().schema || { tables: [], relationships: [], layout: {} };
     const newId = name ? name.toLowerCase().replace(/\s+/g, '_') : `new_usecase_${Date.now()}`;
     const newUsecase = {
@@ -426,6 +500,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   addRelationship: (source, target, sourceHandle, targetHandle) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const newRel: Relationship = {
@@ -465,6 +540,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   addLineage: (source, target) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const existing = schema.lineage ?? [];
@@ -496,6 +572,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   removeEdge: (sourceId, targetId, kind) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const newRels = (kind === 'lineage')
@@ -510,6 +587,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   removeNode: (id) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const isDomain = (schema.domains || []).some(d => d.id === id);
@@ -536,6 +614,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   bulkRemoveTables: (ids) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const idSet = new Set(ids);
@@ -559,6 +638,94 @@ export const useStore = create<AppState>()(persist(
     get().saveSchema();
   },
 
+  renameTableId: (oldId, newId) => {
+    const { schema } = get();
+    if (!schema) return;
+    const trimmed = newId.trim();
+    if (!trimmed || trimmed === oldId) return;
+    // Duplicate check across tables, domains, consumers
+    const allIds = [
+      ...schema.tables.map(t => t.id),
+      ...(schema.domains || []).map(d => d.id),
+      ...(schema.consumers || []).map(c => c.id),
+    ];
+    if (allIds.includes(trimmed)) {
+      set({ error: `ID "${trimmed}" already exists.` });
+      return;
+    }
+    pushHistory(get, set);
+    const newTables = schema.tables.map(t => t.id === oldId ? { ...t, id: trimmed } : t);
+    const newLayout: Schema['layout'] = {};
+    for (const [k, v] of Object.entries(schema.layout || {})) {
+      newLayout[k === oldId ? trimmed : k] = v;
+    }
+    const newDomains = (schema.domains || []).map(d => ({
+      ...d,
+      members: d.members.map(m => m === oldId ? trimmed : m),
+    }));
+    const newRelationships = schema.relationships.map(r => ({
+      ...r,
+      from: { ...r.from, table: r.from.table === oldId ? trimmed : r.from.table },
+      to: { ...r.to, table: r.to.table === oldId ? trimmed : r.to.table },
+    }));
+    const newLineage = (schema.lineage || []).map(l => ({
+      ...l,
+      from: l.from === oldId ? trimmed : l.from,
+      to: l.to === oldId ? trimmed : l.to,
+    }));
+    const newAnnotations = (schema.annotations || []).map(a => ({
+      ...a,
+      targetId: a.targetId === oldId ? trimmed : a.targetId,
+    }));
+    const newSchema: Schema = {
+      ...schema,
+      tables: newTables,
+      layout: newLayout,
+      domains: newDomains,
+      relationships: newRelationships,
+      lineage: newLineage,
+      annotations: newAnnotations,
+    };
+    const newSelectedId = get().selectedTableId === oldId ? trimmed : get().selectedTableId;
+    set({ schema: newSchema, selectedTableId: newSelectedId, error: null });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  renameColumnId: (tableId, oldId, newId) => {
+    const { schema } = get();
+    if (!schema) return;
+    const trimmed = newId.trim();
+    if (!trimmed || trimmed === oldId) return;
+    const table = schema.tables.find(t => t.id === tableId);
+    if (!table) return;
+    const colIds = (table.columns || []).map(c => c.id);
+    if (colIds.includes(trimmed)) {
+      set({ error: `Column ID "${trimmed}" already exists in table "${tableId}".` });
+      return;
+    }
+    pushHistory(get, set);
+    const newTables = schema.tables.map(t => {
+      if (t.id !== tableId) return t;
+      return {
+        ...t,
+        columns: (t.columns || []).map(c => c.id === oldId ? { ...c, id: trimmed } : c),
+      };
+    });
+    const newRelationships = schema.relationships.map(r => ({
+      ...r,
+      from: r.from.table === tableId && r.from.column === oldId
+        ? { ...r.from, column: trimmed }
+        : r.from,
+      to: r.to.table === tableId && r.to.column === oldId
+        ? { ...r.to, column: trimmed }
+        : r.to,
+    }));
+    set({ schema: { ...schema, tables: newTables, relationships: newRelationships }, error: null });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
   updateDomain: (id, updates) => {
     const { schema } = get();
     if (!schema) return;
@@ -569,6 +736,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   assignTableToDomain: (tableId, domainId) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const newDomains = (schema.domains || []).map(domain => {
@@ -587,6 +755,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   bulkAssignTablesToDomain: (tableIds, domainId) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const newDomains = (schema.domains || []).map(domain => {
@@ -606,6 +775,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   distributeSelectedTables: (direction) => {
+    pushHistory(get, set);
     const { schema, selectedTableIds } = get();
     if (!schema || selectedTableIds.length < 2) return;
     const tablePositions = selectedTableIds.map(id => ({ id, pos: schema.layout?.[id] || { x: 0, y: 0 } }));
@@ -625,6 +795,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   applyLayout: (newLayout) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     set({ schema: { ...schema, layout: newLayout }, lastUpdateSource: 'visual' });
@@ -828,6 +999,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   addAnnotation: (offset, targetId, targetType) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
     const newId = `note_${Date.now()}`;
@@ -849,6 +1021,7 @@ export const useStore = create<AppState>()(persist(
   },
 
   removeAnnotation: (id) => {
+    pushHistory(get, set);
     const { schema } = get();
     if (!schema || !schema.annotations) return;
     const newAnnotations = schema.annotations.filter(a => a.id !== id);
@@ -893,7 +1066,9 @@ export const useStore = create<AppState>()(persist(
         }
         data = await res.json();
       }
-      set({ schema: normalizeSchema(data), currentModelSlug: slug, selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null, isModelLoading: false });
+      const loadedSchema = normalizeSchema(data);
+      const loadedYaml = yaml.dump(loadedSchema, { indent: 2, lineWidth: -1, noRefs: true });
+      set({ schema: loadedSchema, currentModelSlug: slug, selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null, isModelLoading: false, undoStack: [], redoStack: [], baselineYaml: loadedYaml });
       get().syncToYamlInput();
       const searchParams = new URLSearchParams(window.location.search);
       searchParams.set('model', slug);

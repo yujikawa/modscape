@@ -89,7 +89,6 @@ export interface Table {
   conceptual?: {
     description?: string;
     tags?: string[]; // BEAM* tags (WHO, WHAT, WHEN, etc.)
-    businessDefinitions?: Record<string, string>;
   };
   physical?: { // Optional Table-level physical info
     name?: string;
@@ -110,7 +109,6 @@ export interface Column {
     isForeignKey?: boolean;
     isPartitionKey?: boolean;
     additivity?: 'fully' | 'semi' | 'non'; // For Measures
-    isMetadata?: boolean; // For Audit/SCD metadata columns
   };
   physical?: { // Optional
     name?: string;
