@@ -18,6 +18,16 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **YAML tab is now read-only** — The in-app YAML editor has been replaced with a read-only viewer. YAML editing is intended to be done in an external editor (VS Code, etc.) or via AI agents. The sidebar tab label has been renamed from "Editor" to "YAML".
 
+### Added (patch)
+- **Table/Column ID rename** — Table and column IDs can now be renamed directly from the DetailPanel. All references (layout, domains, relationships, lineage, annotations) are updated atomically. Duplicate ID detection shows an inline error.
+- **Appearance icon & color editing** — `appearance.icon` (emoji) and `appearance.color` (color picker) are now editable from the DetailPanel header. The color picker defaults to the type's built-in color when no custom color is set.
+- **isForeignKey / isPartitionKey toggles** — Added toggle buttons (🔩 / 📂) for `isForeignKey` and `isPartitionKey` in the Logical tab column rows.
+
+### Fixed (patch)
+- **DetailPanel auto-close** — The detail panel no longer closes when an external file change is received via WebSocket. Selection is preserved if the selected table still exists in the refreshed schema.
+- **Spurious save on model refresh** — Receiving an external file update no longer triggers a redundant write-back to disk.
+- **Removed unused schema fields** — `conceptual.businessDefinitions` and `columns[].logical.isMetadata` have been removed from the schema, templates, and documentation.
+
 ---
 
 ## [2.3.1] - 2026-03-29

@@ -101,6 +101,8 @@ interface AppState {
   removeNode: (id: string) => void;
   bulkRemoveTables: (ids: string[]) => void;
   updateTable: (id: string, updates: Partial<Table>) => void;
+  renameTableId: (oldId: string, newId: string) => void;
+  renameColumnId: (tableId: string, oldId: string, newId: string) => void;
   updateDomain: (id: string, updates: Partial<Domain>) => void;
   assignTableToDomain: (tableId: string, domainId?: string | null) => void;
   bulkAssignTablesToDomain: (tableIds: string[], domainId: string | null) => void;
@@ -408,8 +410,27 @@ export const useStore = create<AppState>()(persist(
         return;
       }
       const data = await res.json();
-      set({ schema: normalizeSchema(data), selectedTableId: null, selectedEdgeId: null, selectedAnnotationId: null, error: null });
-      get().syncToYamlInput();
+      const newSchema = normalizeSchema(data);
+      const { selectedTableId } = get();
+      // Preserve table/domain/consumer selection if the entity still exists in the refreshed schema
+      const entityIds = new Set([
+        ...(newSchema.tables || []).map(t => t.id),
+        ...(newSchema.domains || []).map(d => d.id),
+        ...(newSchema.consumers || []).map(c => c.id),
+      ]);
+      const nextSelectedTableId = selectedTableId && entityIds.has(selectedTableId) ? selectedTableId : null;
+      set({
+        schema: newSchema,
+        selectedTableId: nextSelectedTableId,
+        selectedEdgeId: null,
+        selectedAnnotationId: null,
+        error: null,
+        // Close panel only if the selected entity no longer exists
+        isDetailPanelMinimized: nextSelectedTableId ? get().isDetailPanelMinimized : true,
+      });
+      // Update YAML viewer without triggering a redundant write-back to disk
+      const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
+      set({ yamlInput: yamlString, lastUpdateSource: 'visual' });
     } catch (e: any) {
       set({ error: e.message });
     }
@@ -610,6 +631,94 @@ export const useStore = create<AppState>()(persist(
     if (!schema) return;
     const newTables = schema.tables.map(t => t.id === id ? { ...t, ...updates } : t);
     set({ schema: { ...schema, tables: newTables } });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  renameTableId: (oldId, newId) => {
+    const { schema } = get();
+    if (!schema) return;
+    const trimmed = newId.trim();
+    if (!trimmed || trimmed === oldId) return;
+    // Duplicate check across tables, domains, consumers
+    const allIds = [
+      ...schema.tables.map(t => t.id),
+      ...(schema.domains || []).map(d => d.id),
+      ...(schema.consumers || []).map(c => c.id),
+    ];
+    if (allIds.includes(trimmed)) {
+      set({ error: `ID "${trimmed}" already exists.` });
+      return;
+    }
+    pushHistory(get, set);
+    const newTables = schema.tables.map(t => t.id === oldId ? { ...t, id: trimmed } : t);
+    const newLayout: Schema['layout'] = {};
+    for (const [k, v] of Object.entries(schema.layout || {})) {
+      newLayout[k === oldId ? trimmed : k] = v;
+    }
+    const newDomains = (schema.domains || []).map(d => ({
+      ...d,
+      members: d.members.map(m => m === oldId ? trimmed : m),
+    }));
+    const newRelationships = schema.relationships.map(r => ({
+      ...r,
+      from: { ...r.from, table: r.from.table === oldId ? trimmed : r.from.table },
+      to: { ...r.to, table: r.to.table === oldId ? trimmed : r.to.table },
+    }));
+    const newLineage = (schema.lineage || []).map(l => ({
+      ...l,
+      from: l.from === oldId ? trimmed : l.from,
+      to: l.to === oldId ? trimmed : l.to,
+    }));
+    const newAnnotations = (schema.annotations || []).map(a => ({
+      ...a,
+      targetId: a.targetId === oldId ? trimmed : a.targetId,
+    }));
+    const newSchema: Schema = {
+      ...schema,
+      tables: newTables,
+      layout: newLayout,
+      domains: newDomains,
+      relationships: newRelationships,
+      lineage: newLineage,
+      annotations: newAnnotations,
+    };
+    const newSelectedId = get().selectedTableId === oldId ? trimmed : get().selectedTableId;
+    set({ schema: newSchema, selectedTableId: newSelectedId, error: null });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  renameColumnId: (tableId, oldId, newId) => {
+    const { schema } = get();
+    if (!schema) return;
+    const trimmed = newId.trim();
+    if (!trimmed || trimmed === oldId) return;
+    const table = schema.tables.find(t => t.id === tableId);
+    if (!table) return;
+    const colIds = (table.columns || []).map(c => c.id);
+    if (colIds.includes(trimmed)) {
+      set({ error: `Column ID "${trimmed}" already exists in table "${tableId}".` });
+      return;
+    }
+    pushHistory(get, set);
+    const newTables = schema.tables.map(t => {
+      if (t.id !== tableId) return t;
+      return {
+        ...t,
+        columns: (t.columns || []).map(c => c.id === oldId ? { ...c, id: trimmed } : c),
+      };
+    });
+    const newRelationships = schema.relationships.map(r => ({
+      ...r,
+      from: r.from.table === tableId && r.from.column === oldId
+        ? { ...r.from, column: trimmed }
+        : r.from,
+      to: r.to.table === tableId && r.to.column === oldId
+        ? { ...r.to, column: trimmed }
+        : r.to,
+    }));
+    set({ schema: { ...schema, tables: newTables, relationships: newRelationships }, error: null });
     get().syncToYamlInput();
     get().saveSchema();
   },

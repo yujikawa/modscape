@@ -133,8 +133,6 @@ tables:
     conceptual:  # 任意 – AIエージェント向けビジネスコンテキスト
       description: "1行 = 1注文明細。"
       tags: [WHO, WHAT, WHEN]  # BEAM* タグ
-      businessDefinitions:
-        revenue: "割引・返品後の純売上"
 
     implementation:  # 任意 – AIコード生成へのヒント
       materialization: incremental  # table | view | incremental | ephemeral
@@ -159,7 +157,6 @@ tables:
           isPrimaryKey: true
           isForeignKey: false
           isPartitionKey: false
-          isMetadata: false  # 監査カラム(load_date, record_source)は true
           additivity: fully  # fully | semi | non
         physical:  # 任意 – ウェアハウスの物理定義を上書き
           name: order_id

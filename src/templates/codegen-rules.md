@@ -101,7 +101,6 @@ When `grain`/`measures` are **not** defined, infer from column metadata:
 | `isPrimaryKey: true` | Declare as primary key constraint or unique test |
 | `isForeignKey: true` | JOIN key candidate |
 | `isPartitionKey: true` | Confirm as partition column |
-| `isMetadata: true` | Audit/system column — include last, or exclude from business logic |
 | `additivity` | Aggregation function choice (see section 5) |
 | `physical.type` | Override the logical type for DDL generation |
 | `physical.constraints` | Add NOT NULL / UNIQUE constraints where supported |

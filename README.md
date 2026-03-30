@@ -134,8 +134,6 @@ tables:
     conceptual:  # optional – business context for AI agents
       description: "One row per order line item."
       tags: [WHO, WHAT, WHEN]  # BEAM* tags
-      businessDefinitions:
-        revenue: "Net revenue after discounts"
 
     implementation:  # optional – hints for AI code generation
       materialization: incremental  # table | view | incremental | ephemeral
@@ -160,7 +158,6 @@ tables:
           isPrimaryKey: true
           isForeignKey: false
           isPartitionKey: false
-          isMetadata: false  # true for audit cols (load_date, record_source)
           additivity: fully  # fully | semi | non
         physical:  # optional warehouse overrides
           name: order_id

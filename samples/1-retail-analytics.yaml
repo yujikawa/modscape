@@ -21,12 +21,10 @@ tables:
         logical:
           name: Load Date
           type: Timestamp
-          isMetadata: true
       - id: record_source
         logical:
           name: Record Source
           type: String
-          isMetadata: true
     sampleData:
       - - customer_hk
         - customer_bk
@@ -62,12 +60,10 @@ tables:
         logical:
           name: Load Date
           type: Timestamp
-          isMetadata: true
       - id: record_source
         logical:
           name: Record Source
           type: String
-          isMetadata: true
     sampleData: []
   - id: hub_order
     name: Order Hub
@@ -91,19 +87,16 @@ tables:
         logical:
           name: Load Date
           type: Timestamp
-          isMetadata: true
       - id: record_source
         logical:
           name: Record Source
           type: String
-          isMetadata: true
     sampleData: []
   - id: lnk_order_line
     name: Order Line
     physical_name: lnk_order_line
     appearance:
       type: link
-      icon: 🔗
     conceptual:
       description: Connects orders to products (one order can contain multiple products).
     columns:
@@ -131,12 +124,10 @@ tables:
         logical:
           name: Load Date
           type: Timestamp
-          isMetadata: true
       - id: record_source
         logical:
           name: Record Source
           type: String
-          isMetadata: true
     sampleData: []
   - id: sat_customer_profile
     name: Customer Profile
@@ -155,12 +146,10 @@ tables:
           name: Load Date
           type: Timestamp
           isPrimaryKey: true
-          isMetadata: true
       - id: hash_diff
         logical:
           name: Hash Diff
           type: String
-          isMetadata: true
       - id: full_name
         logical:
           name: Full Name
@@ -195,12 +184,10 @@ tables:
           name: Load Date
           type: Timestamp
           isPrimaryKey: true
-          isMetadata: true
       - id: hash_diff
         logical:
           name: Hash Diff
           type: String
-          isMetadata: true
       - id: product_name
         logical:
           name: Product Name
@@ -235,12 +222,10 @@ tables:
           name: Load Date
           type: Timestamp
           isPrimaryKey: true
-          isMetadata: true
       - id: hash_diff
         logical:
           name: Hash Diff
           type: String
-          isMetadata: true
       - id: order_date
         logical:
           name: Order Date
@@ -306,17 +291,14 @@ tables:
         logical:
           name: Is Current
           type: Boolean
-          isMetadata: true
       - id: valid_from
         logical:
           name: Valid From
           type: Date
-          isMetadata: true
       - id: valid_to
         logical:
           name: Valid To
           type: Date
-          isMetadata: true
     sampleData: []
   - id: dim_products
     name: Products
@@ -370,8 +352,6 @@ tables:
       tags:
         - WHAT
         - HOW_MUCH
-      businessDefinitions:
-        net_revenue: Unit price × quantity minus discount. Excludes tax and shipping.
     implementation:
       materialization: incremental
       incremental_strategy: merge

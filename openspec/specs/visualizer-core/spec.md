@@ -128,13 +128,6 @@ The system SHALL display visual indicators for column additivity rules.
 - **WHEN** a column has `logical.additivity: non`
 - **THEN** the visualizer displays the `⊘` (Prohibited) icon next to the column name
 
-### Requirement: Metadata Column Indicators
-The system SHALL display a visual indicator for technical/audit metadata columns.
-
-#### Scenario: Metadata column
-- **WHEN** a column has `logical.isMetadata: true`
-- **THEN** the visualizer displays a `🕒` (Clock) icon next to the column name
-
 ### Requirement: Diagram Container Structure
 The system SHALL wrap the diagram canvas in a container that allows for sibling elements in a vertical flow.
 
