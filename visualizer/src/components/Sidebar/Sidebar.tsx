@@ -96,7 +96,7 @@ const Sidebar = memo(() => {
           theme === 'dark' ? 'border-slate-800 bg-slate-950/20' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <p className="text-[10px] text-slate-500 font-medium px-1">
-            Modscape v2.4.0
+            Modscape v2.4.1
           </p>
         </div>
       </div>

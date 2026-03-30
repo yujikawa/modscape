@@ -7,12 +7,15 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { Transaction } from '@codemirror/state'
 import { computeDiff } from '../../lib/diff'
 
+const CONTEXT_LINES = 3
+
 const EditorTab = () => {
   const {
     error,
     isCliMode,
     yamlInput,
     baselineYaml,
+    baselineTimestamp,
     savingStatus,
     theme,
     currentModelSlug,
@@ -53,6 +56,19 @@ const EditorTab = () => {
   }, [diffMode, baselineYaml, yamlInput])
 
   const hasChanges = diffLines !== null && diffLines.some(l => l.type !== 'unchanged')
+
+  const visibleSet = useMemo(() => {
+    if (!diffLines) return null
+    const visible = new Set<number>()
+    diffLines.forEach((line, i) => {
+      if (line.type !== 'unchanged') {
+        for (let j = Math.max(0, i - CONTEXT_LINES); j <= Math.min(diffLines.length - 1, i + CONTEXT_LINES); j++) {
+          visible.add(j)
+        }
+      }
+    })
+    return visible
+  }, [diffLines])
 
   return (
     <div className="flex-1 flex flex-col gap-3 overflow-hidden p-4 pt-2 h-full sidebar-content">
@@ -98,7 +114,7 @@ const EditorTab = () => {
           {/* Diff toggle */}
           <button
             onClick={() => setDiffMode(v => !v)}
-            title="Toggle Diff"
+            title={diffMode && baselineTimestamp ? `Comparing against snapshot loaded at ${new Date(baselineTimestamp).toLocaleTimeString()}` : 'Toggle Diff'}
             className={`flex items-center px-2 py-1 rounded transition-colors ${
               diffMode
                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
@@ -138,6 +154,11 @@ const EditorTab = () => {
       }`}>
         {diffMode ? (
           <div className="flex-1 overflow-auto text-[12px] font-mono leading-5">
+            <div className={`px-3 py-1.5 text-[10px] border-b ${
+              theme === 'dark' ? 'text-slate-500 border-slate-700 bg-slate-800/40' : 'text-slate-400 border-slate-200 bg-slate-50'
+            }`}>
+              Comparing against snapshot loaded at {baselineTimestamp ? new Date(baselineTimestamp).toLocaleTimeString() : '—'}
+            </div>
             {!hasChanges ? (
               <div className={`flex items-center justify-center h-full text-[11px] font-medium ${
                 theme === 'dark' ? 'text-slate-500' : 'text-slate-400'
@@ -147,34 +168,63 @@ const EditorTab = () => {
             ) : (
               <table className="w-full border-collapse">
                 <tbody>
-                  {diffLines!.map((line, i) => {
-                    if (line.type === 'unchanged') return null
-                    const isAdded = line.type === 'added'
-                    return (
-                      <tr
-                        key={i}
-                        className={isAdded
-                          ? theme === 'dark' ? 'bg-emerald-900/30' : 'bg-emerald-50'
-                          : theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50'
-                        }
-                      >
-                        <td className={`select-none w-4 px-2 text-center ${
-                          isAdded
-                            ? theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'
-                            : theme === 'dark' ? 'text-red-400' : 'text-red-600'
-                        }`}>
-                          {isAdded ? '+' : '-'}
-                        </td>
-                        <td className={`px-2 py-0 whitespace-pre-wrap break-all ${
-                          isAdded
-                            ? theme === 'dark' ? 'text-emerald-300' : 'text-emerald-800'
-                            : theme === 'dark' ? 'text-red-300' : 'text-red-800'
-                        }`}>
-                          {line.content}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {(() => {
+                    const rows: React.ReactNode[] = []
+                    let prevVisible = false
+                    let oldNum = 0
+                    let newNum = 0
+                    diffLines!.forEach((line, i) => {
+                      if (line.type !== 'added') oldNum++
+                      if (line.type !== 'removed') newNum++
+                      const isVisible = visibleSet!.has(i)
+                      if (!isVisible) { prevVisible = false; return }
+                      if (!prevVisible && rows.length > 0) {
+                        rows.push(
+                          <tr key={`sep-${i}`} className={theme === 'dark' ? 'bg-slate-800/60' : 'bg-slate-100'}>
+                            <td className="select-none px-2 text-right text-[10px] text-slate-500 w-8">···</td>
+                            <td className="select-none px-1 w-4 text-center text-slate-500">···</td>
+                            <td className="px-2 text-slate-500 text-[11px]">···</td>
+                          </tr>
+                        )
+                      }
+                      const isAdded = line.type === 'added'
+                      const isRemoved = line.type === 'removed'
+                      rows.push(
+                        <tr
+                          key={i}
+                          className={isAdded
+                            ? theme === 'dark' ? 'bg-emerald-900/30' : 'bg-emerald-50'
+                            : isRemoved
+                              ? theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50'
+                              : ''}
+                        >
+                          <td className={`select-none px-2 text-right text-[10px] w-8 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+                            {isRemoved ? oldNum : newNum}
+                          </td>
+                          <td className={`select-none px-1 w-4 text-center ${
+                            isAdded
+                              ? theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'
+                              : isRemoved
+                                ? theme === 'dark' ? 'text-red-400' : 'text-red-600'
+                                : 'text-transparent'
+                          }`}>
+                            {isAdded ? '+' : isRemoved ? '-' : ' '}
+                          </td>
+                          <td className={`px-2 py-0 whitespace-pre-wrap break-all ${
+                            isAdded
+                              ? theme === 'dark' ? 'text-emerald-300' : 'text-emerald-800'
+                              : isRemoved
+                                ? theme === 'dark' ? 'text-red-300' : 'text-red-800'
+                                : theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                          }`}>
+                            {line.content}
+                          </td>
+                        </tr>
+                      )
+                      prevVisible = true
+                    })
+                    return rows
+                  })()}
                 </tbody>
               </table>
             )}
