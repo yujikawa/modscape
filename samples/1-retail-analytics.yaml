@@ -26,9 +26,6 @@ tables:
           name: Record Source
           type: String
     sampleData:
-      - - customer_hk
-        - customer_bk
-        - record_source
       - - a1b2c3d4
         - CUST-00042
         - crm.salesforce
@@ -403,13 +400,6 @@ tables:
           type: Decimal
           additivity: fully
     sampleData:
-      - - order_id
-        - customer_key
-        - product_key
-        - date_key
-        - quantity
-        - unit_price
-        - net_revenue
       - - ORD-1001
         - 42
         - 7
@@ -553,99 +543,141 @@ tables:
 relationships:
   - from:
       table: lnk_order_line
-      column: order_hk
+      column:
+        - order_hk
     to:
       table: hub_order
-      column: order_hk
+      column:
+        - order_hk
     type: many-to-one
+    id: rel-lnk_order_line.order_hk-hub_order.order_hk
   - from:
       table: lnk_order_line
-      column: customer_hk
+      column:
+        - customer_hk
     to:
       table: hub_customer
-      column: customer_hk
+      column:
+        - customer_hk
     type: many-to-one
+    id: rel-lnk_order_line.customer_hk-hub_customer.customer_hk
   - from:
       table: lnk_order_line
-      column: product_hk
+      column:
+        - product_hk
     to:
       table: hub_product
-      column: product_hk
+      column:
+        - product_hk
     type: many-to-one
+    id: rel-lnk_order_line.product_hk-hub_product.product_hk
   - from:
       table: sat_customer_profile
-      column: customer_hk
+      column:
+        - customer_hk
     to:
       table: hub_customer
-      column: customer_hk
+      column:
+        - customer_hk
     type: many-to-one
+    id: rel-sat_customer_profile.customer_hk-hub_customer.customer_hk
   - from:
       table: sat_product_details
-      column: product_hk
+      column:
+        - product_hk
     to:
       table: hub_product
-      column: product_hk
+      column:
+        - product_hk
     type: many-to-one
+    id: rel-sat_product_details.product_hk-hub_product.product_hk
   - from:
       table: sat_order_header
-      column: order_hk
+      column:
+        - order_hk
     to:
       table: hub_order
-      column: order_hk
+      column:
+        - order_hk
     type: many-to-one
+    id: rel-sat_order_header.order_hk-hub_order.order_hk
   - from:
       table: fct_orders
-      column: customer_key
+      column:
+        - customer_key
     to:
       table: dim_customers
-      column: customer_key
+      column:
+        - customer_key
     type: many-to-one
+    id: rel-fct_orders.customer_key-dim_customers.customer_key
   - from:
       table: fct_orders
-      column: product_key
+      column:
+        - product_key
     to:
       table: dim_products
-      column: product_key
+      column:
+        - product_key
     type: many-to-one
+    id: rel-fct_orders.product_key-dim_products.product_key
   - from:
       table: fct_orders
-      column: date_key
+      column:
+        - date_key
     to:
       table: dim_dates
-      column: date_key
+      column:
+        - date_key
     type: many-to-one
+    id: rel-fct_orders.date_key-dim_dates.date_key
 lineage:
   - from: hub_customer
     to: dim_customers
+    id: lin-hub_customer-dim_customers
   - from: sat_customer_profile
     to: dim_customers
+    id: lin-sat_customer_profile-dim_customers
   - from: hub_product
     to: dim_products
     description: You can write description
+    id: lin-hub_product-dim_products
   - from: sat_product_details
     to: dim_products
+    id: lin-sat_product_details-dim_products
   - from: hub_order
     to: fct_orders
+    id: lin-hub_order-fct_orders
   - from: lnk_order_line
     to: fct_orders
+    id: lin-lnk_order_line-fct_orders
   - from: sat_order_header
     to: fct_orders
+    id: lin-sat_order_header-fct_orders
   - from: dim_customers
     to: fct_orders
+    id: lin-dim_customers-fct_orders
   - from: dim_products
     to: fct_orders
+    id: lin-dim_products-fct_orders
   - from: dim_dates
     to: fct_orders
+    id: lin-dim_dates-fct_orders
   - from: fct_orders
     to: mart_daily_revenue
+    id: lin-fct_orders-mart_daily_revenue
   - from: fct_orders
     to: mart_product_performance
+    id: lin-fct_orders-mart_product_performance
   - from: mart_daily_revenue
     to: sales_dashboard
+    id: lin-mart_daily_revenue-sales_dashboard
   - from: mart_daily_revenue
     to: exec_report
+    id: lin-mart_daily_revenue-exec_report
   - from: mart_product_performance
     to: exec_report
+    id: lin-mart_product_performance-exec_report
 domains:
   - id: raw_vault
     name: Raw Vault
