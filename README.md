@@ -96,6 +96,7 @@ Best for direct architectural control.
 Modscape uses a schema designed for data analysis contexts. The full YAML structure is:
 
 ```
+version      – model format version (optional string, e.g. "2.0.0")
 imports      – cross-file table references (resolved at dev/build time)
 domains      – visual containers grouping related tables
 tables       – entity definitions with tri-layer metadata
@@ -177,10 +178,12 @@ Top-level `lineage` section declares data flow between tables (which source tabl
 
 ```yaml
 lineage:
-  - from: fct_orders    # source table ID
-    to: mart_revenue    # derived table ID
+  - id: lin_orders_revenue   # optional; auto-generated as lin-{from}-{to} if omitted
+    from: fct_orders         # source table ID
+    to: mart_revenue         # derived table ID
     description: "Aggregated daily amounts into monthly buckets."  # optional
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 ```
 
@@ -188,12 +191,13 @@ lineage:
 
 ```yaml
 relationships:
-  - from:
+  - id: rel_cust_orders
+    from:
       table: dim_customers   # table ID
-      column: customer_id    # column ID (optional)
+      column: [customer_id]  # column ID(s)
     to:
       table: fct_orders
-      column: customer_id
+      column: [customer_id]
     type: one-to-many  # one-to-one | one-to-many | many-to-one | many-to-many
 ```
 
@@ -247,7 +251,7 @@ annotations:
     text: "Grain: one row per invoice line item."
     color: "#fef9c3"          # optional background color
     targetId: fct_orders      # ID of the attached object (optional)
-    targetType: table         # table | domain | relationship | column
+    targetType: table         # table | domain | relationship | lineage | column
     offset:
       x: 100    # offset from target's top-left (or absolute if no target)
       y: -80
@@ -437,17 +441,17 @@ modscape column remove <file> --table <id> --id <col-id>
 
 ```bash
 modscape relationship list <file>
-modscape relationship add <file> --data <json>
-modscape relationship remove <file> --index <n>
+modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>]
+modscape relationship remove <file> --id <id>
 ```
 
 ### Lineage Commands
 
 ```bash
 modscape lineage list <file>
-modscape lineage add <file> --from <table-id> --to <table-id> [--description <text>]
+modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
-modscape lineage remove <file> --from <table-id> --to <table-id>
+modscape lineage remove <file> --id <id>
 ```
 
 ### Domain Commands

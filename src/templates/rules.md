@@ -11,7 +11,7 @@
 ## QUICK REFERENCE (read this first)
 
 ```
-ROOT KEYS      imports | domains | tables | relationships | lineage | annotations | layout | consumers
+ROOT KEYS      version | imports | domains | tables | relationships | lineage | annotations | layout | consumers
 COORDINATES    ONLY in `layout`. NEVER inside tables or domains.
 LINEAGE        Use top-level `lineage` section (not relationships, not table.lineage.upstream).
                lineage.to can reference either a table ID or a consumer ID.
@@ -28,6 +28,7 @@ Grid           All x/y values must be multiples of 40.
 A valid `model.yaml` has exactly these top-level keys.
 
 ```yaml
+version:       # (string) schema version (e.g. "{{MODEL_FORMAT_VERSION}}") — OPTIONAL but recommended
 imports:       # (array) cross-file table references — OPTIONAL
 domains:       # (array) visual containers — OPTIONAL but recommended
 tables:        # (array) entity definitions — REQUIRED
@@ -119,12 +120,13 @@ Use `relationships` **only** for structural ER connections between tables.
 
 ```yaml
 relationships:
-  - from:
+  - id: rel_cust_orders   # Unique ID — REQUIRED for stable referencing
+    from:
       table: dim_customers   # table id
-      column: customer_key   # column id — optional but recommended
+      column: [customer_key] # column id(s) — ALWAYS an array of strings
     to:
       table: fct_orders
-      column: customer_key
+      column: [customer_key]
     type: one-to-many
 ```
 
@@ -148,10 +150,12 @@ This is rendered as dashed arrows in **Lineage Mode**. It is separate from ER re
 
 ```yaml
 lineage:
-  - from: fct_orders    # source table id
+  - id: lin_orders_revenue # Unique ID — REQUIRED for stable referencing
+    from: fct_orders    # source table id
     to: mart_revenue    # derived table id
     description: "Aggregated daily order amounts into monthly buckets."  # optional
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 ```
 
@@ -163,7 +167,6 @@ lineage:
 | `fct_orders` + `dim_dates` → `mart_revenue` (aggregation) | `lineage` |
 
 **MUST** define `lineage` entries for every `mart` or aggregated table.
-**MUST NOT** define `lineage` entries for raw tables (`fact`, `dimension`, `hub`, `link`, `satellite`) as sources.
 **MUST NOT** add a `relationships` entry for a connection already expressed in `lineage`.
 
 #### Example: correct separation
@@ -171,16 +174,19 @@ lineage:
 ```yaml
 # CORRECT
 lineage:
-  - from: fct_orders
+  - id: lin_orders_revenue
+    from: fct_orders
     to: mart_revenue
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 
 relationships:
-  - from: { table: dim_customers, column: customer_key }
-    to:   { table: fct_orders,    column: customer_key }
+  - id: rel_cust_orders
+    from: { table: dim_customers, column: [customer_key] }
+    to:   { table: fct_orders,    column: [customer_key] }
     type: one-to-many                     # ER only
-
+```
 # WRONG — do not add a relationships entry for the same connection as lineage
 relationships:
   - from: { table: fct_orders }
@@ -377,7 +383,8 @@ annotations:
     text: "..."           # REQUIRED. Note content.
     color: "#fef9c3"      # optional. background color.
     targetId: fct_orders  # optional. ID of the object to attach to.
-    targetType: table     # required if targetId is set. table | domain | relationship | column
+    targetType: table     # required if targetId is set. table | domain | relationship | lineage | column
+                          # 'relationship' and 'lineage' require the entry to have an explicit id field
     offset:
       x: 100    # offset from target's top-left. if no targetId, this is absolute canvas position.
       y: -80    # negative y = above the target.
@@ -735,12 +742,14 @@ modscape column add model.yaml \
 ```bash
 modscape relationship add model.yaml \
   --from <table.column> --to <table.column> \
-  --type one-to-one|one-to-many|many-to-one|many-to-many [--json]
+  --type one-to-one|one-to-many|many-to-one|many-to-many \
+  [--id <id>] [--json]
 ```
 
 **lineage add**
 ```bash
-modscape lineage add model.yaml --from <tableId> --to <tableId> [--description <text>] [--json]
+modscape lineage add model.yaml --from <tableId> --to <tableId> \
+  [--id <id>] [--description <text>] [--json]
 modscape lineage update model.yaml --from <tableId> --to <tableId> [--description <text>] [--json]
 ```
 
@@ -774,6 +783,21 @@ All commands support `--json` for machine-readable output:
 { "ok": true,  "action": "add", "resource": "table", "id": "fct_orders" }
 { "ok": false, "error": "Table \"fct_orders\" already exists", "hint": "Use `table update` instead" }
 ```
+
+---
+
+## 14. Schema Version
+
+`model.yaml` supports an optional `version` field at the root level to indicate the schema version.
+
+```yaml
+version: "{{MODEL_FORMAT_VERSION}}"   # optional. semver string. Current schema version is "{{MODEL_FORMAT_VERSION}}".
+```
+
+- The field is **optional** — omitting it is valid and backward-compatible.
+- The current schema version is `"{{MODEL_FORMAT_VERSION}}"`.
+- AI agents SHOULD include `version: "{{MODEL_FORMAT_VERSION}}"` in newly generated files.
+- The parser does not branch on the version value (reserved for future migrations).
 
 ---
 
@@ -914,16 +938,20 @@ tables:
       - ["2024-03", 18900.75]
 
 lineage:                            # data flow — separate from ER
-  - from: fct_orders
+  - id: lin_orders_revenue
+    from: fct_orders
     to: mart_monthly_revenue
-  - from: dim_customers
+  - id: lin_cust_revenue
+    from: dim_customers
     to: mart_monthly_revenue
-  - from: mart_monthly_revenue
+  - id: lin_rev_dashboard
+    from: mart_monthly_revenue
     to: revenue_dashboard           # consumer ID — valid lineage target
 
 relationships:                      # ER only — not for lineage
-  - from: { table: dim_customers, column: customer_key }
-    to:   { table: fct_orders,    column: customer_key }
+  - id: rel_cust_orders
+    from: { table: dim_customers, column: [customer_key] }
+    to:   { table: fct_orders,    column: [customer_key] }
     type: one-to-many
 
 annotations:

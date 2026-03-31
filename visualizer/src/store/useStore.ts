@@ -505,9 +505,11 @@ export const useStore = create<AppState>()(persist(
     pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
+    const sCol = sourceHandle?.split('-')[1];
+    const tCol = targetHandle?.split('-')[1];
     const newRel: Relationship = {
-      from: { table: source, column: sourceHandle?.split('-')[1] },
-      to: { table: target, column: targetHandle?.split('-')[1] },
+      from: { table: source, column: sCol ? [sCol] : undefined },
+      to: { table: target, column: tCol ? [tCol] : undefined },
       type: 'one-to-many'
     };
     const newSchema = { ...schema, relationships: [...(schema.relationships || []), newRel] };
@@ -530,11 +532,12 @@ export const useStore = create<AppState>()(persist(
       set({ schema: { ...schema, lineage: [...existing, ...newEdges] } });
     } else {
       const newRels = matchedTables.map(t => {
-        let targetCol = undefined;
-        if (targetPattern.includes('.')) targetCol = targetPattern.split('.')[1];
+        let targetCol: string[] | undefined = undefined;
+        if (targetPattern.includes('.')) targetCol = [targetPattern.split('.')[1]];
         return { from: source, to: { table: t.id, column: targetCol }, type };
       });
-      set({ schema: { ...schema, relationships: [...(schema.relationships || []), ...newRels] } });
+      const newSchema = { ...schema, relationships: [...(schema.relationships || []), ...newRels] };
+      set({ schema: normalizeSchema(newSchema) });
     }
 
     get().syncToYamlInput();
@@ -547,7 +550,8 @@ export const useStore = create<AppState>()(persist(
     if (!schema) return;
     const existing = schema.lineage ?? [];
     if (existing.some(e => e.from === source && e.to === target)) return; // already exists
-    set({ schema: { ...schema, lineage: [...existing, { from: source, to: target }] } });
+    const newSchema = { ...schema, lineage: [...existing, { from: source, to: target }] };
+    set({ schema: normalizeSchema(newSchema) });
     get().syncToYamlInput();
     get().saveSchema();
   },
@@ -716,11 +720,11 @@ export const useStore = create<AppState>()(persist(
     });
     const newRelationships = schema.relationships.map(r => ({
       ...r,
-      from: r.from.table === tableId && r.from.column === oldId
-        ? { ...r.from, column: trimmed }
+      from: r.from.table === tableId && r.from.column?.includes(oldId)
+        ? { ...r.from, column: r.from.column.map(c => c === oldId ? trimmed : c) }
         : r.from,
-      to: r.to.table === tableId && r.to.column === oldId
-        ? { ...r.to, column: trimmed }
+      to: r.to.table === tableId && r.to.column?.includes(oldId)
+        ? { ...r.to, column: r.to.column.map(c => c === oldId ? trimmed : c) }
         : r.to,
     }));
     set({ schema: { ...schema, tables: newTables, relationships: newRelationships }, error: null });
@@ -1108,19 +1112,32 @@ export const useStore = create<AppState>()(persist(
   getSelectedRelationship: () => {
     const { schema, selectedEdgeId } = get();
     if (!schema || !selectedEdgeId) return null;
+
+    // Lineage search
     if (selectedEdgeId.startsWith('lin-')) {
-      // lin-{from}-{to}-{index} — find the actual lineage edge by index
-      const lastDash = selectedEdgeId.lastIndexOf('-');
-      const idx = parseInt(selectedEdgeId.slice(lastDash + 1));
-      const edge = schema.lineage?.[idx];
-      if (!edge) return null;
-      return { relationship: { from: { table: edge.from }, to: { table: edge.to }, type: 'lineage' as any }, index: idx, kind: 'lineage' as const };
+      const idx = (schema.lineage || []).findIndex(e => e.id === selectedEdgeId);
+      if (idx !== -1) {
+        const edge = schema.lineage![idx];
+        return { 
+          relationship: { 
+            from: { table: edge.from }, 
+            to: { table: edge.to }, 
+            type: 'lineage' as any,
+            description: edge.description
+          }, 
+          index: idx, 
+          kind: 'lineage' as const 
+        };
+      }
     }
-    if (!selectedEdgeId.startsWith('er-')) return null;
-    const index = parseInt(selectedEdgeId.split('-')[1]);
-    const relationship = schema.relationships?.[index];
-    if (!relationship) return null;
-    return { relationship, index, kind: 'er' as const };
+
+    // Relationship search
+    const idx = (schema.relationships || []).findIndex(r => r.id === selectedEdgeId);
+    if (idx !== -1) {
+      return { relationship: schema.relationships![idx], index: idx, kind: 'er' as const };
+    }
+
+    return null;
   },
 
   getSelectedAnnotation: () => {

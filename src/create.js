@@ -2,6 +2,7 @@ import { confirm } from '@inquirer/prompts';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,7 +36,8 @@ export async function createModel(filePath) {
   // 4. Template Writing
   try {
     const templatePath = path.join(__dirname, 'templates/default-model.yaml');
-    const template = fs.readFileSync(templatePath, 'utf8');
+    const template = fs.readFileSync(templatePath, 'utf8')
+      .replace('{{MODEL_FORMAT_VERSION}}', MODEL_FORMAT_VERSION);
     fs.writeFileSync(absolutePath, template, 'utf8');
     console.log(`  ✅ Successfully created new model: ${filePath}`);
     console.log(`  🚀 Run 'modscape dev ${filePath}' to start modeling.`);

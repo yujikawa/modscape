@@ -45,6 +45,7 @@ export function relationshipCommand() {
     .requiredOption('--from <ref>', 'source table (table.column or table)')
     .requiredOption('--to <ref>', 'target table (table.column or table)')
     .requiredOption('--type <type>', 'cardinality (one-to-one|one-to-many|many-to-one|many-to-many)')
+    .option('--id <id>', 'stable identifier for this relationship')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       const data = readYaml(file);
@@ -58,37 +59,53 @@ export function relationshipCommand() {
         return outputError(opts.json, `Table "${to.tableId}" not found`);
       }
       const rels = data.relationships || [];
-      if (rels.some(r => sameRel(r, from.tableId, to.tableId))) {
-        return outputWarn(opts.json, `Relationship ${from.tableId} → ${to.tableId} already exists, skipped`);
+      const id = opts.id || (from.columnId && to.columnId
+        ? `rel-${from.tableId}.${from.columnId}-${to.tableId}.${to.columnId}`
+        : `rel-${from.tableId}-${to.tableId}-${opts.type}`);
+
+      if (rels.some(r => r.id === id || sameRel(r, from.tableId, to.tableId))) {
+        return outputWarn(opts.json, `Relationship "${id}" already exists, skipped`);
       }
       const rel = {
+        id,
         from: { table: from.tableId, ...(from.columnId ? { column: from.columnId } : {}) },
         to: { table: to.tableId, ...(to.columnId ? { column: to.columnId } : {}) },
         type: opts.type,
       };
       data.relationships = [...rels, rel];
       writeYaml(file, data);
-      outputOk(opts.json, 'add', 'relationship', `${opts.from} → ${opts.to}`);
+      outputOk(opts.json, 'add', 'relationship', id);
     });
 
   // remove
   cmd
     .command('remove <file>')
     .description('Remove a relationship')
-    .requiredOption('--from <ref>', 'source table (table.column or table)')
-    .requiredOption('--to <ref>', 'target table (table.column or table)')
+    .option('--from <ref>', 'source table (table.column or table)')
+    .option('--to <ref>', 'target table (table.column or table)')
+    .option('--id <id>', 'stable identifier for this relationship')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       const data = readYaml(file);
-      const from = parseRef(opts.from);
-      const to = parseRef(opts.to);
+      const from = opts.from ? parseRef(opts.from) : null;
+      const to = opts.to ? parseRef(opts.to) : null;
+      const id = opts.id || (from && to ? (from.columnId && to.columnId
+        ? `rel-${from.tableId}.${from.columnId}-${to.tableId}.${to.columnId}`
+        : `rel-${from.tableId}-${to.tableId}`) : null);
+
+      if (!id && !(from && to)) return outputError(opts.json, 'Specify --id or both --from and --to');
+
       const before = (data.relationships || []).length;
-      data.relationships = (data.relationships || []).filter(r => !sameRel(r, from.tableId, to.tableId));
+      data.relationships = (data.relationships || []).filter(r => {
+        if (id && r.id === id) return false;
+        if (from && to && sameRel(r, from.tableId, to.tableId)) return false;
+        return true;
+      });
       if (data.relationships.length === before) {
-        return outputWarn(opts.json, `Relationship ${from.tableId} → ${to.tableId} not found, nothing removed`);
+        return outputWarn(opts.json, `Relationship "${id || opts.from + ' → ' + opts.to}" not found, nothing removed`);
       }
       writeYaml(file, data);
-      outputOk(opts.json, 'remove', 'relationship', `${opts.from} → ${opts.to}`);
+      outputOk(opts.json, 'remove', 'relationship', id || `${opts.from} → ${opts.to}`);
     });
 
   return cmd;

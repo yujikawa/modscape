@@ -95,6 +95,7 @@ npm install -g modscape
 YAMLのルートレベル構造は以下の通りです：
 
 ```
+version      – モデルフォーマットのバージョン（任意の文字列、例: "2.0.0"）
 imports      – 他のYAMLファイルからテーブルを参照（dev/build時に解決）
 domains      – 関連テーブルをまとめるビジュアルコンテナ
 tables       – 3階層メタデータを持つエンティティ定義
@@ -176,10 +177,12 @@ tables:
 
 ```yaml
 lineage:
-  - from: fct_orders    # ソーステーブル ID
-    to: mart_revenue    # 派生テーブル ID
+  - id: lin_orders_revenue   # 任意。省略時はパーサーが lin-{from}-{to} 形式で自動生成。
+    from: fct_orders         # ソーステーブル ID
+    to: mart_revenue         # 派生テーブル ID
     description: "日次注文金額を月次バケットに集計"  # 任意。変換内容の説明。
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 ```
 
@@ -187,12 +190,13 @@ lineage:
 
 ```yaml
 relationships:
-  - from:
+  - id: rel_cust_orders
+    from:
       table: dim_customers   # テーブル ID
-      column: customer_id    # カラム ID（任意）
+      column: [customer_id]  # カラム ID（配列）
     to:
       table: fct_orders
-      column: customer_id
+      column: [customer_id]
     type: one-to-many  # one-to-one | one-to-many | many-to-one | many-to-many
 ```
 
@@ -246,7 +250,7 @@ annotations:
     text: "粒度：1行 = 1注文明細"
     color: "#fef9c3"          # 任意の背景色
     targetId: fct_orders      # 貼り付け先のオブジェクト ID（任意）
-    targetType: table         # table | domain | relationship | column
+    targetType: table         # table | domain | relationship | lineage | column
     offset:
       x: 100    # 対象の左上からのオフセット（targetId 未指定時は絶対座標）
       y: -80
@@ -436,17 +440,17 @@ modscape column remove <file> --table <id> --id <col-id>
 
 ```bash
 modscape relationship list <file>
-modscape relationship add <file> --data <json>
-modscape relationship remove <file> --index <n>
+modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>]
+modscape relationship remove <file> --id <id>
 ```
 
 ### リネージコマンド
 
 ```bash
 modscape lineage list <file>
-modscape lineage add <file> --from <table-id> --to <table-id> [--description <text>]
+modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
-modscape lineage remove <file> --from <table-id> --to <table-id>
+modscape lineage remove <file> --id <id>
 ```
 
 ### ドメインコマンド

@@ -245,13 +245,11 @@ function Flow() {
         // Edge delete (no table/annotation selected)
         if (!selectedTableId && !selectedAnnotationId) {
           if (selectedEdgeId) {
-            if (selectedEdgeId.startsWith('lin-')) {
-              const lastDash = selectedEdgeId.lastIndexOf('-')
-              const idx = parseInt(selectedEdgeId.slice(lastDash + 1))
-              const edge = schema?.lineage?.[idx]
-              if (edge) removeEdge(edge.from, edge.to, 'lineage')
+            const lineageEdge = schema?.lineage?.find(e => e.id === selectedEdgeId)
+            if (lineageEdge) {
+              removeEdge(lineageEdge.from, lineageEdge.to, 'lineage')
             } else {
-              const rel = schema?.relationships?.find((_, i) => `er-${i}` === selectedEdgeId)
+              const rel = schema?.relationships?.find(r => r.id === selectedEdgeId)
               if (rel) removeEdge(rel.from.table, rel.to.table, 'er')
             }
             setSelectedEdgeId(null)
@@ -288,7 +286,7 @@ function Flow() {
 
   const handleEdgeClick = useCallback((edgeData: {
     id: string; kind: string; source: string; target: string;
-    fromColumn?: string; toColumn?: string; relType?: string
+    fromColumn?: string[] | null; toColumn?: string[] | null; relType?: string
   }) => {
     toggleEdgeSelection(edgeData.id)
   }, [toggleEdgeSelection])

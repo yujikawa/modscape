@@ -74,19 +74,30 @@ function contextualize(lines: string[]): string[] {
     let signature = stack.length > 0 ? stack[stack.length - 1].signature : ''
 
     // If it's a list item, we try to extract a signature from its contents
-    // to uniquely identify this block (e.g. by table name).
+    // to uniquely identify this block (e.g. by id or table name).
     if (trimmed.startsWith('-')) {
       const blockContent = []
-      for (let i = index; i < Math.min(index + 5, lines.length); i++) {
+      let foundId = false
+      for (let i = index; i < Math.min(index + 12, lines.length); i++) {
         const l = lines[i].trim()
         if (i > index && l.startsWith('-')) break
-        // Extract values from "key: value" or just "value"
+        
+        // Priority 1: explicitly defined id
+        if (l.startsWith('id:')) {
+          signature = `id:${l.split(':').slice(1).join(':').trim()}`
+          foundId = true
+          break
+        }
+        
+        // Priority 2: Extract other values (like table: name)
         const value = l.includes(':') ? l.split(':').slice(1).join(':').trim() : l
         if (value && value !== '-' && !value.endsWith(':')) {
           blockContent.push(value)
         }
       }
-      signature = blockContent.join('|')
+      if (!foundId) {
+        signature = blockContent.join('|')
+      }
     }
 
     // Add current context and signature to line

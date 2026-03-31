@@ -2,6 +2,7 @@ import { confirm } from '@inquirer/prompts';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -66,7 +67,8 @@ export async function initProject(options = {}) {
 
     // 1. Create .modscape/rules.md and .modscape/codegen-rules.md
     const rulesTemplatePath = path.join(__dirname, 'templates/rules.md');
-    const rulesTemplate = fs.readFileSync(rulesTemplatePath, 'utf8');
+    const rulesTemplate = fs.readFileSync(rulesTemplatePath, 'utf8')
+      .replaceAll('{{MODEL_FORMAT_VERSION}}', MODEL_FORMAT_VERSION);
     await safeWriteFile('.modscape/rules.md', rulesTemplate);
 
     const codegenRulesTemplatePath = path.join(__dirname, 'templates/codegen-rules.md');

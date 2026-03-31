@@ -572,7 +572,7 @@ const DetailPanel = memo(() => {
                 </span>
               </div>
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0 }}>
-                {relationship.from.table}{relationship.from.column ? `.${relationship.from.column}` : ''} → {relationship.to.table}{relationship.to.column ? `.${relationship.to.column}` : ''}
+                {relationship.from.table}{relationship.from.column && relationship.from.column.length > 0 ? `.${relationship.from.column.join(', ')}` : ''} → {relationship.to.table}{relationship.to.column && relationship.to.column.length > 0 ? `.${relationship.to.column.join(', ')}` : ''}
               </p>
             </div>
           </div>
@@ -636,7 +636,7 @@ const DetailPanel = memo(() => {
                         <div className={`text-sm font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{relationship.from.table}</div>
                         <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>{fromCard}</div>
                       </div>
-                      <div className="text-[10px] text-slate-500">Column: {relationship.from.column || '(Table level)'}</div>
+                      <div className="text-[10px] text-slate-500">Column: {relationship.from.column && relationship.from.column.length > 0 ? relationship.from.column.join(', ') : '(Table level)'}</div>
                     </div>
                     <div className="text-slate-400 dark:text-slate-600">—</div>
                     <div className="flex-1">
@@ -645,7 +645,7 @@ const DetailPanel = memo(() => {
                         <div className={`text-sm font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{relationship.to.table}</div>
                         <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>{toCard}</div>
                       </div>
-                      <div className="text-[10px] text-slate-500">Column: {relationship.to.column || '(Table level)'}</div>
+                      <div className="text-[10px] text-slate-500">Column: {relationship.to.column && relationship.to.column.length > 0 ? relationship.to.column.join(', ') : '(Table level)'}</div>
                     </div>
                   </div>
                 );

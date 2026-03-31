@@ -168,9 +168,11 @@ When reading/writing YAML from CLI commands, field names must exactly match the 
 
 ## YAML Model Format
 
-Six root-level sections. Do not write coordinates inside `tables` or `domains`.
+Seven root-level sections. Do not write coordinates inside `tables` or `domains`.
 
 ```yaml
+version: "2.0.0"   # optional; current model format version
+
 # ── Domains ──────────────────────────────────────────────
 domains:
   - id: sales_ops
@@ -225,14 +227,16 @@ tables:
 
 # ── Lineage ───────────────────────────────────────────────
 lineage:
-  - from: fct_orders      # upstream table id
-    to: mart_summary      # downstream table id
+  - id: lin_orders_summary  # optional; auto-generated as lin-{from}-{to} if omitted
+    from: fct_orders        # upstream table id
+    to: mart_summary        # downstream table id
   # Do not duplicate entries in relationships
 
 # ── Relationships ─────────────────────────────────────────
 relationships:
-  - from: { table: dim_customers, column: customer_id }
-    to:   { table: fct_orders,    column: customer_id }
+  - id: rel_cust_orders
+    from: { table: dim_customers, column: [customer_id] }
+    to:   { table: fct_orders,    column: [customer_id] }
     type: one-to-many   # one-to-one|one-to-many|many-to-one|many-to-many
 
 # ── Annotations ──────────────────────────────────────────
@@ -242,7 +246,7 @@ annotations:
     text: "Grain: one row = one order line item"
     color: "#fef9c3"         # optional background color
     targetId: fct_orders     # attachment target ID (optional)
-    targetType: table        # table|domain|relationship|column
+    targetType: table        # table|domain|relationship|lineage|column
     offset: { x: 100, y: -80 }  # offset from target top-left (absolute coord if omitted)
 
 # ── Layout ───────────────────────────────────────────────

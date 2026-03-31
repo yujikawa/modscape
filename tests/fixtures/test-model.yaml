@@ -28,12 +28,13 @@ tables:
           type: Integer
     sampleData: []
 relationships:
-  - from:
+  - id: rel_users_posts
+    from:
       table: users
-      column: id
+      column: [id]
     to:
-      table: orders
-      column: user_id
+      table: posts
+      column: [user_id]
     type: one-to-many
 domains:
   - id: core

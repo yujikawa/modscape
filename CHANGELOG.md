@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-03-31
+
+### Added
+- **Model format versioning** — `model.yaml` now supports a root-level `version` field (e.g. `"2.0.0"`) to track the format specification version. Optional; parser is backward-compatible. Version is defined in `src/model-format-version.js` as the single source of truth. See `MODEL_FORMAT_CHANGELOG.md`.
+- **`relationships[].id` field** — Stable identifier for each relationship entry. Parser auto-generates as `rel-{from}.{cols}-{to}.{cols}` or `rel-{from}-{to}-{type}` if omitted. Enables `annotations.targetType: 'relationship'` and id-based CLI dedup.
+- **`lineage[].id` field** — Stable identifier for each lineage entry. Parser auto-generates as `lin-{from}-{to}` if omitted. Enables `annotations.targetType: 'lineage'` and id-based CLI dedup.
+- **`implementation.cluster_by`** — New `string[]` field for clustering key hints in code generation.
+- **`annotations.targetType: 'lineage'`** — Lineage edges can now be annotation targets.
+- **Composite key support** — `relationships[].from.column` / `to.column` now accepts `string | string[]`; parser normalizes to `string[]`.
+- **`relationship add --id`** — Optional `--id` flag for stable identity; auto-generated if omitted.
+- **`lineage add --id`** — Optional `--id` flag for stable identity; auto-generated if omitted.
+- **`MODEL_FORMAT_CHANGELOG.md`** — New file tracking model format changes independently from app releases.
+
+### Changed
+- **CLI dedup logic** — `relationship add` and `lineage add` now dedup by `id` instead of table-pair, allowing multiple relationships between the same tables (e.g. role-playing dimensions, composite keys).
+- **Cytoscape edge IDs** — ER and lineage edge IDs now use the parser-normalized `rel.id` / `edge.id` values instead of fragile index-based IDs (`er-${i}`, `lin-...-${i}`). PathFinder highlighting and edge deletion now use stable IDs.
+
+### Fixed
+- **`relationships[].type: 'lineage'`** — Parser now warns and discards entries with this invalid type value.
+- **`sampleData` header row detection** — Parser detects and removes a header row if the first row matches the table's column ID list exactly, and emits a warning.
+- **`rules.md` Section 4** — Removed incorrect rule that prohibited `fact` tables as lineage sources.
+- **`rules.md` Section 14** — Added missing section (schema version documentation).
+
 ## [2.4.1] - 2026-03-30
 
 ### Fixed
