@@ -114,10 +114,10 @@ describe('normalizeSchema', () => {
 
   it('preserves version field as schema.version (Task 7.13)', () => {
     const data = {
-      version: '2.0.0',
+      version: '1.0.0',
       tables: []
     }
     const schema = normalizeSchema(data)
-    expect(schema.version).toBe('2.0.0')
+    expect(schema.version).toBe('1.0.0')
   })
 })

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [2.5.0] - 2026-03-31
 
 ### Added
-- **Model format versioning** — `model.yaml` now supports a root-level `version` field (e.g. `"2.0.0"`) to track the format specification version. Optional; parser is backward-compatible. Version is defined in `src/model-format-version.js` as the single source of truth. See `MODEL_FORMAT_CHANGELOG.md`.
+- **Model format versioning** — `model.yaml` now supports a root-level `version` field (e.g. `"1.0.0"`) to track the format specification version. Optional; parser is backward-compatible. Version is defined in `src/model-format-version.js` as the single source of truth. See `MODEL_FORMAT_CHANGELOG.md`.
 - **`relationships[].id` field** — Stable identifier for each relationship entry. Parser auto-generates as `rel-{from}.{cols}-{to}.{cols}` or `rel-{from}-{to}-{type}` if omitted. Enables `annotations.targetType: 'relationship'` and id-based CLI dedup.
 - **`lineage[].id` field** — Stable identifier for each lineage entry. Parser auto-generates as `lin-{from}-{to}` if omitted. Enables `annotations.targetType: 'lineage'` and id-based CLI dedup.
 - **`implementation.cluster_by`** — New `string[]` field for clustering key hints in code generation.
@@ -196,7 +196,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.0.0] - 2025
+## [1.0.0] - 2025
 
 Major rewrite of the canvas renderer.
 

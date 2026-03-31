@@ -6,10 +6,10 @@ The system SHALL support a root-level `version` field in the YAML model to indic
 ## Requirements
 
 ### Requirement: Root-Level Version Field
-The YAML model SHALL support an optional root-level `version` field. The current schema version is `"2.0.0"`. The field is a string following semantic versioning conventions.
+The YAML model SHALL support an optional root-level `version` field. The current schema version is `"1.0.0"`. The field is a string following semantic versioning conventions.
 
 #### Scenario: Model with version field
-- **WHEN** a YAML model contains `version: "2.0.0"` at the root level
+- **WHEN** a YAML model contains `version: "1.0.0"` at the root level
 - **THEN** the parser SHALL read and expose the `version` field on the parsed schema object
 
 #### Scenario: Model without version field
@@ -31,8 +31,8 @@ When a model's metadata is queried (e.g., via `modscape table list --json`), the
 - **THEN** the root-level JSON response SHOULD include a `version` field
 
 ### Requirement: Version in init Template
-The `modscape init` and `modscape new` templates SHALL include `version: "2.0.0"` at the root of the generated YAML to encourage versioning from the start.
+The `modscape init` and `modscape new` templates SHALL include `version: "1.0.0"` at the root of the generated YAML to encourage versioning from the start.
 
 #### Scenario: New model includes version
 - **WHEN** a user runs `modscape new model.yaml`
-- **THEN** the generated `model.yaml` SHALL include `version: "2.0.0"` at the root level
+- **THEN** the generated `model.yaml` SHALL include `version: "1.0.0"` at the root level

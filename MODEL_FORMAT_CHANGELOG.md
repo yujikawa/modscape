@@ -7,7 +7,7 @@ Format version is recorded in the `version` field at the root of `model.yaml`.
 
 ---
 
-## [2.0.0]
+## [1.0.0]
 
 ### Added
 - `version` field (root-level, optional string) — records the model format version

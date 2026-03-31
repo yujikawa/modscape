@@ -171,7 +171,7 @@ When reading/writing YAML from CLI commands, field names must exactly match the 
 Seven root-level sections. Do not write coordinates inside `tables` or `domains`.
 
 ```yaml
-version: "2.0.0"   # optional; current model format version
+version: "1.0.0"   # optional; current model format version
 
 # ── Domains ──────────────────────────────────────────────
 domains:

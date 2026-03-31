@@ -96,7 +96,7 @@ Best for direct architectural control.
 Modscape uses a schema designed for data analysis contexts. The full YAML structure is:
 
 ```
-version      – model format version (optional string, e.g. "2.0.0")
+version      – model format version (optional string, e.g. "1.0.0")
 imports      – cross-file table references (resolved at dev/build time)
 domains      – visual containers grouping related tables
 tables       – entity definitions with tri-layer metadata

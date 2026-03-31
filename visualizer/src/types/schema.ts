@@ -22,7 +22,7 @@ export interface ImportEntry {
 }
 
 export interface Schema {
-  version?: string; // Optional schema version (e.g. "2.0.0")
+  version?: string; // Optional schema version (e.g. "1.0.0")
   tables: Table[];
   relationships: Relationship[];
   lineage?: LineageEdge[]; // Data lineage edges (top-level, separate from ER relationships)
