@@ -787,6 +787,21 @@ modscape layout model.yaml
 
 This assigns coordinates to all layout-less entries automatically.
 
+### 13-5. Validate
+
+Check a model.yaml file for structural errors before visualizing or committing:
+
+```bash
+modscape validate model.yaml          # Human-readable output
+modscape validate model.yaml --json   # Machine-readable output for AI agents
+```
+
+Checks performed:
+- Duplicate IDs (tables, domains, relationships, lineage)
+- Coordinates inside `tables` or `domains` (must be in `layout` only)
+- Broken references in `relationships`, `lineage`, `domains.members`, and `layout`
+- Orphaned `layout` entries (keys not found in tables or domains)
+
 ### 13-5. JSON Output for AI Pipelines
 
 All commands support `--json` for machine-readable output:

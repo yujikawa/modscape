@@ -413,6 +413,29 @@ modscape layout model.yaml
 modscape layout model.yaml -o model-with-layout.yaml
 ```
 
+### バリデーション
+
+model.yamlの構造的なエラー（参照切れ、座標の誤配置、ID重複など）を検出します。
+
+```bash
+modscape validate model.yaml
+
+# AIエージェント向け機械可読出力
+modscape validate model.yaml --json
+```
+
+### MCPサーバー（Claude Code向け）
+
+Claude CodeなどのMCPクライアントで利用できるMCPサーバーを起動します。登録後はAIエージェントがCLIコマンドを組み立てる代わりに、構造化されたツール呼び出しでmodel.yamlを操作できます。
+
+```bash
+# プロジェクトごとに1回だけ登録
+claude mcp add modscape -- modscape mcp
+
+# Claude Code起動時に自動で開始されます
+modscape mcp
+```
+
 ---
 
 ## アトミックモデル操作コマンド

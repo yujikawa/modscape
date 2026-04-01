@@ -1,0 +1,52 @@
+import path from 'path';
+import { readYaml, writeYaml, findTableById, resolveImports } from '../model-utils.js';
+
+export function listLineages(filePath) {
+  const data = readYaml(filePath);
+  return data.lineage || [];
+}
+
+export function addLineage(filePath, { from, to, id, description }) {
+  const data = readYaml(filePath);
+  const { schema: resolved } = resolveImports(data, path.dirname(path.resolve(filePath)));
+  if (!findTableById(resolved, from)) throw new Error(`Table "${from}" not found`);
+  if (!findTableById(resolved, to)) throw new Error(`Table "${to}" not found`);
+  const entries = data.lineage || [];
+  const lineageId = id || `lin-${from}-${to}`;
+  if (entries.some(e => e.id === lineageId || (e.from === from && e.to === to))) {
+    throw new Error(`Lineage "${lineageId}" already exists`);
+  }
+  const entry = { id: lineageId, from, to };
+  if (description) entry.description = description;
+  data.lineage = [...entries, entry];
+  writeYaml(filePath, data);
+  return { id: lineageId };
+}
+
+export function updateLineage(filePath, { id, from, to, description }) {
+  const data = readYaml(filePath);
+  const entries = data.lineage || [];
+  const lineageId = id || (from && to ? `lin-${from}-${to}` : null);
+  if (!lineageId) throw new Error('Specify id or both from and to');
+  const idx = entries.findIndex(e => e.id === lineageId || (e.from === from && e.to === to));
+  if (idx === -1) throw new Error(`Lineage "${lineageId}" not found`);
+  const updated = { ...entries[idx] };
+  if (description !== undefined) {
+    if (description === '') delete updated.description;
+    else updated.description = description;
+  }
+  data.lineage = [...entries.slice(0, idx), updated, ...entries.slice(idx + 1)];
+  writeYaml(filePath, data);
+  return { id: lineageId };
+}
+
+export function removeLineage(filePath, { id, from, to }) {
+  const data = readYaml(filePath);
+  const lineageId = id || (from && to ? `lin-${from}-${to}` : null);
+  if (!lineageId) throw new Error('Specify id or both from and to');
+  const before = (data.lineage || []).length;
+  data.lineage = (data.lineage || []).filter(e => !(e.id === lineageId || (e.from === from && e.to === to)));
+  if (data.lineage.length === before) throw new Error(`Lineage "${lineageId}" not found`);
+  writeYaml(filePath, data);
+  return { id: lineageId };
+}

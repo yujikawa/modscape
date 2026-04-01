@@ -95,6 +95,8 @@ export async function initProject(options = {}) {
       await safeWriteFile('.claude/commands/modscape/modeling.md', modelingTemplate);
       const codegenTemplate = fs.readFileSync(path.join(__dirname, 'templates/claude/codegen.md'), 'utf8');
       await safeWriteFile('.claude/commands/modscape/codegen.md', codegenTemplate);
+      console.log('\n  💡 To use the MCP server with Claude Code, run:');
+      console.log('     claude mcp add modscape -- modscape mcp\n');
     }
 
     console.log('\n  ✅ Initialization complete! Customize ".modscape/rules.md" to match your project standards.\n');

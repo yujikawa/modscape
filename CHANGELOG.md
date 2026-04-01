@@ -2,9 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.5.0] - 2026-03-31
+## [2.5.0] - 2026-04-01
 
 ### Added
+- **MCP server** (`modscape mcp`) — stdio transport MCP server for Claude Code integration. AI agents can operate on model.yaml via 24 structured tools (list/get/add/update/remove for tables, columns, relationships, lineage, domains) instead of constructing CLI commands.
+- **`modscape validate`** — Validates a model.yaml file for structural errors: duplicate IDs, coordinate misplacement (coords inside tables/domains), broken references in relationships/lineage/domains.members/layout, and orphaned layout entries. Supports `--json` for machine-readable output.
+- **Shared operations layer** (`src/operations/`) — CLI and MCP now share the same pure functions for all model mutations. No logic duplication.
+- **`modscape init --claude` MCP hint** — After scaffolding Claude Code files, the init command now prints the `claude mcp add` command for easy MCP setup.
+
+### Changed
+- **CLI internals refactored** — All CLI command definitions moved to `src/cli.js`; per-resource files (`table.js`, `column.js`, etc.) replaced by `src/operations/*.js`. External CLI interface is unchanged.
 - **Model format versioning** — `model.yaml` now supports a root-level `version` field (e.g. `"1.0.0"`) to track the format specification version. Optional; parser is backward-compatible. Version is defined in `src/model-format-version.js` as the single source of truth. See `MODEL_FORMAT_CHANGELOG.md`.
 - **`relationships[].id` field** — Stable identifier for each relationship entry. Parser auto-generates as `rel-{from}.{cols}-{to}.{cols}` or `rel-{from}-{to}-{type}` if omitted. Enables `annotations.targetType: 'relationship'` and id-based CLI dedup.
 - **`lineage[].id` field** — Stable identifier for each lineage entry. Parser auto-generates as `lin-{from}-{to}` if omitted. Enables `annotations.targetType: 'lineage'` and id-based CLI dedup.
