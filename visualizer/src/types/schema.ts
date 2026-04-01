@@ -131,4 +131,5 @@ export interface Relationship {
     column?: string[]; // Optional; parser normalizes string → string[]
   };
   type?: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many';
+  description?: string; // Optional description of the relationship
 }

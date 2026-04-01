@@ -1,7 +1,7 @@
-import { memo, useState, useEffect } from 'react'
+import { memo, useState, useCallback, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, ChevronUp, ChevronDown, Cpu, FileChartColumnIncreasing } from 'lucide-react'
+import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, ChevronUp, ChevronDown, Cpu, FileChartColumnIncreasing, Copy } from 'lucide-react'
 import type { Table, Column } from '../types/schema'
 import { TYPE_CONFIG } from '../lib/cytoscapeElements'
 import { LINEAGE_BASE, CONSUMER_DEFAULT_COLOR, ANNOTATION_DEFAULT_COLOR } from '../lib/colors'
@@ -20,6 +20,7 @@ const DetailPanel = memo(() => {
     updateDomain,
     updateConsumer,
     updateRelationship,
+    updateRelationshipDescription,
     updateLineageDescription,
     updateAnnotation,
     assignTableToDomain,
@@ -42,6 +43,7 @@ const DetailPanel = memo(() => {
     updateDomain: s.updateDomain,
     updateConsumer: s.updateConsumer,
     updateRelationship: s.updateRelationship,
+    updateRelationshipDescription: s.updateRelationshipDescription,
     updateLineageDescription: s.updateLineageDescription,
     updateAnnotation: s.updateAnnotation,
     assignTableToDomain: s.assignTableToDomain,
@@ -67,6 +69,7 @@ const DetailPanel = memo(() => {
   const [tagInput, setTagInput] = useState('')
   const [panelHeight, setPanelHeight] = useState(400) // Default height in pixels
   const [isResizing, setIsResizing] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Use simple effect for global mouse move to handle resizing
   useEffect(() => {
@@ -103,6 +106,13 @@ const DetailPanel = memo(() => {
   const stopPropagation = (e: React.MouseEvent | React.TouchEvent | React.PointerEvent) => {
     e.stopPropagation();
   };
+
+  // Copy ID to clipboard and show brief confirmation
+  const copyEdgeId = useCallback((id: string) => {
+    navigator.clipboard.writeText(id).catch(() => {});
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  }, []);
 
   // Common Wrapper Style
   const panelStyle: React.CSSProperties = {
@@ -216,6 +226,17 @@ const DetailPanel = memo(() => {
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0 }}>
                 {annotation.targetId ? `Sticky to ${annotation.targetId} (${annotation.targetType})` : 'Floating Note'}
               </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {annotation.id}</span>
+                <button
+                  onClick={() => copyEdgeId(annotation.id)}
+                  title="Copy ID"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                >
+                  <Copy size={11} />
+                </button>
+                {copiedId === annotation.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -364,7 +385,17 @@ const DetailPanel = memo(() => {
                   CONSUMER
                 </span>
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>{consumer.id}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, fontFamily: 'monospace' }}>{consumer.id}</p>
+                <button
+                  onClick={() => copyEdgeId(consumer.id)}
+                  title="Copy ID"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                >
+                  <Copy size={11} />
+                </button>
+                {copiedId === consumer.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
+              </div>
             </div>
           </div>
           <button onClick={() => setIsDetailPanelMinimized(true)} className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}>
@@ -489,6 +520,19 @@ const DetailPanel = memo(() => {
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
                 {relationship.from.table} → {relationship.to.table}
               </p>
+              {lineageEdge?.id && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {lineageEdge.id}</span>
+                  <button
+                    onClick={() => copyEdgeId(lineageEdge.id!)}
+                    title="Copy ID"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Copy size={11} />
+                  </button>
+                  {copiedId === lineageEdge.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
+                </div>
+              )}
             </div>
           </div>
           <button onClick={() => setIsDetailPanelMinimized(true)} className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}>
@@ -574,11 +618,24 @@ const DetailPanel = memo(() => {
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0 }}>
                 {relationship.from.table}{relationship.from.column && relationship.from.column.length > 0 ? `.${relationship.from.column.join(', ')}` : ''} → {relationship.to.table}{relationship.to.column && relationship.to.column.length > 0 ? `.${relationship.to.column.join(', ')}` : ''}
               </p>
+              {relationship.id && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {relationship.id}</span>
+                  <button
+                    onClick={() => copyEdgeId(relationship.id!)}
+                    title="Copy ID"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Copy size={11} />
+                  </button>
+                  {copiedId === relationship.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setIsDetailPanelMinimized(true)} 
+            <button
+              onClick={() => setIsDetailPanelMinimized(true)}
               className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}
               title="Minimize Details"
             >
@@ -651,6 +708,35 @@ const DetailPanel = memo(() => {
                 );
               })()}
             </section>
+
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Description</h3>
+              <textarea
+                defaultValue={relationship.description ?? ''}
+                key={relationship.id}
+                placeholder="Describe the meaning or purpose of this relationship..."
+                onBlur={(e) => {
+                  if (relationship.id) {
+                    updateRelationshipDescription(relationship.id, e.target.value.trim());
+                  }
+                }}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-main)',
+                  backgroundColor: 'var(--input-bg)',
+                  color: 'var(--text-main)',
+                  resize: 'vertical',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                  lineHeight: 1.5,
+                }}
+              />
+            </section>
           </div>
         </div>
       </div>
@@ -706,7 +792,17 @@ const DetailPanel = memo(() => {
                   DOMAIN
                 </span>
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0 }}>{domain.id}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0, fontFamily: 'monospace' }}>{domain.id}</p>
+                <button
+                  onClick={() => copyEdgeId(domain.id)}
+                  title="Copy ID"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                >
+                  <Copy size={11} />
+                </button>
+                {copiedId === domain.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -1045,6 +1141,14 @@ const DetailPanel = memo(() => {
               {error && (
                 <span style={{ fontSize: '10px', color: '#ef4444', flexShrink: 0 }}>{error}</span>
               )}
+              <button
+                onClick={() => copyEdgeId(table!.id)}
+                title="Copy ID"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+              >
+                <Copy size={11} />
+              </button>
+              {copiedId === table!.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>Copied!</span>}
             </div>
           )}
         </div>

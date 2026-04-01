@@ -238,6 +238,7 @@ relationships:
     from: { table: dim_customers, column: [customer_id] }
     to:   { table: fct_orders,    column: [customer_id] }
     type: one-to-many   # one-to-one|one-to-many|many-to-one|many-to-many
+    description: "Optional description of the relationship"  # optional
 
 # ── Annotations ──────────────────────────────────────────
 annotations:

@@ -199,6 +199,7 @@ relationships:
       table: fct_orders
       column: [customer_id]
     type: one-to-many  # one-to-one | one-to-many | many-to-one | many-to-many
+    description: "Optional description of the relationship"  # optional
 ```
 
 > **ER Relationships** vs **Lineage**: Use `relationships` for structural joins (FKs) and `lineage` for data flow (transformations). Do not duplicate them.
@@ -441,7 +442,9 @@ modscape column remove <file> --table <id> --id <col-id>
 
 ```bash
 modscape relationship list <file>
-modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>]
+modscape relationship get <file> --id <id>
+modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>] [--description <text>]
+modscape relationship update <file> --id <id> [--type <type>] [--description <text>]
 modscape relationship remove <file> --id <id>
 ```
 
@@ -449,6 +452,7 @@ modscape relationship remove <file> --id <id>
 
 ```bash
 modscape lineage list <file>
+modscape lineage get <file> --id <id>
 modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
 modscape lineage remove <file> --id <id>

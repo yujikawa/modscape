@@ -198,6 +198,7 @@ relationships:
       table: fct_orders
       column: [customer_id]
     type: one-to-many  # one-to-one | one-to-many | many-to-one | many-to-many
+    description: "リレーションシップの説明（任意）"  # optional
 ```
 
 > **ER関係** vs **リネージ**: 構造的な結合（外部キーなど）には `relationships` を、データの加工・変換の流れには `lineage` を使用してください。両方に同じ接続を記述しないでください。
@@ -440,7 +441,9 @@ modscape column remove <file> --table <id> --id <col-id>
 
 ```bash
 modscape relationship list <file>
-modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>]
+modscape relationship get <file> --id <id>
+modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>] [--description <text>]
+modscape relationship update <file> --id <id> [--type <type>] [--description <text>]
 modscape relationship remove <file> --id <id>
 ```
 
@@ -448,6 +451,7 @@ modscape relationship remove <file> --id <id>
 
 ```bash
 modscape lineage list <file>
+modscape lineage get <file> --id <id>
 modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
 modscape lineage remove <file> --id <id>

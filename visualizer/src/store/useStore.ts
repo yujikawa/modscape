@@ -98,6 +98,7 @@ interface AppState {
   bulkAddRelationship: (source: { table: string, column?: string }, targetPattern: string, type: Relationship['type'] | 'lineage') => void;
   addLineage: (source: string, target: string) => void;
   updateLineageDescription: (from: string, to: string, description: string) => void;
+  updateRelationshipDescription: (id: string, description: string) => void;
   updateRelationship: (index: number, updates: Partial<Relationship>) => void;
   removeEdge: (sourceId: string, targetId: string, kind?: 'er' | 'lineage') => void;
   removeNode: (id: string) => void;
@@ -563,6 +564,17 @@ export const useStore = create<AppState>()(persist(
       e.from === from && e.to === to ? { ...e, description: description || undefined } : e
     );
     set({ schema: { ...schema, lineage: newLineage } });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  updateRelationshipDescription: (id, description) => {
+    const { schema } = get();
+    if (!schema) return;
+    const newRels = schema.relationships.map(r =>
+      r.id === id ? { ...r, description: description || undefined } : r
+    );
+    set({ schema: { ...schema, relationships: newRels } });
     get().syncToYamlInput();
     get().saveSchema();
   },

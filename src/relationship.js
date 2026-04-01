@@ -38,6 +38,43 @@ export function relationshipCommand() {
       }
     });
 
+  // get
+  cmd
+    .command('get <file>')
+    .description('Get a single relationship by ID or from/to tables')
+    .option('--id <id>', 'stable identifier for this relationship')
+    .option('--from <ref>', 'source table (table.column or table)')
+    .option('--to <ref>', 'target table (table.column or table)')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      const data = readYaml(file);
+      const rels = data.relationships || [];
+      let rel = null;
+      if (opts.id) {
+        rel = rels.find(r => r.id === opts.id);
+      } else if (opts.from && opts.to) {
+        const from = parseRef(opts.from);
+        const to = parseRef(opts.to);
+        rel = rels.find(r => sameRel(r, from.tableId, to.tableId));
+      } else {
+        return outputError(opts.json, 'Specify --id or both --from and --to');
+      }
+      if (!rel) {
+        return outputError(opts.json, `Relationship not found`);
+      }
+      if (opts.json) {
+        console.log(JSON.stringify(rel));
+      } else {
+        const from = rel.from?.column ? `${rel.from.table}.${Array.isArray(rel.from.column) ? rel.from.column.join(', ') : rel.from.column}` : rel.from?.table;
+        const to = rel.to?.column ? `${rel.to.table}.${Array.isArray(rel.to.column) ? rel.to.column.join(', ') : rel.to.column}` : rel.to?.table;
+        console.log(`  id:   ${rel.id || '(none)'}`);
+        console.log(`  from: ${from}`);
+        console.log(`  to:   ${to}`);
+        console.log(`  type: ${rel.type || '(none)'}`);
+        if (rel.description) console.log(`  desc: ${rel.description}`);
+      }
+    });
+
   // add
   cmd
     .command('add <file>')
@@ -46,6 +83,7 @@ export function relationshipCommand() {
     .requiredOption('--to <ref>', 'target table (table.column or table)')
     .requiredOption('--type <type>', 'cardinality (one-to-one|one-to-many|many-to-one|many-to-many)')
     .option('--id <id>', 'stable identifier for this relationship')
+    .option('--description <text>', 'description of the relationship')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       const data = readYaml(file);
@@ -71,10 +109,58 @@ export function relationshipCommand() {
         from: { table: from.tableId, ...(from.columnId ? { column: from.columnId } : {}) },
         to: { table: to.tableId, ...(to.columnId ? { column: to.columnId } : {}) },
         type: opts.type,
+        ...(opts.description ? { description: opts.description } : {}),
       };
       data.relationships = [...rels, rel];
       writeYaml(file, data);
       outputOk(opts.json, 'add', 'relationship', id);
+    });
+
+  // update
+  cmd
+    .command('update <file>')
+    .description('Update a relationship (e.g. change type or description)')
+    .option('--from <ref>', 'source table (table.column or table)')
+    .option('--to <ref>', 'target table (table.column or table)')
+    .option('--id <id>', 'stable identifier for this relationship')
+    .option('--type <type>', 'cardinality (one-to-one|one-to-many|many-to-one|many-to-many)')
+    .option('--description <text>', 'description of the relationship')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      const data = readYaml(file);
+      const rels = data.relationships || [];
+      const from = opts.from ? parseRef(opts.from) : null;
+      const to = opts.to ? parseRef(opts.to) : null;
+
+      let idx = -1;
+      if (opts.id) {
+        idx = rels.findIndex(r => r.id === opts.id);
+      } else if (from && to) {
+        const matches = rels.reduce((acc, r, i) => sameRel(r, from.tableId, to.tableId) ? [...acc, i] : acc, []);
+        if (matches.length > 1) {
+          return outputError(opts.json, `Multiple relationships found between "${from.tableId}" and "${to.tableId}". Use --id to specify which one.`);
+        }
+        idx = matches[0] ?? -1;
+      } else {
+        return outputError(opts.json, 'Specify --id or both --from and --to');
+      }
+
+      if (idx === -1) {
+        return outputError(opts.json, `Relationship not found`);
+      }
+
+      const updated = { ...rels[idx] };
+      if (opts.type !== undefined) updated.type = opts.type;
+      if (opts.description !== undefined) {
+        if (opts.description === '') {
+          delete updated.description;
+        } else {
+          updated.description = opts.description;
+        }
+      }
+      data.relationships = [...rels.slice(0, idx), updated, ...rels.slice(idx + 1)];
+      writeYaml(file, data);
+      outputOk(opts.json, 'update', 'relationship', updated.id || `${opts.from} → ${opts.to}`);
     });
 
   // remove

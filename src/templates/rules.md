@@ -128,6 +128,7 @@ relationships:
       table: fct_orders
       column: [customer_key]
     type: one-to-many
+    description: "Links each order to its customer via the surrogate key."  # optional
 ```
 
 **`type` values:**
@@ -138,6 +139,8 @@ relationships:
 | `one-to-many` | Dimension → Fact *(most common)* |
 | `many-to-one` | Fact → Dimension *(inverse notation of above)* |
 | `many-to-many` | Via a bridge / link table |
+
+**`description`** (optional) — A free-text explanation of the relationship's business meaning (e.g. why this join exists, what the key represents). Use it to document non-obvious joins.
 
 **MUST NOT** use `relationships` to express data lineage (use the top-level `lineage` section instead).
 
@@ -738,19 +741,28 @@ modscape column add model.yaml \
   [--physical-name <name>] [--physical-type <type>] [--json]
 ```
 
-**relationship add**
+**relationship get / add / update / remove**
 ```bash
+modscape relationship get model.yaml --id <id> [--json]
+modscape relationship get model.yaml --from <table> --to <table> [--json]
 modscape relationship add model.yaml \
   --from <table.column> --to <table.column> \
   --type one-to-one|one-to-many|many-to-one|many-to-many \
-  [--id <id>] [--json]
+  [--id <id>] [--description <text>] [--json]
+modscape relationship update model.yaml --id <id> \
+  [--type one-to-one|one-to-many|many-to-one|many-to-many] \
+  [--description <text>] [--json]
+modscape relationship remove model.yaml --id <id> [--json]
 ```
 
-**lineage add**
+**lineage get / add / update / remove**
 ```bash
+modscape lineage get model.yaml --id <id> [--json]
+modscape lineage get model.yaml --from <tableId> --to <tableId> [--json]
 modscape lineage add model.yaml --from <tableId> --to <tableId> \
   [--id <id>] [--description <text>] [--json]
 modscape lineage update model.yaml --from <tableId> --to <tableId> [--description <text>] [--json]
+modscape lineage remove model.yaml --id <id> [--json]
 ```
 
 **domain add / update**

@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
 - **`relationship add --id`** — Optional `--id` flag for stable identity; auto-generated if omitted.
 - **`lineage add --id`** — Optional `--id` flag for stable identity; auto-generated if omitted.
 - **`MODEL_FORMAT_CHANGELOG.md`** — New file tracking model format changes independently from app releases.
+- **`relationships[].description`** — Optional description field on relationship entries, symmetric with `lineage[].description`. Editable in the Detail Panel.
+- **`relationship get`** — New CLI subcommand to retrieve a single relationship by `--id` or `--from`/`--to`.
+- **`relationship update`** — New CLI subcommand to update `type` or `description` of a relationship by `--id` or `--from`/`--to`.
+- **`relationship add --description`** — Optional `--description` flag when adding a relationship.
+- **`lineage get`** — New CLI subcommand to retrieve a single lineage entry by `--id` or `--from`/`--to`.
+- **Edge ID display in Detail Panel** — Selecting a relationship or lineage edge now shows its stable ID in the panel header with a copy button.
 
 ### Changed
 - **CLI dedup logic** — `relationship add` and `lineage add` now dedup by `id` instead of table-pair, allowing multiple relationships between the same tables (e.g. role-playing dimensions, composite keys).

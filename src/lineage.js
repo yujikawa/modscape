@@ -27,6 +27,38 @@ export function lineageCommand() {
       }
     });
 
+  // get
+  cmd
+    .command('get <file>')
+    .description('Get a single lineage entry by ID or from/to tables')
+    .option('--id <id>', 'stable identifier for this lineage edge')
+    .option('--from <tableId>', 'upstream table ID')
+    .option('--to <tableId>', 'downstream table ID')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      const data = readYaml(file);
+      const entries = data.lineage || [];
+      let entry = null;
+      if (opts.id) {
+        entry = entries.find(e => e.id === opts.id);
+      } else if (opts.from && opts.to) {
+        entry = entries.find(e => e.from === opts.from && e.to === opts.to);
+      } else {
+        return outputError(opts.json, 'Specify --id or both --from and --to');
+      }
+      if (!entry) {
+        return outputError(opts.json, `Lineage entry not found`);
+      }
+      if (opts.json) {
+        console.log(JSON.stringify(entry));
+      } else {
+        console.log(`  id:   ${entry.id || '(none)'}`);
+        console.log(`  from: ${entry.from}`);
+        console.log(`  to:   ${entry.to}`);
+        if (entry.description) console.log(`  desc: ${entry.description}`);
+      }
+    });
+
   // add
   cmd
     .command('add <file>')
