@@ -447,6 +447,9 @@ These commands let AI agents (or scripts) make precise, targeted changes to a YA
 
 ```bash
 modscape table list <file>               # List all table IDs
+modscape table list <file> --type fact   # Filter by type
+modscape table list <file> --domain <id> # Filter by domain
+modscape table list <file> --orphan      # Tables with no domain
 modscape table get <file> --id <id>      # Get a single table as JSON
 modscape table add <file> --data <json>  # Add a new table
 modscape table update <file> --id <id> --data <json>  # Update a table
@@ -491,6 +494,22 @@ modscape domain update <file> --id <id> --data <json>
 modscape domain remove <file> --id <id>
 modscape domain member add <file> --domain <id> --table <table-id>
 modscape domain member remove <file> --domain <id> --table <table-id>
+```
+
+### Annotation Commands
+
+```bash
+modscape annotation list <file>
+modscape annotation add <file> --text <text> [--id <id>] [--type sticky|callout] [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] [--offset-x <x>] [--offset-y <y>]
+modscape annotation update <file> --id <id> [--text <text>] [--color <color>]
+modscape annotation remove <file> --id <id>
+```
+
+### Summary Command
+
+```bash
+modscape summary <file>        # Human-readable model overview
+modscape summary <file> --json # Machine-readable JSON
 ```
 
 ## Credits

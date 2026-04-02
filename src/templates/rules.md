@@ -693,6 +693,8 @@ Use the built-in mutation commands to **add, update, or remove individual entiti
 | `lineage` | `list` `add` `remove` |
 | `domain` | `list` `get` `add` `update` `remove` |
 | `domain member` | `add` `remove` |
+| `annotation` | `list` `add` `update` `remove` |
+| `summary` | (model overview) |
 
 ### 13-2. Recommended AI Agent Flow
 
@@ -700,11 +702,18 @@ When inspecting a model's current state, **prefer using the list/get commands** 
 They return validated, structured JSON output that is easier to process.
 
 ```bash
-# Inspect current state before making changes
+# Get a full overview of the model first
+modscape summary model.yaml --json
+
+# Inspect specific sections
 modscape table list model.yaml --json
+modscape table list model.yaml --type fact --json        # filter by type
+modscape table list model.yaml --domain sales_ops --json # filter by domain
+modscape table list model.yaml --orphan --json           # tables with no domain
 modscape domain list model.yaml --json
 modscape relationship list model.yaml --json
 modscape lineage list model.yaml --json
+modscape annotation list model.yaml --json
 ```
 
 Before `add` or `update`, check existence with `get` or `list`:
@@ -775,6 +784,25 @@ modscape domain add model.yaml \
 ```bash
 modscape domain member add model.yaml --domain <domainId> --table <tableId> [--json]
 modscape domain member remove model.yaml --domain <domainId> --table <tableId> [--json]
+```
+
+**annotation list / add / update / remove**
+```bash
+modscape annotation list model.yaml [--json]
+modscape annotation add model.yaml \
+  --text <text> [--id <id>] [--type sticky|callout] \
+  [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] \
+  [--offset-x <x>] [--offset-y <y>] [--json]
+modscape annotation update model.yaml --id <id> \
+  [--text <text>] [--type sticky|callout] [--color <color>] \
+  [--target-id <id>] [--target-type <type>] [--offset-x <x>] [--offset-y <y>] [--json]
+modscape annotation remove model.yaml --id <id> [--json]
+```
+
+**summary**
+```bash
+modscape summary model.yaml        # human-readable overview
+modscape summary model.yaml --json # machine-readable JSON
 ```
 
 ### 13-4. After Adding Tables

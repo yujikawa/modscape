@@ -6,6 +6,8 @@ import { listColumns, addColumn, updateColumn, removeColumn } from './operations
 import { listRelationships, addRelationship, updateRelationship, removeRelationship } from './operations/relationship.js';
 import { listLineages, addLineage, updateLineage, removeLineage } from './operations/lineage.js';
 import { listDomains, getDomain, addDomain, updateDomain, removeDomain, addDomainMember, removeDomainMember } from './operations/domain.js';
+import { listAnnotations, addAnnotation, updateAnnotation, removeAnnotation } from './operations/annotation.js';
+import { summarizeModel } from './operations/summarize.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,10 +27,13 @@ export function tableCommand() {
   cmd
     .command('list <file>')
     .description('List all tables in the model')
+    .option('--type <type>', 'filter by appearance type (fact|dimension|mart|hub|link|satellite|table)')
+    .option('--domain <domainId>', 'filter by domain ID')
+    .option('--orphan', 'show only tables not assigned to any domain')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       run(opts.json, () => {
-        const tables = listTables(file);
+        const tables = listTables(file, { type: opts.type, domainId: opts.domain, orphanOnly: opts.orphan });
         if (opts.json) {
           console.log(JSON.stringify(tables));
         } else {
@@ -469,5 +474,137 @@ export function domainCommand() {
     });
 
   cmd.addCommand(member);
+  return cmd;
+}
+
+// ── Annotation commands ───────────────────────────────────────────────────────
+
+export function annotationCommand() {
+  const cmd = new Command('annotation').description('Manage annotations in a YAML model');
+
+  cmd
+    .command('list <file>')
+    .description('List all annotations in the model')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const annotations = listAnnotations(file);
+        if (opts.json) {
+          console.log(JSON.stringify(annotations));
+        } else {
+          if (annotations.length === 0) console.log('  (no annotations)');
+          else annotations.forEach(a => console.log(`  ${a.id}  [${a.type || 'sticky'}]  ${a.text || ''}`));
+        }
+      });
+    });
+
+  cmd
+    .command('add <file>')
+    .description('Add an annotation to the model')
+    .option('--id <id>', 'annotation ID (auto-generated if omitted)')
+    .option('--type <type>', 'annotation type (sticky|callout)', 'sticky')
+    .requiredOption('--text <text>', 'annotation text')
+    .option('--color <color>', 'background color (e.g. #fef9c3)')
+    .option('--target-id <id>', 'ID of the element to attach to')
+    .option('--target-type <type>', 'type of the target (table|domain|relationship|lineage|column)')
+    .option('--offset-x <x>', 'x offset from target', parseFloat)
+    .option('--offset-y <y>', 'y offset from target', parseFloat)
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const offset = (opts.offsetX !== undefined || opts.offsetY !== undefined)
+          ? { x: opts.offsetX || 0, y: opts.offsetY || 0 }
+          : undefined;
+        const { id } = addAnnotation(file, {
+          id: opts.id,
+          type: opts.type,
+          text: opts.text,
+          color: opts.color,
+          targetId: opts.targetId,
+          targetType: opts.targetType,
+          offset,
+        });
+        outputOk(opts.json, 'add', 'annotation', id);
+      });
+    });
+
+  cmd
+    .command('update <file>')
+    .description('Update an existing annotation')
+    .requiredOption('--id <id>', 'annotation ID to update')
+    .option('--type <type>', 'annotation type (sticky|callout)')
+    .option('--text <text>', 'annotation text')
+    .option('--color <color>', 'background color')
+    .option('--target-id <id>', 'ID of the element to attach to')
+    .option('--target-type <type>', 'type of the target')
+    .option('--offset-x <x>', 'x offset from target', parseFloat)
+    .option('--offset-y <y>', 'y offset from target', parseFloat)
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const offset = (opts.offsetX !== undefined || opts.offsetY !== undefined)
+          ? { x: opts.offsetX || 0, y: opts.offsetY || 0 }
+          : undefined;
+        updateAnnotation(file, {
+          id: opts.id,
+          type: opts.type,
+          text: opts.text,
+          color: opts.color,
+          targetId: opts.targetId,
+          targetType: opts.targetType,
+          offset,
+        });
+        outputOk(opts.json, 'update', 'annotation', opts.id);
+      });
+    });
+
+  cmd
+    .command('remove <file>')
+    .description('Remove an annotation from the model')
+    .requiredOption('--id <id>', 'annotation ID to remove')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        removeAnnotation(file, opts.id);
+        outputOk(opts.json, 'remove', 'annotation', opts.id);
+      });
+    });
+
+  return cmd;
+}
+
+// ── Summary command ───────────────────────────────────────────────────────────
+
+export function summaryCommand() {
+  const cmd = new Command('summary').description('Show a summary of the YAML model');
+
+  cmd
+    .argument('<file>', 'path to model.yaml')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const summary = summarizeModel(file);
+        if (opts.json) {
+          console.log(JSON.stringify(summary));
+        } else {
+          console.log(`  Tables:        ${summary.tableCount}`);
+          const byType = Object.entries(summary.byType).map(([k, v]) => `${k}(${v})`).join(', ');
+          if (byType) console.log(`  By type:       ${byType}`);
+          console.log(`  Domains:       ${summary.domainCount}`);
+          if (summary.domains.length > 0) {
+            summary.domains.forEach(d => console.log(`    - ${d.id} (${d.name}): ${d.memberCount} tables`));
+          }
+          if (summary.orphanTableIds.length > 0) {
+            console.log(`  Orphan tables: ${summary.orphanTableIds.join(', ')}`);
+          } else {
+            console.log(`  Orphan tables: (none)`);
+          }
+          console.log(`  Relationships: ${summary.relationshipCount}`);
+          console.log(`  Lineage:       ${summary.lineageCount}`);
+          console.log(`  Annotations:   ${summary.annotationCount}`);
+        }
+      });
+    });
+
   return cmd;
 }

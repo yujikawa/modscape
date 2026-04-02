@@ -446,6 +446,9 @@ AIエージェントやスクリプトから、YAMLモデルファイルに対�
 
 ```bash
 modscape table list <file>               # テーブルID一覧を表示
+modscape table list <file> --type fact   # タイプでフィルタリング
+modscape table list <file> --domain <id> # ドメインでフィルタリング
+modscape table list <file> --orphan      # ドメイン未所属テーブルのみ表示
 modscape table get <file> --id <id>      # 指定テーブルをJSONで取得
 modscape table add <file> --data <json>  # テーブルを追加
 modscape table update <file> --id <id> --data <json>  # テーブルを更新
@@ -490,6 +493,22 @@ modscape domain update <file> --id <id> --data <json>
 modscape domain remove <file> --id <id>
 modscape domain member add <file> --domain <id> --table <table-id>
 modscape domain member remove <file> --domain <id> --table <table-id>
+```
+
+### アノテーションコマンド
+
+```bash
+modscape annotation list <file>
+modscape annotation add <file> --text <text> [--id <id>] [--type sticky|callout] [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] [--offset-x <x>] [--offset-y <y>]
+modscape annotation update <file> --id <id> [--text <text>] [--color <color>]
+modscape annotation remove <file> --id <id>
+```
+
+### サマリーコマンド
+
+```bash
+modscape summary <file>        # モデルの概要を表示
+modscape summary <file> --json # JSON形式で出力
 ```
 
 ## クレジット

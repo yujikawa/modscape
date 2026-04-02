@@ -1,8 +1,30 @@
 import { readYaml, writeYaml, findTableById } from '../model-utils.js';
 
-export function listTables(filePath) {
+export function listTables(filePath, { type, domainId, orphanOnly } = {}) {
   const data = readYaml(filePath);
-  return (data.tables || []).map(t => ({ id: t.id, name: t.name, type: t.appearance?.type ?? null }));
+  let tables = (data.tables || []).map(t => ({ id: t.id, name: t.name, type: t.appearance?.type ?? null }));
+
+  if (type) {
+    tables = tables.filter(t => t.type === type);
+  }
+
+  if (domainId) {
+    const domain = (data.domains || []).find(d => d.id === domainId);
+    const members = new Set(domain ? (domain.members || []) : []);
+    tables = tables.filter(t => members.has(t.id));
+  }
+
+  if (orphanOnly) {
+    const memberIds = new Set();
+    for (const domain of (data.domains || [])) {
+      for (const id of (domain.members || [])) {
+        memberIds.add(id);
+      }
+    }
+    tables = tables.filter(t => !memberIds.has(t.id));
+  }
+
+  return tables;
 }
 
 export function getTable(filePath, id) {

@@ -2,9 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.5.0] - 2026-04-01
+## [2.5.0] - 2026-04-02
 
 ### Added
+- **`modscape annotation list/add/update/remove`** — CLI and MCP tools for managing the `annotations` section (sticky notes / callouts) in model.yaml. AI agents can now write design review notes directly into the model, which appear on the visualizer canvas.
+- **`modscape summary`** — New CLI command and `summarize_model` MCP tool that returns a statistical overview of the model in one call: table count, counts by type, domain list with member counts, orphan table IDs, relationship/lineage/annotation counts.
+- **`modscape table list --type / --domain / --orphan`** — Filter flags for the table list command and the `list_tables` MCP tool. Filter by appearance type, domain membership, or orphan status (not assigned to any domain).
 - **MCP server** (`modscape mcp`) — stdio transport MCP server for Claude Code integration. AI agents can operate on model.yaml via 24 structured tools (list/get/add/update/remove for tables, columns, relationships, lineage, domains) instead of constructing CLI commands.
 - **`modscape validate`** — Validates a model.yaml file for structural errors: duplicate IDs, coordinate misplacement (coords inside tables/domains), broken references in relationships/lineage/domains.members/layout, and orphaned layout entries. Supports `--json` for machine-readable output.
 - **Shared operations layer** (`src/operations/`) — CLI and MCP now share the same pure functions for all model mutations. No logic duplication.

@@ -7,6 +7,8 @@ import { listRelationships, addRelationship, updateRelationship, removeRelations
 import { listLineages, addLineage, updateLineage, removeLineage } from './operations/lineage.js';
 import { listDomains, addDomain, updateDomain, removeDomain, addDomainMember, removeDomainMember } from './operations/domain.js';
 import { validateModel } from './validate.js';
+import { listAnnotations, addAnnotation, updateAnnotation, removeAnnotation } from './operations/annotation.js';
+import { summarizeModel } from './operations/summarize.js';
 
 // Wrap an ops call: returns MCP content or isError response
 function call(fn) {
@@ -24,8 +26,16 @@ export async function startMcpServer() {
   // ── Table tools ───────────────────────────────────────────────────────────
 
   server.registerTool('list_tables',
-    { description: 'List all tables in a model.yaml file', inputSchema: { file: z.string().describe('Path to model.yaml') } },
-    ({ file }) => call(() => listTables(file))
+    {
+      description: 'List tables in a model.yaml file. Optionally filter by type, domain, or orphan status.',
+      inputSchema: {
+        file: z.string().describe('Path to model.yaml'),
+        type: z.enum(['fact', 'dimension', 'mart', 'hub', 'link', 'satellite', 'table']).optional().describe('Filter by appearance type'),
+        domain_id: z.string().optional().describe('Filter to tables belonging to this domain ID'),
+        orphan_only: z.boolean().optional().describe('If true, return only tables not assigned to any domain'),
+      },
+    },
+    ({ file, type, domain_id, orphan_only }) => call(() => listTables(file, { type, domainId: domain_id, orphanOnly: orphan_only }))
   );
 
   server.registerTool('get_table',
@@ -260,6 +270,71 @@ export async function startMcpServer() {
     },
     ({ file, domain_id, table_id }) =>
       call(() => { removeDomainMember(file, { domainId: domain_id, tableId: table_id }); return { ok: true, domainId: domain_id, tableId: table_id }; })
+  );
+
+  // ── Summarize tool ────────────────────────────────────────────────────────
+
+  server.registerTool('summarize_model',
+    { description: 'Get a statistical summary of the entire model (table counts, domains, orphans, relationships, etc.)', inputSchema: { file: z.string().describe('Path to model.yaml') } },
+    ({ file }) => call(() => summarizeModel(file))
+  );
+
+  // ── Annotation tools ──────────────────────────────────────────────────────
+
+  server.registerTool('list_annotations',
+    { description: 'List all annotations in a model.yaml file', inputSchema: { file: z.string().describe('Path to model.yaml') } },
+    ({ file }) => call(() => listAnnotations(file))
+  );
+
+  server.registerTool('add_annotation',
+    {
+      description: 'Add an annotation (sticky note or callout) to the model',
+      inputSchema: {
+        file: z.string(),
+        id: z.string().optional().describe('Annotation ID (auto-generated if omitted)'),
+        type: z.enum(['sticky', 'callout']).optional().describe('Annotation type'),
+        text: z.string().describe('Annotation text content'),
+        color: z.string().optional().describe('Background color e.g. #fef9c3'),
+        target_id: z.string().optional().describe('ID of the element to attach to'),
+        target_type: z.enum(['table', 'domain', 'relationship', 'lineage', 'column']).optional(),
+        offset_x: z.number().optional().describe('X offset from target'),
+        offset_y: z.number().optional().describe('Y offset from target'),
+      },
+    },
+    ({ file, id, type, text, color, target_id, target_type, offset_x, offset_y }) => {
+      const offset = (offset_x !== undefined || offset_y !== undefined)
+        ? { x: offset_x || 0, y: offset_y || 0 }
+        : undefined;
+      return call(() => addAnnotation(file, { id, type, text, color, targetId: target_id, targetType: target_type, offset }));
+    }
+  );
+
+  server.registerTool('update_annotation',
+    {
+      description: 'Update an existing annotation',
+      inputSchema: {
+        file: z.string(),
+        id: z.string().describe('Annotation ID to update'),
+        type: z.enum(['sticky', 'callout']).optional(),
+        text: z.string().optional(),
+        color: z.string().optional(),
+        target_id: z.string().optional(),
+        target_type: z.enum(['table', 'domain', 'relationship', 'lineage', 'column']).optional(),
+        offset_x: z.number().optional(),
+        offset_y: z.number().optional(),
+      },
+    },
+    ({ file, id, type, text, color, target_id, target_type, offset_x, offset_y }) => {
+      const offset = (offset_x !== undefined || offset_y !== undefined)
+        ? { x: offset_x || 0, y: offset_y || 0 }
+        : undefined;
+      return call(() => { updateAnnotation(file, { id, type, text, color, targetId: target_id, targetType: target_type, offset }); return { ok: true, id }; });
+    }
+  );
+
+  server.registerTool('remove_annotation',
+    { description: 'Remove an annotation from the model', inputSchema: { file: z.string(), id: z.string().describe('Annotation ID to remove') } },
+    ({ file, id }) => call(() => { removeAnnotation(file, id); return { ok: true, id }; })
   );
 
   // ── Validate tool ─────────────────────────────────────────────────────────

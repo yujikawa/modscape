@@ -14,7 +14,7 @@ import { applyLayout } from './layout.js';
 import { createRequire } from 'module';
 import { mergeModels } from './merge.js';
 import { extractModels } from './extract.js';
-import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand } from './cli.js';
+import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand } from './cli.js';
 import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
 
@@ -124,6 +124,8 @@ program.addCommand(columnCommand());
 program.addCommand(relationshipCommand());
 program.addCommand(lineageCommand());
 program.addCommand(domainCommand());
+program.addCommand(annotationCommand());
+program.addCommand(summaryCommand());
 
 program
   .command('layout')
