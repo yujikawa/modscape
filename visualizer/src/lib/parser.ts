@@ -15,7 +15,12 @@ export function normalizeSchema(data: any): Schema {
     lineage: Array.isArray(data.lineage) ? data.lineage : [],
     domains: Array.isArray(data.domains) ? data.domains : [],
     consumers: Array.isArray(data.consumers) ? data.consumers : [],
-    annotations: Array.isArray(data.annotations) ? data.annotations : [],
+    annotations: Array.isArray(data.annotations)
+      ? data.annotations.map((a: any) => ({
+          ...a,
+          offset: a.offset ?? { x: 0, y: 0 },
+        }))
+      : [],
     layout: data.layout || {}
   }
 
