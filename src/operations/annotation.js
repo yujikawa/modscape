@@ -22,7 +22,7 @@ export function addAnnotation(filePath, { id, type, text, color, targetId, targe
   if (color) annotation.color = color;
   if (targetId) annotation.targetId = targetId;
   if (targetType) annotation.targetType = targetType;
-  if (offset) annotation.offset = offset;
+  annotation.offset = offset ?? { x: 0, y: 0 };
   data.annotations = [...annotations, annotation];
   writeYaml(filePath, data);
   return { id: resolvedId };
