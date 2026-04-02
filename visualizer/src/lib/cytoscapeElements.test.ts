@@ -82,11 +82,12 @@ describe('yamlToElements', () => {
         { id: 'src', name: 'Source', appearance: { type: 'fact' }, columns: [] },
         { id: 'mart', name: 'Mart', appearance: { type: 'mart' }, columns: [] },
       ],
-      lineage: [{ from: 'src', to: 'mart' }],
+      lineage: [{ id: 'lin1', from: 'src', to: 'mart' }],
     })
     const elements = yamlToElements(schema)
     const edges = elements.filter(e => e.classes === 'lineage-edge')
     expect(edges).toHaveLength(1)
+    expect(edges[0].data.id).toBe('lin1')
     expect(edges[0].data.source).toBe('src')
     expect(edges[0].data.target).toBe('mart')
     expect(edges[0].data.kind).toBe('lineage')
@@ -100,8 +101,9 @@ describe('yamlToElements', () => {
       ],
       relationships: [
         {
-          from: { table: 'dim', column: 'id' },
-          to: { table: 'fct', column: 'dim_id' },
+          id: 'rel1',
+          from: { table: 'dim', column: ['id'] },
+          to: { table: 'fct', column: ['dim_id'] },
           type: 'one-to-many',
         },
       ],
@@ -109,13 +111,36 @@ describe('yamlToElements', () => {
     const elements = yamlToElements(schema)
     const erEdges = elements.filter(e => e.classes === 'er-edge')
     expect(erEdges).toHaveLength(1)
+    expect(erEdges[0].data.id).toBe('rel1')
     expect(erEdges[0].data.kind).toBe('er')
     expect(erEdges[0].data.source).toBe('dim')
     expect(erEdges[0].data.target).toBe('fct')
-    expect(erEdges[0].data.label).toBe('1..N')
-    expect(erEdges[0].data.fromColumn).toBe('id')
-    expect(erEdges[0].data.toColumn).toBe('dim_id')
+    expect(erEdges[0].data.sourceLabel).toBe('1')
+    expect(erEdges[0].data.targetLabel).toBe('N')
+    expect(erEdges[0].data.fromColumn).toEqual(['id'])
+    expect(erEdges[0].data.toColumn).toEqual(['dim_id'])
     expect(erEdges[0].data.relType).toBe('one-to-many')
+  })
+
+  it('handles composite columns in relationships', () => {
+    const schema = makeSchema({
+      tables: [
+        { id: 'orders', name: 'Orders', appearance: { type: 'fact' }, columns: [] },
+        { id: 'lines', name: 'Lines', appearance: { type: 'fact' }, columns: [] },
+      ],
+      relationships: [
+        {
+          id: 'rel-composite',
+          from: { table: 'orders', column: ['order_id', 'line_no'] },
+          to: { table: 'lines', column: ['order_id', 'line_no'] },
+          type: 'one-to-many',
+        },
+      ],
+    })
+    const elements = yamlToElements(schema)
+    const erEdges = elements.filter(e => e.classes === 'er-edge')
+    expect(erEdges[0].data.fromColumn).toEqual(['order_id', 'line_no'])
+    expect(erEdges[0].data.toColumn).toEqual(['order_id', 'line_no'])
   })
 
   it('maps domain membership to domainId on nodes', () => {

@@ -95,6 +95,7 @@ npm install -g modscape
 YAMLのルートレベル構造は以下の通りです：
 
 ```
+version      – モデルフォーマットのバージョン（任意の文字列、例: "1.0.0"）
 imports      – 他のYAMLファイルからテーブルを参照（dev/build時に解決）
 domains      – 関連テーブルをまとめるビジュアルコンテナ
 tables       – 3階層メタデータを持つエンティティ定義
@@ -176,10 +177,12 @@ tables:
 
 ```yaml
 lineage:
-  - from: fct_orders    # ソーステーブル ID
-    to: mart_revenue    # 派生テーブル ID
+  - id: lin_orders_revenue   # 任意。省略時はパーサーが lin-{from}-{to} 形式で自動生成。
+    from: fct_orders         # ソーステーブル ID
+    to: mart_revenue         # 派生テーブル ID
     description: "日次注文金額を月次バケットに集計"  # 任意。変換内容の説明。
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 ```
 
@@ -187,13 +190,15 @@ lineage:
 
 ```yaml
 relationships:
-  - from:
+  - id: rel_cust_orders
+    from:
       table: dim_customers   # テーブル ID
-      column: customer_id    # カラム ID（任意）
+      column: [customer_id]  # カラム ID（配列）
     to:
       table: fct_orders
-      column: customer_id
+      column: [customer_id]
     type: one-to-many  # one-to-one | one-to-many | many-to-one | many-to-many
+    description: "リレーションシップの説明（任意）"  # optional
 ```
 
 > **ER関係** vs **リネージ**: 構造的な結合（外部キーなど）には `relationships` を、データの加工・変換の流れには `lineage` を使用してください。両方に同じ接続を記述しないでください。
@@ -246,7 +251,7 @@ annotations:
     text: "粒度：1行 = 1注文明細"
     color: "#fef9c3"          # 任意の背景色
     targetId: fct_orders      # 貼り付け先のオブジェクト ID（任意）
-    targetType: table         # table | domain | relationship | column
+    targetType: table         # table | domain | relationship | lineage | column
     offset:
       x: 100    # 対象の左上からのオフセット（targetId 未指定時は絶対座標）
       y: -80
@@ -408,6 +413,29 @@ modscape layout model.yaml
 modscape layout model.yaml -o model-with-layout.yaml
 ```
 
+### バリデーション
+
+model.yamlの構造的なエラー（参照切れ、座標の誤配置、ID重複など）を検出します。
+
+```bash
+modscape validate model.yaml
+
+# AIエージェント向け機械可読出力
+modscape validate model.yaml --json
+```
+
+### MCPサーバー（Claude Code向け）
+
+Claude CodeなどのMCPクライアントで利用できるMCPサーバーを起動します。登録後はAIエージェントがCLIコマンドを組み立てる代わりに、構造化されたツール呼び出しでmodel.yamlを操作できます。
+
+```bash
+# プロジェクトごとに1回だけ登録
+claude mcp add modscape -- modscape mcp
+
+# Claude Code起動時に自動で開始されます
+modscape mcp
+```
+
 ---
 
 ## アトミックモデル操作コマンド
@@ -418,6 +446,9 @@ AIエージェントやスクリプトから、YAMLモデルファイルに対�
 
 ```bash
 modscape table list <file>               # テーブルID一覧を表示
+modscape table list <file> --type fact   # タイプでフィルタリング
+modscape table list <file> --domain <id> # ドメインでフィルタリング
+modscape table list <file> --orphan      # ドメイン未所属テーブルのみ表示
 modscape table get <file> --id <id>      # 指定テーブルをJSONで取得
 modscape table add <file> --data <json>  # テーブルを追加
 modscape table update <file> --id <id> --data <json>  # テーブルを更新
@@ -427,6 +458,7 @@ modscape table remove <file> --id <id>  # テーブルを削除
 ### カラムコマンド
 
 ```bash
+modscape column list <file> --table <id>
 modscape column add <file> --table <id> --data <json>
 modscape column update <file> --table <id> --id <col-id> --data <json>
 modscape column remove <file> --table <id> --id <col-id>
@@ -436,17 +468,20 @@ modscape column remove <file> --table <id> --id <col-id>
 
 ```bash
 modscape relationship list <file>
-modscape relationship add <file> --data <json>
-modscape relationship remove <file> --index <n>
+modscape relationship get <file> --id <id>
+modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>] [--description <text>]
+modscape relationship update <file> --id <id> [--type <type>] [--description <text>]
+modscape relationship remove <file> --id <id>
 ```
 
 ### リネージコマンド
 
 ```bash
 modscape lineage list <file>
-modscape lineage add <file> --from <table-id> --to <table-id> [--description <text>]
+modscape lineage get <file> --id <id>
+modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
-modscape lineage remove <file> --from <table-id> --to <table-id>
+modscape lineage remove <file> --id <id>
 ```
 
 ### ドメインコマンド
@@ -459,6 +494,32 @@ modscape domain update <file> --id <id> --data <json>
 modscape domain remove <file> --id <id>
 modscape domain member add <file> --domain <id> --table <table-id>
 modscape domain member remove <file> --domain <id> --table <table-id>
+```
+
+### コンシューマーコマンド
+
+```bash
+modscape consumer list <file>
+modscape consumer get <file> --id <id>
+modscape consumer add <file> --id <id> --name <name> [--description <text>] [--icon <icon>] [--color <color>] [--url <url>]
+modscape consumer update <file> --id <id> [--name <name>] [--description <text>] [--icon <icon>] [--color <color>] [--url <url>]
+modscape consumer remove <file> --id <id>
+```
+
+### アノテーションコマンド
+
+```bash
+modscape annotation list <file>
+modscape annotation add <file> --text <text> [--id <id>] [--type sticky|callout] [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] [--offset-x <x>] [--offset-y <y>]
+modscape annotation update <file> --id <id> [--text <text>] [--color <color>]
+modscape annotation remove <file> --id <id>
+```
+
+### サマリーコマンド
+
+```bash
+modscape summary <file>        # モデルの概要を表示
+modscape summary <file> --json # JSON形式で出力
 ```
 
 ## クレジット

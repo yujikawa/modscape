@@ -30,14 +30,14 @@ const buildFilteredAdj = (schema: Schema, filter: EdgeTypeFilter): Record<string
   }
 
   if (filter === 'er' || filter === 'both') {
-    schema.relationships?.forEach((rel, index) => {
-      addEdge(rel.from.table, rel.to.table, 'er', `er-${index}`, rel)
+    schema.relationships?.forEach((rel) => {
+      addEdge(rel.from.table, rel.to.table, 'er', rel.id!, rel)
     })
   }
 
   if (filter === 'lineage' || filter === 'both') {
-    schema.lineage?.forEach((edge, index) => {
-      addEdge(edge.from, edge.to, 'lineage', `lin-${edge.from}-${edge.to}-${index}`, { direction: 'upstream' })
+    schema.lineage?.forEach((edge) => {
+      addEdge(edge.from, edge.to, 'lineage', edge.id!, { direction: 'upstream' })
     })
   }
 
@@ -92,10 +92,9 @@ export const getAllReachable = (
     const downQueue = [nodeId]
     while (downQueue.length > 0) {
       const current = downQueue.shift()!
-      schema.lineage?.forEach((edge, index) => {
+      schema.lineage?.forEach((edge) => {
         if (edge.from === current) {
-          const id = `lin-${edge.from}-${edge.to}-${index}`
-          edgeIds.add(id)
+          edgeIds.add(edge.id!)
           if (!downVisited.has(edge.to)) {
             downVisited.add(edge.to)
             nodeIds.add(edge.to)
@@ -110,10 +109,9 @@ export const getAllReachable = (
     const upQueue = [nodeId]
     while (upQueue.length > 0) {
       const current = upQueue.shift()!
-      schema.lineage?.forEach((edge, index) => {
+      schema.lineage?.forEach((edge) => {
         if (edge.to === current) {
-          const id = `lin-${edge.from}-${edge.to}-${index}`
-          edgeIds.add(id)
+          edgeIds.add(edge.id!)
           if (!upVisited.has(edge.from)) {
             upVisited.add(edge.from)
             nodeIds.add(edge.from)
@@ -130,8 +128,8 @@ export const getAllReachable = (
     const erQueue = [nodeId]
     while (erQueue.length > 0) {
       const current = erQueue.shift()!
-      schema.relationships?.forEach((rel, index) => {
-        const id = `er-${index}`
+      schema.relationships?.forEach((rel) => {
+        const id = rel.id!
         let neighbor: string | null = null
         if (rel.from.table === current) neighbor = rel.to.table
         else if (rel.to.table === current) neighbor = rel.from.table

@@ -96,6 +96,7 @@ Best for direct architectural control.
 Modscape uses a schema designed for data analysis contexts. The full YAML structure is:
 
 ```
+version      – model format version (optional string, e.g. "1.0.0")
 imports      – cross-file table references (resolved at dev/build time)
 domains      – visual containers grouping related tables
 tables       – entity definitions with tri-layer metadata
@@ -177,10 +178,12 @@ Top-level `lineage` section declares data flow between tables (which source tabl
 
 ```yaml
 lineage:
-  - from: fct_orders    # source table ID
-    to: mart_revenue    # derived table ID
+  - id: lin_orders_revenue   # optional; auto-generated as lin-{from}-{to} if omitted
+    from: fct_orders         # source table ID
+    to: mart_revenue         # derived table ID
     description: "Aggregated daily amounts into monthly buckets."  # optional
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 ```
 
@@ -188,13 +191,15 @@ lineage:
 
 ```yaml
 relationships:
-  - from:
+  - id: rel_cust_orders
+    from:
       table: dim_customers   # table ID
-      column: customer_id    # column ID (optional)
+      column: [customer_id]  # column ID(s)
     to:
       table: fct_orders
-      column: customer_id
+      column: [customer_id]
     type: one-to-many  # one-to-one | one-to-many | many-to-one | many-to-many
+    description: "Optional description of the relationship"  # optional
 ```
 
 > **ER Relationships** vs **Lineage**: Use `relationships` for structural joins (FKs) and `lineage` for data flow (transformations). Do not duplicate them.
@@ -247,7 +252,7 @@ annotations:
     text: "Grain: one row per invoice line item."
     color: "#fef9c3"          # optional background color
     targetId: fct_orders      # ID of the attached object (optional)
-    targetType: table         # table | domain | relationship | column
+    targetType: table         # table | domain | relationship | lineage | column
     offset:
       x: 100    # offset from target's top-left (or absolute if no target)
       y: -80
@@ -409,6 +414,29 @@ modscape layout model.yaml
 modscape layout model.yaml -o model-with-layout.yaml
 ```
 
+### Validate
+
+Check a model.yaml file for structural errors (missing references, coordinate placement, duplicate IDs, etc.).
+
+```bash
+modscape validate model.yaml
+
+# Machine-readable output for AI agents
+modscape validate model.yaml --json
+```
+
+### MCP Server (Claude Code)
+
+Start the Modscape MCP server for use with Claude Code and other MCP clients. Once registered, AI agents can operate on model.yaml via structured tool calls instead of constructing CLI commands.
+
+```bash
+# Register once per project
+claude mcp add modscape -- modscape mcp
+
+# The server starts automatically when Claude Code launches
+modscape mcp
+```
+
 ---
 
 ## Atomic Model Mutation Commands
@@ -419,6 +447,9 @@ These commands let AI agents (or scripts) make precise, targeted changes to a YA
 
 ```bash
 modscape table list <file>               # List all table IDs
+modscape table list <file> --type fact   # Filter by type
+modscape table list <file> --domain <id> # Filter by domain
+modscape table list <file> --orphan      # Tables with no domain
 modscape table get <file> --id <id>      # Get a single table as JSON
 modscape table add <file> --data <json>  # Add a new table
 modscape table update <file> --id <id> --data <json>  # Update a table
@@ -428,6 +459,7 @@ modscape table remove <file> --id <id>  # Remove a table
 ### Column Commands
 
 ```bash
+modscape column list <file> --table <id>
 modscape column add <file> --table <id> --data <json>
 modscape column update <file> --table <id> --id <col-id> --data <json>
 modscape column remove <file> --table <id> --id <col-id>
@@ -437,17 +469,20 @@ modscape column remove <file> --table <id> --id <col-id>
 
 ```bash
 modscape relationship list <file>
-modscape relationship add <file> --data <json>
-modscape relationship remove <file> --index <n>
+modscape relationship get <file> --id <id>
+modscape relationship add <file> --from <ref> --to <ref> --type <type> [--id <id>] [--description <text>]
+modscape relationship update <file> --id <id> [--type <type>] [--description <text>]
+modscape relationship remove <file> --id <id>
 ```
 
 ### Lineage Commands
 
 ```bash
 modscape lineage list <file>
-modscape lineage add <file> --from <table-id> --to <table-id> [--description <text>]
+modscape lineage get <file> --id <id>
+modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
-modscape lineage remove <file> --from <table-id> --to <table-id>
+modscape lineage remove <file> --id <id>
 ```
 
 ### Domain Commands
@@ -460,6 +495,32 @@ modscape domain update <file> --id <id> --data <json>
 modscape domain remove <file> --id <id>
 modscape domain member add <file> --domain <id> --table <table-id>
 modscape domain member remove <file> --domain <id> --table <table-id>
+```
+
+### Consumer Commands
+
+```bash
+modscape consumer list <file>
+modscape consumer get <file> --id <id>
+modscape consumer add <file> --id <id> --name <name> [--description <text>] [--icon <icon>] [--color <color>] [--url <url>]
+modscape consumer update <file> --id <id> [--name <name>] [--description <text>] [--icon <icon>] [--color <color>] [--url <url>]
+modscape consumer remove <file> --id <id>
+```
+
+### Annotation Commands
+
+```bash
+modscape annotation list <file>
+modscape annotation add <file> --text <text> [--id <id>] [--type sticky|callout] [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] [--offset-x <x>] [--offset-y <y>]
+modscape annotation update <file> --id <id> [--text <text>] [--color <color>]
+modscape annotation remove <file> --id <id>
+```
+
+### Summary Command
+
+```bash
+modscape summary <file>        # Human-readable model overview
+modscape summary <file> --json # Machine-readable JSON
 ```
 
 ## Credits

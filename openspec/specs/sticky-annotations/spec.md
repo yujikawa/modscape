@@ -11,11 +11,23 @@ The system SHALL persist visual annotations in a top-level `annotations` section
 - **THEN** the YAML output SHALL contain an `annotations` section with the new note's ID, text, and metadata
 
 ### Requirement: Annotation Target Binding
-The system SHALL allow binding an annotation to a specific modeling object (table, domain, or relationship) via a `targetId`.
+The system SHALL allow binding an annotation to a specific modeling object (table, domain, relationship, or lineage edge) via a `targetId`. The `targetType` field SHALL accept the following values: `table`, `domain`, `relationship`, `column`, `lineage`.
 
 #### Scenario: Binding to a table
 - **WHEN** user creates a "sticky" annotation for table "orders"
 - **THEN** the annotation record SHALL have `targetId: "orders"` and `targetType: "table"`
+
+#### Scenario: Binding to a relationship
+- **WHEN** user creates an annotation targeting a relationship that has an `id` field
+- **THEN** the annotation record SHALL have `targetId` set to the relationship's `id` and `targetType: "relationship"`
+
+#### Scenario: Binding to a lineage edge
+- **WHEN** user creates an annotation targeting a lineage entry that has an `id` field
+- **THEN** the annotation record SHALL have `targetId` set to the lineage entry's `id` and `targetType: "lineage"`
+
+#### Scenario: Invalid targetType
+- **WHEN** an annotation has a `targetType` that is not one of the accepted values
+- **THEN** the parser SHALL emit a validation warning and treat the annotation as unbound
 
 ### Requirement: Sticky Positioning (Offset)
 Annotations MUST maintain their visual position relative to their target object using a coordinate `offset`.

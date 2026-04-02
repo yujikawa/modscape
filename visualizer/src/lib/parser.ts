@@ -9,14 +9,58 @@ export function normalizeSchema(data: any): Schema {
 
   // Normalization: Ensure tables, relationships, domains, consumers and annotations are always arrays
   const schema: Schema = {
+    version: typeof data.version === 'string' ? data.version : undefined,
     tables: Array.isArray(data.tables) ? data.tables : [],
     relationships: Array.isArray(data.relationships) ? data.relationships : [],
     lineage: Array.isArray(data.lineage) ? data.lineage : [],
     domains: Array.isArray(data.domains) ? data.domains : [],
     consumers: Array.isArray(data.consumers) ? data.consumers : [],
-    annotations: Array.isArray(data.annotations) ? data.annotations : [],
+    annotations: Array.isArray(data.annotations)
+      ? data.annotations.map((a: any) => ({
+          ...a,
+          offset: a.offset ?? { x: 0, y: 0 },
+        }))
+      : [],
     layout: data.layout || {}
   }
+
+  // Normalize relationships: filter out type='lineage' entries, normalize column to string[], auto-generate id
+  schema.relationships = schema.relationships!.filter((rel: any) => {
+    if (rel.type === 'lineage') {
+      console.warn(`[modscape] Relationship with type='lineage' is invalid and has been ignored. Use the lineage section instead. (from: ${rel.from?.table}, to: ${rel.to?.table})`)
+      return false
+    }
+    return true
+  }).map((rel: any) => {
+    const fromCols: string[] | undefined = rel.from?.column != null
+      ? (Array.isArray(rel.from.column) ? rel.from.column : [rel.from.column])
+      : undefined
+    const toCols: string[] | undefined = rel.to?.column != null
+      ? (Array.isArray(rel.to.column) ? rel.to.column : [rel.to.column])
+      : undefined
+
+    let id: string = rel.id
+    if (!id) {
+      if (fromCols && toCols) {
+        id = `rel-${rel.from.table}.${fromCols.join('+')}-${rel.to.table}.${toCols.join('+')}`
+      } else {
+        id = `rel-${rel.from.table}-${rel.to.table}-${rel.type || 'unknown'}`
+      }
+    }
+
+    return {
+      ...rel,
+      id,
+      from: { ...rel.from, column: fromCols },
+      to: { ...rel.to, column: toCols },
+    }
+  })
+
+  // Normalize lineage: auto-generate id if missing
+  schema.lineage = schema.lineage!.map((edge: any) => {
+    if (edge.id) return edge
+    return { ...edge, id: `lin-${edge.from}-${edge.to}` }
+  })
 
   // Normalize domains: support both `members` (new) and `tables` (legacy) field names
   schema.domains = schema.domains!.map((domain: any) => ({
@@ -46,6 +90,21 @@ export function normalizeSchema(data: any): Schema {
   // Further normalization for each table
   schema.tables = schema.tables.map((table: any) => {
     let sampleData = table.sampleData;
+
+    // Detect and remove header row in sampleData (exact match with column id list)
+    if (Array.isArray(sampleData) && sampleData.length > 0 && Array.isArray(table.columns)) {
+      const firstRow = sampleData[0]
+      const colIds = (table.columns as any[]).map((c: any) => c.id)
+      if (
+        Array.isArray(firstRow) &&
+        firstRow.length === colIds.length &&
+        firstRow.every((v: any) => typeof v === 'string') &&
+        firstRow.every((v: any, i: number) => v === colIds[i])
+      ) {
+        console.warn(`[modscape] sampleData for table "${table.id}" contains a header row matching column IDs. The header row has been removed.`)
+        sampleData = sampleData.slice(1)
+      }
+    }
 
     // Migrate legacy format { columns: [...], rows: [[...]] } to new [[...]] format
     if (sampleData && typeof sampleData === 'object' && !Array.isArray(sampleData)) {

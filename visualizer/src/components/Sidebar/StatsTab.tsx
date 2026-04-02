@@ -72,6 +72,7 @@ const StatsTab = memo(() => {
             { label: 'Lineage', value: (schema.lineage ?? []).length },
             { label: 'Relations', value: (schema.relationships ?? []).length },
             { label: 'Domains', value: (schema.domains ?? []).length },
+            ...(schema.version ? [{ label: 'Version', value: schema.version }] : []),
           ].map(({ label, value }) => (
             <div
               key={label}

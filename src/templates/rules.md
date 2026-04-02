@@ -11,7 +11,7 @@
 ## QUICK REFERENCE (read this first)
 
 ```
-ROOT KEYS      imports | domains | tables | relationships | lineage | annotations | layout | consumers
+ROOT KEYS      version | imports | domains | tables | relationships | lineage | annotations | layout | consumers
 COORDINATES    ONLY in `layout`. NEVER inside tables or domains.
 LINEAGE        Use top-level `lineage` section (not relationships, not table.lineage.upstream).
                lineage.to can reference either a table ID or a consumer ID.
@@ -28,6 +28,7 @@ Grid           All x/y values must be multiples of 40.
 A valid `model.yaml` has exactly these top-level keys.
 
 ```yaml
+version:       # (string) schema version (e.g. "{{MODEL_FORMAT_VERSION}}") — OPTIONAL but recommended
 imports:       # (array) cross-file table references — OPTIONAL
 domains:       # (array) visual containers — OPTIONAL but recommended
 tables:        # (array) entity definitions — REQUIRED
@@ -119,13 +120,15 @@ Use `relationships` **only** for structural ER connections between tables.
 
 ```yaml
 relationships:
-  - from:
+  - id: rel_cust_orders   # Unique ID — REQUIRED for stable referencing
+    from:
       table: dim_customers   # table id
-      column: customer_key   # column id — optional but recommended
+      column: [customer_key] # column id(s) — ALWAYS an array of strings
     to:
       table: fct_orders
-      column: customer_key
+      column: [customer_key]
     type: one-to-many
+    description: "Links each order to its customer via the surrogate key."  # optional
 ```
 
 **`type` values:**
@@ -136,6 +139,8 @@ relationships:
 | `one-to-many` | Dimension → Fact *(most common)* |
 | `many-to-one` | Fact → Dimension *(inverse notation of above)* |
 | `many-to-many` | Via a bridge / link table |
+
+**`description`** (optional) — A free-text explanation of the relationship's business meaning (e.g. why this join exists, what the key represents). Use it to document non-obvious joins.
 
 **MUST NOT** use `relationships` to express data lineage (use the top-level `lineage` section instead).
 
@@ -148,10 +153,12 @@ This is rendered as dashed arrows in **Lineage Mode**. It is separate from ER re
 
 ```yaml
 lineage:
-  - from: fct_orders    # source table id
+  - id: lin_orders_revenue # Unique ID — REQUIRED for stable referencing
+    from: fct_orders    # source table id
     to: mart_revenue    # derived table id
     description: "Aggregated daily order amounts into monthly buckets."  # optional
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 ```
 
@@ -163,7 +170,6 @@ lineage:
 | `fct_orders` + `dim_dates` → `mart_revenue` (aggregation) | `lineage` |
 
 **MUST** define `lineage` entries for every `mart` or aggregated table.
-**MUST NOT** define `lineage` entries for raw tables (`fact`, `dimension`, `hub`, `link`, `satellite`) as sources.
 **MUST NOT** add a `relationships` entry for a connection already expressed in `lineage`.
 
 #### Example: correct separation
@@ -171,16 +177,19 @@ lineage:
 ```yaml
 # CORRECT
 lineage:
-  - from: fct_orders
+  - id: lin_orders_revenue
+    from: fct_orders
     to: mart_revenue
-  - from: dim_dates
+  - id: lin_dates_revenue
+    from: dim_dates
     to: mart_revenue
 
 relationships:
-  - from: { table: dim_customers, column: customer_key }
-    to:   { table: fct_orders,    column: customer_key }
+  - id: rel_cust_orders
+    from: { table: dim_customers, column: [customer_key] }
+    to:   { table: fct_orders,    column: [customer_key] }
     type: one-to-many                     # ER only
-
+```
 # WRONG — do not add a relationships entry for the same connection as lineage
 relationships:
   - from: { table: fct_orders }
@@ -377,7 +386,8 @@ annotations:
     text: "..."           # REQUIRED. Note content.
     color: "#fef9c3"      # optional. background color.
     targetId: fct_orders  # optional. ID of the object to attach to.
-    targetType: table     # required if targetId is set. table | domain | relationship | column
+    targetType: table     # required if targetId is set. table | domain | relationship | lineage | column
+                          # 'relationship' and 'lineage' require the entry to have an explicit id field
     offset:
       x: 100    # offset from target's top-left. if no targetId, this is absolute canvas position.
       y: -80    # negative y = above the target.
@@ -678,11 +688,14 @@ Use the built-in mutation commands to **add, update, or remove individual entiti
 | Resource | Operations |
 |----------|-----------|
 | `table` | `list` `get` `add` `update` `remove` |
-| `column` | `add` `update` `remove` |
+| `column` | `list` `add` `update` `remove` |
 | `relationship` | `list` `add` `remove` |
 | `lineage` | `list` `add` `remove` |
 | `domain` | `list` `get` `add` `update` `remove` |
 | `domain member` | `add` `remove` |
+| `annotation` | `list` `add` `update` `remove` |
+| `consumer` | `list` `get` `add` `update` `remove` |
+| `summary` | (model overview) |
 
 ### 13-2. Recommended AI Agent Flow
 
@@ -690,11 +703,20 @@ When inspecting a model's current state, **prefer using the list/get commands** 
 They return validated, structured JSON output that is easier to process.
 
 ```bash
-# Inspect current state before making changes
+# Get a full overview of the model first
+modscape summary model.yaml --json
+
+# Inspect specific sections
 modscape table list model.yaml --json
+modscape table list model.yaml --type fact --json        # filter by type
+modscape table list model.yaml --domain sales_ops --json # filter by domain
+modscape table list model.yaml --orphan --json           # tables with no domain
 modscape domain list model.yaml --json
 modscape relationship list model.yaml --json
 modscape lineage list model.yaml --json
+modscape annotation list model.yaml --json
+modscape consumer list model.yaml --json
+modscape column list model.yaml --table <tableId> --json
 ```
 
 Before `add` or `update`, check existence with `get` or `list`:
@@ -722,8 +744,9 @@ modscape table add model.yaml \
   [--description <text>] [--json]
 ```
 
-**column add / update**
+**column list / add / update**
 ```bash
+modscape column list model.yaml --table <tableId> [--json]
 modscape column add model.yaml \
   --table <tableId> --id <id> --name <name> \
   [--type Int|String|Decimal|Date|Timestamp|Boolean] \
@@ -731,17 +754,28 @@ modscape column add model.yaml \
   [--physical-name <name>] [--physical-type <type>] [--json]
 ```
 
-**relationship add**
+**relationship get / add / update / remove**
 ```bash
+modscape relationship get model.yaml --id <id> [--json]
+modscape relationship get model.yaml --from <table> --to <table> [--json]
 modscape relationship add model.yaml \
   --from <table.column> --to <table.column> \
-  --type one-to-one|one-to-many|many-to-one|many-to-many [--json]
+  --type one-to-one|one-to-many|many-to-one|many-to-many \
+  [--id <id>] [--description <text>] [--json]
+modscape relationship update model.yaml --id <id> \
+  [--type one-to-one|one-to-many|many-to-one|many-to-many] \
+  [--description <text>] [--json]
+modscape relationship remove model.yaml --id <id> [--json]
 ```
 
-**lineage add**
+**lineage get / add / update / remove**
 ```bash
-modscape lineage add model.yaml --from <tableId> --to <tableId> [--description <text>] [--json]
+modscape lineage get model.yaml --id <id> [--json]
+modscape lineage get model.yaml --from <tableId> --to <tableId> [--json]
+modscape lineage add model.yaml --from <tableId> --to <tableId> \
+  [--id <id>] [--description <text>] [--json]
 modscape lineage update model.yaml --from <tableId> --to <tableId> [--description <text>] [--json]
+modscape lineage remove model.yaml --id <id> [--json]
 ```
 
 **domain add / update**
@@ -756,6 +790,37 @@ modscape domain member add model.yaml --domain <domainId> --table <tableId> [--j
 modscape domain member remove model.yaml --domain <domainId> --table <tableId> [--json]
 ```
 
+**consumer list / get / add / update / remove**
+```bash
+modscape consumer list model.yaml [--json]
+modscape consumer get model.yaml --id <id> [--json]
+modscape consumer add model.yaml \
+  --id <id> --name <name> [--description <text>] \
+  [--icon <icon>] [--color <color>] [--url <url>] [--json]
+modscape consumer update model.yaml --id <id> \
+  [--name <name>] [--description <text>] [--icon <icon>] [--color <color>] [--url <url>] [--json]
+modscape consumer remove model.yaml --id <id> [--json]
+```
+
+**annotation list / add / update / remove**
+```bash
+modscape annotation list model.yaml [--json]
+modscape annotation add model.yaml \
+  --text <text> [--id <id>] [--type sticky|callout] \
+  [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] \
+  [--offset-x <x>] [--offset-y <y>] [--json]
+modscape annotation update model.yaml --id <id> \
+  [--text <text>] [--type sticky|callout] [--color <color>] \
+  [--target-id <id>] [--target-type <type>] [--offset-x <x>] [--offset-y <y>] [--json]
+modscape annotation remove model.yaml --id <id> [--json]
+```
+
+**summary**
+```bash
+modscape summary model.yaml        # human-readable overview
+modscape summary model.yaml --json # machine-readable JSON
+```
+
 ### 13-4. After Adding Tables
 
 `table add` does **not** create layout coordinates. After adding tables, run:
@@ -766,6 +831,21 @@ modscape layout model.yaml
 
 This assigns coordinates to all layout-less entries automatically.
 
+### 13-5. Validate
+
+Check a model.yaml file for structural errors before visualizing or committing:
+
+```bash
+modscape validate model.yaml          # Human-readable output
+modscape validate model.yaml --json   # Machine-readable output for AI agents
+```
+
+Checks performed:
+- Duplicate IDs (tables, domains, relationships, lineage)
+- Coordinates inside `tables` or `domains` (must be in `layout` only)
+- Broken references in `relationships`, `lineage`, `domains.members`, and `layout`
+- Orphaned `layout` entries (keys not found in tables or domains)
+
 ### 13-5. JSON Output for AI Pipelines
 
 All commands support `--json` for machine-readable output:
@@ -774,6 +854,21 @@ All commands support `--json` for machine-readable output:
 { "ok": true,  "action": "add", "resource": "table", "id": "fct_orders" }
 { "ok": false, "error": "Table \"fct_orders\" already exists", "hint": "Use `table update` instead" }
 ```
+
+---
+
+## 14. Schema Version
+
+`model.yaml` supports an optional `version` field at the root level to indicate the schema version.
+
+```yaml
+version: "{{MODEL_FORMAT_VERSION}}"   # optional. semver string. Current schema version is "{{MODEL_FORMAT_VERSION}}".
+```
+
+- The field is **optional** — omitting it is valid and backward-compatible.
+- The current schema version is `"{{MODEL_FORMAT_VERSION}}"`.
+- AI agents SHOULD include `version: "{{MODEL_FORMAT_VERSION}}"` in newly generated files.
+- The parser does not branch on the version value (reserved for future migrations).
 
 ---
 
@@ -914,16 +1009,20 @@ tables:
       - ["2024-03", 18900.75]
 
 lineage:                            # data flow — separate from ER
-  - from: fct_orders
+  - id: lin_orders_revenue
+    from: fct_orders
     to: mart_monthly_revenue
-  - from: dim_customers
+  - id: lin_cust_revenue
+    from: dim_customers
     to: mart_monthly_revenue
-  - from: mart_monthly_revenue
+  - id: lin_rev_dashboard
+    from: mart_monthly_revenue
     to: revenue_dashboard           # consumer ID — valid lineage target
 
 relationships:                      # ER only — not for lineage
-  - from: { table: dim_customers, column: customer_key }
-    to:   { table: fct_orders,    column: customer_key }
+  - id: rel_cust_orders
+    from: { table: dim_customers, column: [customer_key] }
+    to:   { table: fct_orders,    column: [customer_key] }
     type: one-to-many
 
 annotations:

@@ -36,3 +36,25 @@ The system SHALL normalize `annotations` data by providing default empty structu
 - **WHEN** a YAML file has no `annotations` section
 - **THEN** the parser SHALL return a schema object with an empty `annotations` array
 
+### Requirement: sampleData Header Row Detection
+The system SHALL detect and skip accidental header rows in `sampleData` arrays. If the first row of `sampleData` consists entirely of string values that match the column names (case-insensitive), the parser SHALL exclude that row from the sample data and emit a warning.
+
+#### Scenario: sampleData with header row
+- **WHEN** a table's `sampleData` first row contains strings that match the table's column IDs or names
+- **THEN** the parser SHALL skip the header row and treat the remaining rows as data
+
+#### Scenario: sampleData without header row
+- **WHEN** a table's `sampleData` first row contains values that do not match column names
+- **THEN** the parser SHALL treat all rows as data without modification
+
+### Requirement: Relationship Type Exclusion
+The `relationships[].type` field SHALL NOT accept `"lineage"` as a valid value. Lineage dependencies are expressed exclusively in the top-level `lineage` section, not in `relationships`.
+
+#### Scenario: Relationship with invalid type "lineage"
+- **WHEN** a relationship entry has `type: lineage`
+- **THEN** the parser SHALL reject or ignore it and emit a validation warning, directing the user to use the `lineage` section instead
+
+#### Scenario: Valid relationship types
+- **WHEN** a relationship entry has `type` set to `one-to-one`, `one-to-many`, `many-to-one`, or `many-to-many`
+- **THEN** the system SHALL accept it as a valid relationship entry
+

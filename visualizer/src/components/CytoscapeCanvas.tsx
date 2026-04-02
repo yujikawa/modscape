@@ -670,8 +670,8 @@ interface CytoscapeCanvasProps {
     kind: string
     source: string
     target: string
-    fromColumn?: string
-    toColumn?: string
+    fromColumn?: string[] | null
+    toColumn?: string[] | null
     relType?: string
   }) => void
   onPaneClick: () => void

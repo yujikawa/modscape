@@ -137,11 +137,11 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
 
   // Lineage edges (from top-level schema.lineage[])
   // `to` can reference either a table or a consumer node
-  schema.lineage?.forEach((edge, i) => {
+  schema.lineage?.forEach((edge) => {
     if (!allNodeIdSet.has(edge.from) || !allNodeIdSet.has(edge.to)) return // skip dangling edges
     elements.push({
       data: {
-        id: `lin-${edge.from}-${edge.to}-${i}`,
+        id: edge.id,
         source: edge.from,
         target: edge.to,
         kind: 'lineage',
@@ -152,11 +152,11 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
   })
 
   // ER edges (from relationships[])
-  schema.relationships?.forEach((rel, i) => {
+  schema.relationships?.forEach((rel) => {
     if (!tableIdSet.has(rel.from.table) || !tableIdSet.has(rel.to.table)) return // skip dangling edges
     elements.push({
       data: {
-        id: `er-${i}`,
+        id: rel.id,
         source: rel.from.table,
         target: rel.to.table,
         kind: 'er',

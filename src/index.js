@@ -14,11 +14,9 @@ import { applyLayout } from './layout.js';
 import { createRequire } from 'module';
 import { mergeModels } from './merge.js';
 import { extractModels } from './extract.js';
-import { tableCommand } from './table.js';
-import { columnCommand } from './column.js';
-import { relationshipCommand } from './relationship.js';
-import { lineageCommand } from './lineage.js';
-import { domainCommand } from './domain.js';
+import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
+import { startMcpServer } from './mcp.js';
+import { runValidate } from './validate.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -126,6 +124,9 @@ program.addCommand(columnCommand());
 program.addCommand(relationshipCommand());
 program.addCommand(lineageCommand());
 program.addCommand(domainCommand());
+program.addCommand(annotationCommand());
+program.addCommand(consumerCommand());
+program.addCommand(summaryCommand());
 
 program
   .command('layout')
@@ -134,6 +135,22 @@ program
   .option('-o, --output <path>', 'output file path (defaults to overwriting input)')
   .action((path, options) => {
     applyLayout(path, options);
+  });
+
+program
+  .command('validate')
+  .description('Validate a YAML model file for structural errors')
+  .argument('<file>', 'path to the YAML model file')
+  .option('--json', 'output as JSON')
+  .action((file, opts) => {
+    runValidate(file, opts);
+  });
+
+program
+  .command('mcp')
+  .description('Start the Modscape MCP server (stdio transport)')
+  .action(() => {
+    startMcpServer();
   });
 
 program.parse();

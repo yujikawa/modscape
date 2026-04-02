@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-04-02
+
+### Added
+- **`modscape consumer list/get/add/update/remove`** — CLI and MCP tools for managing the `consumers` section (BI dashboards, ML models, applications). Supports `name`, `description`, `icon`, `color`, `url` fields.
+- **`modscape column list`** — New CLI subcommand to list all columns of a table (MCP `list_columns` already existed; CLI was missing).
+- **`modscape annotation list/add/update/remove`** — CLI and MCP tools for managing the `annotations` section (sticky notes / callouts) in model.yaml. AI agents can now write design review notes directly into the model, which appear on the visualizer canvas.
+- **`modscape summary`** — New CLI command and `summarize_model` MCP tool that returns a statistical overview of the model in one call: table count, counts by type, domain list with member counts, orphan table IDs, relationship/lineage/annotation counts.
+- **`modscape table list --type / --domain / --orphan`** — Filter flags for the table list command and the `list_tables` MCP tool. Filter by appearance type, domain membership, or orphan status (not assigned to any domain).
+- **MCP server** (`modscape mcp`) — stdio transport MCP server for Claude Code integration. AI agents can operate on model.yaml via 24 structured tools (list/get/add/update/remove for tables, columns, relationships, lineage, domains) instead of constructing CLI commands.
+- **`modscape validate`** — Validates a model.yaml file for structural errors: duplicate IDs, coordinate misplacement (coords inside tables/domains), broken references in relationships/lineage/domains.members/layout, and orphaned layout entries. Supports `--json` for machine-readable output.
+- **Shared operations layer** (`src/operations/`) — CLI and MCP now share the same pure functions for all model mutations. No logic duplication.
+- **`modscape init --claude` MCP hint** — After scaffolding Claude Code files, the init command now prints the `claude mcp add` command for easy MCP setup.
+
+### Changed
+- **CLI internals refactored** — All CLI command definitions moved to `src/cli.js`; per-resource files (`table.js`, `column.js`, etc.) replaced by `src/operations/*.js`. External CLI interface is unchanged.
+- **Model format versioning** — `model.yaml` now supports a root-level `version` field (e.g. `"1.0.0"`) to track the format specification version. Optional; parser is backward-compatible. Version is defined in `src/model-format-version.js` as the single source of truth. See `MODEL_FORMAT_CHANGELOG.md`.
+- **`relationships[].id` field** — Stable identifier for each relationship entry. Parser auto-generates as `rel-{from}.{cols}-{to}.{cols}` or `rel-{from}-{to}-{type}` if omitted. Enables `annotations.targetType: 'relationship'` and id-based CLI dedup.
+- **`lineage[].id` field** — Stable identifier for each lineage entry. Parser auto-generates as `lin-{from}-{to}` if omitted. Enables `annotations.targetType: 'lineage'` and id-based CLI dedup.
+- **`implementation.cluster_by`** — New `string[]` field for clustering key hints in code generation.
+- **`annotations.targetType: 'lineage'`** — Lineage edges can now be annotation targets.
+- **Composite key support** — `relationships[].from.column` / `to.column` now accepts `string | string[]`; parser normalizes to `string[]`.
+- **`relationship add --id`** — Optional `--id` flag for stable identity; auto-generated if omitted.
+- **`lineage add --id`** — Optional `--id` flag for stable identity; auto-generated if omitted.
+- **`MODEL_FORMAT_CHANGELOG.md`** — New file tracking model format changes independently from app releases.
+- **`relationships[].description`** — Optional description field on relationship entries, symmetric with `lineage[].description`. Editable in the Detail Panel.
+- **`relationship get`** — New CLI subcommand to retrieve a single relationship by `--id` or `--from`/`--to`.
+- **`relationship update`** — New CLI subcommand to update `type` or `description` of a relationship by `--id` or `--from`/`--to`.
+- **`relationship add --description`** — Optional `--description` flag when adding a relationship.
+- **`lineage get`** — New CLI subcommand to retrieve a single lineage entry by `--id` or `--from`/`--to`.
+- **Edge ID display in Detail Panel** — Selecting a relationship or lineage edge now shows its stable ID in the panel header with a copy button.
+
+### Changed
+- **CLI dedup logic** — `relationship add` and `lineage add` now dedup by `id` instead of table-pair, allowing multiple relationships between the same tables (e.g. role-playing dimensions, composite keys).
+- **Cytoscape edge IDs** — ER and lineage edge IDs now use the parser-normalized `rel.id` / `edge.id` values instead of fragile index-based IDs (`er-${i}`, `lin-...-${i}`). PathFinder highlighting and edge deletion now use stable IDs.
+
+### Fixed
+- **`relationships[].type: 'lineage'`** — Parser now warns and discards entries with this invalid type value.
+- **`sampleData` header row detection** — Parser detects and removes a header row if the first row matches the table's column ID list exactly, and emits a warning.
+- **`rules.md` Section 4** — Removed incorrect rule that prohibited `fact` tables as lineage sources.
+- **`rules.md` Section 14** — Added missing section (schema version documentation).
+
 ## [2.4.1] - 2026-03-30
 
 ### Fixed
@@ -173,7 +214,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.0.0] - 2025
+## [1.0.0] - 2025
 
 Major rewrite of the canvas renderer.
 
