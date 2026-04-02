@@ -459,6 +459,7 @@ modscape table remove <file> --id <id>  # Remove a table
 ### Column Commands
 
 ```bash
+modscape column list <file> --table <id>
 modscape column add <file> --table <id> --data <json>
 modscape column update <file> --table <id> --id <col-id> --data <json>
 modscape column remove <file> --table <id> --id <col-id>
@@ -494,6 +495,16 @@ modscape domain update <file> --id <id> --data <json>
 modscape domain remove <file> --id <id>
 modscape domain member add <file> --domain <id> --table <table-id>
 modscape domain member remove <file> --domain <id> --table <table-id>
+```
+
+### Consumer Commands
+
+```bash
+modscape consumer list <file>
+modscape consumer get <file> --id <id>
+modscape consumer add <file> --id <id> --name <name> [--description <text>] [--icon <icon>] [--color <color>] [--url <url>]
+modscape consumer update <file> --id <id> [--name <name>] [--description <text>] [--icon <icon>] [--color <color>] [--url <url>]
+modscape consumer remove <file> --id <id>
 ```
 
 ### Annotation Commands

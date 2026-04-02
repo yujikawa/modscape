@@ -688,12 +688,13 @@ Use the built-in mutation commands to **add, update, or remove individual entiti
 | Resource | Operations |
 |----------|-----------|
 | `table` | `list` `get` `add` `update` `remove` |
-| `column` | `add` `update` `remove` |
+| `column` | `list` `add` `update` `remove` |
 | `relationship` | `list` `add` `remove` |
 | `lineage` | `list` `add` `remove` |
 | `domain` | `list` `get` `add` `update` `remove` |
 | `domain member` | `add` `remove` |
 | `annotation` | `list` `add` `update` `remove` |
+| `consumer` | `list` `get` `add` `update` `remove` |
 | `summary` | (model overview) |
 
 ### 13-2. Recommended AI Agent Flow
@@ -714,6 +715,8 @@ modscape domain list model.yaml --json
 modscape relationship list model.yaml --json
 modscape lineage list model.yaml --json
 modscape annotation list model.yaml --json
+modscape consumer list model.yaml --json
+modscape column list model.yaml --table <tableId> --json
 ```
 
 Before `add` or `update`, check existence with `get` or `list`:
@@ -741,8 +744,9 @@ modscape table add model.yaml \
   [--description <text>] [--json]
 ```
 
-**column add / update**
+**column list / add / update**
 ```bash
+modscape column list model.yaml --table <tableId> [--json]
 modscape column add model.yaml \
   --table <tableId> --id <id> --name <name> \
   [--type Int|String|Decimal|Date|Timestamp|Boolean] \
@@ -784,6 +788,18 @@ modscape domain add model.yaml \
 ```bash
 modscape domain member add model.yaml --domain <domainId> --table <tableId> [--json]
 modscape domain member remove model.yaml --domain <domainId> --table <tableId> [--json]
+```
+
+**consumer list / get / add / update / remove**
+```bash
+modscape consumer list model.yaml [--json]
+modscape consumer get model.yaml --id <id> [--json]
+modscape consumer add model.yaml \
+  --id <id> --name <name> [--description <text>] \
+  [--icon <icon>] [--color <color>] [--url <url>] [--json]
+modscape consumer update model.yaml --id <id> \
+  [--name <name>] [--description <text>] [--icon <icon>] [--color <color>] [--url <url>] [--json]
+modscape consumer remove model.yaml --id <id> [--json]
 ```
 
 **annotation list / add / update / remove**

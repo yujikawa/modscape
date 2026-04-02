@@ -146,8 +146,9 @@ test.describe('CLI: summary command', () => {
     expect(result.orphanTableIds).not.toContain('fct_orders');
   });
 
-  test('summary returns relationship, lineage, annotation counts', () => {
+  test('summary returns consumer, relationship, lineage, annotation counts', () => {
     const result = cliJson(`summary ${MODEL_FILE} --json`);
+    expect(result.consumerCount).toBe(0);
     expect(result.relationshipCount).toBe(1);
     expect(result.lineageCount).toBe(1);
     expect(result.annotationCount).toBe(0);

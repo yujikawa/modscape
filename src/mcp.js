@@ -9,6 +9,7 @@ import { listDomains, addDomain, updateDomain, removeDomain, addDomainMember, re
 import { validateModel } from './validate.js';
 import { listAnnotations, addAnnotation, updateAnnotation, removeAnnotation } from './operations/annotation.js';
 import { summarizeModel } from './operations/summarize.js';
+import { listConsumers, getConsumer, addConsumer, updateConsumer, removeConsumer } from './operations/consumer.js';
 
 // Wrap an ops call: returns MCP content or isError response
 function call(fn) {
@@ -335,6 +336,57 @@ export async function startMcpServer() {
   server.registerTool('remove_annotation',
     { description: 'Remove an annotation from the model', inputSchema: { file: z.string(), id: z.string().describe('Annotation ID to remove') } },
     ({ file, id }) => call(() => { removeAnnotation(file, id); return { ok: true, id }; })
+  );
+
+  // ── Consumer tools ────────────────────────────────────────────────────────
+
+  server.registerTool('list_consumers',
+    { description: 'List all downstream consumers in a model.yaml file', inputSchema: { file: z.string().describe('Path to model.yaml') } },
+    ({ file }) => call(() => listConsumers(file))
+  );
+
+  server.registerTool('get_consumer',
+    { description: 'Get a consumer definition by ID', inputSchema: { file: z.string(), id: z.string().describe('Consumer ID') } },
+    ({ file, id }) => call(() => getConsumer(file, id))
+  );
+
+  server.registerTool('add_consumer',
+    {
+      description: 'Add a new downstream consumer (BI dashboard, ML model, application, etc.)',
+      inputSchema: {
+        file: z.string(),
+        id: z.string().describe('Consumer ID in snake_case'),
+        name: z.string().describe('Display name'),
+        description: z.string().optional(),
+        icon: z.string().optional().describe('Icon emoji or string'),
+        color: z.string().optional().describe('Color e.g. #e0f2fe'),
+        url: z.string().optional().describe('URL of the consumer (e.g. dashboard link)'),
+      },
+    },
+    ({ file, id, name, description, icon, color, url }) =>
+      call(() => { addConsumer(file, { id, name, description, icon, color, url }); return { ok: true, id }; })
+  );
+
+  server.registerTool('update_consumer',
+    {
+      description: 'Update fields of an existing consumer',
+      inputSchema: {
+        file: z.string(),
+        id: z.string().describe('Consumer ID to update'),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        icon: z.string().optional(),
+        color: z.string().optional(),
+        url: z.string().optional(),
+      },
+    },
+    ({ file, id, name, description, icon, color, url }) =>
+      call(() => { updateConsumer(file, { id, name, description, icon, color, url }); return { ok: true, id }; })
+  );
+
+  server.registerTool('remove_consumer',
+    { description: 'Remove a consumer from the model', inputSchema: { file: z.string(), id: z.string().describe('Consumer ID to remove') } },
+    ({ file, id }) => call(() => { removeConsumer(file, id); return { ok: true, id }; })
   );
 
   // ── Validate tool ─────────────────────────────────────────────────────────

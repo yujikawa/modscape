@@ -8,6 +8,7 @@ import { listLineages, addLineage, updateLineage, removeLineage } from './operat
 import { listDomains, getDomain, addDomain, updateDomain, removeDomain, addDomainMember, removeDomainMember } from './operations/domain.js';
 import { listAnnotations, addAnnotation, updateAnnotation, removeAnnotation } from './operations/annotation.js';
 import { summarizeModel } from './operations/summarize.js';
+import { listConsumers, getConsumer, addConsumer, updateConsumer, removeConsumer } from './operations/consumer.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -108,6 +109,26 @@ export function tableCommand() {
 
 export function columnCommand() {
   const cmd = new Command('column').description('Manage columns in a table');
+
+  cmd
+    .command('list <file>')
+    .description('List all columns of a table')
+    .requiredOption('--table <tableId>', 'target table ID')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const columns = listColumns(file, opts.table);
+        if (opts.json) {
+          console.log(JSON.stringify(columns));
+        } else {
+          if (columns.length === 0) console.log('  (no columns)');
+          else columns.forEach(c => {
+            const flags = [c.isPrimaryKey && 'PK', c.isForeignKey && 'FK'].filter(Boolean).join(' ');
+            console.log(`  ${c.id}  ${c.name || ''}  ${c.type || ''}${flags ? '  [' + flags + ']' : ''}`);
+          });
+        }
+      });
+    });
 
   cmd
     .command('add <file>')
@@ -573,6 +594,88 @@ export function annotationCommand() {
   return cmd;
 }
 
+// ── Consumer commands ─────────────────────────────────────────────────────────
+
+export function consumerCommand() {
+  const cmd = new Command('consumer').description('Manage downstream consumers in a YAML model');
+
+  cmd
+    .command('list <file>')
+    .description('List all consumers in the model')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const consumers = listConsumers(file);
+        if (opts.json) {
+          console.log(JSON.stringify(consumers));
+        } else {
+          if (consumers.length === 0) console.log('  (no consumers)');
+          else consumers.forEach(c => console.log(`  ${c.id}  ${c.name || ''}`));
+        }
+      });
+    });
+
+  cmd
+    .command('get <file>')
+    .description('Get a consumer definition by ID')
+    .requiredOption('--id <id>', 'consumer ID')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const consumer = getConsumer(file, opts.id);
+        console.log(opts.json ? JSON.stringify(consumer) : JSON.stringify(consumer, null, 2));
+      });
+    });
+
+  cmd
+    .command('add <file>')
+    .description('Add a new downstream consumer')
+    .requiredOption('--id <id>', 'consumer ID (snake_case)')
+    .requiredOption('--name <name>', 'display name')
+    .option('--description <text>', 'description')
+    .option('--icon <icon>', 'icon emoji or string')
+    .option('--color <color>', 'color (e.g. #e0f2fe)')
+    .option('--url <url>', 'URL of the consumer (e.g. dashboard link)')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        addConsumer(file, { id: opts.id, name: opts.name, description: opts.description, icon: opts.icon, color: opts.color, url: opts.url });
+        outputOk(opts.json, 'add', 'consumer', opts.id);
+      });
+    });
+
+  cmd
+    .command('update <file>')
+    .description('Update fields of an existing consumer')
+    .requiredOption('--id <id>', 'consumer ID to update')
+    .option('--name <name>', 'display name')
+    .option('--description <text>', 'description')
+    .option('--icon <icon>', 'icon emoji or string')
+    .option('--color <color>', 'color')
+    .option('--url <url>', 'URL of the consumer')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        updateConsumer(file, { id: opts.id, name: opts.name, description: opts.description, icon: opts.icon, color: opts.color, url: opts.url });
+        outputOk(opts.json, 'update', 'consumer', opts.id);
+      });
+    });
+
+  cmd
+    .command('remove <file>')
+    .description('Remove a consumer from the model')
+    .requiredOption('--id <id>', 'consumer ID to remove')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        removeConsumer(file, opts.id);
+        outputOk(opts.json, 'remove', 'consumer', opts.id);
+      });
+    });
+
+  return cmd;
+}
+
 // ── Summary command ───────────────────────────────────────────────────────────
 
 export function summaryCommand() {
@@ -599,6 +702,7 @@ export function summaryCommand() {
           } else {
             console.log(`  Orphan tables: (none)`);
           }
+          console.log(`  Consumers:     ${summary.consumerCount}`);
           console.log(`  Relationships: ${summary.relationshipCount}`);
           console.log(`  Lineage:       ${summary.lineageCount}`);
           console.log(`  Annotations:   ${summary.annotationCount}`);

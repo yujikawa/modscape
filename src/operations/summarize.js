@@ -32,6 +32,7 @@ export function summarizeModel(filePath) {
       memberCount: (d.members || []).length,
     })),
     orphanTableIds,
+    consumerCount: (data.consumers || []).length,
     relationshipCount: (data.relationships || []).length,
     lineageCount: (data.lineage || []).length,
     annotationCount: (data.annotations || []).length,

@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [2.5.0] - 2026-04-02
 
 ### Added
+- **`modscape consumer list/get/add/update/remove`** — CLI and MCP tools for managing the `consumers` section (BI dashboards, ML models, applications). Supports `name`, `description`, `icon`, `color`, `url` fields.
+- **`modscape column list`** — New CLI subcommand to list all columns of a table (MCP `list_columns` already existed; CLI was missing).
 - **`modscape annotation list/add/update/remove`** — CLI and MCP tools for managing the `annotations` section (sticky notes / callouts) in model.yaml. AI agents can now write design review notes directly into the model, which appear on the visualizer canvas.
 - **`modscape summary`** — New CLI command and `summarize_model` MCP tool that returns a statistical overview of the model in one call: table count, counts by type, domain list with member counts, orphan table IDs, relationship/lineage/annotation counts.
 - **`modscape table list --type / --domain / --orphan`** — Filter flags for the table list command and the `list_tables` MCP tool. Filter by appearance type, domain membership, or orphan status (not assigned to any domain).
