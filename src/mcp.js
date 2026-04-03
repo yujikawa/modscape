@@ -257,20 +257,20 @@ export async function startMcpServer() {
 
   server.registerTool('add_domain_member',
     {
-      description: 'Add a table to a domain',
-      inputSchema: { file: z.string(), domain_id: z.string().describe('Domain ID'), table_id: z.string().describe('Table ID to add') },
+      description: 'Add a table or consumer to a domain',
+      inputSchema: { file: z.string(), domain_id: z.string().describe('Domain ID'), member_id: z.string().describe('Table or consumer ID to add') },
     },
-    ({ file, domain_id, table_id }) =>
-      call(() => { addDomainMember(file, { domainId: domain_id, tableId: table_id }); return { ok: true, domainId: domain_id, tableId: table_id }; })
+    ({ file, domain_id, member_id }) =>
+      call(() => { addDomainMember(file, { domainId: domain_id, memberId: member_id }); return { ok: true, domainId: domain_id, memberId: member_id }; })
   );
 
   server.registerTool('remove_domain_member',
     {
-      description: 'Remove a table from a domain',
-      inputSchema: { file: z.string(), domain_id: z.string(), table_id: z.string() },
+      description: 'Remove a table or consumer from a domain',
+      inputSchema: { file: z.string(), domain_id: z.string(), member_id: z.string().describe('Table or consumer ID to remove') },
     },
-    ({ file, domain_id, table_id }) =>
-      call(() => { removeDomainMember(file, { domainId: domain_id, tableId: table_id }); return { ok: true, domainId: domain_id, tableId: table_id }; })
+    ({ file, domain_id, member_id }) =>
+      call(() => { removeDomainMember(file, { domainId: domain_id, memberId: member_id }); return { ok: true, domainId: domain_id, memberId: member_id }; })
   );
 
   // ── Summarize tool ────────────────────────────────────────────────────────

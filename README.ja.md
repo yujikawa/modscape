@@ -492,8 +492,8 @@ modscape domain get <file> --id <id>
 modscape domain add <file> --data <json>
 modscape domain update <file> --id <id> --data <json>
 modscape domain remove <file> --id <id>
-modscape domain member add <file> --domain <id> --table <table-id>
-modscape domain member remove <file> --domain <id> --table <table-id>
+modscape domain member add <file> --domain <id> --id <member-id>
+modscape domain member remove <file> --domain <id> --id <member-id>
 ```
 
 ### コンシューマーコマンド

@@ -1,6 +1,10 @@
 import path from 'path';
 import { readYaml, writeYaml, findTableById, findDomainById, resolveImports } from '../model-utils.js';
 
+function findMemberById(schema, id) {
+  return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || null;
+}
+
 export function listDomains(filePath) {
   const data = readYaml(filePath);
   return (data.domains || []).map(d => ({ id: d.id, name: d.name }));
@@ -45,26 +49,26 @@ export function removeDomain(filePath, id) {
   return { id };
 }
 
-export function addDomainMember(filePath, { domainId, tableId }) {
+export function addDomainMember(filePath, { domainId, memberId }) {
   const data = readYaml(filePath);
   const { schema: resolved } = resolveImports(data, path.dirname(path.resolve(filePath)));
   const domain = findDomainById(data, domainId);
   if (!domain) throw new Error(`Domain "${domainId}" not found`);
-  if (!findTableById(resolved, tableId)) throw new Error(`Table "${tableId}" not found`);
+  if (!findMemberById(resolved, memberId)) throw new Error(`Table or consumer "${memberId}" not found`);
   if (!domain.members) domain.members = [];
-  if (domain.members.includes(tableId)) throw new Error(`Table "${tableId}" is already in domain "${domainId}"`);
-  domain.members.push(tableId);
+  if (domain.members.includes(memberId)) throw new Error(`"${memberId}" is already in domain "${domainId}"`);
+  domain.members.push(memberId);
   writeYaml(filePath, data);
-  return { domainId, tableId };
+  return { domainId, memberId };
 }
 
-export function removeDomainMember(filePath, { domainId, tableId }) {
+export function removeDomainMember(filePath, { domainId, memberId }) {
   const data = readYaml(filePath);
   const domain = findDomainById(data, domainId);
   if (!domain) throw new Error(`Domain "${domainId}" not found`);
   const before = (domain.members || []).length;
-  domain.members = (domain.members || []).filter(t => t !== tableId);
-  if (domain.members.length === before) throw new Error(`Table "${tableId}" not found in domain "${domainId}"`);
+  domain.members = (domain.members || []).filter(t => t !== memberId);
+  if (domain.members.length === before) throw new Error(`"${memberId}" not found in domain "${domainId}"`);
   writeYaml(filePath, data);
-  return { domainId, tableId };
+  return { domainId, memberId };
 }
