@@ -1779,19 +1779,26 @@ export default function CytoscapeCanvas({
       if (isTyping || e.repeat) return
 
       const key = e.key.toLowerCase()
-      if (key === 'c') {
+      if (key === 'l') {
         e.preventDefault()
         const { connectMode, setConnectMode } = useStore.getState()
         setConnectMode(connectMode === 'lineage' ? null : 'lineage')
         return
       }
 
-      if (key === 't' || key === 'd' || key === 'u' || key === 's') {
+      if (key === 'r') {
+        e.preventDefault()
+        const { connectMode, setConnectMode } = useStore.getState()
+        setConnectMode(connectMode === 'er' ? null : 'er')
+        return
+      }
+
+      if (key === 't' || key === 'd' || key === 'c' || key === 's') {
         e.preventDefault()
         const center = screenToCanvas(window.innerWidth / 2, window.innerHeight / 2)
         if (key === 't') onAddTableAt(center.x - 160, center.y - 125)
         else if (key === 'd') onAddDomainAt(center.x - 300, center.y - 200)
-        else if (key === 'u') onAddConsumerAt(center.x - 80, center.y - 30)
+        else if (key === 'c') onAddConsumerAt(center.x - 80, center.y - 30)
         else onAddAnnotationAt(center.x - 60, center.y - 40)
         return
       }
