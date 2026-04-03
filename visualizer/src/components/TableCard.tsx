@@ -9,8 +9,6 @@ interface TableCardProps {
   isDimmed: boolean
   isHighlighted: boolean
   isHovered: boolean
-  isPendingSource: boolean
-  isConnectMode: boolean
   zoom: number
   theme: 'dark' | 'light'
   hoveredColumnId: string | null
@@ -25,8 +23,6 @@ const TableCard = ({
   isDimmed: _isDimmed,
   isHighlighted,
   isHovered,
-  isPendingSource,
-  isConnectMode,
   zoom,
   theme,
   hoveredColumnId,
@@ -40,17 +36,13 @@ const TableCard = ({
   const isMinimal = zoom < 0.35   // reduces header size at low zoom
   const hideColumns = isMinimal || isCompact  // hides column list
 
-  const borderColor = isPendingSource ? '#22c55e' : isSelected ? LINEAGE_BASE : isHovered ? themeColor : isConnectMode ? '#22c55e' : 'var(--border-main)'
-  const boxShadow = isPendingSource
-    ? '0 0 0 3px #22c55e, 0 0 20px 6px rgba(34,197,94,0.5)'
-    : isSelected
+  const borderColor = isSelected ? LINEAGE_BASE : isHovered ? themeColor : 'var(--border-main)'
+  const boxShadow = isSelected
     ? `0 0 0 3px ${LINEAGE_BASE}, 0 0 16px 4px rgba(59, 130, 246, 0.45)`
     : isHovered
     ? `0 0 0 2px ${themeColor}, 0 0 20px 6px ${themeColor}80`
     : isHighlighted
     ? '0 0 12px 3px rgba(59, 130, 246, 0.35)'
-    : isConnectMode
-    ? '0 0 0 1px rgba(34,197,94,0.4)'
     : theme === 'dark'
     ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
     : '0 4px 12px -2px rgba(0, 0, 0, 0.1)'
@@ -70,32 +62,6 @@ const TableCard = ({
         userSelect: 'none',
       }}
     >
-      {/* Connect mode: pending source badge */}
-      {isPendingSource && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '8px',
-            padding: '0 6px',
-            height: '14px',
-            backgroundColor: '#22c55e',
-            color: '#fff',
-            fontSize: '8px',
-            fontWeight: 900,
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-        >
-          FROM
-        </div>
-      )}
-
       {/* Type badge tab */}
       {typeLabel && (
         <div
