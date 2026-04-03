@@ -5,6 +5,16 @@ import { CONSUMER_DEFAULT_COLOR } from '../lib/colors'
 const DEFAULT_COLOR = CONSUMER_DEFAULT_COLOR
 const DEFAULT_ICON = '📊'
 
+/** Returns '#ffffff' or a dark color depending on the perceived luminance of a hex color. */
+function contrastColor(hex: string): string {
+  const c = hex.replace('#', '')
+  if (c.length !== 6) return '#1e293b'
+  const r = parseInt(c.slice(0, 2), 16)
+  const g = parseInt(c.slice(2, 4), 16)
+  const b = parseInt(c.slice(4, 6), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#1e293b' : '#ffffff'
+}
+
 interface ConsumerCardProps {
   consumer: Consumer
   isSelected: boolean
@@ -90,9 +100,9 @@ const ConsumerCard = ({ consumer, isSelected, isDimmed, theme }: ConsumerCardPro
               textTransform: 'uppercase',
               padding: '1px 5px',
               borderRadius: '3px',
-              backgroundColor: `${color}20`,
-              color: color,
-              border: `1px solid ${color}40`,
+              backgroundColor: dark ? `${color}20` : color,
+              color: dark ? color : contrastColor(color),
+              border: `1px solid ${dark ? `${color}40` : color}`,
             }}
           >
             CONSUMER

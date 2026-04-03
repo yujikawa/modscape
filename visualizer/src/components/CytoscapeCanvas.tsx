@@ -769,6 +769,7 @@ export default function CytoscapeCanvas({
     relationships: Schema['relationships']
     domains: Schema['domains']
     annotations: Schema['annotations']
+    consumers: Schema['consumers']
   } | null>(null)
   const onNodeClickRef = useRef(onNodeClick)
   const onEdgeCreatedRef = useRef(onEdgeCreated)
@@ -1197,7 +1198,8 @@ export default function CytoscapeCanvas({
       (schema.lineage ?? null) === (prev.lineage ?? null) &&
       (schema.relationships ?? null) === (prev.relationships ?? null) &&
       (schema.domains ?? null) === (prev.domains ?? null) &&
-      (schema.annotations ?? null) === (prev.annotations ?? null)
+      (schema.annotations ?? null) === (prev.annotations ?? null) &&
+      (schema.consumers ?? null) === (prev.consumers ?? null)
 
     prevSchemaStructRef.current = {
       tables: schema.tables,
@@ -1205,6 +1207,7 @@ export default function CytoscapeCanvas({
       relationships: schema.relationships,
       domains: schema.domains,
       annotations: schema.annotations,
+      consumers: schema.consumers,
     }
 
     if (onlyLayoutChanged) {
