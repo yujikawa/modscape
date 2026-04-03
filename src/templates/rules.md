@@ -786,8 +786,8 @@ modscape domain add model.yaml \
 
 **domain member add / remove**
 ```bash
-modscape domain member add model.yaml --domain <domainId> --table <tableId> [--json]
-modscape domain member remove model.yaml --domain <domainId> --table <tableId> [--json]
+modscape domain member add model.yaml --domain <domainId> --id <tableId|consumerId> [--json]
+modscape domain member remove model.yaml --domain <domainId> --id <tableId|consumerId> [--json]
 ```
 
 **consumer list / get / add / update / remove**

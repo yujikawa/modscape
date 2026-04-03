@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.2] - 2026-04-03
+
+### Fixed
+- **Consumer not accepted as domain member via CLI/MCP** — `domain member add` and the `add_domain_member` MCP tool rejected consumer IDs with "Table not found" because the validation only checked `tables`, not `consumers`. Fixed by also looking up `consumers` when validating the member ID. The model validator (`modscape validate`) had the same issue and now accepts consumer IDs in `domains.members` as well.
+
+### Changed
+- **`domain member add/remove --table` renamed to `--id`** — The flag name `--table` was misleading since consumers are also valid domain members. Renamed to `--id` to reflect that any member ID (table or consumer) can be passed. The MCP tool parameter `table_id` is likewise renamed to `member_id`.
+
 ## [2.5.1] - 2026-04-03
 
 ### Fixed

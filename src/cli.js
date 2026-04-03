@@ -470,27 +470,27 @@ export function domainCommand() {
 
   member
     .command('add <file>')
-    .description('Add a table to a domain')
+    .description('Add a table or consumer to a domain')
     .requiredOption('--domain <domainId>', 'domain ID')
-    .requiredOption('--table <tableId>', 'table ID to add')
+    .requiredOption('--id <memberId>', 'table or consumer ID to add')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       run(opts.json, () => {
-        addDomainMember(file, { domainId: opts.domain, tableId: opts.table });
-        outputOk(opts.json, 'member_add', 'domain', `${opts.domain} ← ${opts.table}`);
+        addDomainMember(file, { domainId: opts.domain, memberId: opts.id });
+        outputOk(opts.json, 'member_add', 'domain', `${opts.domain} ← ${opts.id}`);
       });
     });
 
   member
     .command('remove <file>')
-    .description('Remove a table from a domain')
+    .description('Remove a table or consumer from a domain')
     .requiredOption('--domain <domainId>', 'domain ID')
-    .requiredOption('--table <tableId>', 'table ID to remove')
+    .requiredOption('--id <memberId>', 'table or consumer ID to remove')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       run(opts.json, () => {
-        removeDomainMember(file, { domainId: opts.domain, tableId: opts.table });
-        outputOk(opts.json, 'member_remove', 'domain', `${opts.domain} ✕ ${opts.table}`);
+        removeDomainMember(file, { domainId: opts.domain, memberId: opts.id });
+        outputOk(opts.json, 'member_remove', 'domain', `${opts.domain} ✕ ${opts.id}`);
       });
     });
 

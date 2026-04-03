@@ -57,9 +57,9 @@ export function validateModel(filePath) {
       if (field in domain) err(`domains[${domain.id}].${field}`, `Coordinate field "${field}" must be placed in layout, not inside domains`);
     }
 
-    // members reference check
+    // members reference check (tables or consumers)
     for (const memberId of domain.members || []) {
-      if (!tableIds.has(memberId)) err(`domains[${domain.id}].members`, `Table "${memberId}" not found`);
+      if (!tableIds.has(memberId) && !consumerIds.has(memberId)) err(`domains[${domain.id}].members`, `Table or consumer "${memberId}" not found`);
     }
   }
 
