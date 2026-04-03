@@ -18,6 +18,7 @@ interface AppState {
   selectedTableId: string | null;
   selectedTableIds: string[];
   selectedEdgeId: string | null;
+  selectedEdgeKind: 'lineage' | 'er' | null;
   selectedAnnotationId: string | null;
   highlightedNodeIds: string[];
   hoveredColumnId: string | null;
@@ -113,7 +114,7 @@ interface AppState {
   applyLayout: (newLayout: Record<string, any>) => void;
   executePipeline: (input: string, previewOnly?: boolean) => { stages: any[], outputIds: string[] };
   toggleTableSelection: (id: string) => void;
-  toggleEdgeSelection: (id: string) => void;
+  toggleEdgeSelection: (id: string, kind: 'lineage' | 'er') => void;
   toggleAnnotationSelection: (id: string) => void;
   
   // Annotation Actions
@@ -169,6 +170,7 @@ export const useStore = create<AppState>()(persist(
   selectedTableId: null,
   selectedTableIds: [],
   selectedEdgeId: null,
+  selectedEdgeKind: null,
   selectedAnnotationId: null,
   highlightedNodeIds: [],
   hoveredColumnId: null,
@@ -257,9 +259,10 @@ export const useStore = create<AppState>()(persist(
     selectedTableIds: ids,
   }),
 
-  setSelectedEdgeId: (id) => set({ 
-    selectedEdgeId: id, 
-    selectedTableId: null, 
+  setSelectedEdgeId: (id) => set({
+    selectedEdgeId: id,
+    selectedEdgeKind: null,
+    selectedTableId: null,
     selectedAnnotationId: null,
     isDetailPanelMinimized: id ? get().isDetailPanelMinimized : true
   }),
@@ -1004,10 +1007,10 @@ export const useStore = create<AppState>()(persist(
     else set({ selectedTableId: id, selectedEdgeId: null, selectedAnnotationId: null });
   },
 
-  toggleEdgeSelection: (id) => {
+  toggleEdgeSelection: (id, kind) => {
     const { selectedEdgeId } = get();
-    if (selectedEdgeId === id) set({ selectedEdgeId: null });
-    else set({ selectedEdgeId: id, selectedTableId: null, selectedAnnotationId: null });
+    if (selectedEdgeId === id) set({ selectedEdgeId: null, selectedEdgeKind: null });
+    else set({ selectedEdgeId: id, selectedEdgeKind: kind, selectedTableId: null, selectedAnnotationId: null });
   },
 
   toggleAnnotationSelection: (id) => {
@@ -1122,30 +1125,28 @@ export const useStore = create<AppState>()(persist(
   },
 
   getSelectedRelationship: () => {
-    const { schema, selectedEdgeId } = get();
+    const { schema, selectedEdgeId, selectedEdgeKind } = get();
     if (!schema || !selectedEdgeId) return null;
 
-    // Lineage search
-    if (selectedEdgeId.startsWith('lin-')) {
+    if (selectedEdgeKind === 'lineage') {
       const idx = (schema.lineage || []).findIndex(e => e.id === selectedEdgeId);
-      if (idx !== -1) {
-        const edge = schema.lineage![idx];
-        return { 
-          relationship: { 
-            from: { table: edge.from }, 
-            to: { table: edge.to }, 
-            type: 'lineage' as any,
-            description: edge.description
-          }, 
-          index: idx, 
-          kind: 'lineage' as const 
-        };
-      }
+      if (idx === -1) return null;
+      const edge = schema.lineage![idx];
+      return {
+        relationship: {
+          from: { table: edge.from },
+          to: { table: edge.to },
+          type: 'lineage' as any,
+          description: edge.description
+        },
+        index: idx,
+        kind: 'lineage' as const
+      };
     }
 
-    // Relationship search
-    const idx = (schema.relationships || []).findIndex(r => r.id === selectedEdgeId);
-    if (idx !== -1) {
+    if (selectedEdgeKind === 'er') {
+      const idx = (schema.relationships || []).findIndex(r => r.id === selectedEdgeId);
+      if (idx === -1) return null;
       return { relationship: schema.relationships![idx], index: idx, kind: 'er' as const };
     }
 

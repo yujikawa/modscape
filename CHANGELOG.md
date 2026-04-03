@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.1] - 2026-04-03
+
+### Fixed
+- **Lineage edge click unresponsive in Detail Panel** — Clicking a lineage edge added via AI agent or CLI had no effect in the Detail Panel. The root cause was that `getSelectedRelationship` routed edge lookups solely by `id.startsWith('lin-')`, so any lineage ID that did not carry the `lin-` prefix (e.g. `lin_foo` with an underscore, or a custom ID) was silently skipped. Fixed by storing the edge `kind` (`'lineage'` | `'er'`) at selection time (`selectedEdgeKind`) and using it to route directly to the correct array, eliminating all prefix-based assumptions. The same kind-based routing is now applied to edge deletion (Delete key).
+
 ## [2.5.0] - 2026-04-02
 
 ### Added
