@@ -91,7 +91,7 @@ export function validateModel(filePath) {
   }
 
   // ── Layout checks ─────────────────────────────────────────────────────────
-  const validLayoutIds = new Set([...tableIds, ...domainIds]);
+  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds]);
   for (const [id, coords] of Object.entries(layout)) {
     if (!validLayoutIds.has(id)) {
       warn(`layout.${id}`, `"${id}" not found in tables or domains — orphaned layout entry`);
