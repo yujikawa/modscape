@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.1] - 2026-04-03
+
+### Fixed
+- **Keyboard shortcuts for edge drawing and consumer** — Added `L` to toggle Lineage Edge mode (previously `C`), `R` to toggle ER Edge mode (previously no shortcut), and reassigned `C` to Add Consumer (previously `U`). Tooltips and Shortcut Guide updated accordingly.
+- **Consumer color change not reflected on canvas** — Updating a consumer's color in the Detail Panel was not applied to the canvas node. The schema sync fast-path excluded `consumers` from its change detection, causing Cytoscape element data to stay stale. Fixed by adding `consumers` to the structural change check.
+- **Consumer tag unreadable with light colors in light mode** — The CONSUMER tag used the accent color directly as text color, making it invisible against a light background. In light mode the tag now uses a solid color fill with auto-selected contrast text (dark or white based on perceived luminance).
+- **ActivityBar tooltip hidden behind Detail Panel** — Hover tooltips on ActivityBar icons (Add Table, Draw Lineage, etc.) were rendered behind the Detail Panel. Fixed by raising the Sidebar stacking context from `z-50` to `z-60`, above the Detail Panel.
+- **Lineage edge click unresponsive in Detail Panel** — Clicking a lineage edge added via AI agent or CLI had no effect in the Detail Panel. The root cause was that `getSelectedRelationship` routed edge lookups solely by `id.startsWith('lin-')`, so any lineage ID that did not carry the `lin-` prefix (e.g. `lin_foo` with an underscore, or a custom ID) was silently skipped. Fixed by storing the edge `kind` (`'lineage'` | `'er'`) at selection time (`selectedEdgeKind`) and using it to route directly to the correct array, eliminating all prefix-based assumptions. The same kind-based routing is now applied to edge deletion (Delete key).
+
 ## [2.5.0] - 2026-04-02
 
 ### Added

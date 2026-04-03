@@ -769,6 +769,7 @@ export default function CytoscapeCanvas({
     relationships: Schema['relationships']
     domains: Schema['domains']
     annotations: Schema['annotations']
+    consumers: Schema['consumers']
   } | null>(null)
   const onNodeClickRef = useRef(onNodeClick)
   const onEdgeCreatedRef = useRef(onEdgeCreated)
@@ -1197,7 +1198,8 @@ export default function CytoscapeCanvas({
       (schema.lineage ?? null) === (prev.lineage ?? null) &&
       (schema.relationships ?? null) === (prev.relationships ?? null) &&
       (schema.domains ?? null) === (prev.domains ?? null) &&
-      (schema.annotations ?? null) === (prev.annotations ?? null)
+      (schema.annotations ?? null) === (prev.annotations ?? null) &&
+      (schema.consumers ?? null) === (prev.consumers ?? null)
 
     prevSchemaStructRef.current = {
       tables: schema.tables,
@@ -1205,6 +1207,7 @@ export default function CytoscapeCanvas({
       relationships: schema.relationships,
       domains: schema.domains,
       annotations: schema.annotations,
+      consumers: schema.consumers,
     }
 
     if (onlyLayoutChanged) {
@@ -1779,19 +1782,26 @@ export default function CytoscapeCanvas({
       if (isTyping || e.repeat) return
 
       const key = e.key.toLowerCase()
-      if (key === 'c') {
+      if (key === 'l') {
         e.preventDefault()
         const { connectMode, setConnectMode } = useStore.getState()
         setConnectMode(connectMode === 'lineage' ? null : 'lineage')
         return
       }
 
-      if (key === 't' || key === 'd' || key === 'u' || key === 's') {
+      if (key === 'r') {
+        e.preventDefault()
+        const { connectMode, setConnectMode } = useStore.getState()
+        setConnectMode(connectMode === 'er' ? null : 'er')
+        return
+      }
+
+      if (key === 't' || key === 'd' || key === 'c' || key === 's') {
         e.preventDefault()
         const center = screenToCanvas(window.innerWidth / 2, window.innerHeight / 2)
         if (key === 't') onAddTableAt(center.x - 160, center.y - 125)
         else if (key === 'd') onAddDomainAt(center.x - 300, center.y - 200)
-        else if (key === 'u') onAddConsumerAt(center.x - 80, center.y - 30)
+        else if (key === 'c') onAddConsumerAt(center.x - 80, center.y - 30)
         else onAddAnnotationAt(center.x - 60, center.y - 40)
         return
       }

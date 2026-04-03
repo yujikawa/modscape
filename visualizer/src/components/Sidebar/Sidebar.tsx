@@ -22,7 +22,7 @@ const Sidebar = memo(() => {
 
   return (
     <div
-      className={`relative h-full flex flex-row border-r transition-all duration-300 ease-in-out shadow-2xl z-50 ${
+      className={`relative h-full flex flex-row border-r transition-all duration-300 ease-in-out shadow-2xl z-[60] ${
         isSidebarOpen ? 'w-[456px]' : 'w-14'
       } ${
         theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'

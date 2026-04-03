@@ -20,6 +20,7 @@ function Flow() {
     setSelectedTableId,
     selectedTableId,
     selectedEdgeId,
+    selectedEdgeKind,
     setSelectedEdgeId,
     selectedAnnotationId,
     setSelectedAnnotationId,
@@ -52,6 +53,7 @@ function Flow() {
     setSelectedTableId: s.setSelectedTableId,
     selectedTableId: s.selectedTableId,
     selectedEdgeId: s.selectedEdgeId,
+    selectedEdgeKind: s.selectedEdgeKind,
     setSelectedEdgeId: s.setSelectedEdgeId,
     selectedAnnotationId: s.selectedAnnotationId,
     setSelectedAnnotationId: s.setSelectedAnnotationId,
@@ -245,10 +247,10 @@ function Flow() {
         // Edge delete (no table/annotation selected)
         if (!selectedTableId && !selectedAnnotationId) {
           if (selectedEdgeId) {
-            const lineageEdge = schema?.lineage?.find(e => e.id === selectedEdgeId)
-            if (lineageEdge) {
-              removeEdge(lineageEdge.from, lineageEdge.to, 'lineage')
-            } else {
+            if (selectedEdgeKind === 'lineage') {
+              const lineageEdge = schema?.lineage?.find(e => e.id === selectedEdgeId)
+              if (lineageEdge) removeEdge(lineageEdge.from, lineageEdge.to, 'lineage')
+            } else if (selectedEdgeKind === 'er') {
               const rel = schema?.relationships?.find(r => r.id === selectedEdgeId)
               if (rel) removeEdge(rel.from.table, rel.to.table, 'er')
             }
@@ -274,7 +276,7 @@ function Flow() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId,
-    selectedTableId, selectedEdgeId, selectedAnnotationId,
+    selectedTableId, selectedEdgeId, selectedEdgeKind, selectedAnnotationId,
     selectedTableIds, distributeSelectedTables,
     schema, removeNode, bulkRemoveTables, removeEdge, removeAnnotation,
   ])
@@ -288,7 +290,7 @@ function Flow() {
     id: string; kind: string; source: string; target: string;
     fromColumn?: string[] | null; toColumn?: string[] | null; relType?: string
   }) => {
-    toggleEdgeSelection(edgeData.id)
+    toggleEdgeSelection(edgeData.id, edgeData.kind as 'lineage' | 'er')
   }, [toggleEdgeSelection])
 
   const handlePaneClick = useCallback(() => {

@@ -157,7 +157,7 @@ const ActivityBar = () => {
                 <FileChartColumnIncreasing size={20} />
                 <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
               </div>
-              <Tooltip text="Add Consumer (U)" />
+              <Tooltip text="Add Consumer (C)" />
             </button>
             <button onClick={handleAddAnnotation} className={iconClass(false, 'text-amber-400')}>
               <div className="relative">
@@ -171,20 +171,20 @@ const ActivityBar = () => {
                 <Spline size={20} />
                 <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
               </div>
-              <Tooltip text={connectMode === 'lineage' ? "Exit Lineage Mode (Esc)" : "Draw Lineage Edge (C)"} />
+              <Tooltip text={connectMode === 'lineage' ? "Exit Lineage Mode (Esc)" : "Draw Lineage Edge (L)"} />
             </button>
             <button onClick={() => setConnectMode(connectMode === 'er' ? null : 'er')} className={iconClass(connectMode === 'er', 'text-emerald-400')}>
               <div className="relative">
                 <Network size={20} />
                 <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
               </div>
-              <Tooltip text={connectMode === 'er' ? "Exit ER Mode (Esc)" : "Draw ER Edge"} />
+              <Tooltip text={connectMode === 'er' ? "Exit ER Mode (Esc)" : "Draw ER Edge (R)"} />
             </button>
 
             {/* Draw mode button */}
             <button onClick={() => setIsDrawMode(!isDrawMode)} className={iconClass(isDrawMode, 'text-pink-400')}>
               <Pencil size={20} />
-              <Tooltip text={isDrawMode ? "Exit Draw Mode" : "Draw Mode"} />
+              <Tooltip text={isDrawMode ? "Exit Draw Mode (P)" : "Draw Mode (P)"} />
             </button>
           </div>
         </div>
@@ -230,8 +230,10 @@ const ActivityBar = () => {
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Quick Create</h3>
                 <ShortcutRow label="New Table" keys={['T']} />
                 <ShortcutRow label="New Domain" keys={['D']} />
-                <ShortcutRow label="New Consumer" keys={['U']} />
+                <ShortcutRow label="New Consumer" keys={['C']} />
                 <ShortcutRow label="New Sticky Note" keys={['S']} />
+                <ShortcutRow label="Draw Lineage Edge" keys={['L']} />
+                <ShortcutRow label="Draw ER Edge" keys={['R']} />
                 <ShortcutRow label="Draw Mode" keys={['P']} />
               </section>
 
