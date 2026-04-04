@@ -17,18 +17,22 @@ interface Suggestion {
 }
 
 const COMMANDS: { cmd: string; desc: string }[] = [
-  { cmd: '/t',     desc: 'Add table' },
-  { cmd: '/d',     desc: 'Add domain' },
-  { cmd: '/c',     desc: 'Add consumer' },
-  { cmd: '/s',     desc: 'Add annotation' },
-  { cmd: '/er',    desc: 'ER relationship  /er <src.col> <tgt.col>' },
-  { cmd: '/ln',    desc: 'Lineage  /ln <source> <target>' },
-  { cmd: '/mv',    desc: 'Move to domain  /mv <pattern> <domain>' },
-  { cmd: '/del',   desc: 'Delete  /del <pattern>' },
-  { cmd: '/find',  desc: 'Find and focus  /find <name>' },
-  { cmd: '/fit',   desc: 'Fit view' },
-  { cmd: '/pos',   desc: 'Move to position  /pos <id> <x> <y>' },
-  { cmd: '/theme', desc: 'Switch theme  /theme dark|light' },
+  { cmd: '/t',      desc: 'Add table' },
+  { cmd: '/d',      desc: 'Add domain' },
+  { cmd: '/c',      desc: 'Add consumer' },
+  { cmd: '/s',      desc: 'Add annotation' },
+  { cmd: '/er',     desc: 'ER relationship  /er <src.col> <tgt.col> [1n|n1|nn|11]' },
+  { cmd: '/ln',     desc: 'Lineage  /ln <source> <target>' },
+  { cmd: '/mv',     desc: 'Move to domain  /mv <pattern> <domain>' },
+  { cmd: '/del',    desc: 'Delete  /del <id>' },
+  { cmd: '/get',    desc: 'Show details  /get <id>' },
+  { cmd: '/rename', desc: 'Rename table ID  /rename <id> <newId>' },
+  { cmd: '/label',  desc: 'Set display name  /label <id> <name>' },
+  { cmd: '/col',    desc: 'Column ops  /col add|rm <tableId> [colId]' },
+  { cmd: '/find',   desc: 'Find and focus  /find <name>' },
+  { cmd: '/fit',    desc: 'Fit view' },
+  { cmd: '/pos',    desc: 'Move to position  /pos <id> <x> <y>' },
+  { cmd: '/theme',  desc: 'Switch theme  /theme dark|light' },
 ]
 
 const DEFAULT_W = 380
@@ -78,6 +82,14 @@ const TerminalBar = memo(() => {
       (t.columns ?? []).map(c => ({ value: `${t.id}.${c.id}` }))
     )
   }, [schema])
+  const edgeIds = useMemo(() => [
+    ...(schema?.relationships ?? []).map(r => ({ id: r.id ?? '', desc: `${r.from.table} → ${r.to.table} (er)` })).filter(e => e.id),
+    ...(schema?.lineage ?? []).map(l => ({ id: l.id ?? '', desc: `${l.from} → ${l.to} (ln)` })).filter(e => e.id),
+  ], [schema])
+  const allNodeIds = useMemo(() => [
+    ...tableIds.map(t => ({ value: t.id, label: t.id, desc: t.name, type: 'table' as const })),
+    ...domainIds.map(d => ({ value: d.id, label: d.id, desc: d.name, type: 'domain' as const })),
+  ], [tableIds, domainIds])
 
   // Center panel on first open
   useEffect(() => {
@@ -177,11 +189,54 @@ const TerminalBar = memo(() => {
         ]
         next = allNodes.filter(n => n.value.toLowerCase().includes(q) && n.value !== currentArg).slice(0, 8)
       }
-    } else if (cmd === '/ln' || cmd === '/del' || cmd === '/find') {
+    } else if (cmd === '/del') {
+      // All node IDs + edge IDs
+      const allDel: Suggestion[] = [
+        ...allNodeIds,
+        ...edgeIds.map(e => ({ value: e.id, label: e.id, desc: e.desc, type: 'table' as const })),
+      ]
+      next = allDel.filter(n => n.value.toLowerCase().includes(q) && n.value !== currentArg).slice(0, 10)
+    } else if (cmd === '/get') {
+      const allGet: Suggestion[] = [
+        ...allNodeIds,
+        ...edgeIds.map(e => ({ value: e.id, label: e.id, desc: e.desc, type: 'table' as const })),
+      ]
+      next = allGet.filter(n => n.value.toLowerCase().includes(q) && n.value !== currentArg).slice(0, 10)
+    } else if (cmd === '/rename') {
+      // Tables only (domains not supported)
       next = tableIds
         .filter(t => (t.id.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)) && t.id !== currentArg)
         .slice(0, 8)
         .map(t => ({ value: t.id, label: t.id, desc: t.name, type: 'table' as const }))
+    } else if (cmd === '/label') {
+      next = allNodeIds.filter(n => n.value.toLowerCase().includes(q) && n.value !== currentArg).slice(0, 8)
+    } else if (cmd === '/col') {
+      // arg1: sub-command (add/rm), arg2: tableId, arg3: colId (rm only)
+      if (argCount < 1) {
+        next = ['add', 'rm']
+          .filter(s => s.startsWith(q))
+          .map(s => ({ value: s, label: s, desc: s === 'add' ? 'Add column' : 'Remove column', type: 'command' as const }))
+      } else if (argCount < 2) {
+        next = tableIds
+          .filter(t => (t.id.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)) && t.id !== currentArg)
+          .slice(0, 8)
+          .map(t => ({ value: t.id, label: t.id, desc: t.name, type: 'table' as const }))
+      } else if (argCount < 3 && tokens[1] === 'rm') {
+        // Column completion for /col rm <tableId> <colId>
+        const tableId = tokens[2]
+        const table = schema?.tables.find(t => t.id === tableId)
+        next = (table?.columns ?? [])
+          .filter(c => c.id.toLowerCase().includes(q) && c.id !== currentArg)
+          .slice(0, 10)
+          .map(c => ({ value: c.id, label: c.id, desc: c.logical?.name ?? '', type: 'column' as const }))
+      }
+    } else if (cmd === '/ln') {
+      next = tableIds
+        .filter(t => (t.id.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)) && t.id !== currentArg)
+        .slice(0, 8)
+        .map(t => ({ value: t.id, label: t.id, desc: t.name, type: 'table' as const }))
+    } else if (cmd === '/find') {
+      next = allNodeIds.filter(n => (n.value.toLowerCase().includes(q) || (n.desc ?? '').toLowerCase().includes(q)) && n.value !== currentArg).slice(0, 8)
     } else if (cmd === '/mv') {
       if (argCount < 1) {
         next = tableIds
@@ -203,7 +258,7 @@ const TerminalBar = memo(() => {
     setSuggestions(next)
     setSuggestionIndex(0)
     void argCount
-  }, [input, tableIds, domainIds, columnIds, schema])
+  }, [input, tableIds, domainIds, columnIds, edgeIds, allNodeIds, schema])
 
   // Canvas highlight
   useEffect(() => {

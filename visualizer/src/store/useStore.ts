@@ -100,6 +100,7 @@ interface AppState {
   updateRelationshipDescription: (id: string, description: string) => void;
   updateRelationship: (index: number, updates: Partial<Relationship>) => void;
   removeEdge: (sourceId: string, targetId: string, kind?: 'er' | 'lineage') => void;
+  removeEdgeById: (id: string) => void;
   removeNode: (id: string) => void;
   bulkRemoveTables: (ids: string[]) => void;
   updateTable: (id: string, updates: Partial<Table>) => void;
@@ -603,6 +604,17 @@ export const useStore = create<AppState>()(persist(
     get().saveSchema();
   },
 
+  removeEdgeById: (id) => {
+    pushHistory(get, set);
+    const { schema } = get();
+    if (!schema) return;
+    const newRels = (schema.relationships ?? []).filter(r => r.id !== id);
+    const newLineage = (schema.lineage ?? []).filter(e => e.id !== id);
+    set({ schema: { ...schema, relationships: newRels, lineage: newLineage }, selectedEdgeId: null });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
   removeNode: (id) => {
     pushHistory(get, set);
     const { schema } = get();
@@ -916,9 +928,16 @@ export const useStore = create<AppState>()(persist(
       }
 
       if (cmd === 'del') {
-        if (!args.length) return { status: 'error', message: 'Usage: del <pattern>' };
+        if (!args.length) return { status: 'error', message: 'Usage: del <id|pattern>' };
         if (!schema) return { status: 'error', message: 'No model loaded' };
         const pattern = args[0];
+        // Check edge ID first (exact match only, no glob for edges)
+        const matchedRel = (schema.relationships ?? []).find(r => r.id === pattern);
+        const matchedLin = (schema.lineage ?? []).find(l => l.id === pattern);
+        if (matchedRel || matchedLin) {
+          get().removeEdgeById(pattern);
+          return { status: 'success', message: `Deleted edge: ${pattern}` };
+        }
         const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
         const matchedTables = schema.tables.filter(t => t.id === pattern || regex.test(t.id)).map(t => t.id);
         const matchedDomains = (schema.domains || []).filter(d => d.id === pattern || regex.test(d.id)).map(d => d.id);
@@ -956,6 +975,89 @@ export const useStore = create<AppState>()(persist(
         if (!exists) return { status: 'error', message: `Node not found: ${id}` };
         get().updateNodePosition(id, x, y);
         return { status: 'success', message: `Moved ${id} to (${x}, ${y})` };
+      }
+
+      if (cmd === 'get') {
+        if (!args.length) return { status: 'error', message: 'Usage: get <id>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const id = args[0];
+        const table = schema.tables.find(t => t.id === id);
+        if (table) {
+          const domain = (schema.domains ?? []).find(d => (d.members ?? []).includes(id));
+          const cols = (table.columns ?? []).map(c => {
+            const flags = [c.logical?.isPrimaryKey ? '*' : '', c.logical?.isForeignKey ? '†' : ''].filter(Boolean).join('');
+            return c.id + (flags ? `(${flags})` : '');
+          }).join(', ') || '—';
+          const ers = (schema.relationships ?? []).filter(r => r.from.table === id || r.to.table === id)
+            .map(r => `${r.from.table} → ${r.to.table} [${r.type ?? '1n'}]`).join(', ') || '—';
+          const lns = (schema.lineage ?? []).filter(l => l.from === id || l.to === id)
+            .map(l => `${l.from} → ${l.to}`).join(', ') || '—';
+          const msg = `${id}  (${table.appearance?.type ?? 'table'})  [${domain?.id ?? '—'}]\n  name   : ${table.name}\n  columns: ${cols}\n  er     : ${ers}\n  lineage: ${lns}`;
+          return { status: 'success', message: msg };
+        }
+        const domain = (schema.domains ?? []).find(d => d.id === id);
+        if (domain) {
+          const members = (domain.members ?? []).join(', ') || '—';
+          return { status: 'success', message: `${id}  (domain)\n  name   : ${domain.name}\n  members: ${members}` };
+        }
+        const rel = (schema.relationships ?? []).find(r => r.id === id);
+        if (rel) {
+          return { status: 'success', message: `${id}  (er)\n  ${rel.from.table}.${(rel.from.column ?? []).join(',')} → ${rel.to.table}.${(rel.to.column ?? []).join(',')}  [${rel.type ?? '1n'}]` };
+        }
+        const lin = (schema.lineage ?? []).find(l => l.id === id);
+        if (lin) {
+          return { status: 'success', message: `${id}  (lineage)\n  ${lin.from} → ${lin.to}` };
+        }
+        return { status: 'error', message: `Not found: ${id}` };
+      }
+
+      if (cmd === 'rename') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: rename <tableId> <newId>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [oldId, newId] = args;
+        if (!schema.tables.some(t => t.id === oldId)) {
+          if ((schema.domains ?? []).some(d => d.id === oldId)) return { status: 'error', message: 'Domain rename not supported' };
+          return { status: 'error', message: `Table not found: ${oldId}` };
+        }
+        if (schema.tables.some(t => t.id === newId)) return { status: 'error', message: `ID already exists: ${newId}` };
+        get().renameTableId(oldId, newId);
+        return { status: 'success', message: `Renamed: ${oldId} → ${newId}` };
+      }
+
+      if (cmd === 'label') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: label <id> <name>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [id, ...nameParts] = args;
+        const name = nameParts.join(' ');
+        if (schema.tables.some(t => t.id === id)) {
+          get().updateTable(id, { name });
+          return { status: 'success', message: `Updated name: ${id} → "${name}"` };
+        }
+        if ((schema.domains ?? []).some(d => d.id === id)) {
+          get().updateDomain(id, { name });
+          return { status: 'success', message: `Updated name: ${id} → "${name}"` };
+        }
+        return { status: 'error', message: `Not found: ${id}` };
+      }
+
+      if (cmd === 'col') {
+        if (args.length < 3) return { status: 'error', message: 'Usage: col add|rm <tableId> <colId>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [sub, tableId, colId] = args;
+        const table = schema.tables.find(t => t.id === tableId);
+        if (!table) return { status: 'error', message: `Table not found: ${tableId}` };
+        const cols = table.columns ?? [];
+        if (sub === 'add') {
+          if (cols.some(c => c.id === colId)) return { status: 'error', message: `Column already exists: ${colId}` };
+          get().updateTable(tableId, { columns: [...cols, { id: colId }] });
+          return { status: 'success', message: `Added column: ${tableId}.${colId}` };
+        }
+        if (sub === 'rm') {
+          if (!cols.some(c => c.id === colId)) return { status: 'error', message: `Column not found: ${colId}` };
+          get().updateTable(tableId, { columns: cols.filter(c => c.id !== colId) });
+          return { status: 'success', message: `Removed column: ${tableId}.${colId}` };
+        }
+        return { status: 'error', message: `Unknown sub-command: ${sub}. Use add or rm` };
       }
 
       if (cmd === 'theme') {
