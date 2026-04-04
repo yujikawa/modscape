@@ -717,7 +717,6 @@ export default function CytoscapeCanvas({
     hoveredColumnId,
     updateNodePosition,
     updateAnnotation,
-    connectMode,
   } = useStore(
     useShallow((s) => ({
       schema: s.schema,
@@ -734,7 +733,6 @@ export default function CytoscapeCanvas({
       hoveredColumnId: s.hoveredColumnId,
       updateNodePosition: s.updateNodePosition,
       updateAnnotation: s.updateAnnotation,
-      connectMode: s.connectMode,
     }))
   )
 
@@ -755,7 +753,7 @@ export default function CytoscapeCanvas({
   const selectedIdsRef = useRef<string[]>([])
   const highlightedIdsRef = useRef<string[]>([])
   const hoveredNodeIdRef = useRef<string | null>(null)
-  const connectPendingSourceRef = useRef<string | null>(null)
+
   const pathFinderResultRef = useRef<{ nodeIds: string[], edgeIds: string[] } | null>(null)
   const themeRef = useRef<'dark' | 'light'>(theme)
   const hoveredColumnIdRef = useRef<string | null>(null)
@@ -830,10 +828,6 @@ export default function CytoscapeCanvas({
         const isDimmed = pathFinderNodeSet
           ? !pathFinderNodeSet.has(id)
           : isAnythingHighlighted && !isSelected && !isHighlighted && !isHovered && !connectedToSelected.has(id)
-        const currentConnectMode = useStore.getState().connectMode
-        const isPendingSource = connectPendingSourceRef.current === id
-        const isConnectMode = !!currentConnectMode
-
         if (consumer) {
           root.render(
             <ConsumerCard
@@ -851,8 +845,6 @@ export default function CytoscapeCanvas({
               isDimmed={isDimmed}
               isHighlighted={isHighlighted}
               isHovered={isHovered}
-              isPendingSource={isPendingSource}
-              isConnectMode={isConnectMode}
               zoom={zoom}
               theme={themeRef.current}
               hoveredColumnId={hoveredColumnIdRef.current}
@@ -991,24 +983,6 @@ export default function CytoscapeCanvas({
     // ── Interaction events ────────────────────────────────────────
     cy.on('tap', 'node', (evt: CyInstance) => {
       const id: string = evt.target.id()
-      const mode = useStore.getState().connectMode
-      if (mode) {
-        const pending = connectPendingSourceRef.current
-        if (!pending) {
-          // 1st click: set as source
-          connectPendingSourceRef.current = id
-          updateAllCards()
-        } else if (pending === id) {
-          // clicked same node: cancel
-          connectPendingSourceRef.current = null
-          updateAllCards()
-        } else {
-          // 2nd click: create edge
-          onEdgeCreated(mode, pending, id)
-          connectPendingSourceRef.current = null
-        }
-        return
-      }
       onNodeClick(id)
     })
 
@@ -1361,24 +1335,7 @@ export default function CytoscapeCanvas({
                   useStore.getState().updateNodePosition(id, pos.x, pos.y)
                 }
               } else {
-                // Tap: handle connect mode or regular node click
-                const { connectMode } = useStore.getState()
-                if (connectMode) {
-                  const pending = connectPendingSourceRef.current
-                  if (!pending) {
-                    connectPendingSourceRef.current = id
-                    updateAllCards()
-                  } else if (pending === id) {
-                    connectPendingSourceRef.current = null
-                    updateAllCards()
-                  } else {
-                    onEdgeCreatedRef.current(connectMode, pending, id)
-                    connectPendingSourceRef.current = null
-                    updateAllCards()
-                  }
-                } else {
-                  onNodeClickRef.current(id)
-                }
+                onNodeClickRef.current(id)
               }
             }
 
@@ -1490,20 +1447,6 @@ export default function CytoscapeCanvas({
     cy.style(buildCytoscapeStyle(theme, zoomRef.current < LOW_ZOOM_THRESHOLD))
   }, [theme])
 
-  // ── Connect mode: reset pending source + clear hover highlight ──────
-  // Connect mode is handled entirely in the DOM mousedown handler's tap branch
-  // (using onEdgeCreatedRef to avoid stale closure issues).
-  // DOM containers keep pointer-events:auto so the mousedown handler fires normally.
-  useEffect(() => {
-    if (connectMode) {
-      hoveredNodeIdRef.current = null
-      highlightedIdsRef.current = []
-    } else {
-      connectPendingSourceRef.current = null
-    }
-    updateAllCards()
-  }, [connectMode, updateAllCards])
-
   // ── Expose canvas API to parent ──────────────────────────────────────
   useEffect(() => {
     const fitFn = () => {
@@ -1519,6 +1462,12 @@ export default function CytoscapeCanvas({
     }
     onFitView(fitFn)
     ;(window as any).__modscapeFitView = fitFn
+    ;(window as any).__modscapeCanvasCenter = () => {
+      const cy = cyRef.current
+      if (!cy) return { x: 400, y: 300 }
+      const ext = cy.extent()
+      return { x: (ext.x1 + ext.x2) / 2, y: (ext.y1 + ext.y2) / 2 }
+    }
   }, [onFitView])
 
   // ── Auto Layout (dagre LR + domain grid packing) ─────────────────────
@@ -1782,20 +1731,6 @@ export default function CytoscapeCanvas({
       if (isTyping || e.repeat) return
 
       const key = e.key.toLowerCase()
-      if (key === 'l') {
-        e.preventDefault()
-        const { connectMode, setConnectMode } = useStore.getState()
-        setConnectMode(connectMode === 'lineage' ? null : 'lineage')
-        return
-      }
-
-      if (key === 'r') {
-        e.preventDefault()
-        const { connectMode, setConnectMode } = useStore.getState()
-        setConnectMode(connectMode === 'er' ? null : 'er')
-        return
-      }
-
       if (key === 't' || key === 'd' || key === 'c' || key === 's') {
         e.preventDefault()
         const center = screenToCanvas(window.innerWidth / 2, window.innerHeight / 2)

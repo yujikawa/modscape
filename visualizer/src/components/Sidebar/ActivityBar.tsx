@@ -3,13 +3,11 @@ import { useStore } from '../../store/useStore'
 import {
   Grid,
   Layout,
-  Network,
   Plus,
   ChevronLeft,
   CircleHelp,
   X,
   Command,
-  Spline,
   Tag,
   FileChartColumnIncreasing,
   Pencil,
@@ -20,8 +18,6 @@ const ActivityBar = () => {
   const {
     isSidebarOpen,
     setIsSidebarOpen,
-    connectMode,
-    setConnectMode,
     addTable,
     addDomain,
     addConsumer,
@@ -166,21 +162,6 @@ const ActivityBar = () => {
               </div>
               <Tooltip text="Add Sticky Note (S)" />
             </button>
-            <button onClick={() => setConnectMode(connectMode === 'lineage' ? null : 'lineage')} className={iconClass(connectMode === 'lineage', 'text-blue-400')}>
-              <div className="relative">
-                <Spline size={20} />
-                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
-              </div>
-              <Tooltip text={connectMode === 'lineage' ? "Exit Lineage Mode (Esc)" : "Draw Lineage Edge (L)"} />
-            </button>
-            <button onClick={() => setConnectMode(connectMode === 'er' ? null : 'er')} className={iconClass(connectMode === 'er', 'text-emerald-400')}>
-              <div className="relative">
-                <Network size={20} />
-                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
-              </div>
-              <Tooltip text={connectMode === 'er' ? "Exit ER Mode (Esc)" : "Draw ER Edge (R)"} />
-            </button>
-
             {/* Draw mode button */}
             <button onClick={() => setIsDrawMode(!isDrawMode)} className={iconClass(isDrawMode, 'text-pink-400')}>
               <Pencil size={20} />

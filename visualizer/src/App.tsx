@@ -5,7 +5,7 @@ import CytoscapeCanvas from './components/CytoscapeCanvas'
 import DetailPanel from './components/DetailPanel'
 import Sidebar from './components/Sidebar/Sidebar'
 import RightPanel from './components/RightPanel/RightPanel'
-import CommandPalette from './components/CommandPalette'
+import TerminalBar from './components/TerminalBar'
 import SelectionToolbar from './components/SelectionToolbar'
 import CanvasViewToolbar from './components/CanvasViewToolbar'
 import DrawOverlay, { type DrawOverlayHandle } from './components/DrawOverlay'
@@ -44,8 +44,6 @@ function Flow() {
     selectedTableIds,
     toggleTableSelection,
     toggleEdgeSelection,
-    connectMode,
-    setConnectMode,
     currentModelSlug,
   } = useStore(useShallow(s => ({
     schema: s.schema,
@@ -78,8 +76,6 @@ function Flow() {
     selectedTableIds: s.selectedTableIds,
     toggleTableSelection: s.toggleTableSelection,
     toggleEdgeSelection: s.toggleEdgeSelection,
-    connectMode: s.connectMode,
-    setConnectMode: s.setConnectMode,
     currentModelSlug: s.currentModelSlug,
   })))
 
@@ -174,7 +170,6 @@ function Flow() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (useStore.getState().isDrawMode) { useStore.getState().setIsDrawMode(false); return }
-        if (useStore.getState().connectMode) { useStore.getState().setConnectMode(null); return }
         useStore.getState().setPathFinderResult(null)
         setSelectedTableId(null)
         setSelectedEdgeId(null)
@@ -226,7 +221,7 @@ function Flow() {
 
       if (key === 'k' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
-        useStore.getState().setIsCommandPaletteOpen(!useStore.getState().isCommandPaletteOpen)
+        useStore.getState().setIsTerminalOpen(!useStore.getState().isTerminalOpen)
         return
       }
 
@@ -342,31 +337,8 @@ function Flow() {
     <div className="flex-1 relative h-full flex flex-col overflow-hidden">
       <div className="flex-1 relative overflow-hidden">
         <SelectionToolbar />
-        <CommandPalette />
+        <TerminalBar />
         <CanvasViewToolbar />
-
-        {connectMode && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-            <div className={`flex items-center gap-2 px-4 py-1.5 backdrop-blur-md rounded-full shadow-xl border ${
-              theme === 'dark' ? 'bg-slate-950/70 border-green-500/50' : 'bg-white/80 border-green-500/40'
-            }`}>
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                {connectMode === 'lineage' ? 'Lineage' : 'ER'} Connect Mode
-              </span>
-              <div className={`w-px h-3 ${theme === 'dark' ? 'bg-green-500/20' : 'bg-green-500/30'}`} />
-              <span className={`text-[10px] font-bold ${theme === 'dark' ? 'text-green-400/70' : 'text-green-600/70'}`}>
-                Click source → target · Esc to exit
-              </span>
-              <button
-                className="pointer-events-auto ml-1 opacity-60 hover:opacity-100 transition-opacity"
-                onClick={() => setConnectMode(null)}
-              >
-                <span className={`text-[10px] font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>✕</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {isModelLoading && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, zIndex: 10, pointerEvents: 'none' }}>

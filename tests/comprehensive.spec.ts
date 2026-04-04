@@ -48,16 +48,16 @@ test.describe.serial('Modscape Main E2E Suite', () => {
     await expect(page.locator('.cm-editor')).toBeVisible();
   });
 
-  test('Command Palette: Visibility and Toggle', async ({ page }) => {
+  test('Terminal Bar: Visibility and Toggle', async ({ page }) => {
     // Toggle with Ctrl+K
     await page.keyboard.press('Control+k');
-    const palette = page.locator('input[placeholder*="select * | mv Core"]');
-    await expect(palette).toBeVisible();
-    await expect(palette).toBeFocused();
+    const terminal = page.locator('input[placeholder*="/ for commands"]');
+    await expect(terminal).toBeVisible();
+    await expect(terminal).toBeFocused();
 
     // Close with Escape
     await page.keyboard.press('Escape');
-    await expect(palette).not.toBeVisible();
+    await expect(terminal).not.toBeVisible();
   });
 
   test('Visual: Sidebar snapshot', async ({ page }) => {

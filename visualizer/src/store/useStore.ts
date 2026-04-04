@@ -47,7 +47,7 @@ interface AppState {
   isSidebarOpen: boolean;
   isRightPanelOpen: boolean;
   isQuickConnectBarOpen: boolean;
-  isCommandPaletteOpen: boolean;
+  isTerminalOpen: boolean;
   activeTab: 'yaml' | 'stats';
   activeRightPanelTab: 'search' | 'path' | 'notes';
   focusNodeId: string | null;
@@ -56,7 +56,6 @@ interface AppState {
   showLineage: boolean;
   showAnnotations: boolean;
   isCompactMode: boolean;
-  connectMode: 'lineage' | 'er' | null;
   isDrawMode: boolean;
   theme: 'dark' | 'light';
   isDetailPanelSuppressed: boolean;
@@ -77,7 +76,6 @@ interface AppState {
   setShowLineage: (show: boolean) => void;
   setShowAnnotations: (show: boolean) => void;
   setIsCompactMode: (v: boolean) => void;
-  setConnectMode: (mode: 'lineage' | 'er' | null) => void;
   setIsDrawMode: (v: boolean) => void;
   setIsAutoSaveEnabled: (enabled: boolean) => void;
   setLastUpdateSource: (source: 'user' | 'visual' | 'undo') => void;
@@ -95,13 +93,14 @@ interface AppState {
   addTable: (x: number, y: number, name?: string) => void;
   addDomain: (x: number, y: number, name?: string) => void;
   addConsumer: (x: number, y: number, name?: string) => void;
-  addRelationship: (source: string, target: string, sourceHandle?: string | null, targetHandle?: string | null) => void;
+  addRelationship: (source: string, target: string, sourceHandle?: string | null, targetHandle?: string | null, relType?: Relationship['type']) => void;
   bulkAddRelationship: (source: { table: string, column?: string }, targetPattern: string, type: Relationship['type'] | 'lineage') => void;
   addLineage: (source: string, target: string) => void;
   updateLineageDescription: (from: string, to: string, description: string) => void;
   updateRelationshipDescription: (id: string, description: string) => void;
   updateRelationship: (index: number, updates: Partial<Relationship>) => void;
   removeEdge: (sourceId: string, targetId: string, kind?: 'er' | 'lineage') => void;
+  removeEdgeById: (id: string) => void;
   removeNode: (id: string) => void;
   bulkRemoveTables: (ids: string[]) => void;
   updateTable: (id: string, updates: Partial<Table>) => void;
@@ -112,7 +111,7 @@ interface AppState {
   bulkAssignTablesToDomain: (tableIds: string[], domainId: string | null) => void;
   distributeSelectedTables: (direction: 'horizontal' | 'vertical') => void;
   applyLayout: (newLayout: Record<string, any>) => void;
-  executePipeline: (input: string, previewOnly?: boolean) => { stages: any[], outputIds: string[] };
+  executeCommand: (input: string) => { status: 'success' | 'error', message: string };
   toggleTableSelection: (id: string) => void;
   toggleEdgeSelection: (id: string, kind: 'lineage' | 'er') => void;
   toggleAnnotationSelection: (id: string) => void;
@@ -130,7 +129,7 @@ interface AppState {
   setIsSidebarOpen: (isOpen: boolean) => void;
   setIsRightPanelOpen: (isOpen: boolean) => void;
   setIsQuickConnectBarOpen: (isOpen: boolean) => void;
-  setIsCommandPaletteOpen: (isOpen: boolean) => void;
+  setIsTerminalOpen: (isOpen: boolean) => void;
   setActiveTab: (tab: 'yaml' | 'stats') => void;
   setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
@@ -213,7 +212,7 @@ export const useStore = create<AppState>()(persist(
   isSidebarOpen: true,
   isRightPanelOpen: false,
   isQuickConnectBarOpen: false,
-  isCommandPaletteOpen: false,
+  isTerminalOpen: false,
   activeTab: 'yaml',
   activeRightPanelTab: 'search',
   focusNodeId: null,
@@ -222,7 +221,6 @@ export const useStore = create<AppState>()(persist(
   showLineage: true,
   showAnnotations: true,
   isCompactMode: false,
-  connectMode: null,
   isDrawMode: false,
   theme: 'dark',
   isDetailPanelSuppressed: false,
@@ -283,7 +281,7 @@ export const useStore = create<AppState>()(persist(
   setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
   setIsRightPanelOpen: (isOpen) => set({ isRightPanelOpen: isOpen }),
   setIsQuickConnectBarOpen: (isOpen) => set({ isQuickConnectBarOpen: isOpen }),
-  setIsCommandPaletteOpen: (isOpen) => set({ isCommandPaletteOpen: isOpen }),
+  setIsTerminalOpen: (isOpen: boolean) => set({ isTerminalOpen: isOpen }),
   setActiveTab: (tab) => set({ activeTab: tab, isSidebarOpen: true }),
   setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab, isRightPanelOpen: true }),
   setIsAutoSaveEnabled: (enabled) => set({ isAutoSaveEnabled: enabled }),
@@ -321,7 +319,6 @@ export const useStore = create<AppState>()(persist(
   setShowLineage: (show) => set({ showLineage: show }),
   setShowAnnotations: (show) => set({ showAnnotations: show }),
   setIsCompactMode: (v: boolean) => set({ isCompactMode: v }),
-  setConnectMode: (mode) => set({ connectMode: mode }),
   setIsDrawMode: (v) => set({ isDrawMode: v }),
 
   updateNodePosition: (id, x, y, parentId) => {
@@ -505,7 +502,7 @@ export const useStore = create<AppState>()(persist(
     get().saveSchema();
   },
 
-  addRelationship: (source, target, sourceHandle, targetHandle) => {
+  addRelationship: (source, target, sourceHandle, targetHandle, relType) => {
     pushHistory(get, set);
     const { schema } = get();
     if (!schema) return;
@@ -514,7 +511,7 @@ export const useStore = create<AppState>()(persist(
     const newRel: Relationship = {
       from: { table: source, column: sCol ? [sCol] : undefined },
       to: { table: target, column: tCol ? [tCol] : undefined },
-      type: 'one-to-many'
+      type: relType ?? 'one-to-many'
     };
     const newSchema = { ...schema, relationships: [...(schema.relationships || []), newRel] };
     set({ schema: normalizeSchema(newSchema) });
@@ -602,6 +599,17 @@ export const useStore = create<AppState>()(persist(
     const newLineage = (kind === 'er')
       ? (schema.lineage ?? [])
       : (schema.lineage ?? []).filter(e => !(e.from === sourceId && e.to === targetId));
+    set({ schema: { ...schema, relationships: newRels, lineage: newLineage }, selectedEdgeId: null });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  removeEdgeById: (id) => {
+    pushHistory(get, set);
+    const { schema } = get();
+    if (!schema) return;
+    const newRels = (schema.relationships ?? []).filter(r => r.id !== id);
+    const newLineage = (schema.lineage ?? []).filter(e => e.id !== id);
     set({ schema: { ...schema, relationships: newRels, lineage: newLineage }, selectedEdgeId: null });
     get().syncToYamlInput();
     get().saveSchema();
@@ -824,181 +832,245 @@ export const useStore = create<AppState>()(persist(
     get().saveSchema();
   },
 
-  executePipeline: (input, previewOnly = false) => {
-    const { schema, selectedTableIds } = get();
-    if (!schema) return { stages: [], outputIds: [] };
-    const rawStages = input.split('|').map(s => s.trim()).filter(Boolean);
-    const stages: any[] = [];
-    let currentIds: string[] = [];
-    let tempSchema = JSON.parse(JSON.stringify(schema));
+  executeCommand: (input: string): { status: 'success' | 'error', message: string } => {
+    const tokens = input.trim().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return { status: 'error', message: 'Empty command' };
+    const cmd = tokens[0].toLowerCase();
+    const args = tokens.slice(1);
+    const { schema } = get();
 
-    rawStages.forEach((raw) => {
-      const parts = raw.split(/\s+/);
-      const cmd = parts[0].toLowerCase();
-      const args = parts.slice(1);
-      let outputIds: string[] = [...currentIds];
-      let message = '';
-      let status: 'success' | 'error' | 'active' = 'success';
+    const getCenter = (): { x: number, y: number } =>
+      (window as any).__modscapeCanvasCenter?.() ?? { x: 400, y: 300 };
 
-      try {
-        if (cmd === 'select') {
-          const pattern = args.join(' ');
-          if (pattern === '*') {
-            outputIds = [
-                ...tempSchema.tables.map((t: any) => t.id),
-                ...(tempSchema.domains || []).map((d: any) => d.id)
-            ];
-          } else if (pattern) {
-            const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
-            const matchedTables = tempSchema.tables
-                .filter((t: any) => t.id === pattern || regex.test(t.id) || regex.test(t.name))
-                .map((t: any) => t.id);
-            const matchedDomains = (tempSchema.domains || [])
-                .filter((d: any) => d.id === pattern || regex.test(d.id) || regex.test(d.name))
-                .map((d: any) => d.id);
-            outputIds = [...matchedTables, ...matchedDomains];
-          } else outputIds = [];
-          
-          if (outputIds.length > 0) { 
-            message = `Matched ${outputIds.length} objects`; 
-            status = 'success'; 
-          } else { 
-            status = 'error'; 
-            message = `No objects matched "${pattern}"`; 
-          }
-        } else if (cmd === 'selected') {
-          outputIds = [...selectedTableIds];
-          message = `Using ${outputIds.length} selected tables`;
-          status = 'success';
-        } else if (cmd === 'mv') {
-          const toIndex = parts.findIndex(p => p.toLowerCase() === 'to');
-          const domainId = toIndex > -1 ? parts.slice(toIndex + 1).join(' ') : args.join(' ');
-          if (!currentIds || currentIds.length === 0) { status = 'error'; message = 'No tables to move. Add a "select" stage.'; }
-          else if (domainId) {
-            const domainExists = (tempSchema.domains || []).some((d: any) => d.id === domainId);
-            if (!domainExists) { status = 'error'; message = `Domain "${domainId}" not found`; }
-            else {
-              tempSchema.domains = (tempSchema.domains || []).map((d: any) => {
-                const filtered = d.members.filter((tid: string) => !currentIds.includes(tid));
-                if (d.id === domainId) return { ...d, members: Array.from(new Set([...filtered, ...currentIds])) };
-                return { ...d, members: filtered };
-              });
-              currentIds.forEach(id => { if (tempSchema.layout) tempSchema.layout[id] = { x: 20, y: 20 }; });
-              message = `Move ${currentIds.length} to ${domainId}`;
-              status = 'success';
-            }
-          } else { status = 'active'; message = 'Waiting for domain...'; }
-        } else if (cmd === 'stack' || cmd === 'v' || cmd === 'h') {
-          const dir = (cmd === 'v' || args.includes('v') || args.includes('vertical')) ? 'vertical' : 'horizontal';
-          const tablePositions = currentIds.map(id => ({ id, pos: tempSchema.layout?.[id] || { x: 0, y: 0 } }));
-          if (dir === 'vertical') tablePositions.sort((a, b) => a.pos.y - b.pos.y);
-          else tablePositions.sort((a, b) => a.pos.x - b.pos.x);
-          const basePos = tablePositions.length > 0 ? tablePositions[0].pos : { x: 0, y: 0 };
-          tablePositions.forEach((item, i) => {
-            if (tempSchema.layout) tempSchema.layout[item.id] = {
-              x: dir === 'vertical' ? basePos.x : basePos.x + (i * 280),
-              y: dir === 'vertical' ? basePos.y + (i * 320) : basePos.y
-            };
-          });
-          message = `Stacked ${currentIds.length} ${dir}`;
-          status = 'success';
-        } else if (cmd === 'delete') {
-          const tableIdsToDelete = currentIds.filter(id => tempSchema.tables.some((t: any) => t.id === id));
-          const domainIdsToDelete = currentIds.filter(id => (tempSchema.domains || []).some((d: any) => d.id === id));
-          
-          tempSchema.tables = tempSchema.tables.filter((t: any) => !tableIdsToDelete.includes(t.id));
-          tempSchema.domains = (tempSchema.domains || []).filter((d: any) => !domainIdsToDelete.includes(d.id));
-          tempSchema.lineage = (tempSchema.lineage ?? []).filter((e: any) => !tableIdsToDelete.includes(e.from) && !tableIdsToDelete.includes(e.to));
-          
-          // CRITICAL: Cleanup parentId references if domains were deleted
-          if (domainIdsToDelete.length > 0 && tempSchema.layout) {
-            const layout = { ...tempSchema.layout };
-            Object.keys(layout).forEach(key => {
-              if (domainIdsToDelete.includes(layout[key].parentId)) {
-                const { parentId, ...rest } = layout[key];
-                layout[key] = rest;
-              }
-              if (domainIdsToDelete.includes(key)) {
-                delete layout[key];
-              }
-            });
-            tempSchema.layout = layout;
-          }
+    const matchByGlob = (pattern: string): string[] => {
+      if (!schema) return [];
+      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
+      return schema.tables
+        .filter(t => t.id === pattern || regex.test(t.id))
+        .map(t => t.id);
+    };
 
-          outputIds = [];
-          message = `Deleted ${tableIdsToDelete.length} tables and ${domainIdsToDelete.length} domains`;
-          status = 'success';
-        } else if (cmd === 'clear') {
-          tempSchema.domains = (tempSchema.domains || []).map((d: any) => ({ ...d, members: d.members.filter((tid: string) => !currentIds.includes(tid)) }));
-          message = `Cleared domain for ${currentIds.length} tables`;
-          status = 'success';
-        } else if (cmd === 'add') {
-          const subCmd = args[0]?.toLowerCase();
-          const name = args.slice(1).join(' ');
-          
-          const generateUniqueId = (baseName: string) => {
-            const baseId = baseName.toLowerCase().replace(/\s+/g, '_');
-            let uniqueId = baseId || `new_${subCmd}_${Date.now()}`;
-            let counter = 1;
-            const exists = (id: string) => 
-                tempSchema.tables.some((t: any) => t.id === id) || 
-                (tempSchema.domains || []).some((d: any) => d.id === id);
-            
-            while (exists(uniqueId)) {
-                uniqueId = `${baseId}_${counter}`;
-                counter++;
-            }
-            return uniqueId;
-          };
+    try {
+      if (cmd === 't') {
+        const name = args.join(' ') || undefined;
+        const c = getCenter();
+        get().addTable(c.x - 160, c.y - 125, name);
+        return { status: 'success', message: name ? `Added table: ${name}` : 'Added table' };
+      }
 
-          if (subCmd === 'table') {
-            const newId = generateUniqueId(name);
-            tempSchema.tables.push({
-              id: newId,
-              name: name || 'NEW_TABLE',
-              columns: [{ id: 'id', logical: { name: 'ID', type: 'Integer', isPrimaryKey: true } }]
-            });
-            if (!tempSchema.layout) tempSchema.layout = {};
-            tempSchema.layout[newId] = { x: 400, y: 300 };
-            message = `Added table ${newId}`;
-            status = 'success';
-          } else if (subCmd === 'domain') {
-            const newId = generateUniqueId(name);
-            tempSchema.domains.push({
-              id: newId,
-              name: name || 'NEW_DOMAIN',
-              tables: [],
-              color: 'rgba(59, 130, 246, 0.05)'
-            });
-            if (!tempSchema.layout) tempSchema.layout = {};
-            tempSchema.layout[newId] = { x: 400, y: 300, width: 600, height: 400 };
-            message = `Added domain ${newId}`;
-            status = 'success';
-          } else if (subCmd === 'consumer') {
-            const newId = generateUniqueId(name);
-            if (!tempSchema.consumers) tempSchema.consumers = [];
-            tempSchema.consumers.push({
-              id: newId,
-              name: name || 'NEW_CONSUMER',
-              appearance: { icon: '📊' }
-            });
-            if (!tempSchema.layout) tempSchema.layout = {};
-            tempSchema.layout[newId] = { x: 400, y: 300 };
-            message = `Added consumer ${newId}`;
-            status = 'success';
-          }
-        } else { status = 'error'; message = `Unknown command: ${cmd}`; }
-      } catch (e) { status = 'error'; message = 'Execution error'; }
-      stages.push({ command: cmd, args, inputIds: currentIds, outputIds, status, message });
-      currentIds = outputIds;
-    });
+      if (cmd === 'd') {
+        const name = args.join(' ') || undefined;
+        const c = getCenter();
+        get().addDomain(c.x - 300, c.y - 200, name);
+        return { status: 'success', message: name ? `Added domain: ${name}` : 'Added domain' };
+      }
 
-    if (!previewOnly && stages.length > 0 && stages.every(s => s.status === 'success')) {
-      set({ schema: normalizeSchema(tempSchema) });
-      get().syncToYamlInput();
-      get().saveSchema();
+      if (cmd === 'c') {
+        const name = args.join(' ') || undefined;
+        const c = getCenter();
+        get().addConsumer(c.x - 80, c.y - 30, name);
+        return { status: 'success', message: name ? `Added consumer: ${name}` : 'Added consumer' };
+      }
+
+      if (cmd === 's') {
+        const c = getCenter();
+        get().addAnnotation({ x: c.x - 60, y: c.y - 40 });
+        const text = args.join(' ');
+        if (text) {
+          const { selectedAnnotationId } = get();
+          if (selectedAnnotationId) get().updateAnnotation(selectedAnnotationId, { text });
+        }
+        return { status: 'success', message: 'Added annotation' };
+      }
+
+      if (cmd === 'er') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: er <source> <target> [1n|n1|nn|11]' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [sourcePart, targetPart, typeShorthand] = args;
+        const typeMap: Record<string, Relationship['type']> = {
+          '1n': 'one-to-many', 'n1': 'many-to-one', 'nn': 'many-to-many', '11': 'one-to-one',
+        };
+        if (typeShorthand && !typeMap[typeShorthand]) return { status: 'error', message: 'Type must be 1n, n1, nn, or 11' };
+        const relType = typeShorthand ? typeMap[typeShorthand] : undefined;
+        const [sourceTable, sourceCol] = sourcePart.includes('.') ? sourcePart.split('.') : [sourcePart, undefined];
+        const [targetTable, targetCol] = targetPart.includes('.') ? targetPart.split('.') : [targetPart, undefined];
+        if (!schema.tables.some(t => t.id === sourceTable)) return { status: 'error', message: `Table not found: ${sourceTable}` };
+        if (!schema.tables.some(t => t.id === targetTable)) return { status: 'error', message: `Table not found: ${targetTable}` };
+        get().addRelationship(
+          sourceTable,
+          targetTable,
+          sourceCol ? `port-${sourceCol}` : undefined,
+          targetCol ? `port-${targetCol}` : undefined,
+          relType,
+        );
+        return { status: 'success', message: `ER: ${sourcePart} → ${targetPart}${relType ? ` (${relType})` : ''}` };
+      }
+
+      if (cmd === 'ln') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: ln <source> <target>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [source, target] = args;
+        if (!schema.tables.some(t => t.id === source)) return { status: 'error', message: `Table not found: ${source}` };
+        if (!schema.tables.some(t => t.id === target)) return { status: 'error', message: `Table not found: ${target}` };
+        get().addLineage(source, target);
+        return { status: 'success', message: `Lineage: ${source} → ${target}` };
+      }
+
+      if (cmd === 'mv') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: mv <pattern> <domain>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [pattern, domainId] = args;
+        if (!(schema.domains || []).some(d => d.id === domainId)) return { status: 'error', message: `Domain not found: ${domainId}` };
+        const matched = matchByGlob(pattern);
+        if (!matched.length) return { status: 'error', message: `No tables matched: ${pattern}` };
+        get().bulkAssignTablesToDomain(matched, domainId);
+        return { status: 'success', message: `Moved ${matched.length} table(s) to ${domainId}` };
+      }
+
+      if (cmd === 'del') {
+        if (!args.length) return { status: 'error', message: 'Usage: del <id|pattern>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const pattern = args[0];
+        // Check edge ID first (exact match only, no glob for edges)
+        const matchedRel = (schema.relationships ?? []).find(r => r.id === pattern);
+        const matchedLin = (schema.lineage ?? []).find(l => l.id === pattern);
+        if (matchedRel || matchedLin) {
+          get().removeEdgeById(pattern);
+          return { status: 'success', message: `Deleted edge: ${pattern}` };
+        }
+        const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
+        const matchedTables = schema.tables.filter(t => t.id === pattern || regex.test(t.id)).map(t => t.id);
+        const matchedDomains = (schema.domains || []).filter(d => d.id === pattern || regex.test(d.id)).map(d => d.id);
+        if (!matchedTables.length && !matchedDomains.length) return { status: 'error', message: `No matches: ${pattern}` };
+        matchedDomains.forEach(id => get().removeNode(id));
+        if (matchedTables.length) get().bulkRemoveTables(matchedTables);
+        return { status: 'success', message: `Deleted ${matchedTables.length + matchedDomains.length} node(s)` };
+      }
+
+      if (cmd === 'find') {
+        if (!args.length) return { status: 'error', message: 'Usage: find <name>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const query = args.join(' ').toLowerCase();
+        const match =
+          schema.tables.find(t => t.id.toLowerCase().includes(query) || t.name.toLowerCase().includes(query)) ||
+          (schema.domains || []).find(d => d.id.toLowerCase().includes(query) || d.name.toLowerCase().includes(query));
+        if (!match) return { status: 'error', message: `Not found: ${query}` };
+        get().setFocusNodeId(match.id);
+        return { status: 'success', message: `Focused: ${match.id}` };
+      }
+
+      if (cmd === 'fit') {
+        ;(window as any).__modscapeFitView?.();
+        return { status: 'success', message: 'View fitted' };
+      }
+
+      if (cmd === 'pos') {
+        if (args.length < 3) return { status: 'error', message: 'Usage: pos <id> <x> <y>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [id, xStr, yStr] = args;
+        const x = Number(xStr);
+        const y = Number(yStr);
+        if (isNaN(x) || isNaN(y)) return { status: 'error', message: 'x and y must be numbers' };
+        const exists = schema.tables.some(t => t.id === id) || (schema.domains || []).some(d => d.id === id);
+        if (!exists) return { status: 'error', message: `Node not found: ${id}` };
+        get().updateNodePosition(id, x, y);
+        return { status: 'success', message: `Moved ${id} to (${x}, ${y})` };
+      }
+
+      if (cmd === 'get') {
+        if (!args.length) return { status: 'error', message: 'Usage: get <id>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const id = args[0];
+        const table = schema.tables.find(t => t.id === id);
+        if (table) {
+          const domain = (schema.domains ?? []).find(d => (d.members ?? []).includes(id));
+          const cols = (table.columns ?? []).map(c => {
+            const flags = [c.logical?.isPrimaryKey ? '*' : '', c.logical?.isForeignKey ? '†' : ''].filter(Boolean).join('');
+            return c.id + (flags ? `(${flags})` : '');
+          }).join(', ') || '—';
+          const ers = (schema.relationships ?? []).filter(r => r.from.table === id || r.to.table === id)
+            .map(r => `${r.from.table} → ${r.to.table} [${r.type ?? '1n'}]`).join(', ') || '—';
+          const lns = (schema.lineage ?? []).filter(l => l.from === id || l.to === id)
+            .map(l => `${l.from} → ${l.to}`).join(', ') || '—';
+          const msg = `${id}  (${table.appearance?.type ?? 'table'})  [${domain?.id ?? '—'}]\n  name   : ${table.name}\n  columns: ${cols}\n  er     : ${ers}\n  lineage: ${lns}`;
+          return { status: 'success', message: msg };
+        }
+        const domain = (schema.domains ?? []).find(d => d.id === id);
+        if (domain) {
+          const members = (domain.members ?? []).join(', ') || '—';
+          return { status: 'success', message: `${id}  (domain)\n  name   : ${domain.name}\n  members: ${members}` };
+        }
+        const rel = (schema.relationships ?? []).find(r => r.id === id);
+        if (rel) {
+          return { status: 'success', message: `${id}  (er)\n  ${rel.from.table}.${(rel.from.column ?? []).join(',')} → ${rel.to.table}.${(rel.to.column ?? []).join(',')}  [${rel.type ?? '1n'}]` };
+        }
+        const lin = (schema.lineage ?? []).find(l => l.id === id);
+        if (lin) {
+          return { status: 'success', message: `${id}  (lineage)\n  ${lin.from} → ${lin.to}` };
+        }
+        return { status: 'error', message: `Not found: ${id}` };
+      }
+
+      if (cmd === 'rename') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: rename <tableId> <newId>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [oldId, newId] = args;
+        if (!schema.tables.some(t => t.id === oldId)) {
+          if ((schema.domains ?? []).some(d => d.id === oldId)) return { status: 'error', message: 'Domain rename not supported' };
+          return { status: 'error', message: `Table not found: ${oldId}` };
+        }
+        if (schema.tables.some(t => t.id === newId)) return { status: 'error', message: `ID already exists: ${newId}` };
+        get().renameTableId(oldId, newId);
+        return { status: 'success', message: `Renamed: ${oldId} → ${newId}` };
+      }
+
+      if (cmd === 'label') {
+        if (args.length < 2) return { status: 'error', message: 'Usage: label <id> <name>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [id, ...nameParts] = args;
+        const name = nameParts.join(' ');
+        if (schema.tables.some(t => t.id === id)) {
+          get().updateTable(id, { name });
+          return { status: 'success', message: `Updated name: ${id} → "${name}"` };
+        }
+        if ((schema.domains ?? []).some(d => d.id === id)) {
+          get().updateDomain(id, { name });
+          return { status: 'success', message: `Updated name: ${id} → "${name}"` };
+        }
+        return { status: 'error', message: `Not found: ${id}` };
+      }
+
+      if (cmd === 'col') {
+        if (args.length < 3) return { status: 'error', message: 'Usage: col add|rm <tableId> <colId>' };
+        if (!schema) return { status: 'error', message: 'No model loaded' };
+        const [sub, tableId, colId] = args;
+        const table = schema.tables.find(t => t.id === tableId);
+        if (!table) return { status: 'error', message: `Table not found: ${tableId}` };
+        const cols = table.columns ?? [];
+        if (sub === 'add') {
+          if (cols.some(c => c.id === colId)) return { status: 'error', message: `Column already exists: ${colId}` };
+          get().updateTable(tableId, { columns: [...cols, { id: colId }] });
+          return { status: 'success', message: `Added column: ${tableId}.${colId}` };
+        }
+        if (sub === 'rm') {
+          if (!cols.some(c => c.id === colId)) return { status: 'error', message: `Column not found: ${colId}` };
+          get().updateTable(tableId, { columns: cols.filter(c => c.id !== colId) });
+          return { status: 'success', message: `Removed column: ${tableId}.${colId}` };
+        }
+        return { status: 'error', message: `Unknown sub-command: ${sub}. Use add or rm` };
+      }
+
+      if (cmd === 'theme') {
+        const target = args[0]?.toLowerCase();
+        if (target !== 'dark' && target !== 'light') return { status: 'error', message: 'Usage: theme dark|light' };
+        if (get().theme !== target) get().toggleTheme();
+        return { status: 'success', message: `Theme: ${target}` };
+      }
+
+      return { status: 'error', message: `Unknown command: ${cmd}` };
+    } catch {
+      return { status: 'error', message: 'Execution error' };
     }
-    return { stages, outputIds: currentIds };
   },
 
   toggleTableSelection: (id) => {

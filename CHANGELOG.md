@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-04-03
+
+### Added
+- **Terminal Bar** — Replaced CommandPalette with a floating, draggable, and resizable console panel. Open with `Ctrl+K`, close with `Esc` or `✕`. Stays on screen so the canvas remains fully visible while entering commands.
+- **Slash commands** — Type `/` inside the Terminal Bar to see a command picker. Supported commands: `/t`, `/d`, `/c`, `/s`, `/er`, `/ln`, `/mv`, `/del`, `/get`, `/rename`, `/label`, `/col`, `/find`, `/fit`, `/pos`, `/theme`.
+- **`/pos <id> <x> <y>`** — Move any table or domain node to an absolute canvas coordinate.
+- **`/get <id>`** — Show details of any object (table, domain, ER edge, lineage) in the terminal, including columns, relationships, and lineage.
+- **`/rename <id> <newId>`** — Rename a table ID with full reference tracking (relationships, lineage, layout, domains.members).
+- **`/label <id> <name>`** — Update the display name of a table or domain.
+- **`/col add <tableId> <colId>`** — Add a column to a table (duplicate check included).
+- **`/col rm <tableId> <colId>`** — Remove a column from a table (existence check included).
+- **`/er` relationship type shorthand** — Optional third argument: `1n` (one-to-many), `n1` (many-to-one), `nn` (many-to-many), `11` (one-to-one). Defaults to `1n` if omitted.
+- **Command history** — `↑`/`↓` keys cycle through previously executed commands (session only, up to 50 entries).
+- **Tab completion** — `Tab` confirms the highlighted suggestion; `↑`/`↓` navigates the list with auto-scroll to keep the active item visible.
+- **Canvas highlight** — While typing `/er`, `/ln`, `/mv`, `/del`, or `/find`, matching nodes are highlighted on the canvas in real time.
+
+### Changed
+- **CommandPalette removed** — The full-screen modal command palette (`/` key shortcut) is replaced by the Terminal Bar (`Ctrl+K`).
+- **`r`/`l` canvas shortcuts removed** — ER and Lineage connect-mode toggles (`R`, `L`) are replaced by `/er` and `/ln` commands in the Terminal Bar. Other canvas shortcuts (`T`, `D`, `C`, `S`, `P`, Arrow keys, `F`, `\`) remain unchanged.
+- **`/del` edge ID support** — `/del <id>` now accepts `relationships[].id` and `lineage[].id` directly. No need to specify type separately.
+- **Tab completion expanded** — Edge IDs added as candidates for `/del` and `/get`; domain IDs added for `/find`; column IDs of the target table added for `/col rm`.
+
 ## [2.5.2] - 2026-04-03
 
 ### Fixed
