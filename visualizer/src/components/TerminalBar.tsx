@@ -380,14 +380,14 @@ const TerminalBar = memo(() => {
   if (!isTerminalOpen) return null
 
   const isDark = theme === 'dark'
-  const bg = isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.97)'
-  const border = isDark ? '#1e293b' : '#e2e8f0'
-  const headerBg = isDark ? '#0f172a' : '#f1f5f9'
+  const bg = isDark ? 'rgba(15,23,42,0.6)' : 'rgba(255,255,255,0.6)'
+  const border = isDark ? 'rgba(30,41,59,0.6)' : 'rgba(226,232,240,0.6)'
+  const headerBg = isDark ? 'rgba(15,23,42,0.7)' : 'rgba(241,245,249,0.7)'
   const textPrimary = isDark ? '#e2e8f0' : '#0f172a'
   const textMuted = isDark ? '#475569' : '#94a3b8'
-  const suggBg = isDark ? '#1e293b' : '#f8fafc'
+  const suggBg = isDark ? 'rgba(30,41,59,0.75)' : 'rgba(248,250,252,0.75)'
   const suggActive = isDark ? '#2563eb' : '#3b82f6'
-  const histBg = isDark ? 'rgba(15,23,42,0.5)' : 'rgba(248,250,252,0.8)'
+  const histBg = isDark ? 'rgba(15,23,42,0.3)' : 'rgba(248,250,252,0.3)'
 
   return (
     <div
@@ -410,6 +410,8 @@ const TerminalBar = memo(() => {
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
         overflow: 'hidden',
         userSelect: 'none',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
       }}
     >
       {/* Header / drag bar */}
