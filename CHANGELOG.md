@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [2.6.1] - 2026-04-05
 
+### Added
+- **Terminal Bar: `/clear` command** — Clears the command history. Also accessible via the trash icon button in the console header.
+
 ### Changed
 - **Terminal Bar: glassmorphism background** — Panel background is now semi-transparent with `backdrop-filter: blur(12px)`, keeping the canvas visible through the console.
 - **Terminal Bar: Modscape icon in header** — The Modscape logo now appears in the console header.

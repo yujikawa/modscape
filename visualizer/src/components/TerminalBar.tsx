@@ -1,7 +1,7 @@
 import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { X, GripHorizontal } from 'lucide-react'
+import { X, GripHorizontal, Trash2 } from 'lucide-react'
 
 interface HistoryEntry {
   status: 'success' | 'error'
@@ -30,6 +30,7 @@ const COMMANDS: { cmd: string; desc: string }[] = [
   { cmd: '/label',  desc: 'Set display name  /label <id> <name>' },
   { cmd: '/col',    desc: 'Column ops  /col add|rm <tableId> [colId]' },
   { cmd: '/find',   desc: 'Find and focus  /find <name>' },
+  { cmd: '/clear',  desc: 'Clear history' },
   { cmd: '/fit',    desc: 'Fit view' },
   { cmd: '/pos',    desc: 'Move to position  /pos <id> <x> <y>' },
   { cmd: '/theme',  desc: 'Switch theme  /theme dark|light' },
@@ -293,9 +294,17 @@ const TerminalBar = memo(() => {
     inputRef.current?.focus()
   }, [input])
 
+  const clearHistory = useCallback(() => {
+    setHistory([])
+    setHistoryIndex(-1)
+    setInput('')
+    setSuggestions([])
+  }, [])
+
   const handleExecute = useCallback(() => {
     const trimmed = input.trim()
     if (!trimmed) return
+    if (trimmed === '/clear') { clearHistory(); return }
     // strip leading slash for executeCommand
     const cmd = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed
     const result = executeCommand(cmd)
@@ -306,7 +315,7 @@ const TerminalBar = memo(() => {
       setSuggestions([])
       setHighlightedNodeIds([])
     }
-  }, [input, executeCommand, setHighlightedNodeIds])
+  }, [input, executeCommand, setHighlightedNodeIds, clearHistory])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') { e.preventDefault(); setIsTerminalOpen(false); return }
@@ -430,6 +439,14 @@ const TerminalBar = memo(() => {
       >
         <GripHorizontal size={13} style={{ color: textMuted, flexShrink: 0 }} />
         <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: textMuted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Console</span>
+        <button
+          onMouseDown={e => e.stopPropagation()}
+          onClick={clearHistory}
+          title="Clear history"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: textMuted, padding: 2, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+        >
+          <Trash2 size={12} />
+        </button>
         <button
           onMouseDown={e => e.stopPropagation()}
           onClick={() => setIsTerminalOpen(false)}
