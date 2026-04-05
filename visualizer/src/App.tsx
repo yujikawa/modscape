@@ -92,6 +92,11 @@ function Flow() {
 
   const handleFitView = useCallback((fn: () => void) => {
     fitViewFnRef.current = fn
+    // On initial load, schema may already be set before CytoscapeCanvas mounts
+    // (e.g. no ?model= param in URL). Trigger fitView now that the canvas is ready.
+    if (useStore.getState().schema) {
+      setTimeout(() => fn(), 100)
+    }
   }, [])
   const handleFocusNode = useCallback((fn: (id: string) => void) => {
     focusNodeFnRef.current = fn

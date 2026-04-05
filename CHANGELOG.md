@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [2.6.1] - 2026-04-05
 
+### Fixed
+- **Dev mode: canvas not visible on initial load** — When starting without a `?model=` URL parameter, the canvas was blank because `fitView` only fired on `currentModelSlug` changes. Fixed by also triggering `fitView` when the canvas registers its fit function and a schema is already loaded.
+
 ### Added
 - **Terminal Bar: `/clear` command** — Clears the command history. Also accessible via the trash icon button in the console header.
 
