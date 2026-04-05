@@ -80,6 +80,28 @@ Leverage AI coding assistants (**Gemini CLI, Claude Code, or Codex**) to build y
 
     The agent generates models in the correct dependency order and adds `-- TODO:` comments wherever the YAML doesn't fully specify the logic.
 
+### Path A+: Spec-Driven Data Engineering (SDD) — Claude Code
+
+SDD adds a structured four-step workflow on top of Path A, guiding you from business requirements all the way through to implementation.
+
+1.  **Initialize with SDD** (Claude Code only):
+    ```bash
+    modscape init --claude --sdd
+    ```
+    This installs four additional slash commands and a customization template.
+
+2.  **Collect requirements** — run `/modscape:sdd:requirements` to interactively define your pipeline spec:
+    - Goal, stakeholders, data sources, acceptance criteria, target tool
+    - Writes `.modscape/sdd/spec.md`
+
+3.  **Design the model** — run `/modscape:sdd:design` to generate `model.yaml` from `spec.md`
+
+4.  **Generate tasks** — run `/modscape:sdd:tasks` to break `model.yaml` into a phased implementation checklist (`.modscape/sdd/tasks.md`)
+
+5.  **Implement** — run `/modscape:sdd:implement` to work through tasks one by one, generating dbt / SQLMesh code and checking them off
+
+> **Customization**: Rename `.modscape/sdd/sdd.custom.md.example` to `sdd.custom.md` to override target tool defaults, add required spec fields, or adjust output conventions for your project.
+
 ### Path B: Manual Modeling
 Best for direct architectural control.
 

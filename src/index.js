@@ -37,6 +37,7 @@ program
   .option('-x, --codex', 'Scaffold for Codex')
   .option('-c, --claude', 'Scaffold for Claude Code')
   .option('-a, --all', 'Scaffold for all agents')
+  .option('-s, --sdd', 'Add SDD (Spec-Driven Data Engineering) skills (Claude Code only)')
   .action((options) => {
     initProject(options);
   });

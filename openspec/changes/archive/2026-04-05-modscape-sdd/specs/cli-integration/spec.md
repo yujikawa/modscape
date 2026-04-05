@@ -1,30 +1,6 @@
-## ADDED Requirements
-
-### Requirement: CLI Entry Point
-The system SHALL provide a `modscape` command with subcommands for development and building.
-
-#### Scenario: Running the help command
-- **WHEN** the user runs `modscape --help`
-- **THEN** the system displays usage instructions for `dev` and `build` subcommands
-
-### Requirement: CLI Development Mode
-The system SHALL support a `dev` command that starts a local modeling session.
-
-#### Scenario: Starting development mode
-- **WHEN** the user runs `modscape dev my-model.yaml`
-- **THEN** the system starts a local server and opens the visualizer in the default browser
-
-### Requirement: CLI Build Mode
-The system SHALL support a `build` command that generates a static site.
-
-#### Scenario: Building a static site
-- **WHEN** the user runs `modscape build my-model.yaml`
-- **THEN** the system generates a `dist/` directory containing a standalone version of the visualizer with the model data embedded
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Init Subcommand Integration
-The `modscape` CLI SHALL register a new `init` subcommand.
-
 `modscape` CLI の `init` サブコマンドは `--sdd` フラグをサポートしなければならない（SHALL）。
 
 `--sdd` フラグは `--claude` と組み合わせた場合にのみ有効とし、以下のファイルを生成しなければならない（SHALL）:
@@ -37,8 +13,8 @@ The `modscape` CLI SHALL register a new `init` subcommand.
 `--sdd` を `--gemini` や `--codex` と組み合わせた場合、CLI は「SDD スキルは現在 Claude Code のみ対応しています」というメッセージを表示し、`--sdd` フラグを無視しなければならない（SHALL）。
 
 #### Scenario: Running modscape help after update
-- **WHEN** the user runs `modscape --help`
-- **THEN** the list of commands includes `init` with a description like "Initialize project with AI modeling rules"
+- **WHEN** ユーザーが `modscape --help` を実行する
+- **THEN** コマンド一覧に `init` が含まれ、説明に `--sdd` フラグへの言及がある
 
 #### Scenario: --claude --sdd フラグで SDD スキルを生成する
 - **WHEN** ユーザーが `modscape init --claude --sdd` を実行する

@@ -97,6 +97,22 @@ export async function initProject(options = {}) {
       await safeWriteFile('.claude/commands/modscape/codegen.md', codegenTemplate);
       console.log('\n  💡 To use the MCP server with Claude Code, run:');
       console.log('     claude mcp add modscape -- modscape mcp\n');
+
+      if (options.sdd) {
+        console.log('  Scaffolding SDD (Spec-Driven Data Engineering) skills...');
+        const sddDir = path.join(__dirname, 'templates/claude/sdd');
+        const sddSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md'];
+        for (const skill of sddSkills) {
+          const template = fs.readFileSync(path.join(sddDir, skill), 'utf8');
+          await safeWriteFile(`.claude/commands/modscape/sdd/${skill}`, template);
+        }
+        const customExample = fs.readFileSync(path.join(sddDir, 'sdd.custom.md.example'), 'utf8');
+        await safeWriteFile('.modscape/sdd/sdd.custom.md.example', customExample);
+        console.log('\n  💡 SDD skills installed. Start with /modscape:sdd:requirements\n');
+      }
+    } else if (options.sdd) {
+      console.log('\n  ⚠️  SDD skills are currently supported for Claude Code only.');
+      console.log('     Use --claude --sdd to install SDD skills.\n');
     }
 
     console.log('\n  ✅ Initialization complete! Customize ".modscape/rules.md" to match your project standards.\n');

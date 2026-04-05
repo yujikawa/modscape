@@ -857,6 +857,33 @@ All commands support `--json` for machine-readable output:
 
 ---
 
+## 13-6. Project Initialization Flags
+
+```bash
+modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--gemini` | Scaffold skills for Gemini CLI |
+| `--codex`  | Scaffold skills for Codex |
+| `--claude` | Scaffold skills for Claude Code |
+| `--all`    | Scaffold for all three agents |
+| `--sdd`    | Add SDD (Spec-Driven Data Engineering) skills — **Claude Code only**, combine with `--claude` |
+
+`--sdd` installs four additional slash commands for Claude Code:
+
+| Command | Purpose |
+|---------|---------|
+| `/modscape:sdd:requirements` | Collect business requirements → `.modscape/sdd/spec.md` |
+| `/modscape:sdd:design`       | Design `model.yaml` from `spec.md` |
+| `/modscape:sdd:tasks`        | Generate phased task list from `model.yaml` → `.modscape/sdd/tasks.md` |
+| `/modscape:sdd:implement`    | Implement tasks one by one, generating dbt / SQLMesh code |
+
+Customize SDD behavior by creating `.modscape/sdd/sdd.custom.md` (rename from the generated `.example` file).
+
+---
+
 ## 14. Schema Version
 
 `model.yaml` supports an optional `version` field at the root level to indicate the schema version.

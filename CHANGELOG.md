@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **SDD (Spec-Driven Data Engineering)** — A four-step AI workflow for building data pipelines from business requirements to implementation, powered by Claude Code slash commands.
+  - `/modscape:sdd:requirements` — Collects business requirements interactively and writes `.modscape/sdd/spec.md`
+  - `/modscape:sdd:design` — Reads `spec.md` and designs `model.yaml` using mutation CLI commands
+  - `/modscape:sdd:tasks` — Generates a phased implementation checklist from `model.yaml` lineage into `.modscape/sdd/tasks.md`
+  - `/modscape:sdd:implement` — Implements tasks one by one, generating dbt / SQLMesh code and updating checkboxes
+- **`modscape init --sdd`** — New flag (combine with `--claude`) to install SDD skills and a `.modscape/sdd/sdd.custom.md.example` customization template
+- **`sdd.custom.md` support** — All SDD skills respect `.modscape/sdd/sdd.custom.md` for project-specific overrides (target tool, required spec fields, output conventions)
+
 ## [2.6.1] - 2026-04-05
 
 ### Fixed

@@ -1,0 +1,44 @@
+# SDD Custom Rules
+#
+# This file overrides the default SDD skill behavior for this project.
+# Rename to `sdd.custom.md` to activate (remove the `.example` suffix).
+# Rules defined here take PRIORITY over the built-in SDD skill instructions.
+#
+# Delete or comment out any section you don't need to customize.
+
+## Overall Policy
+
+# Uncomment and edit to set project-wide defaults:
+# - This project uses Data Vault 2.0 modeling patterns.
+# - Target tool is always dbt (BigQuery). Do not ask the user to choose.
+# - All models must be in the `analytics` dbt project.
+
+## spec.md Extensions
+
+# Additional required fields for spec.md in this project:
+# - Add a `## SLA` section with update frequency (e.g., "Daily at 06:00 JST")
+# - Add a `## Compliance` section for data governance tags (e.g., GDPR, PII)
+
+## tasks.md Format
+
+# Additional phases or tasks to append to every generated tasks.md:
+# ## Phase 5: Data Contracts
+# - [ ] Publish data contract for `<mart_table>`
+# - [ ] Notify downstream consumers of schema
+
+## Implementation Output
+
+# Code generation preferences:
+# - Output directory for staging models: models/staging/
+# - Output directory for core models: models/core/
+# - Output directory for mart models: models/mart/
+# - Add Japanese comments to generated SQL
+# - Use dbt-expectations for all test assertions
+
+## Naming Conventions
+
+# Table ID → physical name mapping rules:
+# - Staging: stg_<source>_<entity>
+# - Fact: fct_<event>
+# - Dimension: dim_<entity>
+# - Mart: mart_<domain>_<metric>

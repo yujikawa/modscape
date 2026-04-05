@@ -79,6 +79,28 @@ npm install -g modscape
 
     エージェントは `lineage` セクションを元に依存関係の順でモデルを生成し、YAMLで定義しきれない箇所には `-- TODO:` コメントを残します。
 
+### A+: 仕様駆動データエンジニアリング（SDD） — Claude Code 専用
+
+SDD はパスAの上に構造化された4ステップのワークフローを追加し、ビジネス要件から実装まで一貫して支援します。
+
+1.  **SDD付きで初期化**（Claude Code のみ）:
+    ```bash
+    modscape init --claude --sdd
+    ```
+    4つのスラッシュコマンドとカスタマイズテンプレートがインストールされます。
+
+2.  **要件定義** — `/modscape:sdd:requirements` を実行してパイプラインの仕様を対話的に定義します:
+    - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
+    - `.modscape/sdd/spec.md` に出力
+
+3.  **モデル設計** — `/modscape:sdd:design` を実行して `spec.md` をもとに `model.yaml` を生成・更新します
+
+4.  **タスク生成** — `/modscape:sdd:tasks` を実行して `model.yaml` からフェーズ別の実装チェックリスト（`.modscape/sdd/tasks.md`）を生成します
+
+5.  **実装** — `/modscape:sdd:implement` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
+
+> **カスタマイズ**: `.modscape/sdd/sdd.custom.md.example` を `sdd.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
+
 ### B: 手動モデリング
 アーキテクチャを直接コントロールしたい場合に最適です。
 
