@@ -457,15 +457,26 @@ const TerminalBar = memo(() => {
             Type <span style={{ color: isDark ? '#60a5fa' : '#3b82f6' }}>/</span> to see commands
           </div>
         )}
-        {history.map((h, i) => (
-          <div key={i} style={{ fontSize: 11, display: 'flex', gap: 6, alignItems: 'baseline' }}>
-            <span style={{ color: h.status === 'success' ? (isDark ? '#22c55e' : '#16a34a') : (isDark ? '#f87171' : '#dc2626'), flexShrink: 0 }}>
-              {h.status === 'success' ? '✓' : '✗'}
-            </span>
-            <span style={{ color: textMuted }}>{h.input}</span>
-            <span style={{ color: h.status === 'success' ? (isDark ? '#64748b' : '#94a3b8') : (isDark ? '#f87171' : '#dc2626') }}>{h.message}</span>
-          </div>
-        ))}
+        {history.map((h, i) => {
+          const isSuccess = h.status === 'success'
+          const accentColor = isSuccess ? (isDark ? '#22c55e' : '#16a34a') : (isDark ? '#f87171' : '#dc2626')
+          const msgColor = isSuccess ? (isDark ? '#94a3b8' : '#64748b') : accentColor
+          return (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '4px 0', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` }}>
+              {/* Input line */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ color: accentColor, flexShrink: 0, fontSize: 10 }}>{isSuccess ? '✓' : '✗'}</span>
+                <span style={{ fontSize: 11, color: textPrimary, fontWeight: 500 }}>{h.input}</span>
+              </div>
+              {/* Output lines */}
+              {h.message.split('\n').map((line, j) => (
+                <div key={j} style={{ display: 'flex', gap: 5, paddingLeft: 15 }}>
+                  <span style={{ fontSize: 11, color: msgColor, whiteSpace: 'pre' }}>{line}</span>
+                </div>
+              ))}
+            </div>
+          )
+        })}
         <div ref={historyEndRef} />
       </div>
 
@@ -504,6 +515,18 @@ const TerminalBar = memo(() => {
         </div>
       )}
 
+      {/* Usage hint */}
+      {(() => {
+        const tokens = input.trim().split(/\s+/)
+        const cmd = tokens[0]?.toLowerCase()
+        const hint = cmd && input.includes(' ') ? COMMANDS.find(c => c.cmd === cmd)?.desc : null
+        return hint ? (
+          <div style={{ padding: '3px 10px', fontSize: 10, color: textMuted, borderTop: `1px solid ${border}`, fontStyle: 'italic' }}>
+            {hint}
+          </div>
+        ) : null
+      })()}
+
       {/* Input row */}
       <div
         style={{
@@ -515,7 +538,7 @@ const TerminalBar = memo(() => {
           flexShrink: 0,
         }}
       >
-        <span style={{ color: isDark ? '#3b82f6' : '#2563eb', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>▶</span>
+        <span style={{ color: isDark ? '#3b82f6' : '#2563eb', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>$</span>
         <input
           ref={inputRef}
           type="text"
