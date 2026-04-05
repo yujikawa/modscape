@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.1] - 2026-04-05
+
+### Fixed
+- **Dev mode: canvas not visible on initial load** — When starting without a `?model=` URL parameter, the canvas was blank because `fitView` only fired on `currentModelSlug` changes. Fixed by also triggering `fitView` when the canvas registers its fit function and a schema is already loaded.
+
+### Added
+- **Terminal Bar: `/clear` command** — Clears the command history. Also accessible via the trash icon button in the console header.
+
+### Changed
+- **Terminal Bar: glassmorphism background** — Panel background is now semi-transparent with `backdrop-filter: blur(12px)`, keeping the canvas visible through the console.
+- **Terminal Bar: Modscape icon in header** — The Modscape logo now appears in the console header.
+- **Terminal Bar: history display** — Command input and output are split into separate lines. Multi-line output (e.g. `/get`) is rendered correctly. Thin dividers separate entries for easier scanning.
+- **Terminal Bar: prompt symbols** — Input line uses `$` as the prompt. History entries show `✓` (success) or `✗` (error) instead of `▶` for both states.
+- **Terminal Bar: usage hint** — After typing a command name and a space, a usage hint for that command appears above the input line.
+
 ## [2.6.0] - 2026-04-03
 
 ### Added
