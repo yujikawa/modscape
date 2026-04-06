@@ -17,9 +17,16 @@ export function mergeModels(inputs, options) {
 
   const mergedTables = [];
   const mergedRelationships = [];
+  const mergedLineages = [];
+  const mergedAnnotations = [];
   const mergedDomains = [];
+  const mergedLayout = {};
   const seenTableIds = new Set();
   const seenDomainIds = new Set();
+  const seenLineageIds = new Set();
+  const seenRelationshipIds = new Set();
+  const seenAnnotationIds = new Set();
+  let mergedVersion = undefined;
 
   // 入力パスを全部ファイルに展開
   const allFiles = [];
@@ -47,8 +54,40 @@ export function mergeModels(inputs, options) {
         }
       }
 
-      // relationships: そのまま全部追加
-      mergedRelationships.push(...(data.relationships || []));
+      // version: 最初のファイルの値を採用
+      if (mergedVersion === undefined && data.version) {
+        mergedVersion = data.version;
+      }
+
+      // relationships: IDありは重複除外、IDなしはそのまま追加
+      for (const rel of data.relationships || []) {
+        if (!rel.id) {
+          mergedRelationships.push(rel);
+        } else if (!seenRelationshipIds.has(rel.id)) {
+          mergedRelationships.push(rel);
+          seenRelationshipIds.add(rel.id);
+        }
+      }
+
+      // lineage: 重複IDは除外、IDなしはそのまま追加
+      for (const lineage of data.lineage || []) {
+        if (!lineage.id) {
+          mergedLineages.push(lineage);
+        } else if (!seenLineageIds.has(lineage.id)) {
+          mergedLineages.push(lineage);
+          seenLineageIds.add(lineage.id);
+        }
+      }
+
+      // annotations: IDありは重複除外、IDなしはそのまま追加
+      for (const annotation of data.annotations || []) {
+        if (!annotation.id) {
+          mergedAnnotations.push(annotation);
+        } else if (!seenAnnotationIds.has(annotation.id)) {
+          mergedAnnotations.push(annotation);
+          seenAnnotationIds.add(annotation.id);
+        }
+      }
 
       // domains: 重複IDは除外
       for (const domain of data.domains || []) {
@@ -58,17 +97,27 @@ export function mergeModels(inputs, options) {
         }
       }
 
+      // layout: 最初のファイルの値を優先（first-wins）
+      for (const [key, value] of Object.entries(data.layout || {})) {
+        if (!(key in mergedLayout)) {
+          mergedLayout[key] = value;
+        }
+      }
+
       console.log(`  📄 ${filePath} (${(data.tables || []).length} tables)`);
     } catch (e) {
       console.error(`  ❌ Failed to read ${filePath}: ${e.message}`);
     }
   }
 
-  const outputModel = {
-    tables: mergedTables,
-    relationships: mergedRelationships,
-    domains: mergedDomains
-  };
+  const outputModel = {};
+  if (mergedVersion !== undefined) outputModel.version = mergedVersion;
+  if (mergedTables.length) outputModel.tables = mergedTables;
+  if (mergedRelationships.length) outputModel.relationships = mergedRelationships;
+  if (mergedLineages.length) outputModel.lineage = mergedLineages;
+  if (mergedAnnotations.length) outputModel.annotations = mergedAnnotations;
+  if (mergedDomains.length) outputModel.domains = mergedDomains;
+  if (Object.keys(mergedLayout).length) outputModel.layout = mergedLayout;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
   console.log(`\n  ✅ Merged ${allFiles.length} files → ${outputPath} (${mergedTables.length} tables)`);
