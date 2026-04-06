@@ -871,14 +871,51 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
 | `--all`    | Scaffold for all three agents |
 | `--sdd`    | Add SDD (Spec-Driven Data Engineering) skills — **Claude Code only**, combine with `--claude` |
 
-`--sdd` installs four additional slash commands for Claude Code:
+`--sdd` installs five slash commands for Claude Code and creates the `.modscape/sdd/` and `.modscape/specs/` directories:
 
 | Command | Purpose |
 |---------|---------|
-| `/modscape:sdd:requirements` | Collect business requirements → `.modscape/sdd/spec.md` |
-| `/modscape:sdd:design`       | Design `model.yaml` from `spec.md` |
-| `/modscape:sdd:tasks`        | Generate phased task list from `model.yaml` → `.modscape/sdd/tasks.md` |
-| `/modscape:sdd:implement`    | Implement tasks one by one, generating dbt / SQLMesh code |
+| `/modscape:sdd:requirements` | Collect business requirements → `.modscape/sdd/<name>/spec.md` |
+| `/modscape:sdd:design <name>`       | Design `model.yaml` from `spec.md`, generate `design.md` and `tasks.md` |
+| `/modscape:sdd:implement <name>`    | Implement tasks one by one, generating dbt / SQLMesh code |
+| `/modscape:sdd:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
+
+### SDD Directory Structure
+
+```
+.modscape/
+├── sdd/
+│   ├── <name>/               # Work folder per pipeline (temporary)
+│   │   ├── spec.md           # Business requirements
+│   │   ├── design.md         # Design decisions + real-data findings
+│   │   └── tasks.md          # Implementation task list
+│   └── sdd.custom.md         # Project-wide custom rules (optional)
+└── specs/
+    └── <table-id>.md         # Permanent business spec per table
+```
+
+### Permanent Table Spec Format (`specs/<table-id>.md`)
+
+```markdown
+# <table-id>
+
+## Overview
+- **Owner**: <team or person>
+- **Update Frequency**: <daily / weekly / etc.>
+- **SLA**: <e.g., "Available by 07:00 JST">
+
+## Business Context
+<Business meaning of this table>
+
+## Business Rules
+- <Key business rule or calculation logic>
+
+## Known Issues / Caveats
+- <Known data quality issues or edge cases>
+
+## Changelog
+- YYYY-MM-DD: 初版 (SDD: <name>)
+```
 
 Customize SDD behavior by creating `.modscape/sdd/sdd.custom.md` (rename from the generated `.example` file).
 

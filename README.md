@@ -82,23 +82,31 @@ Leverage AI coding assistants (**Gemini CLI, Claude Code, or Codex**) to build y
 
 ### Path A+: Spec-Driven Data Engineering (SDD) — Claude Code
 
-SDD adds a structured four-step workflow on top of Path A, guiding you from business requirements all the way through to implementation.
+SDD adds a structured workflow on top of Path A, guiding you from business requirements through implementation to permanent documentation. Each pipeline gets its own named work folder, and completed work is archived into per-table business specs.
 
 1.  **Initialize with SDD** (Claude Code only):
     ```bash
     modscape init --claude --sdd
     ```
-    This installs four additional slash commands and a customization template.
+    Installs five slash commands, a customization template, and creates `.modscape/sdd/` and `.modscape/specs/` directories.
 
 2.  **Collect requirements** — run `/modscape:sdd:requirements` to interactively define your pipeline spec:
     - Goal, stakeholders, data sources, acceptance criteria, target tool
-    - Writes `.modscape/sdd/spec.md`
+    - AI proposes a folder name (e.g., `monthly-sales-summary`) — you confirm or rename
+    - Writes `.modscape/sdd/<name>/spec.md`
 
-3.  **Design the model** — run `/modscape:sdd:design` to generate `model.yaml` from `spec.md`
+3.  **Design the model** — run `/modscape:sdd:design <name>` to:
+    - Generate `model.yaml` from `spec.md` (reads existing `specs/*.md` for context)
+    - Auto-identify directly and indirectly affected tables
+    - Write `design.md` (design decisions) and `tasks.md` (implementation checklist)
+    - **Re-runnable**: add findings to `design.md` after running with real data, then re-run to update the design
 
-4.  **Generate tasks** — run `/modscape:sdd:tasks` to break `model.yaml` into a phased implementation checklist (`.modscape/sdd/tasks.md`)
+4.  **Implement** — run `/modscape:sdd:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and checking them off
 
-5.  **Implement** — run `/modscape:sdd:implement` to work through tasks one by one, generating dbt / SQLMesh code and checking them off
+5.  **Archive** — run `/modscape:sdd:archive <name>` to sync permanent table specs:
+    - Creates or updates `.modscape/specs/<table-id>.md` for each affected table
+    - Appends changelog entries for upstream tables
+    - Optionally deletes the work folder when done
 
 > **Customization**: Rename `.modscape/sdd/sdd.custom.md.example` to `sdd.custom.md` to override target tool defaults, add required spec fields, or adjust output conventions for your project.
 

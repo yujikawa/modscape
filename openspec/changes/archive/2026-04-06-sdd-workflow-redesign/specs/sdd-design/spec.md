@@ -16,19 +16,6 @@ AIスキル `/modscape:sdd:design <name>` は `sdd/<name>/spec.md`・`model.yaml
 
 スキルは `.modscape/sdd/sdd.custom.md` が存在する場合、そのルールを優先して適用しなければならない（SHALL）。
 
-スキルは `model.yaml` の `lineage` セクションをトポロジカルソートし、実装フェーズごとに分類した `sdd/<name>/tasks.md` を生成しなければならない（SHALL）。
-
-タスクは以下のフェーズ構成で分類しなければならない（SHALL）:
-- Phase 1: Staging（依存なしのテーブル）
-- Phase 2: Core（1段上流のテーブル）
-- Phase 3: Mart / 集計（最下流のテーブル）
-- Phase 4: Tests（各テーブルのキーカラムに対するテスト）
-
-各タスクには以下を含めなければならない（SHALL）:
-- テーブルID（バッククォートで表記）
-- materialization 種別（`implementation.materialization` または `appearance.type` から推定）
-- 上流依存テーブル（`←` で表記）
-
 #### Scenario: spec.md をもとに model.yaml を新規設計する
 - **WHEN** `sdd/<name>/spec.md` が存在し `/modscape:sdd:design <name>` を実行する
 - **THEN** AIは spec.md・model.yaml・specs/*.md を読み込み、テーブル・lineage・domains の構成を設計して model.yaml に反映し、設計判断を design.md に記録する
@@ -40,14 +27,6 @@ AIスキル `/modscape:sdd:design <name>` は `sdd/<name>/spec.md`・`model.yaml
 #### Scenario: design.md の気づきを反映して再実行する
 - **WHEN** `sdd/<name>/design.md` に気づきが追記された状態で `/modscape:sdd:design <name>` を再実行する
 - **THEN** AIは気づきの内容を読み込んで設計を更新し、tasks.md の完了済みタスクを保持したまま未完了部分を差分更新する
-
-#### Scenario: lineage が定義された model.yaml からタスクを生成する
-- **WHEN** lineage セクションが存在する model.yaml で設計が完了する
-- **THEN** AIは依存順にソートされたフェーズ別タスク一覧を `.modscape/sdd/<name>/tasks.md` として生成する
-
-#### Scenario: lineage が未定義の場合に案内メッセージを表示する
-- **WHEN** model.yaml に lineage セクションが存在しない状態で設計が完了する
-- **THEN** AIは「model.yaml に lineage が定義されていません。lineage を追加してから再度実行してください」と案内する
 
 #### Scenario: spec.md が存在しない場合にエラーメッセージを表示する
 - **WHEN** `sdd/<name>/spec.md` が存在しない状態で `/modscape:sdd:design <name>` を実行する

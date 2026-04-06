@@ -1,13 +1,4 @@
-## MERGED into sdd-design
-
-このスペックの要件は `sdd-design` に統合されました。
-`/modscape:sdd:design <name>` スキルが設計完了後に tasks.md を生成する責務を担います。
-
-詳細は `openspec/specs/sdd-design/spec.md` を参照してください。
-
----
-
-## MODIFIED Requirements (archived)
+## MODIFIED Requirements
 
 ### Requirement: model.yaml の lineage から依存順にタスクを生成する
 AIスキル `/modscape:sdd:design <name>` は設計完了後に `model.yaml` の `lineage` セクションをトポロジカルソートし、実装フェーズごとに分類した `.modscape/sdd/<name>/tasks.md` を生成しなければならない（SHALL）。

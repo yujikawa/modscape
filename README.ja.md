@@ -81,23 +81,31 @@ npm install -g modscape
 
 ### A+: 仕様駆動データエンジニアリング（SDD） — Claude Code 専用
 
-SDD はパスAの上に構造化された4ステップのワークフローを追加し、ビジネス要件から実装まで一貫して支援します。
+SDD はパスAの上に構造化されたワークフローを追加し、ビジネス要件から実装、そして恒久的なドキュメントまで一貫して支援します。各パイプラインは名前付き作業フォルダで管理され、完了後はテーブル単位のビジネス仕様書としてアーカイブされます。
 
 1.  **SDD付きで初期化**（Claude Code のみ）:
     ```bash
     modscape init --claude --sdd
     ```
-    4つのスラッシュコマンドとカスタマイズテンプレートがインストールされます。
+    5つのスラッシュコマンドとカスタマイズテンプレートがインストールされ、`.modscape/sdd/` と `.modscape/specs/` ディレクトリが作成されます。
 
 2.  **要件定義** — `/modscape:sdd:requirements` を実行してパイプラインの仕様を対話的に定義します:
     - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
-    - `.modscape/sdd/spec.md` に出力
+    - AIが作業フォルダ名を提案（例: `monthly-sales-summary`）→ 確認またはリネーム
+    - `.modscape/sdd/<name>/spec.md` に出力
 
-3.  **モデル設計** — `/modscape:sdd:design` を実行して `spec.md` をもとに `model.yaml` を生成・更新します
+3.  **モデル設計** — `/modscape:sdd:design <name>` を実行します:
+    - `spec.md` をもとに `model.yaml` を設計・更新（既存の `specs/*.md` も参照）
+    - 直接・間接影響テーブルを自動特定
+    - `design.md`（設計判断）と `tasks.md`（実装チェックリスト）を生成
+    - **再実行可能**: 実データで動かして気づきを `design.md` に追記し、再実行で設計を更新
 
-4.  **タスク生成** — `/modscape:sdd:tasks` を実行して `model.yaml` からフェーズ別の実装チェックリスト（`.modscape/sdd/tasks.md`）を生成します
+4.  **実装** — `/modscape:sdd:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
 
-5.  **実装** — `/modscape:sdd:implement` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
+5.  **アーカイブ** — `/modscape:sdd:archive <name>` を実行して恒久テーブル仕様書を同期します:
+    - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
+    - 上流テーブルにはChangelog追記のみ
+    - 作業フォルダの削除可否をユーザーが選択
 
 > **カスタマイズ**: `.modscape/sdd/sdd.custom.md.example` を `sdd.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
 

@@ -1,17 +1,26 @@
-Implement pending tasks from `.modscape/sdd/tasks.md` one by one.
+Implement pending tasks from `.modscape/sdd/<name>/tasks.md` one by one.
+
+## Usage
+
+```
+/modscape:sdd:implement <name>
+/modscape:sdd:implement <name> path/to/model.yaml
+```
+
+`<name>` is the work folder name (e.g., `monthly-sales-summary`).
 
 ## Instructions
 
 1. Read `.modscape/codegen-rules.md` to understand how to generate implementation code.
    If `.modscape/sdd/sdd.custom.md` exists, read it too — its rules take **priority** for target tool and output format.
 
-2. Check that `.modscape/sdd/tasks.md` exists.
+2. Check that `.modscape/sdd/<name>/tasks.md` exists.
    - If it does not exist: stop and tell the user:
-     > `tasks.md` not found. Run `/modscape:sdd:tasks` first to generate the task list.
+     > `sdd/<name>/tasks.md` not found. Run `/modscape:sdd:design <name>` first to generate the task list.
 
 3. Check for pending tasks (`- [ ]`).
    - If all tasks are complete (`- [x]`): tell the user:
-     > All tasks are already complete. Update the `Status` field in `.modscape/sdd/spec.md` to `done`.
+     > All tasks are complete. Run `/modscape:sdd:archive <name>` to sync the permanent table specs.
    - Otherwise: find the first pending task and proceed.
 
 4. For each pending task, in phase order:
@@ -26,7 +35,7 @@ Implement pending tasks from `.modscape/sdd/tasks.md` one by one.
    - Generate test definitions for primary keys (unique + not_null) and foreign key relationships
    - For dbt: write to `models/schema.yml` or the appropriate schema file
 
-5. After generating code for a task, immediately update the checkbox in `.modscape/sdd/tasks.md`:
+5. After generating code for a task, immediately update the checkbox in `.modscape/sdd/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
 6. After each task, confirm with the user before proceeding:
@@ -39,16 +48,18 @@ Implement pending tasks from `.modscape/sdd/tasks.md` one by one.
 - Add `-- TODO:` comments where `model.yaml` lacks sufficient information to generate definitive code
 - Keep generated code minimal and correct — do not add logic not supported by the YAML
 
-## Usage
+## If You Discover Issues During Implementation
 
-```
-/modscape:sdd:implement
-/modscape:sdd:implement path/to/model.yaml
-```
+If running the pipeline reveals unexpected results (wrong grain, high NULL rate, upstream data issues, etc.):
+
+1. Add the finding to `.modscape/sdd/<name>/design.md` under the `## Findings` section
+2. Re-run `/modscape:sdd:design <name>` to update the design and regenerate pending tasks
+3. Resume implementation with the updated task list
 
 ## Completion
 
 When all tasks are done:
 
-> All tasks complete! Update the `Status` field in `.modscape/sdd/spec.md` to `done`.
+> All tasks complete!
+> Run `/modscape:sdd:archive <name>` to sync the permanent table specs in `.modscape/specs/`.
 > Run `modscape dev model.yaml` to review the final model in the visualizer.

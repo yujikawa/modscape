@@ -101,14 +101,17 @@ export async function initProject(options = {}) {
       if (options.sdd) {
         console.log('  Scaffolding SDD (Spec-Driven Data Engineering) skills...');
         const sddDir = path.join(__dirname, 'templates/claude/sdd');
-        const sddSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md'];
+        const sddSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md', 'archive.md'];
         for (const skill of sddSkills) {
           const template = fs.readFileSync(path.join(sddDir, skill), 'utf8');
           await safeWriteFile(`.claude/commands/modscape/sdd/${skill}`, template);
         }
         const customExample = fs.readFileSync(path.join(sddDir, 'sdd.custom.md.example'), 'utf8');
         await safeWriteFile('.modscape/sdd/sdd.custom.md.example', customExample);
+        // Create specs/ directory placeholder
+        await safeWriteFile('.modscape/specs/.gitkeep', '');
         console.log('\n  💡 SDD skills installed. Start with /modscape:sdd:requirements\n');
+        console.log('     Permanent table specs will be stored in .modscape/specs/\n');
       }
     } else if (options.sdd) {
       console.log('\n  ⚠️  SDD skills are currently supported for Claude Code only.');

@@ -5,13 +5,18 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- **SDD (Spec-Driven Data Engineering)** — A four-step AI workflow for building data pipelines from business requirements to implementation, powered by Claude Code slash commands.
-  - `/modscape:sdd:requirements` — Collects business requirements interactively and writes `.modscape/sdd/spec.md`
-  - `/modscape:sdd:design` — Reads `spec.md` and designs `model.yaml` using mutation CLI commands
-  - `/modscape:sdd:tasks` — Generates a phased implementation checklist from `model.yaml` lineage into `.modscape/sdd/tasks.md`
-  - `/modscape:sdd:implement` — Implements tasks one by one, generating dbt / SQLMesh code and updating checkboxes
-- **`modscape init --sdd`** — New flag (combine with `--claude`) to install SDD skills and a `.modscape/sdd/sdd.custom.md.example` customization template
-- **`sdd.custom.md` support** — All SDD skills respect `.modscape/sdd/sdd.custom.md` for project-specific overrides (target tool, required spec fields, output conventions)
+- **SDD workflow redesign** — Restructured the SDD workflow to separate temporary work artifacts from permanent table specs, and to support data-specific design loops.
+  - **Named work folders**: Each pipeline now gets its own folder `sdd/<name>/` (requirements proposes the name, user confirms). Multiple pipelines can run in parallel.
+  - **`/modscape:sdd:archive <name>`** — New skill that syncs permanent table specs to `.modscape/specs/<table-id>.md`. Directly affected tables get full spec updates; upstream tables get Changelog-only entries. Prompts user to optionally delete the work folder.
+  - **`/modscape:sdd:design <name>` (enhanced)** — Now reads `specs/*.md` for existing business context, auto-identifies directly/indirectly affected tables, writes `sdd/<name>/design.md` (design decisions), and generates `sdd/<name>/tasks.md` inline. Re-runnable: add findings to `design.md` after running with real data, then re-run to update design and regenerate pending tasks.
+  - **`/modscape:sdd:implement <name>` (updated)** — Accepts `<name>` argument; completion message now guides to `/modscape:sdd:archive`.
+  - **`/modscape:sdd:requirements` (updated)** — Proposes a kebab-case folder name from pipeline title; warns on name collision.
+  - **`specs/<table-id>.md` format** — Defined permanent business spec format (Overview, Business Context, Business Rules, Known Issues, Changelog) documented in `rules.md`.
+  - **`modscape init --sdd`** — Now installs `archive.md` skill and creates `.modscape/specs/.gitkeep` placeholder.
+
+### Changed
+- **SDD skills use `sdd/<name>/` path structure** instead of flat `sdd/spec.md` / `sdd/tasks.md` singletons. Existing projects with the old structure need manual migration.
+- **`sdd-tasks` skill merged into `sdd-design`** — Tasks are now generated automatically at the end of the design step. The standalone `tasks.md` skill is kept for backward compatibility but is deprecated.
 
 ## [2.6.1] - 2026-04-05
 
