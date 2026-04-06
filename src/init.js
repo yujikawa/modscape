@@ -107,7 +107,7 @@ export async function initProject(options = {}) {
           await safeWriteFile(`.claude/commands/modscape/spec/${skill}`, template);
         }
         const customExample = fs.readFileSync(path.join(specDir, 'modscape-spec.custom.md.example'), 'utf8');
-        await safeWriteFile('.modscape/spec/modscape-spec.custom.md.example', customExample);
+        await safeWriteFile('.modscape/changes/modscape-spec.custom.md.example', customExample);
         // Create specs/ directory placeholder
         await safeWriteFile('.modscape/specs/.gitkeep', '');
         console.log('\n  💡 SDD skills installed. Start with /modscape:spec:requirements\n');

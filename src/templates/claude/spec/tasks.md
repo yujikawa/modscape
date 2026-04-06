@@ -1,8 +1,8 @@
-Generate an implementation task list from `model.yaml` and write it to `.modscape/spec/tasks.md`.
+Generate an implementation task list from `model.yaml` and write it to `.modscape/changes/tasks.md`.
 
 ## Instructions
 
-1. If `.modscape/spec/modscape-spec.custom.md` exists, read it — its rules take **priority** for phase structure and additional tasks.
+1. If `.modscape/changes/modscape-spec.custom.md` exists, read it — its rules take **priority** for phase structure and additional tasks.
 
 2. Read `model.yaml` (default path) or the path provided by the user.
 
@@ -23,17 +23,17 @@ Generate an implementation task list from `model.yaml` and write it to `.modscap
    - Materialization type in brackets (from `implementation.materialization` or inferred from `appearance.type`)
    - Upstream dependencies with `←` notation (omit for Phase 1)
 
-6. Write `.modscape/spec/tasks.md` using the format below.
-   Create the `.modscape/spec/` directory if it does not exist.
+6. Write `.modscape/changes/tasks.md` using the format below.
+   Create the `.modscape/changes/` directory if it does not exist.
 
-7. Update `Status` in `.modscape/spec/spec.md` from `design` to `tasks` (if spec.md exists).
+7. Update `Status` in `.modscape/changes/spec.md` from `design` to `tasks` (if spec.md exists).
 
 ## tasks.md Format
 
 ```markdown
 # Pipeline Tasks
 > Generated from: model.yaml
-> Spec: .modscape/spec/spec.md
+> Spec: .modscape/changes/spec.md
 > Progress: 0 / <total>
 
 ## Phase 1: Staging

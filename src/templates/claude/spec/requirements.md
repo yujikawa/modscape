@@ -1,8 +1,8 @@
-Gather business requirements interactively and generate `.modscape/spec/<name>/spec.md`.
+Gather business requirements interactively and generate `.modscape/changes/<name>/spec.md`.
 
 ## Instructions
 
-1. If `.modscape/spec/modscape-spec.custom.md` exists, read it **in addition** to these instructions.
+1. If `.modscape/changes/modscape-spec.custom.md` exists, read it **in addition** to these instructions.
    Rules in `modscape-spec.custom.md` take **priority** when they conflict.
 
 2. Collect the following information through conversation:
@@ -19,17 +19,17 @@ Gather business requirements interactively and generate `.modscape/spec/<name>/s
      > Proposed folder name: `<name>`. Is this OK? (Reply with a different name to rename.)
    - Wait for user confirmation or rename.
 
-4. Check whether `.modscape/spec/<name>/` already exists.
+4. Check whether `.modscape/changes/<name>/` already exists.
    - If it exists: warn the user:
-     > `spec/<name>/` already exists. Please specify a different name.
+     > `changes/<name>/` already exists. Please specify a different name.
    - If not: proceed to create the directory.
 
-5. Check whether `.modscape/spec/<name>/spec.md` already exists.
+5. Check whether `.modscape/changes/<name>/spec.md` already exists.
    - If it exists: show the current content and ask the user what to update.
    - If not: write the collected requirements using the format below.
 
-6. Write the requirements to `.modscape/spec/<name>/spec.md`.
-   Create the `.modscape/spec/<name>/` directory if it does not exist.
+6. Write the requirements to `.modscape/changes/<name>/spec.md`.
+   Create the `.modscape/changes/<name>/` directory if it does not exist.
 
 7. Set `Status: requirements` in the spec file.
 
@@ -70,5 +70,5 @@ requirements
 
 After completing `spec.md`, guide the user:
 
-> `spec.md` has been created at `.modscape/spec/<name>/spec.md`.
+> `spec.md` has been created at `.modscape/changes/<name>/spec.md`.
 > Run `/modscape:spec:design <name>` next to design the data model.

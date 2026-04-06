@@ -1,4 +1,4 @@
-Implement pending tasks from `.modscape/spec/<name>/tasks.md` one by one.
+Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
 ## Usage
 
@@ -11,12 +11,12 @@ Implement pending tasks from `.modscape/spec/<name>/tasks.md` one by one.
 
 ## Instructions
 
-1. Read `.modscape/spec/modscape-spec.custom.md` if it exists — it contains all project-specific rules including target tool, output directories, naming conventions, and code generation preferences. These rules take **priority** over any defaults.
+1. Read `.modscape/changes/modscape-spec.custom.md` if it exists — it contains all project-specific rules including target tool, output directories, naming conventions, and code generation preferences. These rules take **priority** over any defaults.
    If `.modscape/codegen-rules.md` also exists, read it as supplementary reference.
 
-2. Check that `.modscape/spec/<name>/tasks.md` exists.
+2. Check that `.modscape/changes/<name>/tasks.md` exists.
    - If it does not exist: stop and tell the user:
-     > `spec/<name>/tasks.md` not found. Run `/modscape:spec:design <name>` first to generate the task list.
+     > `changes/<name>/tasks.md` not found. Run `/modscape:spec:design <name>` first to generate the task list.
 
 3. Check for pending tasks (`- [ ]`).
    - If all tasks are complete (`- [x]`): tell the user:
@@ -26,7 +26,7 @@ Implement pending tasks from `.modscape/spec/<name>/tasks.md` one by one.
 4. For each pending task, in phase order:
 
    **Staging / Core / Mart tasks:**
-   - Read the corresponding table definition from `.modscape/spec/<name>/model.yaml` (the work-scoped YAML, NOT the master model.yaml)
+   - Read the corresponding table definition from `.modscape/changes/<name>/model.yaml` (the work-scoped YAML, NOT the master model.yaml)
    - Generate implementation code for the target tool (dbt, SQLMesh, etc.)
    - Follow the dependency order defined in `lineage` — always generate upstream tables first
    - Place generated files in the appropriate location (e.g., `models/staging/`, `models/core/`, `models/mart/`)
@@ -35,7 +35,7 @@ Implement pending tasks from `.modscape/spec/<name>/tasks.md` one by one.
    - Generate test definitions for primary keys (unique + not_null) and foreign key relationships
    - For dbt: write to `models/schema.yml` or the appropriate schema file
 
-5. After generating code for a task, immediately update the checkbox in `.modscape/spec/<name>/tasks.md`:
+5. After generating code for a task, immediately update the checkbox in `.modscape/changes/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
 6. After each task, confirm with the user before proceeding:
@@ -52,7 +52,7 @@ Implement pending tasks from `.modscape/spec/<name>/tasks.md` one by one.
 
 If running the pipeline reveals unexpected results (wrong grain, high NULL rate, upstream data issues, etc.):
 
-1. Add the finding to `.modscape/spec/<name>/design.md` under the `## Findings` section
+1. Add the finding to `.modscape/changes/<name>/design.md` under the `## Findings` section
 2. Re-run `/modscape:spec:design <name>` to update the design and regenerate pending tasks
 3. Resume implementation with the updated task list
 

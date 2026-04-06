@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: ビジネス要件を対話的に収集して spec.md を生成する
-AIスキル `/modscape:spec:requirements` は、ユーザーとの対話を通じてビジネス要件を収集し、`.modscape/spec/<name>/spec.md` を生成または更新しなければならない（SHALL）。
+AIスキル `/modscape:spec:requirements` は、ユーザーとの対話を通じてビジネス要件を収集し、`.modscape/changes/<name>/spec.md` を生成または更新しなければならない（SHALL）。
 
 スキルは以下の項目を対話的に収集しなければならない（SHALL）:
 - パイプラインのゴール（誰のために・何のために）
@@ -10,20 +10,20 @@ AIスキル `/modscape:spec:requirements` は、ユーザーとの対話を通�
 - 受け入れ条件（Acceptance Criteria）
 - ターゲットツール（dbt / SQLMesh / Spark SQL / plain SQL）
 
-スキルは要件収集後に作業フォルダ名（kebab-case）を提案し、ユーザーの承認またはリネームを受けてから `spec/<name>/` フォルダを作成しなければならない（SHALL）。
+スキルは要件収集後に作業フォルダ名（kebab-case）を提案し、ユーザーの承認またはリネームを受けてから `changes/<name>/` フォルダを作成しなければならない（SHALL）。
 
-スキルは `.modscape/spec/modscape-spec.custom.md` が存在する場合、そのルールを優先して適用しなければならない（SHALL）。
+スキルは `.modscape/changes/modscape-spec.custom.md` が存在する場合、そのルールを優先して適用しなければならない（SHALL）。
 
 #### Scenario: spec.md が存在しない場合にフォルダ名を提案して新規作成する
-- **WHEN** 対応する `spec/<name>/spec.md` が存在しない状態で `/modscape:spec:requirements` を実行する
-- **THEN** AIは対話的に要件を収集し、要件内容からkebab-caseのフォルダ名を提案してユーザーの確認を得た後、`spec/<name>/spec.md` を新規作成する
+- **WHEN** 対応する `changes/<name>/spec.md` が存在しない状態で `/modscape:spec:requirements` を実行する
+- **THEN** AIは対話的に要件を収集し、要件内容からkebab-caseのフォルダ名を提案してユーザーの確認を得た後、`changes/<name>/spec.md` を新規作成する
 
 #### Scenario: 既存フォルダ名が衝突する場合に警告する
-- **WHEN** AIが提案したフォルダ名と同名の `spec/<name>/` が既に存在する
-- **THEN** AIは「`spec/<name>/` は既に存在します。別の名前を指定してください」と案内する
+- **WHEN** AIが提案したフォルダ名と同名の `changes/<name>/` が既に存在する
+- **THEN** AIは「`changes/<name>/` は既に存在します。別の名前を指定してください」と案内する
 
 #### Scenario: spec.md が既存の場合に内容を確認して更新する
-- **WHEN** `spec/<name>/spec.md` が既存の状態で `/modscape:spec:requirements <name>` を実行する
+- **WHEN** `changes/<name>/spec.md` が既存の状態で `/modscape:spec:requirements <name>` を実行する
 - **THEN** AIは既存内容を表示し、ユーザーの指示に基づいて更新する
 
 #### Scenario: 完了後に次スキルへ誘導する

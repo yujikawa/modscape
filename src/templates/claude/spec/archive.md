@@ -12,20 +12,20 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
 
 ## Instructions
 
-1. Verify that `.modscape/spec/<name>/` exists and contains `model.yaml`.
+1. Verify that `.modscape/changes/<name>/` exists and contains `model.yaml`.
    - If not: stop and tell the user:
-     > `spec/<name>/model.yaml` not found. Run `/modscape:spec:design <name>` first.
+     > `changes/<name>/model.yaml` not found. Run `/modscape:spec:design <name>` first.
 
 2. Read the following files:
-   - `.modscape/spec/<name>/spec.md`
-   - `.modscape/spec/<name>/design.md`
-   - `.modscape/spec/<name>/model.yaml`
+   - `.modscape/changes/<name>/spec.md`
+   - `.modscape/changes/<name>/design.md`
+   - `.modscape/changes/<name>/model.yaml`
 
 ### Step 1: Merge work YAML into master YAML
 
 3. Run the merge with spec-first ordering (spec version wins on duplicate IDs):
    ```bash
-   modscape merge .modscape/spec/<name>/model.yaml <master>.yaml --output <master>.yaml
+   modscape merge .modscape/changes/<name>/model.yaml <master>.yaml --output <master>.yaml
    ```
 
 4. Check the merge output for duplicate table ID warnings.
@@ -44,7 +44,7 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
 5. **Identify affected tables** from `design.md`:
    - **Direct impact tables**: listed under `## Affected Tables > ### Direct Impact`
    - **Indirect impact tables**: listed under `## Affected Tables > ### Indirect Impact`
-   - If `design.md` has no affected tables section: infer from `spec/<name>/model.yaml` lineage.
+   - If `design.md` has no affected tables section: infer from `changes/<name>/model.yaml` lineage.
 
 6. **Sync `specs/<table-id>.md` for direct impact tables**:
 
@@ -72,13 +72,13 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
 ### Step 3: Cleanup
 
 9. **Ask the user whether to delete the work folder**:
-   > Archive complete. Delete `spec/<name>/`? (y / n — move to archives)
+   > Archive complete. Delete `changes/<name>/`? (y / n — move to archives)
 
-   - If yes: delete the `.modscape/spec/<name>/` directory.
+   - If yes: delete the `.modscape/changes/<name>/` directory.
    - If no: move it to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date) instead.
      ```bash
      mkdir -p .modscape/archives
-     mv .modscape/spec/<name> .modscape/archives/YYYY-MM-DD-<name>
+     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
      ```
 
 10. Show spec coverage summary:

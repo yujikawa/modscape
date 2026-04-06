@@ -533,28 +533,28 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    ```bash
    modscape init --claude --sdd
    ```
-   Installs five slash commands and a customization template. Creates `.modscape/spec/` and `.modscape/specs/` directories.
+   Installs five slash commands and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
    - AI proposes a work folder name (e.g. `monthly-sales-summary`) → confirm or rename
-   - Output: `.modscape/spec/<name>/spec.md`
+   - Output: `.modscape/changes/<name>/spec.md`
 
 3. **Design the model** — run `/modscape:spec:design <name>`:
    - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
-   - Runs `modscape extract` to pull relevant tables from the master YAML into `spec/<name>/model.yaml`
+   - Runs `modscape extract` to pull relevant tables from the master YAML into `changes/<name>/model.yaml`
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
    - **Re-runnable**: add findings to `design.md` after seeing real data, re-run to update the design while preserving completed tasks
 
 4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
-   - Merges `spec/<name>/model.yaml` into the master YAML (spec-first wins)
+   - Merges `changes/<name>/model.yaml` into the master YAML (spec-first wins)
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
    - You choose whether to delete the work folder or move it to `.modscape/archives/YYYY-MM-DD-<name>/`
 
-> **Customization**: Rename `.modscape/spec/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
+> **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
 ### SDD Workflow Diagram
 
@@ -570,30 +570,30 @@ sequenceDiagram
         User->>AI: Describe requirements (goal, stakeholders, data sources, etc.)
         AI->>User: Propose folder name (e.g. monthly-sales-summary)
         User->>AI: Approve or rename
-        AI->>FS: Create spec/<name>/spec.md
+        AI->>FS: Create changes/<name>/spec.md
     end
 
     rect rgb(240, 255, 240)
         Note over User,FS: ② /modscape:spec:design <name>
         AI->>FS: Read spec.md and specs/*.md
         AI->>CLI: modscape extract HR.yaml --tables <ids>
-        CLI->>FS: Create spec/<name>/model.yaml (extracted tables)
-        AI->>CLI: modscape table add spec/<name>/model.yaml ...
-        CLI->>FS: Add new tables to spec/<name>/model.yaml
-        AI->>CLI: modscape layout spec/<name>/model.yaml
-        AI->>FS: Create spec/<name>/design.md + tasks.md
+        CLI->>FS: Create changes/<name>/model.yaml (extracted tables)
+        AI->>CLI: modscape table add changes/<name>/model.yaml ...
+        CLI->>FS: Add new tables to changes/<name>/model.yaml
+        AI->>CLI: modscape layout changes/<name>/model.yaml
+        AI->>FS: Create changes/<name>/design.md + tasks.md
     end
 
     rect rgb(255, 253, 240)
         Note over User,FS: ③ /modscape:spec:implement <name>
         loop While incomplete tasks remain
-            AI->>FS: Read spec/<name>/model.yaml
+            AI->>FS: Read changes/<name>/model.yaml
             AI->>User: Generate code (dbt / SQLMesh etc.)
             AI->>FS: Update tasks.md checkbox [ ]→[x]
             AI->>User: Proceed to next task?
         end
         opt If real-data findings arise
-            User->>FS: Add Findings to spec/<name>/design.md
+            User->>FS: Add Findings to changes/<name>/design.md
             User->>AI: Re-run /modscape:spec:design <name>
             AI->>FS: Redesign model.yaml, diff-update tasks.md
         end
@@ -601,11 +601,11 @@ sequenceDiagram
 
     rect rgb(255, 240, 245)
         Note over User,FS: ④ /modscape:spec:archive <name>
-        AI->>CLI: modscape merge spec/<name>/model.yaml HR.yaml
+        AI->>CLI: modscape merge changes/<name>/model.yaml HR.yaml
         CLI->>FS: Update HR.yaml (spec-first wins)
         Note over CLI: ⚠ Warn on duplicate table IDs
         AI->>FS: Generate / update specs/<table-id>.md
-        AI->>User: Delete spec/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
+        AI->>User: Delete changes/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
     end
 ```
 

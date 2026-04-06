@@ -18,10 +18,10 @@
 #       └── <table-id>.md     Permanent business spec per table
 #
 # SDD Workflow:
-#   /modscape:spec:requirements           → create spec/<name>/spec.md
+#   /modscape:spec:requirements           → create changes/<name>/spec.md
 #   /modscape:spec:design <name>          → design model.yaml, generate design.md + tasks.md
 #   /modscape:spec:implement <name>       → implement tasks one by one
-#   /modscape:spec:archive <name>         → sync specs/<table-id>.md, optionally delete spec/<name>/
+#   /modscape:spec:archive <name>         → sync specs/<table-id>.md, optionally delete changes/<name>/
 
 ## Overall Policy
 
