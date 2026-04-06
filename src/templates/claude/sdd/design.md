@@ -63,9 +63,9 @@ Design the data model based on `spec.md` and update `sdd/<name>/model.yaml` (the
    ```
    Edit YAML directly only for complex nested fields (`implementation`, `columns`, `sampleData`).
 
-10. After all tables are added, run:
+10. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash
-    modscape layout .modscape/sdd/<name>/model.yaml
+    modscape validate .modscape/sdd/<name>/model.yaml
     ```
 
 11. Write `.modscape/sdd/<name>/design.md` using the format below.

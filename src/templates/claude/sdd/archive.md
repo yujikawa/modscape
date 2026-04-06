@@ -34,6 +34,11 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
    > The spec version was used: `<table-id>`, `<table-id>`
    > Please verify the master YAML diff looks correct.
 
+5. Run validate on the merged master YAML and fix any errors before proceeding:
+   ```bash
+   modscape validate <master>.yaml
+   ```
+
 ### Step 2: Sync permanent table specs
 
 5. **Identify affected tables** from `design.md`:
