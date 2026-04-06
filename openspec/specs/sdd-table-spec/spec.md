@@ -16,7 +16,7 @@
 このフォーマットは `model.yaml` の `conceptual.description`（AI向けの簡潔な記述）とは役割が異なり、ステークホルダー向けの詳細なビジネス文書として機能しなければならない（SHALL）。
 
 #### Scenario: archiveスキルが新規specを作成する
-- **WHEN** `/modscape:sdd:archive` が新規テーブルのspecを生成する
+- **WHEN** `/modscape:spec:archive` が新規テーブルのspecを生成する
 - **THEN** 上記フォーマットに従った `specs/<table-id>.md` が作成される
 
 #### Scenario: specの内容がmodel.yamlのテーブルIDと一致する

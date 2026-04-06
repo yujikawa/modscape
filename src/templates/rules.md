@@ -871,25 +871,25 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
 | `--all`    | Scaffold for all three agents |
 | `--sdd`    | Add SDD (Spec-Driven Data Engineering) skills — **Claude Code only**, combine with `--claude` |
 
-`--sdd` installs five slash commands for Claude Code and creates the `.modscape/sdd/` and `.modscape/specs/` directories:
+`--sdd` installs five slash commands for Claude Code and creates the `.modscape/spec/` and `.modscape/specs/` directories:
 
 | Command | Purpose |
 |---------|---------|
-| `/modscape:sdd:requirements` | Collect business requirements → `.modscape/sdd/<name>/spec.md` |
-| `/modscape:sdd:design <name>`       | Design `model.yaml` from `spec.md`, generate `design.md` and `tasks.md` |
-| `/modscape:sdd:implement <name>`    | Implement tasks one by one, generating dbt / SQLMesh code |
-| `/modscape:sdd:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
+| `/modscape:spec:requirements` | Collect business requirements → `.modscape/spec/<name>/spec.md` |
+| `/modscape:spec:design <name>`       | Design `model.yaml` from `spec.md`, generate `design.md` and `tasks.md` |
+| `/modscape:spec:implement <name>`    | Implement tasks one by one, generating dbt / SQLMesh code |
+| `/modscape:spec:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
 
 ### SDD Directory Structure
 
 ```
 .modscape/
-├── sdd/
+├── spec/
 │   ├── <name>/               # Work folder per pipeline (temporary)
 │   │   ├── spec.md           # Business requirements
 │   │   ├── design.md         # Design decisions + real-data findings
 │   │   └── tasks.md          # Implementation task list
-│   └── sdd.custom.md         # Project-wide custom rules (optional)
+│   └── modscape-spec.custom.md         # Project-wide custom rules (optional)
 └── specs/
     └── <table-id>.md         # Permanent business spec per table
 ```
@@ -917,7 +917,7 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
 - YYYY-MM-DD: 初版 (SDD: <name>)
 ```
 
-Customize SDD behavior by creating `.modscape/sdd/sdd.custom.md` (rename from the generated `.example` file).
+Customize SDD behavior by creating `.modscape/spec/modscape-spec.custom.md` (rename from the generated `.example` file).
 
 ---
 

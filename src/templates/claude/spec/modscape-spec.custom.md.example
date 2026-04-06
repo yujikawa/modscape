@@ -1,7 +1,7 @@
 # SDD Custom Rules
 #
 # This file overrides the default SDD skill behavior for this project.
-# Rename to `sdd.custom.md` to activate (remove the `.example` suffix).
+# Rename to `modscape-spec.custom.md` to activate (remove the `.example` suffix).
 # Rules defined here take PRIORITY over the built-in SDD skill instructions.
 #
 # Delete or comment out any section you don't need to customize.
@@ -13,15 +13,15 @@
 #   │   │   ├── spec.md       Business requirements
 #   │   │   ├── design.md     Design decisions + real-data findings
 #   │   │   └── tasks.md      Implementation task list
-#   │   └── sdd.custom.md     This file (project-wide custom rules)
+#   │   └── modscape-spec.custom.md     This file (project-wide custom rules)
 #   └── specs/
 #       └── <table-id>.md     Permanent business spec per table
 #
 # SDD Workflow:
-#   /modscape:sdd:requirements           → create sdd/<name>/spec.md
-#   /modscape:sdd:design <name>          → design model.yaml, generate design.md + tasks.md
-#   /modscape:sdd:implement <name>       → implement tasks one by one
-#   /modscape:sdd:archive <name>         → sync specs/<table-id>.md, optionally delete sdd/<name>/
+#   /modscape:spec:requirements           → create spec/<name>/spec.md
+#   /modscape:spec:design <name>          → design model.yaml, generate design.md + tasks.md
+#   /modscape:spec:implement <name>       → implement tasks one by one
+#   /modscape:spec:archive <name>         → sync specs/<table-id>.md, optionally delete spec/<name>/
 
 ## Overall Policy
 
@@ -45,7 +45,7 @@
 
 ## Implementation Output
 
-# Code generation preferences (used by /modscape:sdd:implement):
+# Code generation preferences (used by /modscape:spec:implement):
 # - Target tool: dbt (BigQuery)
 # - Output directory for staging models: models/staging/
 # - Output directory for core models: models/core/

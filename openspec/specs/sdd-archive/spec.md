@@ -1,22 +1,22 @@
 ## MODIFIED Requirements
 
 ### Requirement: SDD作業完了時に恒久テーブルspecを自動同期する
-AIスキル `/modscape:sdd:archive <name>` は `sdd/<name>/spec.md`・`sdd/<name>/design.md`・`sdd/<name>/model.yaml` を解析し、影響テーブルを特定して `.modscape/specs/<table-id>.md` を自動生成または更新しなければならない（SHALL）。また `sdd/<name>/model.yaml` を本番のmaster model.yaml（HR.yaml等）にマージしなければならない（SHALL）。
+AIスキル `/modscape:spec:archive <name>` は `spec/<name>/spec.md`・`spec/<name>/design.md`・`spec/<name>/model.yaml` を解析し、影響テーブルを特定して `.modscape/specs/<table-id>.md` を自動生成または更新しなければならない（SHALL）。また `spec/<name>/model.yaml` を本番のmaster model.yaml（HR.yaml等）にマージしなければならない（SHALL）。
 
 スキルは以下を実行しなければならない（SHALL）:
-- `sdd/<name>/spec.md`・`sdd/<name>/design.md`・`sdd/<name>/model.yaml` の lineage を読み込む
-- `modscape merge sdd/<name>/model.yaml <master>.yaml --output <master>.yaml` でマージする（spec版優先）
+- `spec/<name>/spec.md`・`spec/<name>/design.md`・`spec/<name>/model.yaml` の lineage を読み込む
+- `modscape merge spec/<name>/model.yaml <master>.yaml --output <master>.yaml` でマージする（spec版優先）
 - 重複テーブルIDが検出された場合、警告を表示してユーザーに通知する（処理はブロックしない）
 - 直接影響テーブルに対して `specs/<table-id>.md` の Overview / Business Context / Business Rules / Known Issues を生成・更新する
 - 間接影響テーブルに対して `specs/<table-id>.md` の Changelog のみ追記する
-- 同期完了後「`sdd/<name>/` を削除しますか？」とユーザーに確認する
+- 同期完了後「`spec/<name>/` を削除しますか？」とユーザーに確認する
 
 #### Scenario: 作業用YAMLを本番YAMLにマージする
 - **WHEN** archive を実行する
-- **THEN** `modscape merge sdd/<name>/model.yaml <master>.yaml --output <master>.yaml` が実行され、spec版が優先してマージされる
+- **THEN** `modscape merge spec/<name>/model.yaml <master>.yaml --output <master>.yaml` が実行され、spec版が優先してマージされる
 
 #### Scenario: 重複テーブルがある場合に警告する
-- **WHEN** `sdd/<name>/model.yaml` に本番YAMLと同じIDのテーブルが存在する状態で archive を実行する
+- **WHEN** `spec/<name>/model.yaml` に本番YAMLと同じIDのテーブルが存在する状態で archive を実行する
 - **THEN** AIは「⚠ <table-id> は本番YAMLにも存在します。spec版を使用します」と警告を表示し、処理を継続する
 
 #### Scenario: 直接影響テーブルのspecを新規作成する
@@ -29,4 +29,4 @@ AIスキル `/modscape:sdd:archive <name>` は `sdd/<name>/spec.md`・`sdd/<name
 
 #### Scenario: 同期完了後に削除確認を行う
 - **WHEN** マージとすべての `specs/<table-id>.md` の同期が完了する
-- **THEN** AIは「`sdd/<name>/` を削除しますか？」と確認し、ユーザーの選択に応じて削除またはそのまま保持する
+- **THEN** AIは「`spec/<name>/` を削除しますか？」と確認し、ユーザーの選択に応じて削除またはそのまま保持する

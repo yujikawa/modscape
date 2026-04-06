@@ -533,28 +533,28 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    ```bash
    modscape init --claude --sdd
    ```
-   Installs five slash commands and a customization template. Creates `.modscape/sdd/` and `.modscape/specs/` directories.
+   Installs five slash commands and a customization template. Creates `.modscape/spec/` and `.modscape/specs/` directories.
 
-2. **Define requirements** — run `/modscape:sdd:requirements` to interactively capture the pipeline spec:
+2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
    - AI proposes a work folder name (e.g. `monthly-sales-summary`) → confirm or rename
-   - Output: `.modscape/sdd/<name>/spec.md`
+   - Output: `.modscape/spec/<name>/spec.md`
 
-3. **Design the model** — run `/modscape:sdd:design <name>`:
+3. **Design the model** — run `/modscape:spec:design <name>`:
    - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
-   - Runs `modscape extract` to pull relevant tables from the master YAML into `sdd/<name>/model.yaml`
+   - Runs `modscape extract` to pull relevant tables from the master YAML into `spec/<name>/model.yaml`
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
    - **Re-runnable**: add findings to `design.md` after seeing real data, re-run to update the design while preserving completed tasks
 
-4. **Implement** — run `/modscape:sdd:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
+4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
-5. **Archive** — run `/modscape:sdd:archive <name>` to sync permanent table specs:
-   - Merges `sdd/<name>/model.yaml` into the master YAML (spec-first wins)
+5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
+   - Merges `spec/<name>/model.yaml` into the master YAML (spec-first wins)
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
    - You choose whether to delete the work folder or move it to `.modscape/archives/YYYY-MM-DD-<name>/`
 
-> **Customization**: Rename `.modscape/sdd/sdd.custom.md.example` to `sdd.custom.md` to override default tool targets, required fields, and output conventions per project.
+> **Customization**: Rename `.modscape/spec/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
 ### SDD Workflow Diagram
 
@@ -566,46 +566,46 @@ sequenceDiagram
     participant FS as .modscape/
 
     rect rgb(240, 248, 255)
-        Note over User,FS: ① /modscape:sdd:requirements
+        Note over User,FS: ① /modscape:spec:requirements
         User->>AI: Describe requirements (goal, stakeholders, data sources, etc.)
         AI->>User: Propose folder name (e.g. monthly-sales-summary)
         User->>AI: Approve or rename
-        AI->>FS: Create sdd/<name>/spec.md
+        AI->>FS: Create spec/<name>/spec.md
     end
 
     rect rgb(240, 255, 240)
-        Note over User,FS: ② /modscape:sdd:design <name>
+        Note over User,FS: ② /modscape:spec:design <name>
         AI->>FS: Read spec.md and specs/*.md
         AI->>CLI: modscape extract HR.yaml --tables <ids>
-        CLI->>FS: Create sdd/<name>/model.yaml (extracted tables)
-        AI->>CLI: modscape table add sdd/<name>/model.yaml ...
-        CLI->>FS: Add new tables to sdd/<name>/model.yaml
-        AI->>CLI: modscape layout sdd/<name>/model.yaml
-        AI->>FS: Create sdd/<name>/design.md + tasks.md
+        CLI->>FS: Create spec/<name>/model.yaml (extracted tables)
+        AI->>CLI: modscape table add spec/<name>/model.yaml ...
+        CLI->>FS: Add new tables to spec/<name>/model.yaml
+        AI->>CLI: modscape layout spec/<name>/model.yaml
+        AI->>FS: Create spec/<name>/design.md + tasks.md
     end
 
     rect rgb(255, 253, 240)
-        Note over User,FS: ③ /modscape:sdd:implement <name>
+        Note over User,FS: ③ /modscape:spec:implement <name>
         loop While incomplete tasks remain
-            AI->>FS: Read sdd/<name>/model.yaml
+            AI->>FS: Read spec/<name>/model.yaml
             AI->>User: Generate code (dbt / SQLMesh etc.)
             AI->>FS: Update tasks.md checkbox [ ]→[x]
             AI->>User: Proceed to next task?
         end
         opt If real-data findings arise
-            User->>FS: Add Findings to sdd/<name>/design.md
-            User->>AI: Re-run /modscape:sdd:design <name>
+            User->>FS: Add Findings to spec/<name>/design.md
+            User->>AI: Re-run /modscape:spec:design <name>
             AI->>FS: Redesign model.yaml, diff-update tasks.md
         end
     end
 
     rect rgb(255, 240, 245)
-        Note over User,FS: ④ /modscape:sdd:archive <name>
-        AI->>CLI: modscape merge sdd/<name>/model.yaml HR.yaml
+        Note over User,FS: ④ /modscape:spec:archive <name>
+        AI->>CLI: modscape merge spec/<name>/model.yaml HR.yaml
         CLI->>FS: Update HR.yaml (spec-first wins)
         Note over CLI: ⚠ Warn on duplicate table IDs
         AI->>FS: Generate / update specs/<table-id>.md
-        AI->>User: Delete sdd/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
+        AI->>User: Delete spec/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
     end
 ```
 
