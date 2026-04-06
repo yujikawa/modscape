@@ -45,12 +45,15 @@
 
 ## Implementation Output
 
-# Code generation preferences:
+# Code generation preferences (used by /modscape:sdd:implement):
+# - Target tool: dbt (BigQuery)
 # - Output directory for staging models: models/staging/
 # - Output directory for core models: models/core/
 # - Output directory for mart models: models/mart/
+# - Schema test file: models/schema.yml
 # - Add Japanese comments to generated SQL
 # - Use dbt-expectations for all test assertions
+# - dbt project name: analytics
 
 ## Naming Conventions
 

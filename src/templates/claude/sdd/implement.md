@@ -11,8 +11,8 @@ Implement pending tasks from `.modscape/sdd/<name>/tasks.md` one by one.
 
 ## Instructions
 
-1. Read `.modscape/codegen-rules.md` to understand how to generate implementation code.
-   If `.modscape/sdd/sdd.custom.md` exists, read it too — its rules take **priority** for target tool and output format.
+1. Read `.modscape/sdd/sdd.custom.md` if it exists — it contains all project-specific rules including target tool, output directories, naming conventions, and code generation preferences. These rules take **priority** over any defaults.
+   If `.modscape/codegen-rules.md` also exists, read it as supplementary reference.
 
 2. Check that `.modscape/sdd/<name>/tasks.md` exists.
    - If it does not exist: stop and tell the user:
