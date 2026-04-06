@@ -79,36 +79,6 @@ npm install -g modscape
 
     エージェントは `lineage` セクションを元に依存関係の順でモデルを生成し、YAMLで定義しきれない箇所には `-- TODO:` コメントを残します。
 
-### A+: 仕様駆動データエンジニアリング（SDD） — Claude Code 専用
-
-SDD はパスAの上に構造化されたワークフローを追加し、ビジネス要件から実装、そして恒久的なドキュメントまで一貫して支援します。各パイプラインは名前付き作業フォルダで管理され、完了後はテーブル単位のビジネス仕様書としてアーカイブされます。
-
-1.  **SDD付きで初期化**（Claude Code のみ）:
-    ```bash
-    modscape init --claude --sdd
-    ```
-    5つのスラッシュコマンドとカスタマイズテンプレートがインストールされ、`.modscape/sdd/` と `.modscape/specs/` ディレクトリが作成されます。
-
-2.  **要件定義** — `/modscape:sdd:requirements` を実行してパイプラインの仕様を対話的に定義します:
-    - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
-    - AIが作業フォルダ名を提案（例: `monthly-sales-summary`）→ 確認またはリネーム
-    - `.modscape/sdd/<name>/spec.md` に出力
-
-3.  **モデル設計** — `/modscape:sdd:design <name>` を実行します:
-    - `spec.md` をもとに `model.yaml` を設計・更新（既存の `specs/*.md` も参照）
-    - 直接・間接影響テーブルを自動特定
-    - `design.md`（設計判断）と `tasks.md`（実装チェックリスト）を生成
-    - **再実行可能**: 実データで動かして気づきを `design.md` に追記し、再実行で設計を更新
-
-4.  **実装** — `/modscape:sdd:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
-
-5.  **アーカイブ** — `/modscape:sdd:archive <name>` を実行して恒久テーブル仕様書を同期します:
-    - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
-    - 上流テーブルにはChangelog追記のみ
-    - 作業フォルダの削除可否をユーザーが選択
-
-> **カスタマイズ**: `.modscape/sdd/sdd.custom.md.example` を `sdd.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
-
 ### B: 手動モデリング
 アーキテクチャを直接コントロールしたい場合に最適です。
 
@@ -550,6 +520,92 @@ modscape annotation remove <file> --id <id>
 ```bash
 modscape summary <file>        # モデルの概要を表示
 modscape summary <file> --json # JSON形式で出力
+```
+
+## 仕様駆動データエンジニアリング（SDD）
+
+> Claude Code 専用。`modscape init --claude --sdd` が必要です。
+
+SDD はパスAの上に構造化されたワークフローを追加し、ビジネス要件から実装、そして恒久的なドキュメントまで一貫して支援します。各パイプラインは名前付き作業フォルダで管理され、完了後はテーブル単位のビジネス仕様書としてアーカイブされます。
+
+1.  **SDD付きで初期化**（Claude Code のみ）:
+    ```bash
+    modscape init --claude --sdd
+    ```
+    5つのスラッシュコマンドとカスタマイズテンプレートがインストールされ、`.modscape/sdd/` と `.modscape/specs/` ディレクトリが作成されます。
+
+2.  **要件定義** — `/modscape:sdd:requirements` を実行してパイプラインの仕様を対話的に定義します:
+    - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
+    - AIが作業フォルダ名を提案（例: `monthly-sales-summary`）→ 確認またはリネーム
+    - `.modscape/sdd/<name>/spec.md` に出力
+
+3.  **モデル設計** — `/modscape:sdd:design <name>` を実行します:
+    - `spec.md` をもとに関連テーブルを自動特定し、`modscape extract` でマスターYAMLから `sdd/<name>/model.yaml` を生成
+    - 新規テーブルを `sdd/<name>/model.yaml` に追加設計（マスターYAMLは触らない）
+    - `design.md`（設計判断）と `tasks.md`（実装チェックリスト）を生成
+    - **再実行可能**: 実データで動かして気づきを `design.md` に追記し、再実行で設計を更新
+
+4.  **実装** — `/modscape:sdd:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
+
+5.  **アーカイブ** — `/modscape:sdd:archive <name>` を実行して恒久テーブル仕様書を同期します:
+    - `sdd/<name>/model.yaml` をマスターYAMLにマージ（spec版優先）
+    - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
+    - 上流テーブルにはChangelog追記のみ
+    - 作業フォルダの削除可否をユーザーが選択
+
+> **カスタマイズ**: `.modscape/sdd/sdd.custom.md.example` を `sdd.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
+
+### SDDワークフロー図
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant AI as Claude (AI)
+    participant CLI as modscape CLI
+    participant FS as .modscape/
+
+    rect rgb(240, 248, 255)
+        Note over User,FS: ① /modscape:sdd:requirements
+        User->>AI: 要件を話す（ゴール・ステークホルダー・データソース等）
+        AI->>User: フォルダ名を提案（例: monthly-sales-summary）
+        User->>AI: 承認 or リネーム
+        AI->>FS: sdd/<name>/spec.md 作成
+    end
+
+    rect rgb(240, 255, 240)
+        Note over User,FS: ② /modscape:sdd:design <name>
+        AI->>FS: spec.md・specs/*.md を読む
+        AI->>CLI: modscape extract HR.yaml --tables <ids>
+        CLI->>FS: sdd/<name>/model.yaml 作成（関連テーブル抽出）
+        AI->>CLI: modscape table add sdd/<name>/model.yaml ...
+        CLI->>FS: sdd/<name>/model.yaml に新規テーブル追加
+        AI->>CLI: modscape layout sdd/<name>/model.yaml
+        AI->>FS: sdd/<name>/design.md + tasks.md 作成
+    end
+
+    rect rgb(255, 253, 240)
+        Note over User,FS: ③ /modscape:sdd:implement <name>
+        loop 未完了タスクがある間
+            AI->>FS: sdd/<name>/model.yaml を参照
+            AI->>User: コード生成（dbt / SQLMesh 等）
+            AI->>FS: tasks.md チェックボックス更新 [ ]→[x]
+            AI->>User: 次のタスクに進みますか？
+        end
+        opt 実データで気づきが発生した場合
+            User->>FS: sdd/<name>/design.md に Findings 追記
+            User->>AI: /modscape:sdd:design <name> 再実行
+            AI->>FS: model.yaml 再設計・tasks.md 差分更新
+        end
+    end
+
+    rect rgb(255, 240, 245)
+        Note over User,FS: ④ /modscape:sdd:archive <name>
+        AI->>CLI: modscape merge sdd/<name>/model.yaml HR.yaml
+        CLI->>FS: HR.yaml 更新（spec版優先）
+        Note over CLI: ⚠ 重複テーブルがあれば警告
+        AI->>FS: specs/<table-id>.md 生成・更新
+        AI->>User: sdd/<name>/ を削除しますか？（y/n）
+    end
 ```
 
 ## クレジット

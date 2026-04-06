@@ -80,36 +80,6 @@ Leverage AI coding assistants (**Gemini CLI, Claude Code, or Codex**) to build y
 
     The agent generates models in the correct dependency order and adds `-- TODO:` comments wherever the YAML doesn't fully specify the logic.
 
-### Path A+: Spec-Driven Data Engineering (SDD) — Claude Code
-
-SDD adds a structured workflow on top of Path A, guiding you from business requirements through implementation to permanent documentation. Each pipeline gets its own named work folder, and completed work is archived into per-table business specs.
-
-1.  **Initialize with SDD** (Claude Code only):
-    ```bash
-    modscape init --claude --sdd
-    ```
-    Installs five slash commands, a customization template, and creates `.modscape/sdd/` and `.modscape/specs/` directories.
-
-2.  **Collect requirements** — run `/modscape:sdd:requirements` to interactively define your pipeline spec:
-    - Goal, stakeholders, data sources, acceptance criteria, target tool
-    - AI proposes a folder name (e.g., `monthly-sales-summary`) — you confirm or rename
-    - Writes `.modscape/sdd/<name>/spec.md`
-
-3.  **Design the model** — run `/modscape:sdd:design <name>` to:
-    - Generate `model.yaml` from `spec.md` (reads existing `specs/*.md` for context)
-    - Auto-identify directly and indirectly affected tables
-    - Write `design.md` (design decisions) and `tasks.md` (implementation checklist)
-    - **Re-runnable**: add findings to `design.md` after running with real data, then re-run to update the design
-
-4.  **Implement** — run `/modscape:sdd:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and checking them off
-
-5.  **Archive** — run `/modscape:sdd:archive <name>` to sync permanent table specs:
-    - Creates or updates `.modscape/specs/<table-id>.md` for each affected table
-    - Appends changelog entries for upstream tables
-    - Optionally deletes the work folder when done
-
-> **Customization**: Rename `.modscape/sdd/sdd.custom.md.example` to `sdd.custom.md` to override target tool defaults, add required spec fields, or adjust output conventions for your project.
-
 ### Path B: Manual Modeling
 Best for direct architectural control.
 
@@ -551,6 +521,92 @@ modscape annotation remove <file> --id <id>
 ```bash
 modscape summary <file>        # Human-readable model overview
 modscape summary <file> --json # Machine-readable JSON
+```
+
+## Spec-Driven Data Engineering (SDD)
+
+> Claude Code only. Requires `modscape init --claude --sdd`.
+
+SDD adds a structured workflow on top of Path A, guiding you from business requirements through implementation to permanent, per-table documentation. Each pipeline is managed in its own named work folder and archived as table-level business specs when complete.
+
+1. **Initialize with SDD** (Claude Code only):
+   ```bash
+   modscape init --claude --sdd
+   ```
+   Installs five slash commands and a customization template. Creates `.modscape/sdd/` and `.modscape/specs/` directories.
+
+2. **Define requirements** — run `/modscape:sdd:requirements` to interactively capture the pipeline spec:
+   - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
+   - AI proposes a work folder name (e.g. `monthly-sales-summary`) → confirm or rename
+   - Output: `.modscape/sdd/<name>/spec.md`
+
+3. **Design the model** — run `/modscape:sdd:design <name>`:
+   - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
+   - Runs `modscape extract` to pull relevant tables from the master YAML into `sdd/<name>/model.yaml`
+   - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
+   - **Re-runnable**: add findings to `design.md` after seeing real data, re-run to update the design while preserving completed tasks
+
+4. **Implement** — run `/modscape:sdd:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
+
+5. **Archive** — run `/modscape:sdd:archive <name>` to sync permanent table specs:
+   - Merges `sdd/<name>/model.yaml` into the master YAML (spec-first wins)
+   - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
+   - Upstream tables receive a Changelog entry only
+   - You choose whether to delete the work folder
+
+> **Customization**: Rename `.modscape/sdd/sdd.custom.md.example` to `sdd.custom.md` to override default tool targets, required fields, and output conventions per project.
+
+### SDD Workflow Diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant AI as Claude (AI)
+    participant CLI as modscape CLI
+    participant FS as .modscape/
+
+    rect rgb(240, 248, 255)
+        Note over User,FS: ① /modscape:sdd:requirements
+        User->>AI: Describe requirements (goal, stakeholders, data sources, etc.)
+        AI->>User: Propose folder name (e.g. monthly-sales-summary)
+        User->>AI: Approve or rename
+        AI->>FS: Create sdd/<name>/spec.md
+    end
+
+    rect rgb(240, 255, 240)
+        Note over User,FS: ② /modscape:sdd:design <name>
+        AI->>FS: Read spec.md and specs/*.md
+        AI->>CLI: modscape extract HR.yaml --tables <ids>
+        CLI->>FS: Create sdd/<name>/model.yaml (extracted tables)
+        AI->>CLI: modscape table add sdd/<name>/model.yaml ...
+        CLI->>FS: Add new tables to sdd/<name>/model.yaml
+        AI->>CLI: modscape layout sdd/<name>/model.yaml
+        AI->>FS: Create sdd/<name>/design.md + tasks.md
+    end
+
+    rect rgb(255, 253, 240)
+        Note over User,FS: ③ /modscape:sdd:implement <name>
+        loop While incomplete tasks remain
+            AI->>FS: Read sdd/<name>/model.yaml
+            AI->>User: Generate code (dbt / SQLMesh etc.)
+            AI->>FS: Update tasks.md checkbox [ ]→[x]
+            AI->>User: Proceed to next task?
+        end
+        opt If real-data findings arise
+            User->>FS: Add Findings to sdd/<name>/design.md
+            User->>AI: Re-run /modscape:sdd:design <name>
+            AI->>FS: Redesign model.yaml, diff-update tasks.md
+        end
+    end
+
+    rect rgb(255, 240, 245)
+        Note over User,FS: ④ /modscape:sdd:archive <name>
+        AI->>CLI: modscape merge sdd/<name>/model.yaml HR.yaml
+        CLI->>FS: Update HR.yaml (spec-first wins)
+        Note over CLI: ⚠ Warn on duplicate table IDs
+        AI->>FS: Generate / update specs/<table-id>.md
+        AI->>User: Delete sdd/<name>/? (y/n)
+    end
 ```
 
 ## Credits
