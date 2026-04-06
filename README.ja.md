@@ -551,7 +551,7 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
     - `sdd/<name>/model.yaml` をマスターYAMLにマージ（spec版優先）
     - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
     - 上流テーブルにはChangelog追記のみ
-    - 作業フォルダの削除可否をユーザーが選択
+    - 削除 or `.modscape/archives/YYYY-MM-DD-<name>/` へ移動をユーザーが選択
 
 > **カスタマイズ**: `.modscape/sdd/sdd.custom.md.example` を `sdd.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
 
@@ -604,7 +604,7 @@ sequenceDiagram
         CLI->>FS: HR.yaml 更新（spec版優先）
         Note over CLI: ⚠ 重複テーブルがあれば警告
         AI->>FS: specs/<table-id>.md 生成・更新
-        AI->>User: sdd/<name>/ を削除しますか？（y/n）
+        AI->>User: sdd/<name>/ を削除しますか？（y=削除 / n=archives/YYYY-MM-DD-<name>/へ移動）
     end
 ```
 

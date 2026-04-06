@@ -552,7 +552,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    - Merges `sdd/<name>/model.yaml` into the master YAML (spec-first wins)
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
-   - You choose whether to delete the work folder
+   - You choose whether to delete the work folder or move it to `.modscape/archives/YYYY-MM-DD-<name>/`
 
 > **Customization**: Rename `.modscape/sdd/sdd.custom.md.example` to `sdd.custom.md` to override default tool targets, required fields, and output conventions per project.
 
@@ -605,7 +605,7 @@ sequenceDiagram
         CLI->>FS: Update HR.yaml (spec-first wins)
         Note over CLI: ⚠ Warn on duplicate table IDs
         AI->>FS: Generate / update specs/<table-id>.md
-        AI->>User: Delete sdd/<name>/? (y/n)
+        AI->>User: Delete sdd/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
     end
 ```
 

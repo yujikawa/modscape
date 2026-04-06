@@ -67,10 +67,14 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
 ### Step 3: Cleanup
 
 9. **Ask the user whether to delete the work folder**:
-   > Archive complete. Delete `sdd/<name>/`? (y / n — keep it as a reference)
+   > Archive complete. Delete `sdd/<name>/`? (y / n — move to archives)
 
    - If yes: delete the `.modscape/sdd/<name>/` directory.
-   - If no: leave it in place.
+   - If no: move it to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date) instead.
+     ```bash
+     mkdir -p .modscape/archives
+     mv .modscape/sdd/<name> .modscape/archives/YYYY-MM-DD-<name>
+     ```
 
 10. Show spec coverage summary:
     ```
