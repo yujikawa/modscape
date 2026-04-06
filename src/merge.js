@@ -37,11 +37,13 @@ export function mergeModels(inputs, options) {
       const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
       if (!data) continue;
 
-      // tables: 重複IDは除外
+      // tables: 重複IDは除外（警告付き）
       for (const table of data.tables || []) {
         if (!seenTableIds.has(table.id)) {
           mergedTables.push(table);
           seenTableIds.add(table.id);
+        } else {
+          console.warn(`  ⚠ ${table.id}: also exists in a later file — using first version`);
         }
       }
 

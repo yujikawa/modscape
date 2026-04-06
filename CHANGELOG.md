@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
   - **`specs/<table-id>.md` format** — Defined permanent business spec format (Overview, Business Context, Business Rules, Known Issues, Changelog) documented in `rules.md`.
   - **`modscape init --sdd`** — Now installs `archive.md` skill and creates `.modscape/specs/.gitkeep` placeholder.
 
+- **SDD model isolation** — The design skill no longer modifies the master model.yaml (e.g., HR.yaml) directly during work. Instead, it extracts relevant tables into `sdd/<name>/model.yaml` (work-scoped YAML) and merges back into the master only at archive time.
+  - `/modscape:sdd:design <name>`: runs `modscape extract` to create `sdd/<name>/model.yaml`, all mutation CLI commands target this work YAML
+  - `/modscape:sdd:implement <name>`: reads `sdd/<name>/model.yaml` for code generation
+  - `/modscape:sdd:archive <name>`: runs `modscape merge sdd/<name>/model.yaml <master>.yaml` (spec-first, so spec version wins) before syncing `specs/*.md`
+- **`modscape merge` duplicate warning**: when a table ID already exists in a merged file, a `⚠` warning is now printed instead of silently skipping. The first-encountered version is still used.
+
 ### Changed
 - **SDD skills use `sdd/<name>/` path structure** instead of flat `sdd/spec.md` / `sdd/tasks.md` singletons. Existing projects with the old structure need manual migration.
 - **`sdd-tasks` skill merged into `sdd-design`** — Tasks are now generated automatically at the end of the design step. The standalone `tasks.md` skill is kept for backward compatibility but is deprecated.

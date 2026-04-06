@@ -26,7 +26,7 @@ Implement pending tasks from `.modscape/sdd/<name>/tasks.md` one by one.
 4. For each pending task, in phase order:
 
    **Staging / Core / Mart tasks:**
-   - Read the corresponding table definition from `model.yaml`
+   - Read the corresponding table definition from `.modscape/sdd/<name>/model.yaml` (the work-scoped YAML, NOT the master model.yaml)
    - Generate implementation code for the target tool (dbt, SQLMesh, etc.)
    - Follow the dependency order defined in `lineage` — always generate upstream tables first
    - Place generated files in the appropriate location (e.g., `models/staging/`, `models/core/`, `models/mart/`)
