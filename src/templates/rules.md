@@ -893,10 +893,11 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
 
 | Command | Purpose |
 |---------|---------|
-| `/modscape:spec:requirements` | Collect business requirements → `.modscape/changes/<name>/spec.md` |
+| `/modscape:spec:requirements`        | Collect business requirements → `.modscape/changes/<name>/spec.md` |
 | `/modscape:spec:design <name>`       | Design `model.yaml` from `spec.md`, generate `design.md` and `tasks.md` |
 | `/modscape:spec:implement <name>`    | Implement tasks one by one, generating dbt / SQLMesh code |
 | `/modscape:spec:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
+| `/modscape:spec:status <name>`       | Show current phase, task progress, and next recommended command |
 
 ### SDD Directory Structure
 

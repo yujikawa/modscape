@@ -548,6 +548,8 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 4.  **実装** — `/modscape:spec:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
 
 5.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
+
+> **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
     - `changes/<name>/model.yaml` をマスターYAMLにマージ（spec版優先）
     - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
     - 上流テーブルにはChangelog追記のみ

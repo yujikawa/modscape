@@ -101,7 +101,7 @@ export async function initProject(options = {}) {
       if (options.sdd) {
         console.log('  Scaffolding Spec-Driven Data Engineering (SDD) skills...');
         const specDir = path.join(__dirname, 'templates/claude/spec');
-        const specSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md', 'archive.md'];
+        const specSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md', 'archive.md', 'status.md'];
         for (const skill of specSkills) {
           const template = fs.readFileSync(path.join(specDir, skill), 'utf8');
           await safeWriteFile(`.claude/commands/modscape/spec/${skill}`, template);

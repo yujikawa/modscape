@@ -549,6 +549,8 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
+
+> **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
    - Merges `changes/<name>/model.yaml` into the master YAML (spec-first wins)
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
