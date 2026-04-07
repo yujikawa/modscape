@@ -50,7 +50,7 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 8. Design the data model — **all changes go to `changes/<name>/model.yaml`, never to the master YAML**:
    - Propose tables (with `appearance.type`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
-   - Group related tables into `domains`
+   - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `implementation` hints where the target tool and table type make them clear
    - On re-run: incorporate `## Findings` from `design.md` before applying changes
@@ -58,8 +58,9 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 9. Apply changes using mutation CLI commands targeting `changes/<name>/model.yaml`:
    ```bash
    modscape table add .modscape/changes/<name>/model.yaml --id <id> --name "<name>" --type <type>
-   modscape domain add .modscape/changes/<name>/model.yaml --id <id> --name "<name>"
    modscape lineage add .modscape/changes/<name>/model.yaml --from <from> --to <to>
+   # domain add: only when explicitly requested by the user
+   modscape domain add .modscape/changes/<name>/model.yaml --id <id> --name "<name>"
    ```
    Edit YAML directly only for complex nested fields (`implementation`, `columns`, `sampleData`).
 
