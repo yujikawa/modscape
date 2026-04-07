@@ -12,6 +12,14 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
 
 ## Instructions
 
+**When reading model information, always use modscape CLI commands or MCP tools — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
+```bash
+modscape table list <file>
+modscape table get <file> --id <id>
+modscape lineage list <file>
+modscape summary <file> --json
+```
+
 1. Verify that `.modscape/changes/<name>/` exists and contains `model.yaml`.
    - If not: stop and tell the user:
      > `changes/<name>/model.yaml` not found. Run `/modscape:spec:design <name>` first.
