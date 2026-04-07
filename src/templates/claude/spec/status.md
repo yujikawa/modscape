@@ -14,6 +14,7 @@ Show the current status of a spec work folder.
 
 2. Check which files exist in `.modscape/changes/<name>/`:
    - `spec.md`
+   - `spec-config.yaml`
    - `model.yaml`
    - `design.md`
    - `tasks.md`
@@ -43,6 +44,7 @@ Show the current status of a spec work folder.
 
 **Files:**
   <✓ or ✗> spec.md
+  <✓ or ✗> spec-config.yaml
   <✓ or ✗> model.yaml
   <✓ or ✗> design.md
   <✓ or ✗> tasks.md

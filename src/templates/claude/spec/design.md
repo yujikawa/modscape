@@ -37,19 +37,40 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
      - If `### Implementation Notes` only: no model changes needed, proceed to update tasks.md.
    - If not: this is a **first run**.
 
-5. **Extract relevant tables from the master YAML** (first run only):
+5. **Resolve master YAMLs** (first run only):
 
-   Read `.modscape/changes/<name>/spec.md` and identify the **Data Sources** — the existing tables referenced by the pipeline. Then run:
+   Read `.modscape/changes/<name>/spec-config.yaml`.
+   - If it exists and has `master_yamls` entries → use them.
+   - If it does not exist:
+     - Check `modscape-spec.custom.md` for a `Master YAMLs` setting → use it and create `spec-config.yaml`.
+     - If neither found → stop and tell the user:
+       > Master YAML is unknown. Run `/modscape:spec:requirements` again to set it, or create `changes/<name>/spec-config.yaml` manually.
+
+6. **Extract relevant tables from the master YAML(s)** (first run only):
+
+   Read `.modscape/changes/<name>/spec.md` and identify the **Data Sources**. For each master YAML, run extract with `--append` and `--record` so the source mapping is recorded automatically:
 
    ```bash
-   modscape extract <master>.yaml --tables <id1>,<id2>,... --output .modscape/changes/<name>/model.yaml
+   # First master YAML (creates model.yaml)
+   modscape extract <master1>.yaml \
+     --tables <id1>,<id2>,... \
+     --output .modscape/changes/<name>/model.yaml \
+     --record .modscape/changes/<name>/spec-config.yaml
+
+   # Additional master YAMLs (upsert into existing model.yaml)
+   modscape extract <master2>.yaml \
+     --tables <id3>,... \
+     --output .modscape/changes/<name>/model.yaml \
+     --append \
+     --record .modscape/changes/<name>/spec-config.yaml
    ```
 
-   If Data Sources are unclear or the master YAML does not exist, create an empty `changes/<name>/model.yaml` with:
-   ```yaml
-   tables: []
-   ```
-   and inform the user which tables could not be found.
+   `--record` automatically updates `spec-config.yaml` with which tables came from which YAML.
+   `--append` upserts into the existing `model.yaml` instead of overwriting.
+
+   When new tables are added during design, manually add them to the appropriate master YAML entry in `spec-config.yaml`. If unclear, add to the first entry and inform the user.
+
+   If Data Sources are unclear, skip this step — `model.yaml` was already scaffolded as `tables: []` by `modscape spec new`.
 
 6. Read all existing `specs/*.md` files (if any) to understand current business context.
 

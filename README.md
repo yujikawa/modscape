@@ -533,28 +533,30 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    ```bash
    modscape init --claude --sdd
    ```
-   Installs five slash commands and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
+   Installs six slash commands and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
+   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `model.yaml`, `design.md`, `tasks.md`)
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
-   - AI proposes a work folder name (e.g. `monthly-sales-summary`) → confirm or rename
+   - Resolves master YAML path(s) from `modscape-spec.custom.md` or prompts the user
    - Output: `.modscape/changes/<name>/spec.md`
 
 3. **Design the model** — run `/modscape:spec:design <name>`:
    - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
-   - Runs `modscape extract` to pull relevant tables from the master YAML into `changes/<name>/model.yaml`
+   - Runs `modscape extract` to pull relevant tables from master YAML(s) into `changes/<name>/model.yaml`
+   - Records which tables belong to which master YAML in `spec-config.yaml`
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
-   - **Re-runnable**: add findings to `design.md` after seeing real data, re-run to update the design while preserving completed tasks
+   - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to update model and tasks
 
 4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
-
-> **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
-   - Merges `changes/<name>/model.yaml` into the master YAML (spec-first wins)
+   - Merges `changes/<name>/model.yaml` into the correct master YAML(s) per `spec-config.yaml`
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
    - You choose whether to delete the work folder or move it to `.modscape/archives/YYYY-MM-DD-<name>/`
+
+> **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
 
 > **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 

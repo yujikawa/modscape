@@ -17,14 +17,56 @@ export function extractModels(inputs, options) {
   const tableIds = options.tables
     ? options.tables.split(',').map(id => id.trim()).filter(Boolean)
     : [];
+  const appendMode = !!options.append;
+  const recordPath = options.record || null;
 
   if (tableIds.length === 0) {
     console.error('  ❌ --tables option is required. Specify comma-separated table IDs.');
     return;
   }
 
-  // 後勝ちマージ用 Map
+  // upsert用 Map（appendモード時は既存出力ファイルで初期化）
   const tableMap = new Map();
+  const relationshipsList = [];
+  const lineageList = [];
+  const annotationsList = [];
+  const domainsList = [];
+  const layoutMap = {};
+  const seenRelIds = new Set();
+  const seenLinIds = new Set();
+  const seenAnnIds = new Set();
+  const seenDomIds = new Set();
+
+  if (appendMode && fs.existsSync(outputPath)) {
+    try {
+      const existing = yaml.load(fs.readFileSync(outputPath, 'utf8'));
+      if (existing) {
+        for (const t of existing.tables || []) tableMap.set(t.id, t);
+        for (const r of existing.relationships || []) {
+          relationshipsList.push(r);
+          if (r.id) seenRelIds.add(r.id);
+        }
+        for (const l of existing.lineage || []) {
+          lineageList.push(l);
+          if (l.id) seenLinIds.add(l.id);
+        }
+        for (const a of existing.annotations || []) {
+          annotationsList.push(a);
+          if (a.id) seenAnnIds.add(a.id);
+        }
+        for (const d of existing.domains || []) {
+          if (!seenDomIds.has(d.id)) {
+            domainsList.push(d);
+            seenDomIds.add(d.id);
+          }
+        }
+        Object.assign(layoutMap, existing.layout || {});
+      }
+      console.log(`  📎 Appending to existing: ${outputPath}`);
+    } catch (e) {
+      console.warn(`  ⚠️  Could not read existing output file: ${e.message}`);
+    }
+  }
 
   const allFiles = [];
   for (const input of inputs) {
@@ -36,15 +78,7 @@ export function extractModels(inputs, options) {
     return;
   }
 
-  const relationshipsList = [];
-  const lineageList = [];
-  const annotationsList = [];
-  const domainsList = [];
-  const layoutMap = {};
-  const seenRelIds = new Set();
-  const seenLinIds = new Set();
-  const seenAnnIds = new Set();
-  const seenDomIds = new Set();
+  const extractedIds = [];
 
   for (const filePath of allFiles) {
     try {
@@ -54,7 +88,8 @@ export function extractModels(inputs, options) {
       let matched = 0;
       for (const table of data.tables || []) {
         if (tableIds.includes(table.id)) {
-          tableMap.set(table.id, table); // 後勝ち上書き
+          tableMap.set(table.id, table); // upsert: 新規追加 or 既存上書き
+          extractedIds.push(table.id);
           matched++;
         }
       }
@@ -136,6 +171,35 @@ export function extractModels(inputs, options) {
   if (Object.keys(layoutMap).length) outputModel.layout = layoutMap;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
-  console.log(`\n  ✅ Extracted ${tableMap.size} tables → ${outputPath}`);
+  console.log(`\n  ✅ Extracted ${extractedIds.length} tables → ${outputPath}`);
+
+  // --record: spec-config.yaml にソース情報を記録
+  if (recordPath && extractedIds.length > 0) {
+    const sourceFile = allFiles[0]; // 抽出元の最初のファイル
+    let config = { master_yamls: [] };
+
+    if (fs.existsSync(recordPath)) {
+      try {
+        config = yaml.load(fs.readFileSync(recordPath, 'utf8')) || config;
+      } catch (e) {
+        console.warn(`  ⚠️  Could not read record file: ${e.message}`);
+      }
+    }
+
+    // sourceFile のエントリを探してupsert
+    const entry = config.master_yamls.find(e => e.path === sourceFile);
+    if (entry) {
+      // 既存エントリにテーブルIDをupsert
+      const existing = new Set(entry.tables || []);
+      for (const id of extractedIds) existing.add(id);
+      entry.tables = [...existing];
+    } else {
+      config.master_yamls.push({ path: sourceFile, tables: extractedIds });
+    }
+
+    fs.writeFileSync(recordPath, yaml.dump(config, { lineWidth: -1 }), 'utf8');
+    console.log(`  📝 Recorded source mapping → ${recordPath}`);
+  }
+
   console.log(`  🚀 Run 'modscape dev ${outputPath}' to visualize.`);
 }

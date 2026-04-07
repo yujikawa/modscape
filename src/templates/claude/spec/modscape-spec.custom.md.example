@@ -30,6 +30,17 @@
 # - Target tool is always dbt (BigQuery). Do not ask the user to choose.
 # - All models must be in the `analytics` dbt project.
 
+## Master YAMLs
+
+# Default master YAML(s) for this project.
+# Used when spec-config.yaml does not exist yet.
+# If your project has multiple domain YAMLs, list them all.
+# The AI will ask which tables belong to which YAML during design.
+#
+# Master YAMLs:
+#   - models/sales/HR.yaml
+#   - models/finance/Finance.yaml
+
 ## spec.md Extensions
 
 # Additional required fields for spec.md in this project:

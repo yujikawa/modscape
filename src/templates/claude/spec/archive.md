@@ -18,12 +18,19 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
 
 2. Read the following files:
    - `.modscape/changes/<name>/spec.md`
+   - `.modscape/changes/<name>/spec-config.yaml`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/model.yaml`
 
-### Step 1: Merge work YAML into master YAML
+### Step 1: Merge work YAML into master YAML(s)
 
-3. Run the merge with spec-first ordering (spec version wins on duplicate IDs):
+3. For each master YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+   ```bash
+   modscape extract .modscape/changes/<name>/model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
+   modscape merge /tmp/spec-slice.yaml <master>.yaml --output <master>.yaml
+   ```
+
+   If `spec-config.yaml` has only one master YAML, merge the entire work YAML directly:
    ```bash
    modscape merge .modscape/changes/<name>/model.yaml <master>.yaml --output <master>.yaml
    ```
@@ -34,7 +41,7 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
    > The spec version was used: `<table-id>`, `<table-id>`
    > Please verify the master YAML diff looks correct.
 
-5. Run validate on the merged master YAML and fix any errors before proceeding:
+5. Run validate on each merged master YAML and fix any errors before proceeding:
    ```bash
    modscape validate <master>.yaml
    ```

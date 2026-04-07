@@ -5,7 +5,14 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 1. If `.modscape/changes/modscape-spec.custom.md` exists, read it **in addition** to these instructions.
    Rules in `modscape-spec.custom.md` take **priority** when they conflict.
 
-2. Collect the following information through conversation:
+2. Determine the **master YAML(s)** using this priority order:
+   - If `modscape-spec.custom.md` has a `Master YAMLs` setting → use it (do not ask)
+   - Otherwise → ask the user:
+     > Which YAML file(s) are your master models? You can specify multiple.
+     > (e.g. `models/sales/HR.yaml`, `models/finance/Finance.yaml`)
+   - Record the answer in `changes/<name>/config.yaml` (see format below).
+
+3. Collect the following information through conversation:
    - **Pipeline title** — a short name for this pipeline or data product
    - **Goal** — who is this for and what problem does it solve?
    - **Stakeholders** — owner (team or person) and consumers (downstream users or systems)
@@ -13,25 +20,36 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - **Acceptance Criteria** — concrete, testable conditions for "done" (at least 2–3 items)
    - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL`
 
-3. After collecting requirements, propose a work folder name:
+4. After collecting requirements, propose a work folder name:
    - Derive a short, descriptive kebab-case name from the pipeline title (e.g., `monthly-sales-summary`)
    - Present the proposed name to the user:
      > Proposed folder name: `<name>`. Is this OK? (Reply with a different name to rename.)
    - Wait for user confirmation or rename.
 
-4. Check whether `.modscape/changes/<name>/` already exists.
+5. Check whether `.modscape/changes/<name>/` already exists.
    - If it exists: warn the user:
      > `changes/<name>/` already exists. Please specify a different name.
    - If not: proceed to create the directory.
 
-5. Check whether `.modscape/changes/<name>/spec.md` already exists.
+6. Check whether `.modscape/changes/<name>/spec.md` already exists.
    - If it exists: show the current content and ask the user what to update.
    - If not: write the collected requirements using the format below.
 
-6. Write the requirements to `.modscape/changes/<name>/spec.md`.
-   Create the `.modscape/changes/<name>/` directory if it does not exist.
+7. Scaffold the work folder by running:
+   ```bash
+   modscape spec new <name>
+   ```
+   This creates `spec-config.yaml`, `model.yaml`, `design.md`, and `tasks.md`.
+   If the folder already exists, skip this step.
 
-7. Set `Status: requirements` in the spec file.
+8. Update `spec-config.yaml` with the resolved master YAMLs:
+   ```bash
+   # edit .modscape/changes/<name>/spec-config.yaml directly
+   ```
+
+9. Write the requirements to `.modscape/changes/<name>/spec.md`.
+
+10. Set `Status: requirements` in the spec file.
 
 ## spec.md Format
 
@@ -59,6 +77,21 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 ## Status
 requirements
 ```
+
+## spec-config.yaml Format
+
+```yaml
+# Spec-local config — only valid within this changes/<name>/ folder.
+master_yamls:
+  - path: models/sales/HR.yaml
+    tables: []          # populated by design: tables extracted from this YAML
+  - path: models/finance/Finance.yaml
+    tables: []
+```
+
+- `master_yamls` lists all YAML files involved in this spec.
+- `tables` under each entry is populated by `/modscape:spec:design` as tables are extracted or assigned.
+- New tables added during design are assigned to the first entry by default; the user can reassign.
 
 ## Usage
 

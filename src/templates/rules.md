@@ -899,6 +899,10 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
 | `/modscape:spec:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
 | `/modscape:spec:status <name>`       | Show current phase, task progress, and next recommended command |
 
+```bash
+modscape spec new <name>   # Scaffold work folder (spec-config.yaml, model.yaml, design.md, tasks.md)
+```
+
 ### SDD Directory Structure
 
 ```
