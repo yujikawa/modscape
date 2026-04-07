@@ -84,17 +84,13 @@ modscape summary <file> --json
    > - Updated: `specs/fct_orders.md`
    > - Changelog only: `specs/stg_raw_orders.md`
 
-### Step 3: Cleanup
+### Step 3: Move to archives
 
-9. **Ask the user whether to delete the work folder**:
-   > Archive complete. Delete `changes/<name>/`? (y / n — move to archives)
-
-   - If yes: delete the `.modscape/changes/<name>/` directory.
-   - If no: move it to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date) instead.
-     ```bash
-     mkdir -p .modscape/archives
-     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
-     ```
+9. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+   ```bash
+   mkdir -p .modscape/archives
+   mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
+   ```
 
 10. **Always output the following summary at the end, without exception:**
 
