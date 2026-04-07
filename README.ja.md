@@ -524,15 +524,16 @@ modscape summary <file> --json # JSON形式で出力
 
 ## 仕様駆動データエンジニアリング（SDD）
 
-> Claude Code 専用。`modscape init --claude --sdd` が必要です。
-
 SDD はパスAの上に構造化されたワークフローを追加し、ビジネス要件から実装、そして恒久的なドキュメントまで一貫して支援します。各パイプラインは名前付き作業フォルダで管理され、完了後はテーブル単位のビジネス仕様書としてアーカイブされます。
 
-1.  **SDD付きで初期化**（Claude Code のみ）:
+1.  **SDD付きで初期化**:
     ```bash
-    modscape init --claude --sdd
+    modscape init --claude --sdd   # Claude Code
+    modscape init --codex --sdd    # Codex
+    modscape init --gemini --sdd   # Gemini CLI
+    modscape init --all --sdd      # すべてのエージェント
     ```
-    6つのスラッシュコマンドとカスタマイズテンプレートがインストールされ、`.modscape/changes/` と `.modscape/specs/` ディレクトリが作成されます。
+    スキルとカスタマイズテンプレートがインストールされ、`.modscape/changes/` と `.modscape/specs/` ディレクトリが作成されます。
 
 2.  **要件定義** — `/modscape:spec:requirements` を実行してパイプラインの仕様を対話的に定義します:
     - AIが `modscape spec new <name>` で作業フォルダを scaffold（`spec-config.yaml`・`model.yaml`・`design.md`・`tasks.md` を生成）
@@ -553,7 +554,7 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
     - `spec-config.yaml` を参照し、テーブルごとに対応するマスターYAMLにマージ
     - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
     - 上流テーブルにはChangelog追記のみ
-    - 削除 or `.modscape/archives/YYYY-MM-DD-<name>/` へ移動をユーザーが選択
+    - 作業フォルダは自動的に `.modscape/archives/YYYY-MM-DD-<name>/` へ移動
 
 > **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
 

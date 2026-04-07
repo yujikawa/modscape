@@ -525,15 +525,16 @@ modscape summary <file> --json # Machine-readable JSON
 
 ## Spec-Driven Data Engineering (SDD)
 
-> Claude Code only. Requires `modscape init --claude --sdd`.
-
 SDD adds a structured workflow on top of Path A, guiding you from business requirements through implementation to permanent, per-table documentation. Each pipeline is managed in its own named work folder and archived as table-level business specs when complete.
 
-1. **Initialize with SDD** (Claude Code only):
+1. **Initialize with SDD**:
    ```bash
-   modscape init --claude --sdd
+   modscape init --claude --sdd   # Claude Code
+   modscape init --codex --sdd    # Codex
+   modscape init --gemini --sdd   # Gemini CLI
+   modscape init --all --sdd      # all agents
    ```
-   Installs six slash commands and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
+   Installs skills and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
    - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `model.yaml`, `design.md`, `tasks.md`)
@@ -554,7 +555,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    - Merges `changes/<name>/model.yaml` into the correct master YAML(s) per `spec-config.yaml`
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
-   - You choose whether to delete the work folder or move it to `.modscape/archives/YYYY-MM-DD-<name>/`
+   - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
 
