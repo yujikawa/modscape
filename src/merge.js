@@ -89,11 +89,19 @@ export function mergeModels(inputs, options) {
         }
       }
 
-      // domains: 重複IDは除外
+      // domains: 重複IDはメタ情報をfirst-winsで保持しつつ members をunionマージ
       for (const domain of data.domains || []) {
         if (!seenDomainIds.has(domain.id)) {
-          mergedDomains.push(domain);
+          mergedDomains.push({ ...domain, members: [...(domain.members || [])] });
           seenDomainIds.add(domain.id);
+        } else {
+          // 既存エントリに members をunionマージ
+          const existing = mergedDomains.find(d => d.id === domain.id);
+          if (existing && domain.members) {
+            const memberSet = new Set(existing.members);
+            for (const m of domain.members) memberSet.add(m);
+            existing.members = [...memberSet];
+          }
         }
       }
 
