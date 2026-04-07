@@ -36,7 +36,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 5. Check whether `.modscape/changes/<name>/` already exists.
    - If it exists: warn the user:
      > `changes/<name>/` already exists. Please specify a different name.
-   - If not: proceed to create the directory.
+   - If not: proceed to step 7 — **do not create the directory manually**; `modscape spec new` will handle it.
 
 6. Check whether `.modscape/changes/<name>/spec.md` already exists.
    - If it exists: show the current content and ask the user what to update.
