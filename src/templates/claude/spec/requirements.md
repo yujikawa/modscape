@@ -68,7 +68,13 @@ requirements
 
 ## Next Step
 
-After completing `spec.md`, guide the user:
+**Always output the following message at the end, without exception:**
 
-> `spec.md` has been created at `.modscape/changes/<name>/spec.md`.
-> Run `/modscape:spec:design <name>` next to design the data model.
+---
+✅ `spec.md` created at `.modscape/changes/<name>/spec.md`
+
+**Next step:**
+```
+/modscape:spec:design <name>
+```
+---

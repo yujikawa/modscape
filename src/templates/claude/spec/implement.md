@@ -64,10 +64,38 @@ If running the pipeline reveals unexpected results (wrong grain, high NULL rate,
 2. Re-run `/modscape:spec:design <name>` to update the design and regenerate pending tasks
 3. Resume implementation with the updated task list
 
+**When notifying the user of a discovered issue, always output:**
+
+---
+⚠️ Issue found during implementation: <issue description>
+
+**Next step:**
+1. Add the following to `### Requires Model Change` in `.modscape/changes/<name>/design.md`:
+   `- <table-id>: <issue and proposed fix>`
+2. Then re-run:
+```
+/modscape:spec:design <name>
+```
+---
+
 ## Completion
 
-When all tasks are done:
+**When all tasks are done, always output the following message, without exception:**
 
-> All tasks complete!
-> Run `/modscape:spec:archive <name>` to sync the permanent table specs in `.modscape/specs/`.
+---
+✅ All tasks complete!
+
+**Next step:**
+```
+/modscape:spec:archive <name>
+```
+---
+
+**After each individual task completion**, also output:
+
+---
+✅ Task complete: `<task description>`
+
+<n> tasks remaining. Ready to continue?
+---
 > Run `modscape dev model.yaml` to review the final model in the visualizer.

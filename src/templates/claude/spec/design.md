@@ -32,7 +32,9 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
 4. **Check for existing design.md** at `.modscape/changes/<name>/design.md`.
-   - If it exists: this is a **re-run**. Read it fully and look for a `## Findings` section. Incorporate findings into the design.
+   - If it exists: this is a **re-run**. Read it fully and check the `## Findings` section.
+     - If `### Requires Model Change` has entries: **process these first before anything else** — apply the model changes to `changes/<name>/model.yaml` using mutation CLI commands, then run `modscape validate`. Only after model changes are applied, proceed to update tasks.md.
+     - If `### Implementation Notes` only: no model changes needed, proceed to update tasks.md.
    - If not: this is a **first run**.
 
 5. **Extract relevant tables from the master YAML** (first run only):
@@ -78,11 +80,12 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
     ```
 
 11. Write `.modscape/changes/<name>/design.md` using the format below.
-    - On first run: create with design decisions and affected tables.
-    - On re-run: preserve `## Findings`; update `## Design Decisions` and `## Affected Tables` only.
+    - On first run: create with design decisions and affected tables. Initialize `## Findings` with empty subsections.
+    - On re-run: preserve `## Findings` content; update `## Design Decisions` and `## Affected Tables` only.
 
 12. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
     - On re-run: preserve completed tasks (`- [x]`); regenerate only pending (`- [ ]`) tasks.
+    - **Always generate tasks.md after model.yaml is finalized** — never before.
 
 13. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
 
@@ -103,11 +106,18 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 - `<table-id>`: upstream dependency (Changelog will be updated on archive)
 
 ## Findings
-<This section is written by the user or AI during implementation.>
-<Add observations from running the pipeline with real data here.>
+
+### Requires Model Change
+<Observations that require changes to model.yaml — processed first on re-run>
 <Example:>
-<- `fct_orders`: NULL rate for customer_id was 12% — need to handle gracefully>
-<- Grain was off: one row per order line, not per order — redesigned>
+<- `fct_orders`: NULL rate for customer_id was 12% → add `null_customer_flag` column>
+<- Grain was off: one row per order line, not per order → redesign fct_orders>
+
+### Implementation Notes
+<Observations that do NOT require model changes — for reference only>
+<Example:>
+<- stg_raw_sales partition by event_date works as expected>
+<- dbt incremental merge on order_id performs well>
 ```
 
 ## Task Generation Rules
@@ -149,12 +159,24 @@ For each task, include:
 
 ## Next Step
 
-After updating `changes/<name>/model.yaml` and generating `tasks.md`, guide the user:
+**Always output the following message at the end, without exception:**
 
-> Design complete. `tasks.md` has been generated at `.modscape/changes/<name>/tasks.md`.
-> Run `/modscape:spec:implement <name>` to start implementation.
->
-> To preview the model: `modscape dev .modscape/changes/<name>/model.yaml`
->
-> If you run the pipeline and discover issues, add them to the `## Findings` section
-> in `.modscape/changes/<name>/design.md`, then re-run `/modscape:spec:design <name>` to update the design.
+---
+✅ Design complete. `tasks.md` generated at `.modscape/changes/<name>/tasks.md`
+
+**Next step:**
+```
+/modscape:spec:implement <name>
+```
+
+To preview the model:
+```
+modscape dev .modscape/changes/<name>/model.yaml
+```
+
+If you discover issues during implementation, add them to `## Findings` in `.modscape/changes/<name>/design.md`:
+- Model change needed → `### Requires Model Change`
+- Observation only → `### Implementation Notes`
+
+Then re-run `/modscape:spec:design <name>` to update the design.
+---

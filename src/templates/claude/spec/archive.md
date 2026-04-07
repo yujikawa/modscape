@@ -81,11 +81,21 @@ Merge the work-scoped YAML back into the master model, then sync permanent table
      mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
      ```
 
-10. Show spec coverage summary:
-    ```
-    Spec coverage: <n>/<total> tables have permanent specs.
-    Tables without specs: <list>
-    ```
+10. **Always output the following summary at the end, without exception:**
+
+---
+✅ Archive complete.
+
+**Synced specs:**
+- Created: `specs/<table-id>.md` ...
+- Updated: `specs/<table-id>.md` ...
+- Changelog only: `specs/<table-id>.md` ...
+
+**Spec coverage:** <n>/<total> tables have permanent specs.
+Tables without specs: <list or "none">
+
+🎉 All work for this spec is complete!
+---
 
 ## `specs/<table-id>.md` Format
 
