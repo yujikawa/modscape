@@ -846,6 +846,24 @@ Checks performed:
 - Broken references in `relationships`, `lineage`, `domains.members`, and `layout`
 - Orphaned `layout` entries (keys not found in tables or domains)
 
+### 13-5. Reading Model Information
+
+When investigating or querying a YAML model, always prefer modscape CLI commands or MCP tools over `grep` / `cat` / direct file reads:
+
+```bash
+modscape table list <file>               # List all tables
+modscape table get <file> --id <id>      # Get a specific table
+modscape lineage list <file>             # List all lineage entries
+modscape relationship list <file>        # List all relationships
+modscape domain list <file>              # List all domains
+modscape summary <file>                  # Overview of the entire model
+modscape summary <file> --json           # Machine-readable summary
+```
+
+If the modscape MCP server is active, prefer `mcp__modscape__*` tools (e.g. `mcp__modscape__list_tables`, `mcp__modscape__get_table`) for zero-overhead reads.
+
+Fall back to `grep` or direct file reads only when the information genuinely cannot be obtained from the above commands.
+
 ### 13-5. JSON Output for AI Pipelines
 
 All commands support `--json` for machine-readable output:

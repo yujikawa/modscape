@@ -15,6 +15,14 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 1. Read `.modscape/rules.md` to understand the YAML schema and modeling rules.
    If `.modscape/changes/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
 
+   **When reading model information, always use modscape CLI commands or MCP tools — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
+   ```bash
+   modscape table list <file>
+   modscape table get <file> --id <id>
+   modscape lineage list <file>
+   modscape summary <file> --json
+   ```
+
 2. Check that `.modscape/changes/<name>/spec.md` exists.
    - If it does not exist: stop and tell the user:
      > `changes/<name>/spec.md` not found. Run `/modscape:spec:requirements` first to create it.
