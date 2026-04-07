@@ -13,20 +13,19 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    modscape summary <file> --json
    ```
 
-2. Determine the **master YAML(s)** using this priority order:
-   - If `modscape-spec.custom.md` has a `Master YAMLs` setting → use it (do not ask)
-   - Otherwise → ask the user:
-     > Which YAML file(s) are your master models? You can specify multiple.
-     > (e.g. `models/sales/HR.yaml`, `models/finance/Finance.yaml`)
-   - Record the answer in `changes/<name>/config.yaml` (see format below).
+2. Read `modscape-spec.custom.md` carefully and extract any settings already defined there. Treat defined settings as answers — **do not ask the user about anything already specified in `modscape-spec.custom.md`**. Key settings to look for:
+   - Master YAML path(s) (e.g. `Master YAMLs: models/sales/HR.yaml`)
+   - Target tool (e.g. `Target tool is always dbt`)
+   - Any other project-wide defaults
 
-3. Collect the following information through conversation:
+3. Collect the following information through conversation, **skipping anything already answered by `modscape-spec.custom.md`**:
    - **Pipeline title** — a short name for this pipeline or data product
    - **Goal** — who is this for and what problem does it solve?
    - **Stakeholders** — owner (team or person) and consumers (downstream users or systems)
    - **Data Sources** — existing tables, databases, or external systems that feed this pipeline
    - **Acceptance Criteria** — concrete, testable conditions for "done" (at least 2–3 items)
-   - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL`
+   - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL` (skip if set in custom.md)
+   - **Master YAML(s)** — path(s) to master model YAML file(s) (skip if set in custom.md; otherwise ask)
 
 4. After collecting requirements, propose a work folder name:
    - Derive a short, descriptive kebab-case name from the pipeline title (e.g., `monthly-sales-summary`)
