@@ -68,7 +68,10 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
    `--record` automatically updates `spec-config.yaml` with which tables came from which YAML.
    `--append` upserts into the existing `model.yaml` instead of overwriting.
 
-   When new tables are added during design, manually add them to the appropriate master YAML entry in `spec-config.yaml`. If unclear, add to the first entry and inform the user.
+   When tables are added or removed during design, always update `spec-config.yaml` manually to keep it in sync:
+   - Table added → add its ID to the appropriate `master_yamls[].tables` entry
+   - Table removed → remove its ID from whichever `master_yamls[].tables` entry contains it
+   If the target master YAML is unclear, use the first entry and inform the user.
 
    If Data Sources are unclear, skip this step — `model.yaml` was already scaffolded as `tables: []` by `modscape spec new`.
 
