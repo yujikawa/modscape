@@ -522,6 +522,97 @@ modscape summary <file>        # モデルの概要を表示
 modscape summary <file> --json # JSON形式で出力
 ```
 
+## 仕様駆動データエンジニアリング（SDD）
+
+SDD はパスAの上に構造化されたワークフローを追加し、ビジネス要件から実装、そして恒久的なドキュメントまで一貫して支援します。各パイプラインは名前付き作業フォルダで管理され、完了後はテーブル単位のビジネス仕様書としてアーカイブされます。
+
+1.  **SDD付きで初期化**:
+    ```bash
+    modscape init --claude --sdd   # Claude Code
+    modscape init --codex --sdd    # Codex
+    modscape init --gemini --sdd   # Gemini CLI
+    modscape init --all --sdd      # すべてのエージェント
+    ```
+    スキルとカスタマイズテンプレートがインストールされ、`.modscape/changes/` と `.modscape/specs/` ディレクトリが作成されます。
+
+2.  **要件定義** — `/modscape:spec:requirements` を実行してパイプラインの仕様を対話的に定義します:
+    - AIが `modscape spec new <name>` で作業フォルダを scaffold（`spec-config.yaml`・`model.yaml`・`design.md`・`tasks.md` を生成）
+    - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
+    - マスターYAMLのパスを `modscape-spec.custom.md` から解決、またはユーザーに確認
+    - `.modscape/changes/<name>/spec.md` に出力
+
+3.  **モデル設計** — `/modscape:spec:design <name>` を実行します:
+    - `spec.md` をもとに関連テーブルを自動特定し、`modscape extract` でマスターYAMLから `changes/<name>/model.yaml` を生成
+    - どのテーブルがどのマスターYAMLに属するかを `spec-config.yaml` に記録
+    - 新規テーブルを `changes/<name>/model.yaml` に追加設計（マスターYAMLは触らない）
+    - `design.md`（設計判断）と `tasks.md`（実装チェックリスト）を生成
+    - **再実行可能**: 気づきを `design.md` の `### Requires Model Change` に追記し、再実行でmodelとtasksを更新
+
+4.  **実装** — `/modscape:spec:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
+
+5.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
+    - `spec-config.yaml` を参照し、テーブルごとに対応するマスターYAMLにマージ
+    - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
+    - 上流テーブルにはChangelog追記のみ
+    - 作業フォルダは自動的に `.modscape/archives/YYYY-MM-DD-<name>/` へ移動
+
+> **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
+
+> **カスタマイズ**: `.modscape/changes/modscape-spec.custom.md.example` を `modscape-spec.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
+
+### SDDワークフロー図
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant AI as Claude (AI)
+    participant CLI as modscape CLI
+    participant FS as .modscape/
+
+    rect rgb(240, 248, 255)
+        Note over User,FS: ① /modscape:spec:requirements
+        User->>AI: 要件を話す（ゴール・ステークホルダー・データソース等）
+        AI->>User: フォルダ名を提案（例: monthly-sales-summary）
+        User->>AI: 承認 or リネーム
+        AI->>FS: changes/<name>/spec.md 作成
+    end
+
+    rect rgb(240, 255, 240)
+        Note over User,FS: ② /modscape:spec:design <name>
+        AI->>FS: spec.md・specs/*.md を読む
+        AI->>CLI: modscape extract HR.yaml --tables <ids>
+        CLI->>FS: changes/<name>/model.yaml 作成（関連テーブル抽出）
+        AI->>CLI: modscape table add changes/<name>/model.yaml ...
+        CLI->>FS: changes/<name>/model.yaml に新規テーブル追加
+        AI->>CLI: modscape layout changes/<name>/model.yaml
+        AI->>FS: changes/<name>/design.md + tasks.md 作成
+    end
+
+    rect rgb(255, 253, 240)
+        Note over User,FS: ③ /modscape:spec:implement <name>
+        loop 未完了タスクがある間
+            AI->>FS: changes/<name>/model.yaml を参照
+            AI->>User: コード生成（dbt / SQLMesh 等）
+            AI->>FS: tasks.md チェックボックス更新 [ ]→[x]
+            AI->>User: 次のタスクに進みますか？
+        end
+        opt 実データで気づきが発生した場合
+            User->>FS: changes/<name>/design.md に Findings 追記
+            User->>AI: /modscape:spec:design <name> 再実行
+            AI->>FS: model.yaml 再設計・tasks.md 差分更新
+        end
+    end
+
+    rect rgb(255, 240, 245)
+        Note over User,FS: ④ /modscape:spec:archive <name>
+        AI->>CLI: modscape merge changes/<name>/model.yaml HR.yaml
+        CLI->>FS: HR.yaml 更新（spec版優先）
+        Note over CLI: ⚠ 重複テーブルがあれば警告
+        AI->>FS: specs/<table-id>.md 生成・更新
+        AI->>User: changes/<name>/ を削除しますか？（y=削除 / n=archives/YYYY-MM-DD-<name>/へ移動）
+    end
+```
+
 ## クレジット
 
 Modscape は以下の素晴らしいオープンソースプロジェクトによって支えられています：

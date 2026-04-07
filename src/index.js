@@ -17,6 +17,7 @@ import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
 import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
+import { specNew } from './spec.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -37,6 +38,7 @@ program
   .option('-x, --codex', 'Scaffold for Codex')
   .option('-c, --claude', 'Scaffold for Claude Code')
   .option('-a, --all', 'Scaffold for all agents')
+  .option('-s, --sdd', 'Add SDD (Spec-Driven Data Engineering) skills')
   .action((options) => {
     initProject(options);
   });
@@ -115,6 +117,8 @@ program
   .argument('<paths...>', 'YAML files or directories to extract from')
   .option('-t, --tables <ids>', 'comma-separated table IDs to extract')
   .option('-o, --output <path>', 'output file path', 'extracted.yaml')
+  .option('-a, --append', 'upsert into existing output file instead of overwriting')
+  .option('--record <path>', 'record source YAML → table mapping into spec-config.yaml')
   .action((paths, options) => {
     extractModels(paths, options);
   });
@@ -144,6 +148,18 @@ program
   .option('--json', 'output as JSON')
   .action((file, opts) => {
     runValidate(file, opts);
+  });
+
+const specCommand = program
+  .command('spec')
+  .description('Spec-Driven Data Engineering (SDD) commands');
+
+specCommand
+  .command('new')
+  .description('Scaffold a new spec work folder under .modscape/changes/<name>/')
+  .argument('<name>', 'kebab-case name for the spec (e.g. monthly-sales-summary)')
+  .action((name) => {
+    specNew(name);
   });
 
 program

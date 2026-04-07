@@ -17,14 +17,56 @@ export function extractModels(inputs, options) {
   const tableIds = options.tables
     ? options.tables.split(',').map(id => id.trim()).filter(Boolean)
     : [];
+  const appendMode = !!options.append;
+  const recordPath = options.record || null;
 
   if (tableIds.length === 0) {
     console.error('  ❌ --tables option is required. Specify comma-separated table IDs.');
     return;
   }
 
-  // 後勝ちマージ用 Map
+  // upsert用 Map（appendモード時は既存出力ファイルで初期化）
   const tableMap = new Map();
+  const relationshipsList = [];
+  const lineageList = [];
+  const annotationsList = [];
+  const domainsList = [];
+  const layoutMap = {};
+  const seenRelIds = new Set();
+  const seenLinIds = new Set();
+  const seenAnnIds = new Set();
+  const seenDomIds = new Set();
+
+  if (appendMode && fs.existsSync(outputPath)) {
+    try {
+      const existing = yaml.load(fs.readFileSync(outputPath, 'utf8'));
+      if (existing) {
+        for (const t of existing.tables || []) tableMap.set(t.id, t);
+        for (const r of existing.relationships || []) {
+          relationshipsList.push(r);
+          if (r.id) seenRelIds.add(r.id);
+        }
+        for (const l of existing.lineage || []) {
+          lineageList.push(l);
+          if (l.id) seenLinIds.add(l.id);
+        }
+        for (const a of existing.annotations || []) {
+          annotationsList.push(a);
+          if (a.id) seenAnnIds.add(a.id);
+        }
+        for (const d of existing.domains || []) {
+          if (!seenDomIds.has(d.id)) {
+            domainsList.push(d);
+            seenDomIds.add(d.id);
+          }
+        }
+        Object.assign(layoutMap, existing.layout || {});
+      }
+      console.log(`  📎 Appending to existing: ${outputPath}`);
+    } catch (e) {
+      console.warn(`  ⚠️  Could not read existing output file: ${e.message}`);
+    }
+  }
 
   const allFiles = [];
   for (const input of inputs) {
@@ -36,6 +78,8 @@ export function extractModels(inputs, options) {
     return;
   }
 
+  const extractedIds = [];
+
   for (const filePath of allFiles) {
     try {
       const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
@@ -44,8 +88,64 @@ export function extractModels(inputs, options) {
       let matched = 0;
       for (const table of data.tables || []) {
         if (tableIds.includes(table.id)) {
-          tableMap.set(table.id, table); // 後勝ち上書き
+          tableMap.set(table.id, table); // upsert: 新規追加 or 既存上書き
+          extractedIds.push(table.id);
           matched++;
+        }
+      }
+
+      // relationships: 両端ともに対象テーブルに含まれるものだけ抽出
+      for (const rel of data.relationships || []) {
+        const fromId = rel.from?.table;
+        const toId = rel.to?.table;
+        if (tableIds.includes(fromId) && tableIds.includes(toId)) {
+          if (!rel.id) {
+            relationshipsList.push(rel);
+          } else if (!seenRelIds.has(rel.id)) {
+            relationshipsList.push(rel);
+            seenRelIds.add(rel.id);
+          }
+        }
+      }
+
+      // lineage: 両端ともに対象テーブルに含まれるものだけ抽出
+      for (const lin of data.lineage || []) {
+        if (tableIds.includes(lin.from) && tableIds.includes(lin.to)) {
+          if (!lin.id) {
+            lineageList.push(lin);
+          } else if (!seenLinIds.has(lin.id)) {
+            lineageList.push(lin);
+            seenLinIds.add(lin.id);
+          }
+        }
+      }
+
+      // annotations: targetId が対象テーブルに含まれるものだけ抽出
+      for (const ann of data.annotations || []) {
+        if (!ann.targetId || tableIds.includes(ann.targetId)) {
+          if (!ann.id) {
+            annotationsList.push(ann);
+          } else if (!seenAnnIds.has(ann.id)) {
+            annotationsList.push(ann);
+            seenAnnIds.add(ann.id);
+          }
+        }
+      }
+
+      // domains: members に対象テーブルを含むものだけ抽出（membersを対象IDのみに絞る）
+      for (const domain of data.domains || []) {
+        if (seenDomIds.has(domain.id)) continue;
+        const filteredMembers = (domain.members || []).filter(m => tableIds.includes(m));
+        if (filteredMembers.length > 0) {
+          domainsList.push({ ...domain, members: filteredMembers });
+          seenDomIds.add(domain.id);
+        }
+      }
+
+      // layout: 対象テーブルIDとドメインIDのエントリのみ抽出
+      for (const [key, value] of Object.entries(data.layout || {})) {
+        if ((tableIds.includes(key) || seenDomIds.has(key)) && !(key in layoutMap)) {
+          layoutMap[key] = value;
         }
       }
 
@@ -62,11 +162,44 @@ export function extractModels(inputs, options) {
     }
   }
 
-  const outputModel = {
-    tables: [...tableMap.values()],
-  };
+  const outputModel = {};
+  if (tableMap.size) outputModel.tables = [...tableMap.values()];
+  if (relationshipsList.length) outputModel.relationships = relationshipsList;
+  if (lineageList.length) outputModel.lineage = lineageList;
+  if (annotationsList.length) outputModel.annotations = annotationsList;
+  if (domainsList.length) outputModel.domains = domainsList;
+  if (Object.keys(layoutMap).length) outputModel.layout = layoutMap;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
-  console.log(`\n  ✅ Extracted ${tableMap.size} tables → ${outputPath}`);
+  console.log(`\n  ✅ Extracted ${extractedIds.length} tables → ${outputPath}`);
+
+  // --record: spec-config.yaml にソース情報を記録
+  if (recordPath && extractedIds.length > 0) {
+    const sourceFile = allFiles[0]; // 抽出元の最初のファイル
+    let config = { master_yamls: [] };
+
+    if (fs.existsSync(recordPath)) {
+      try {
+        config = yaml.load(fs.readFileSync(recordPath, 'utf8')) || config;
+      } catch (e) {
+        console.warn(`  ⚠️  Could not read record file: ${e.message}`);
+      }
+    }
+
+    // sourceFile のエントリを探してupsert
+    const entry = config.master_yamls.find(e => e.path === sourceFile);
+    if (entry) {
+      // 既存エントリにテーブルIDをupsert
+      const existing = new Set(entry.tables || []);
+      for (const id of extractedIds) existing.add(id);
+      entry.tables = [...existing];
+    } else {
+      config.master_yamls.push({ path: sourceFile, tables: extractedIds });
+    }
+
+    fs.writeFileSync(recordPath, yaml.dump(config, { lineWidth: -1 }), 'utf8');
+    console.log(`  📝 Recorded source mapping → ${recordPath}`);
+  }
+
   console.log(`  🚀 Run 'modscape dev ${outputPath}' to visualize.`);
 }

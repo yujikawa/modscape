@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-04-07
+
+### Added
+- **SDD workflow redesign** — Restructured the SDD workflow to separate temporary work artifacts from permanent table specs, and to support data-specific design loops.
+  - **Named work folders**: Each pipeline now gets its own folder `sdd/<name>/` (requirements proposes the name, user confirms). Multiple pipelines can run in parallel.
+  - **`/modscape:sdd:archive <name>`** — New skill that syncs permanent table specs to `.modscape/specs/<table-id>.md`. Directly affected tables get full spec updates; upstream tables get Changelog-only entries. Prompts user to optionally delete the work folder.
+  - **`/modscape:sdd:design <name>` (enhanced)** — Now reads `specs/*.md` for existing business context, auto-identifies directly/indirectly affected tables, writes `sdd/<name>/design.md` (design decisions), and generates `sdd/<name>/tasks.md` inline. Re-runnable: add findings to `design.md` after running with real data, then re-run to update design and regenerate pending tasks.
+  - **`/modscape:sdd:implement <name>` (updated)** — Accepts `<name>` argument; completion message now guides to `/modscape:sdd:archive`.
+  - **`/modscape:sdd:requirements` (updated)** — Proposes a kebab-case folder name from pipeline title; warns on name collision.
+  - **`specs/<table-id>.md` format** — Defined permanent business spec format (Overview, Business Context, Business Rules, Known Issues, Changelog) documented in `rules.md`.
+  - **`modscape init --sdd`** — Now installs `archive.md` skill and creates `.modscape/specs/.gitkeep` placeholder.
+
+- **SDD model isolation** — The design skill no longer modifies the master model.yaml (e.g., HR.yaml) directly during work. Instead, it extracts relevant tables into `sdd/<name>/model.yaml` (work-scoped YAML) and merges back into the master only at archive time.
+  - `/modscape:sdd:design <name>`: runs `modscape extract` to create `sdd/<name>/model.yaml`, all mutation CLI commands target this work YAML
+  - `/modscape:sdd:implement <name>`: reads `sdd/<name>/model.yaml` for code generation
+  - `/modscape:sdd:archive <name>`: runs `modscape merge sdd/<name>/model.yaml <master>.yaml` (spec-first, so spec version wins) before syncing `specs/*.md`
+- **`modscape merge` duplicate warning**: when a table ID already exists in a merged file, a `⚠` warning is now printed instead of silently skipping. The first-encountered version is still used.
+
+- **SDD skill rename: `sdd` → `spec`** — All SDD slash commands renamed from `/modscape:sdd:*` to `/modscape:spec:*`. Work folder path changed from `.modscape/sdd/<name>/` to `.modscape/changes/<name>/`. Custom rules file renamed from `sdd.custom.md` to `modscape-spec.custom.md`.
+- **`modscape spec new <name>`** — New CLI command that scaffolds a spec work folder under `.modscape/changes/<name>/` with `spec-config.yaml`, `model.yaml` (`tables: []`), `design.md`, and `tasks.md`. Called automatically by `/modscape:spec:requirements`.
+- **`spec-config.yaml`** — New per-spec config file recording which tables belong to which master YAML. Supports multiple master YAMLs (e.g. separate domain YAMLs in a dbt project). Used by design during extract and by archive to route each table to the correct merge target.
+- **`modscape extract --append`** — New flag to upsert extracted tables into an existing output YAML instead of overwriting.
+- **`modscape extract --record <path>`** — New flag to automatically record the source YAML → table mapping into `spec-config.yaml`. Upserts entries per source file.
+- **`/modscape:spec:status <name>`** — New skill showing current phase, file checklist, task progress by phase, unresolved model changes, and the next recommended command.
+- **`modscape merge` and `modscape extract` full-section support** — Both commands now correctly carry all YAML root sections: `lineage`, `annotations`, `layout`, `version` (previously dropped on merge/extract). `relationships` now deduplicates by ID in both commands.
+- **SDD design findings structure** — `design.md` `## Findings` now has `### Requires Model Change` (triggers model update on re-run) and `### Implementation Notes` (reference only).
+- **SDD next-step prompts** — All skills always output a formatted next-step block at completion, and after each task during implement.
+
+### Changed
+- **SDD work folder**: `.modscape/sdd/` → `.modscape/changes/`; archive cleanup moves to `.modscape/archives/YYYY-MM-DD-<name>/` instead of leaving in place.
+- **`modscape:spec:design` validate step**: replaced `modscape layout` (removed from skill) with `modscape validate` after every model.yaml mutation.
+- **`sdd-tasks` skill merged into `sdd-design`** — Tasks are now generated automatically at the end of the design step. The standalone `tasks.md` skill is kept for backward compatibility but is deprecated.
+
 ## [2.6.1] - 2026-04-05
 
 ### Fixed

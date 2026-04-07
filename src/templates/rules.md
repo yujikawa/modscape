@@ -846,6 +846,24 @@ Checks performed:
 - Broken references in `relationships`, `lineage`, `domains.members`, and `layout`
 - Orphaned `layout` entries (keys not found in tables or domains)
 
+### 13-5. Reading Model Information
+
+When investigating or querying a YAML model, always prefer modscape CLI commands or MCP tools over `grep` / `cat` / direct file reads:
+
+```bash
+modscape table list <file>               # List all tables
+modscape table get <file> --id <id>      # Get a specific table
+modscape lineage list <file>             # List all lineage entries
+modscape relationship list <file>        # List all relationships
+modscape domain list <file>              # List all domains
+modscape summary <file>                  # Overview of the entire model
+modscape summary <file> --json           # Machine-readable summary
+```
+
+If the modscape MCP server is active, prefer `mcp__modscape__*` tools (e.g. `mcp__modscape__list_tables`, `mcp__modscape__get_table`) for zero-overhead reads.
+
+Fall back to `grep` or direct file reads only when the information genuinely cannot be obtained from the above commands.
+
 ### 13-5. JSON Output for AI Pipelines
 
 All commands support `--json` for machine-readable output:
@@ -854,6 +872,79 @@ All commands support `--json` for machine-readable output:
 { "ok": true,  "action": "add", "resource": "table", "id": "fct_orders" }
 { "ok": false, "error": "Table \"fct_orders\" already exists", "hint": "Use `table update` instead" }
 ```
+
+---
+
+## 13-6. Project Initialization Flags
+
+```bash
+modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--gemini` | Scaffold skills for Gemini CLI |
+| `--codex`  | Scaffold skills for Codex |
+| `--claude` | Scaffold skills for Claude Code |
+| `--all`    | Scaffold for all three agents |
+| `--sdd`    | Add SDD (Spec-Driven Data Engineering) skills — **Claude Code only**, combine with `--claude` |
+
+`--sdd` installs five slash commands for Claude Code and creates the `.modscape/changes/` and `.modscape/specs/` directories:
+
+| Command | Purpose |
+|---------|---------|
+| `/modscape:spec:requirements`        | Collect business requirements → `.modscape/changes/<name>/spec.md` |
+| `/modscape:spec:design <name>`       | Design `model.yaml` from `spec.md`, generate `design.md` and `tasks.md` |
+| `/modscape:spec:implement <name>`    | Implement tasks one by one, generating dbt / SQLMesh code |
+| `/modscape:spec:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
+| `/modscape:spec:status <name>`       | Show current phase, task progress, and next recommended command |
+
+```bash
+modscape spec new <name>   # Scaffold work folder (spec-config.yaml, model.yaml, design.md, tasks.md)
+```
+
+### SDD Directory Structure
+
+```
+.modscape/
+├── changes/
+│   ├── modscape-spec.custom.md         # Project-wide custom rules (optional)
+│   └── <name>/                         # Work folder per pipeline (temporary)
+│       ├── spec.md                     # Business requirements
+│       ├── spec-config.yaml            # Master YAML mapping for this spec
+│       ├── model.yaml                  # Work-scoped YAML (extracted + new tables)
+│       ├── design.md                   # Design decisions + real-data findings
+│       └── tasks.md                    # Implementation task list
+├── archives/
+│   └── YYYY-MM-DD-<name>/              # Archived work folders
+└── specs/
+    └── <table-id>.md                   # Permanent business spec per table
+```
+
+### Permanent Table Spec Format (`specs/<table-id>.md`)
+
+```markdown
+# <table-id>
+
+## Overview
+- **Owner**: <team or person>
+- **Update Frequency**: <daily / weekly / etc.>
+- **SLA**: <e.g., "Available by 07:00 JST">
+
+## Business Context
+<Business meaning of this table>
+
+## Business Rules
+- <Key business rule or calculation logic>
+
+## Known Issues / Caveats
+- <Known data quality issues or edge cases>
+
+## Changelog
+- YYYY-MM-DD: 初版 (SDD: <name>)
+```
+
+Customize SDD behavior by creating `.modscape/changes/modscape-spec.custom.md` (rename from the generated `.example` file).
 
 ---
 

@@ -76,11 +76,21 @@ export async function initProject(options = {}) {
     await safeWriteFile('.modscape/codegen-rules.md', codegenRulesTemplate);
 
     // 2. Create agent-specific files
+    const specSkillNames = ['requirements', 'design', 'implement', 'archive', 'status'];
+
     if (agents.includes('gemini')) {
       const modelingTemplate = fs.readFileSync(path.join(__dirname, 'templates/gemini/modscape-modeling/SKILL.md'), 'utf8');
       await safeWriteFile('.gemini/skills/modscape-modeling/SKILL.md', modelingTemplate);
       const codegenTemplate = fs.readFileSync(path.join(__dirname, 'templates/gemini/modscape-codegen/SKILL.md'), 'utf8');
       await safeWriteFile('.gemini/skills/modscape-codegen/SKILL.md', codegenTemplate);
+
+      if (options.sdd) {
+        console.log('  Scaffolding SDD skills for Gemini CLI...');
+        for (const skill of specSkillNames) {
+          const template = fs.readFileSync(path.join(__dirname, `templates/gemini/modscape-spec-${skill}/SKILL.md`), 'utf8');
+          await safeWriteFile(`.gemini/skills/modscape-spec-${skill}/SKILL.md`, template);
+        }
+      }
     }
 
     if (agents.includes('codex')) {
@@ -88,6 +98,14 @@ export async function initProject(options = {}) {
       await safeWriteFile('.codex/skills/modscape-modeling/SKILL.md', modelingTemplate);
       const codegenTemplate = fs.readFileSync(path.join(__dirname, 'templates/codex/modscape-codegen/SKILL.md'), 'utf8');
       await safeWriteFile('.codex/skills/modscape-codegen/SKILL.md', codegenTemplate);
+
+      if (options.sdd) {
+        console.log('  Scaffolding SDD skills for Codex...');
+        for (const skill of specSkillNames) {
+          const template = fs.readFileSync(path.join(__dirname, `templates/codex/modscape-spec-${skill}/SKILL.md`), 'utf8');
+          await safeWriteFile(`.codex/skills/modscape-spec-${skill}/SKILL.md`, template);
+        }
+      }
     }
 
     if (agents.includes('claude')) {
@@ -97,6 +115,28 @@ export async function initProject(options = {}) {
       await safeWriteFile('.claude/commands/modscape/codegen.md', codegenTemplate);
       console.log('\n  💡 To use the MCP server with Claude Code, run:');
       console.log('     claude mcp add modscape -- modscape mcp\n');
+
+      if (options.sdd) {
+        console.log('  Scaffolding SDD skills for Claude Code...');
+        const specDir = path.join(__dirname, 'templates/claude/spec');
+        const claudeSpecSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md', 'archive.md', 'status.md'];
+        for (const skill of claudeSpecSkills) {
+          const template = fs.readFileSync(path.join(specDir, skill), 'utf8');
+          await safeWriteFile(`.claude/commands/modscape/spec/${skill}`, template);
+        }
+      }
+    }
+
+    if (options.sdd) {
+      const customExample = fs.readFileSync(path.join(__dirname, 'templates/claude/spec/modscape-spec.custom.md.example'), 'utf8');
+      await safeWriteFile('.modscape/changes/modscape-spec.custom.md.example', customExample);
+      // Create specs/ directory placeholder
+      await safeWriteFile('.modscape/specs/.gitkeep', '');
+      console.log('\n  💡 SDD skills installed.\n');
+      if (agents.includes('claude')) console.log('     Claude Code: start with /modscape:spec:requirements');
+      if (agents.includes('codex')) console.log('     Codex: start with /modscape:spec:requirements');
+      if (agents.includes('gemini')) console.log('     Gemini CLI: start with @modscape-spec-requirements');
+      console.log('     Permanent table specs will be stored in .modscape/specs/\n');
     }
 
     console.log('\n  ✅ Initialization complete! Customize ".modscape/rules.md" to match your project standards.\n');
