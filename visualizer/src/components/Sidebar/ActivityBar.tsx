@@ -11,6 +11,8 @@ import {
   Tag,
   FileChartColumnIncreasing,
   Pencil,
+  Spline,
+  Network,
 } from 'lucide-react'
 import logo from '/favicon.svg?url'
 
@@ -29,6 +31,8 @@ const ActivityBar = () => {
     getSelectedDomain,
     isDrawMode,
     setIsDrawMode,
+    connectMode,
+    setConnectMode,
   } = useStore()
 
   const [showHelp, setShowHelp] = useState(false)
@@ -166,6 +170,20 @@ const ActivityBar = () => {
             <button onClick={() => setIsDrawMode(!isDrawMode)} className={iconClass(isDrawMode, 'text-pink-400')}>
               <Pencil size={20} />
               <Tooltip text={isDrawMode ? "Exit Draw Mode (P)" : "Draw Mode (P)"} />
+            </button>
+            <button onClick={() => setConnectMode(connectMode === 'lineage' ? null : 'lineage')} className={iconClass(connectMode === 'lineage', 'text-blue-400')}>
+              <div className="relative">
+                <Spline size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
+              <Tooltip text={connectMode === 'lineage' ? "Exit Lineage Mode (Esc)" : "Draw Lineage Edge (L)"} />
+            </button>
+            <button onClick={() => setConnectMode(connectMode === 'er' ? null : 'er')} className={iconClass(connectMode === 'er', 'text-emerald-400')}>
+              <div className="relative">
+                <Network size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
+              <Tooltip text={connectMode === 'er' ? "Exit ER Mode (Esc)" : "Draw ER Edge (R)"} />
             </button>
           </div>
         </div>

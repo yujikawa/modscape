@@ -20,27 +20,27 @@ modscape lineage list <file>
 modscape summary <file> --json
 ```
 
-1. Verify that `.modscape/changes/<name>/` exists and contains `model.yaml`.
+1. Verify that `.modscape/changes/<name>/` exists and contains `spec-model.yaml`.
    - If not: stop and tell the user:
-     > `changes/<name>/model.yaml` not found. Run `/modscape:spec:design <name>` first.
+     > `changes/<name>/spec-model.yaml` not found. Run `/modscape:spec:design <name>` first.
 
 2. Read the following files:
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/spec-config.yaml`
    - `.modscape/changes/<name>/design.md`
-   - `.modscape/changes/<name>/model.yaml`
+   - `.modscape/changes/<name>/spec-model.yaml`
 
 ### Step 1: Merge work YAML into master YAML(s)
 
 3. For each master YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
-   modscape extract .modscape/changes/<name>/model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
-   modscape merge /tmp/spec-slice.yaml <master>.yaml --output <master>.yaml
+   modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
+   modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
    ```
 
    If `spec-config.yaml` has only one master YAML, merge the entire work YAML directly:
    ```bash
-   modscape merge .modscape/changes/<name>/model.yaml <master>.yaml --output <master>.yaml
+   modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
    ```
 
 4. Check the merge output for duplicate table ID warnings.
@@ -59,7 +59,7 @@ modscape summary <file> --json
 5. **Identify affected tables** from `design.md`:
    - **Direct impact tables**: listed under `## Affected Tables > ### Direct Impact`
    - **Indirect impact tables**: listed under `## Affected Tables > ### Indirect Impact`
-   - If `design.md` has no affected tables section: infer from `changes/<name>/model.yaml` lineage.
+   - If `design.md` has no affected tables section: infer from `changes/<name>/spec-model.yaml` lineage.
 
 6. **Sync `specs/<table-id>.md` for direct impact tables**:
 

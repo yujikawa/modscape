@@ -42,9 +42,9 @@ export function specNew(name) {
     yaml.dump(config, { lineWidth: -1 })
   );
 
-  // model.yaml
+  // spec-model.yaml
   writeIfNotExists(
-    path.join(dir, 'model.yaml'),
+    path.join(dir, 'spec-model.yaml'),
     'tables: []\n'
   );
 
@@ -57,7 +57,7 @@ export function specNew(name) {
   // tasks.md
   writeIfNotExists(
     path.join(dir, 'tasks.md'),
-    `# Pipeline Tasks\n> Generated from: .modscape/changes/${name}/model.yaml\n> Spec: .modscape/changes/${name}/spec.md\n> Progress: 0 / 0\n\n## Phase 1: Staging\n\n## Phase 2: Core\n\n## Phase 3: Mart\n\n## Phase 4: Tests\n`
+    `# Pipeline Tasks\n> Generated from: .modscape/changes/${name}/spec-model.yaml\n> Spec: .modscape/changes/${name}/spec.md\n> Progress: 0 / 0\n\n## Phase 1: Staging\n\n## Phase 2: Core\n\n## Phase 3: Mart\n\n## Phase 4: Tests\n`
   );
 
   console.log(`\n  ✅ Scaffold complete: ${dir}/`);

@@ -39,7 +39,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 4. For each pending task, in phase order:
 
    **Staging / Core / Mart tasks:**
-   - Read the corresponding table definition from `.modscape/changes/<name>/model.yaml` (the work-scoped YAML, NOT the master model.yaml)
+   - Read the corresponding table definition from `.modscape/changes/<name>/spec-model.yaml` (the work-scoped YAML, NOT the master model.yaml)
    - Generate implementation code for the target tool (dbt, SQLMesh, etc.)
    - Follow the dependency order defined in `lineage` — always generate upstream tables first
    - Place generated files in the appropriate location (e.g., `models/staging/`, `models/core/`, `models/mart/`)
@@ -56,9 +56,9 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
 ## Code Generation Guidelines
 
-- Follow `implementation.*` fields in `model.yaml` when present; fall back to `appearance.type` defaults
+- Follow `implementation.*` fields in `spec-model.yaml` when present; fall back to `appearance.type` defaults
 - Use `{{ ref('table_id') }}` (dbt) or equivalent for upstream references derived from `lineage`
-- Add `-- TODO:` comments where `model.yaml` lacks sufficient information to generate definitive code
+- Add `-- TODO:` comments where `spec-model.yaml` lacks sufficient information to generate definitive code
 - Keep generated code minimal and correct — do not add logic not supported by the YAML
 
 ## If You Discover Issues During Implementation

@@ -1,11 +1,11 @@
 ---
 name: modscape-spec-design
-description: Design the data model based on spec.md and update changes/<name>/model.yaml. Generates design.md and tasks.md.
+description: Design the data model based on spec.md and update changes/<name>/spec-model.yaml. Generates design.md and tasks.md.
 ---
 
 # Spec Design
 
-Design the data model based on `spec.md` and update `changes/<name>/model.yaml` (the work-scoped YAML). Does NOT modify the master model.yaml directly. Also generates `design.md` and `tasks.md` in the work folder.
+Design the data model based on `spec.md` and update `changes/<name>/spec-model.yaml` (the work-scoped YAML). Does NOT modify the master model.yaml directly. Also generates `design.md` and `tasks.md` in the work folder.
 
 ## Instructions
 
@@ -24,13 +24,13 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
    - If it does not exist: stop and tell the user:
      > `changes/<name>/spec.md` not found. Run `/modscape:spec:requirements` first to create it.
 
-3. **Check for existing `changes/<name>/model.yaml`** (the work-scoped YAML).
+3. **Check for existing `changes/<name>/spec-model.yaml`** (the work-scoped YAML).
    - If it **does not exist**: this is a first run — extract relevant tables from the master YAML (step 5).
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
 4. **Check for existing design.md** at `.modscape/changes/<name>/design.md`.
    - If it exists: this is a **re-run**. Read it fully and check the `## Findings` section.
-     - If `### Requires Model Change` has entries: **process these first before anything else** — apply the model changes to `changes/<name>/model.yaml` using mutation CLI commands, then run `modscape validate`. Only after model changes are applied, proceed to update tasks.md.
+     - If `### Requires Model Change` has entries: **process these first before anything else** — apply the model changes to `changes/<name>/spec-model.yaml` using mutation CLI commands, then run `modscape validate`. Only after model changes are applied, proceed to update tasks.md.
      - If `### Implementation Notes` only: no model changes needed, proceed to update tasks.md.
    - If not: this is a **first run**.
 
@@ -51,13 +51,13 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
    # First master YAML (creates model.yaml)
    modscape extract <master1>.yaml \
      --tables <id1>,<id2>,... \
-     --output .modscape/changes/<name>/model.yaml \
+     --output .modscape/changes/<name>/spec-model.yaml \
      --record .modscape/changes/<name>/spec-config.yaml
 
    # Additional master YAMLs (upsert into existing model.yaml)
    modscape extract <master2>.yaml \
      --tables <id3>,... \
-     --output .modscape/changes/<name>/model.yaml \
+     --output .modscape/changes/<name>/spec-model.yaml \
      --append \
      --record .modscape/changes/<name>/spec-config.yaml
    ```
@@ -67,27 +67,27 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 
 7. Read all existing `specs/*.md` files (if any) to understand current business context.
 
-8. **Identify affected tables** by cross-referencing spec.md with the lineage in `changes/<name>/model.yaml`.
+8. **Identify affected tables** by cross-referencing spec.md with the lineage in `changes/<name>/spec-model.yaml`.
 
-9. Design the data model — **all changes go to `changes/<name>/model.yaml`, never to the master YAML**:
+9. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the master YAML**:
    - Propose tables (with `appearance.type`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `implementation` hints where the target tool and table type make them clear
 
-10. Apply changes using mutation CLI commands targeting `changes/<name>/model.yaml`:
+10. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
     ```bash
-    modscape table add .modscape/changes/<name>/model.yaml --id <id> --name "<name>" --type <type>
-    modscape lineage add .modscape/changes/<name>/model.yaml --from <from> --to <to>
+    modscape table add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>" --type <type>
+    modscape lineage add .modscape/changes/<name>/spec-model.yaml --from <from> --to <to>
     # domain add: only when explicitly requested by the user
-    modscape domain add .modscape/changes/<name>/model.yaml --id <id> --name "<name>"
+    modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
     ```
     Edit YAML directly only for complex nested fields (`implementation`, `columns`, `sampleData`).
 
 11. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash
-    modscape validate .modscape/changes/<name>/model.yaml
+    modscape validate .modscape/changes/<name>/spec-model.yaml
     ```
 
 12. Write `.modscape/changes/<name>/design.md` using the format below.
@@ -115,7 +115,7 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 ## Findings
 
 ### Requires Model Change
-<Observations that require changes to model.yaml — processed first on re-run>
+<Observations that require changes to spec-model.yaml — processed first on re-run>
 
 ### Implementation Notes
 <Observations that do NOT require model changes — for reference only>
@@ -123,7 +123,7 @@ Design the data model based on `spec.md` and update `changes/<name>/model.yaml` 
 
 ## Task Generation Rules
 
-Build a dependency graph from `lineage` entries in `changes/<name>/model.yaml`, then topologically sort.
+Build a dependency graph from `lineage` entries in `changes/<name>/spec-model.yaml`, then topologically sort.
 
 - **Phase 1 — Staging**: tables with no upstream dependencies
 - **Phase 2 — Core**: tables that depend only on Phase 1 tables
@@ -134,7 +134,7 @@ Build a dependency graph from `lineage` entries in `changes/<name>/model.yaml`, 
 
 ```markdown
 # Pipeline Tasks
-> Generated from: changes/<name>/model.yaml
+> Generated from: changes/<name>/spec-model.yaml
 
 ## Phase 1: Staging
 - [ ] `<table_id>` [<materialization>]
@@ -166,7 +166,7 @@ Usage: `/modscape:spec:design <name> [path/to/master.yaml]`
 
 To preview the model:
 ```
-modscape dev .modscape/changes/<name>/model.yaml
+modscape dev .modscape/changes/<name>/spec-model.yaml
 ```
 
 If you discover issues during implementation, add them to `## Findings` in `.modscape/changes/<name>/design.md`, then re-run `/modscape:spec:design <name>` to update the design.

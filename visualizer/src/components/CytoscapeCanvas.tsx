@@ -89,14 +89,15 @@ function buildCytoscapeStyle(theme: 'dark' | 'light', lowZoom = false) {
         width: 2,
         'source-label': 'data(sourceLabel)',
         'target-label': 'data(targetLabel)',
-        'font-size': 10,
-        'font-weight': 600,
-        color: erStroke,
+        'font-size': 11,
+        'font-weight': 800,
+        color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
         'source-text-offset': 28,
         'target-text-offset': 28,
-        'text-background-color': theme === 'dark' ? '#1e293b' : '#ffffff',
-        'text-background-opacity': 0.9,
-        'text-background-padding': '2px',
+        'text-background-color': theme === 'dark' ? '#1e293b' : '#e2e8f0',
+        'text-background-opacity': 1,
+        'text-background-padding': '3px',
+        'text-background-shape': 'roundrectangle',
       },
     },
     // ER edge: connected to selected node
@@ -717,6 +718,7 @@ export default function CytoscapeCanvas({
     hoveredColumnId,
     updateNodePosition,
     updateAnnotation,
+    connectMode,
   } = useStore(
     useShallow((s) => ({
       schema: s.schema,
@@ -733,6 +735,7 @@ export default function CytoscapeCanvas({
       hoveredColumnId: s.hoveredColumnId,
       updateNodePosition: s.updateNodePosition,
       updateAnnotation: s.updateAnnotation,
+      connectMode: s.connectMode,
     }))
   )
 
@@ -753,6 +756,7 @@ export default function CytoscapeCanvas({
   const selectedIdsRef = useRef<string[]>([])
   const highlightedIdsRef = useRef<string[]>([])
   const hoveredNodeIdRef = useRef<string | null>(null)
+  const connectPendingSourceRef = useRef<string | null>(null)
 
   const pathFinderResultRef = useRef<{ nodeIds: string[], edgeIds: string[] } | null>(null)
   const themeRef = useRef<'dark' | 'light'>(theme)
@@ -828,6 +832,9 @@ export default function CytoscapeCanvas({
         const isDimmed = pathFinderNodeSet
           ? !pathFinderNodeSet.has(id)
           : isAnythingHighlighted && !isSelected && !isHighlighted && !isHovered && !connectedToSelected.has(id)
+        const currentConnectMode = useStore.getState().connectMode
+        const isPendingSource = connectPendingSourceRef.current === id
+        const isConnectMode = !!currentConnectMode
         if (consumer) {
           root.render(
             <ConsumerCard
@@ -849,6 +856,8 @@ export default function CytoscapeCanvas({
               theme={themeRef.current}
               hoveredColumnId={hoveredColumnIdRef.current}
               isCompact={isCompactModeRef.current}
+              isConnectMode={isConnectMode}
+              isPendingSource={isPendingSource}
             />
           )
         }
@@ -983,6 +992,22 @@ export default function CytoscapeCanvas({
     // ── Interaction events ────────────────────────────────────────
     cy.on('tap', 'node', (evt: CyInstance) => {
       const id: string = evt.target.id()
+      const mode = useStore.getState().connectMode
+      if (mode) {
+        const pending = connectPendingSourceRef.current
+        if (!pending) {
+          connectPendingSourceRef.current = id
+          updateAllCards()
+        } else if (pending === id) {
+          connectPendingSourceRef.current = null
+          updateAllCards()
+        } else {
+          onEdgeCreatedRef.current(mode, pending, id)
+          connectPendingSourceRef.current = null
+          updateAllCards()
+        }
+        return
+      }
       onNodeClick(id)
     })
 
@@ -1335,7 +1360,23 @@ export default function CytoscapeCanvas({
                   useStore.getState().updateNodePosition(id, pos.x, pos.y)
                 }
               } else {
-                onNodeClickRef.current(id)
+                const { connectMode } = useStore.getState()
+                if (connectMode) {
+                  const pending = connectPendingSourceRef.current
+                  if (!pending) {
+                    connectPendingSourceRef.current = id
+                    updateAllCards()
+                  } else if (pending === id) {
+                    connectPendingSourceRef.current = null
+                    updateAllCards()
+                  } else {
+                    onEdgeCreatedRef.current(connectMode, pending, id)
+                    connectPendingSourceRef.current = null
+                    updateAllCards()
+                  }
+                } else {
+                  onNodeClickRef.current(id)
+                }
               }
             }
 
@@ -1446,6 +1487,17 @@ export default function CytoscapeCanvas({
     if (!cy) return
     cy.style(buildCytoscapeStyle(theme, zoomRef.current < LOW_ZOOM_THRESHOLD))
   }, [theme])
+
+  // ── Connect mode: reset pending source + clear hover highlight ──────
+  useEffect(() => {
+    if (connectMode) {
+      hoveredNodeIdRef.current = null
+      highlightedIdsRef.current = []
+    } else {
+      connectPendingSourceRef.current = null
+    }
+    updateAllCards()
+  }, [connectMode, updateAllCards])
 
   // ── Expose canvas API to parent ──────────────────────────────────────
   useEffect(() => {
@@ -1731,6 +1783,20 @@ export default function CytoscapeCanvas({
       if (isTyping || e.repeat) return
 
       const key = e.key.toLowerCase()
+      if (key === 'l') {
+        e.preventDefault()
+        const { connectMode, setConnectMode } = useStore.getState()
+        setConnectMode(connectMode === 'lineage' ? null : 'lineage')
+        return
+      }
+
+      if (key === 'r') {
+        e.preventDefault()
+        const { connectMode, setConnectMode } = useStore.getState()
+        setConnectMode(connectMode === 'er' ? null : 'er')
+        return
+      }
+
       if (key === 't' || key === 'd' || key === 'c' || key === 's') {
         e.preventDefault()
         const center = screenToCanvas(window.innerWidth / 2, window.innerHeight / 2)
