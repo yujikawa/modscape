@@ -28,14 +28,14 @@ modscape summary <file> --json
 2. Check which files exist in `.modscape/changes/<name>/`:
    - `spec.md`
    - `spec-config.yaml`
-   - `model.yaml`
+   - `spec-model.yaml`
    - `design.md`
    - `tasks.md`
 
 3. Determine the current phase based on what exists and task progress:
    - No `spec.md` → `not started`
    - `spec.md` only → `requirements`
-   - `model.yaml` + `design.md` + `tasks.md` exist → check tasks
+   - `spec-model.yaml` + `design.md` + `tasks.md` exist → check tasks
      - Any `- [ ]` remaining → `implement`
      - All `- [x]` → `ready to archive`
 
@@ -58,7 +58,7 @@ modscape summary <file> --json
 **Files:**
   <✓ or ✗> spec.md
   <✓ or ✗> spec-config.yaml
-  <✓ or ✗> model.yaml
+  <✓ or ✗> spec-model.yaml
   <✓ or ✗> design.md
   <✓ or ✗> tasks.md
 

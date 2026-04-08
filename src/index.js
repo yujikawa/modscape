@@ -107,6 +107,7 @@ program
   .description('Merge multiple YAML models into one')
   .argument('<paths...>', 'YAML files or directories to merge')
   .option('-o, --output <path>', 'output file path', 'merged.yaml')
+  .option('-p, --patch', 'Patch mode: preserve first file\'s table order, upsert subsequent files in-place')
   .action((paths, options) => {
     mergeModels(paths, options);
   });

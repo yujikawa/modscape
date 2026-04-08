@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - **Relationship cardinality in Detail Panel** — The 1/N labels are no longer rendered as Cytoscape edge text (unreliable visibility, especially in light mode). Instead, when an ER edge is selected the cardinality is shown in the Detail Panel header in the format `tableName [N] — [1] tableName`, both in the expanded panel and in the minimized bottom bar.
+- **`modscape merge --patch` flag** — New `--patch` mode for the `merge` command. Uses the first file (master YAML) as the base and upserts subsequent files in-place, preserving the master's table array order. Prevents spurious delete+add git diffs that occurred when spec-model tables were prepended to the output array. Archive workflow now uses `modscape merge <master>.yaml <spec-model>.yaml --output <master>.yaml --patch`.
+- **SDD spec file renamed** — The work-scoped model file scaffolded by `/modscape:spec:new` is now named `spec-model.yaml` (was `model.yaml`) for clarity.
 
 ## [2.7.0] - 2026-04-07
 

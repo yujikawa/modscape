@@ -537,22 +537,22 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    Installs skills and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
-   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `model.yaml`, `design.md`, `tasks.md`)
+   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`)
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
-   - Resolves master YAML path(s) from `modscape-spec.custom.md` or prompts the user
+   - Resolves main-model.yaml path from `modscape-spec.custom.md` or prompts the user
    - Output: `.modscape/changes/<name>/spec.md`
 
 3. **Design the model** — run `/modscape:spec:design <name>`:
    - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
-   - Runs `modscape extract` to pull relevant tables from master YAML(s) into `changes/<name>/model.yaml`
-   - Records which tables belong to which master YAML in `spec-config.yaml`
+   - Runs `modscape extract` to pull relevant tables from main-model.yaml into `changes/<name>/spec-model.yaml`
+   - Records which tables belong to `main-model.yaml` in `spec-config.yaml`
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
    - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to update model and tasks
 
 4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
-   - Merges `changes/<name>/model.yaml` into the correct master YAML(s) per `spec-config.yaml`
+   - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
    - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
@@ -581,18 +581,18 @@ sequenceDiagram
     rect rgb(240, 255, 240)
         Note over User,FS: ② /modscape:spec:design <name>
         AI->>FS: Read spec.md and specs/*.md
-        AI->>CLI: modscape extract HR.yaml --tables <ids>
-        CLI->>FS: Create changes/<name>/model.yaml (extracted tables)
-        AI->>CLI: modscape table add changes/<name>/model.yaml ...
-        CLI->>FS: Add new tables to changes/<name>/model.yaml
-        AI->>CLI: modscape layout changes/<name>/model.yaml
+        AI->>CLI: modscape extract main-model.yaml --tables <ids>
+        CLI->>FS: Create changes/<name>/spec-model.yaml (extracted tables)
+        AI->>CLI: modscape table add changes/<name>/spec-model.yaml ...
+        CLI->>FS: Add new tables to changes/<name>/spec-model.yaml
+        AI->>CLI: modscape layout changes/<name>/spec-model.yaml
         AI->>FS: Create changes/<name>/design.md + tasks.md
     end
 
     rect rgb(255, 253, 240)
         Note over User,FS: ③ /modscape:spec:implement <name>
         loop While incomplete tasks remain
-            AI->>FS: Read changes/<name>/model.yaml
+            AI->>FS: Read changes/<name>/spec-model.yaml
             AI->>User: Generate code (dbt / SQLMesh etc.)
             AI->>FS: Update tasks.md checkbox [ ]→[x]
             AI->>User: Proceed to next task?
@@ -600,14 +600,14 @@ sequenceDiagram
         opt If real-data findings arise
             User->>FS: Add Findings to changes/<name>/design.md
             User->>AI: Re-run /modscape:spec:design <name>
-            AI->>FS: Redesign model.yaml, diff-update tasks.md
+            AI->>FS: Redesign spec-model.yaml, diff-update tasks.md
         end
     end
 
     rect rgb(255, 240, 245)
         Note over User,FS: ④ /modscape:spec:archive <name>
-        AI->>CLI: modscape merge changes/<name>/model.yaml HR.yaml
-        CLI->>FS: Update HR.yaml (spec-first wins)
+        AI->>CLI: modscape merge main-model.yaml changes/<name>/spec-model.yaml --patch
+        CLI->>FS: Update main-model.yaml (in-place upsert)
         Note over CLI: ⚠ Warn on duplicate table IDs
         AI->>FS: Generate / update specs/<table-id>.md
         AI->>User: Delete changes/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)

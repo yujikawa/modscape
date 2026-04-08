@@ -53,7 +53,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    ```bash
    modscape spec new <name>
    ```
-   This creates `spec-config.yaml`, `model.yaml`, `design.md`, and `tasks.md`.
+   This creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, and `tasks.md`.
    If the folder already exists, skip this step.
 
 8. Update `spec-config.yaml` with the resolved master YAMLs:
