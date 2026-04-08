@@ -48,6 +48,7 @@ interface AppState {
   isRightPanelOpen: boolean;
   isQuickConnectBarOpen: boolean;
   isTerminalOpen: boolean;
+  connectMode: 'lineage' | 'er' | null;
   activeTab: 'yaml' | 'stats';
   activeRightPanelTab: 'search' | 'path' | 'notes';
   focusNodeId: string | null;
@@ -130,6 +131,7 @@ interface AppState {
   setIsRightPanelOpen: (isOpen: boolean) => void;
   setIsQuickConnectBarOpen: (isOpen: boolean) => void;
   setIsTerminalOpen: (isOpen: boolean) => void;
+  setConnectMode: (mode: 'lineage' | 'er' | null) => void;
   setActiveTab: (tab: 'yaml' | 'stats') => void;
   setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
@@ -213,6 +215,7 @@ export const useStore = create<AppState>()(persist(
   isRightPanelOpen: false,
   isQuickConnectBarOpen: false,
   isTerminalOpen: false,
+  connectMode: null,
   activeTab: 'yaml',
   activeRightPanelTab: 'search',
   focusNodeId: null,
@@ -282,6 +285,7 @@ export const useStore = create<AppState>()(persist(
   setIsRightPanelOpen: (isOpen) => set({ isRightPanelOpen: isOpen }),
   setIsQuickConnectBarOpen: (isOpen) => set({ isQuickConnectBarOpen: isOpen }),
   setIsTerminalOpen: (isOpen: boolean) => set({ isTerminalOpen: isOpen }),
+  setConnectMode: (mode) => set({ connectMode: mode }),
   setActiveTab: (tab) => set({ activeTab: tab, isSidebarOpen: true }),
   setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab, isRightPanelOpen: true }),
   setIsAutoSaveEnabled: (enabled) => set({ isAutoSaveEnabled: enabled }),

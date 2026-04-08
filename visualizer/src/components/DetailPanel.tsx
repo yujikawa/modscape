@@ -107,6 +107,20 @@ const DetailPanel = memo(() => {
     e.stopPropagation();
   };
 
+  // Cardinality labels for source and target sides
+  const cardinalityOf = (type: string | undefined): [string, string] => {
+    if (type === 'one-to-many')  return ['1', 'N']
+    if (type === 'many-to-one')  return ['N', '1']
+    if (type === 'many-to-many') return ['N', 'N']
+    return ['1', '1']
+  }
+
+  const CardBadge = ({ label }: { label: string }) => (
+    <span style={{ fontSize: '11px', fontWeight: 900, padding: '0px 5px', borderRadius: '3px', backgroundColor: 'rgba(132, 204, 22, 0.15)', color: '#84cc16', border: '1px solid rgba(132, 204, 22, 0.3)', fontFamily: 'monospace', flexShrink: 0 }}>
+      {label}
+    </span>
+  )
+
   // Copy ID to clipboard and show brief confirmation
   const copyEdgeId = useCallback((id: string) => {
     navigator.clipboard.writeText(id).catch(() => {});
@@ -165,10 +179,26 @@ const DetailPanel = memo(() => {
           color: 'var(--text-primary)'
         }}
       >
-        <div className="flex items-center gap-3 overflow-hidden flex-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">
-            {hasSelection ? `Selected: ${selectedName}` : 'Select an object on the canvas to view its details'}
-          </span>
+        <div className="flex items-center gap-2 overflow-hidden flex-1">
+          {relationshipData && relationshipData.kind !== 'lineage' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', overflow: 'hidden' }}>
+              {(() => {
+                const [src, tgt] = cardinalityOf(relationshipData.relationship.type)
+                const rel = relationshipData.relationship
+                return (<>
+                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rel.from.table}</span>
+                  <CardBadge label={src} />
+                  <span style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>-</span>
+                  <CardBadge label={tgt} />
+                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rel.to.table}</span>
+                </>)
+              })()}
+            </div>
+          ) : (
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis">
+              {hasSelection ? `Selected: ${selectedName}` : 'Select an object on the canvas to view its details'}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {hasSelection && (
@@ -615,9 +645,15 @@ const DetailPanel = memo(() => {
                   EDGE
                 </span>
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0 }}>
-                {relationship.from.table}{relationship.from.column && relationship.from.column.length > 0 ? `.${relationship.from.column.join(', ')}` : ''} → {relationship.to.table}{relationship.to.column && relationship.to.column.length > 0 ? `.${relationship.to.column.join(', ')}` : ''}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                {(() => { const [src, tgt] = cardinalityOf(relationship.type); return (<>
+                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{relationship.from.table}{relationship.from.column?.length ? `.${relationship.from.column.join(', ')}` : ''}</span>
+                  <CardBadge label={src} />
+                  <span>-</span>
+                  <CardBadge label={tgt} />
+                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{relationship.to.table}{relationship.to.column?.length ? `.${relationship.to.column.join(', ')}` : ''}</span>
+                </>) })()}
+              </div>
               {relationship.id && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                   <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {relationship.id}</span>

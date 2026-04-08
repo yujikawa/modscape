@@ -175,6 +175,7 @@ function Flow() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (useStore.getState().isDrawMode) { useStore.getState().setIsDrawMode(false); return }
+        if (useStore.getState().connectMode) { useStore.getState().setConnectMode(null); return }
         useStore.getState().setPathFinderResult(null)
         setSelectedTableId(null)
         setSelectedEdgeId(null)
