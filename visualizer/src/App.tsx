@@ -44,7 +44,9 @@ function Flow() {
     selectedTableIds,
     toggleTableSelection,
     toggleEdgeSelection,
+    toggleAnnotationSelection,
     currentModelSlug,
+    setIsDetailPanelOpen,
   } = useStore(useShallow(s => ({
     schema: s.schema,
     error: s.error,
@@ -76,7 +78,9 @@ function Flow() {
     selectedTableIds: s.selectedTableIds,
     toggleTableSelection: s.toggleTableSelection,
     toggleEdgeSelection: s.toggleEdgeSelection,
+    toggleAnnotationSelection: s.toggleAnnotationSelection,
     currentModelSlug: s.currentModelSlug,
+    setIsDetailPanelOpen: s.setIsDetailPanelOpen,
   })))
 
   // Draw mode state
@@ -180,6 +184,7 @@ function Flow() {
         setSelectedTableId(null)
         setSelectedEdgeId(null)
         setSelectedAnnotationId(null)
+        setIsDetailPanelOpen(false)
         useStore.getState().setSelectedTableIds([])
         return
       }
@@ -232,6 +237,15 @@ function Flow() {
       }
 
 
+      if (e.key === 'Enter') {
+        const state = useStore.getState()
+        if (state.selectedTableId || state.selectedEdgeId || state.selectedAnnotationId) {
+          e.preventDefault()
+          state.setIsDetailPanelOpen(true)
+        }
+        return
+      }
+
       if ((key === 'v' || key === 'h') && selectedTableIds.length > 1) {
         e.preventDefault()
         distributeSelectedTables?.(key === 'v' ? 'vertical' : 'horizontal')
@@ -276,7 +290,7 @@ function Flow() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
-    setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId,
+    setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen,
     selectedTableId, selectedEdgeId, selectedEdgeKind, selectedAnnotationId,
     selectedTableIds, distributeSelectedTables,
     schema, removeNode, bulkRemoveTables, removeEdge, removeAnnotation,
@@ -298,20 +312,17 @@ function Flow() {
     setSelectedTableId(null)
     setSelectedEdgeId(null)
     setSelectedAnnotationId(null)
+    setIsDetailPanelOpen(false)
     useStore.getState().setSelectedTableIds([])
-  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId])
+  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen])
 
   const handleAnnotationClick = useCallback((id: string) => {
-    setSelectedTableId(null)
-    setSelectedEdgeId(null)
-    setSelectedAnnotationId(id)
-  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId])
+    toggleAnnotationSelection(id)
+  }, [toggleAnnotationSelection])
 
   const handleDomainClick = useCallback((id: string) => {
-    setSelectedAnnotationId(null)
-    setSelectedEdgeId(null)
     toggleTableSelection(id)
-  }, [setSelectedAnnotationId, setSelectedEdgeId, toggleTableSelection])
+  }, [toggleTableSelection])
 
   const handleEdgeCreated = useCallback((kind: 'lineage' | 'er', sourceId: string, targetId: string) => {
     if (kind === 'lineage') {
@@ -411,9 +422,8 @@ function Flow() {
             onAutoLayout={handleAutoLayout}
           />
         )}
+        <DetailPanel />
       </div>
-
-      <DetailPanel />
     </div>
   )
 }

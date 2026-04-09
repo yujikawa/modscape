@@ -1,10 +1,16 @@
-import { memo, useState, useCallback, useEffect } from 'react'
+import { memo, useState, useCallback, useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, ChevronUp, ChevronDown, Cpu, FileChartColumnIncreasing, Copy } from 'lucide-react'
+import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, Cpu, FileChartColumnIncreasing, Copy } from 'lucide-react'
 import type { Table, Column } from '../types/schema'
 import { TYPE_CONFIG } from '../lib/cytoscapeElements'
 import { LINEAGE_BASE, CONSUMER_DEFAULT_COLOR, ANNOTATION_DEFAULT_COLOR } from '../lib/colors'
+
+const CardBadge = ({ label }: { label: string }) => (
+  <span style={{ fontSize: '11px', fontWeight: 900, padding: '0px 5px', borderRadius: '3px', backgroundColor: 'rgba(132, 204, 22, 0.15)', color: '#84cc16', border: '1px solid rgba(132, 204, 22, 0.3)', fontFamily: 'monospace', flexShrink: 0 }}>
+    {label}
+  </span>
+)
 
 const DetailPanel = memo(() => {
   const {
@@ -27,9 +33,8 @@ const DetailPanel = memo(() => {
     error,
     setError,
     theme,
-    isDetailPanelSuppressed,
-    isDetailPanelMinimized,
-    setIsDetailPanelMinimized
+    isDetailPanelOpen,
+    setIsDetailPanelOpen
   } = useStore(useShallow((s) => ({
     schema: s.schema,
     getSelectedTable: s.getSelectedTable,
@@ -50,9 +55,8 @@ const DetailPanel = memo(() => {
     error: s.error,
     setError: s.setError,
     theme: s.theme,
-    isDetailPanelSuppressed: s.isDetailPanelSuppressed,
-    isDetailPanelMinimized: s.isDetailPanelMinimized,
-    setIsDetailPanelMinimized: s.setIsDetailPanelMinimized,
+    isDetailPanelOpen: s.isDetailPanelOpen,
+    setIsDetailPanelOpen: s.setIsDetailPanelOpen,
     // Trigger re-render when selection changes (needed for getSelected* to return fresh values)
     selectedTableId: s.selectedTableId,
     selectedEdgeId: s.selectedEdgeId,
@@ -67,42 +71,119 @@ const DetailPanel = memo(() => {
   
   const [activeTab, setActiveTab] = useState('conceptual')
   const [tagInput, setTagInput] = useState('')
-  const [panelHeight, setPanelHeight] = useState(400) // Default height in pixels
-  const [isResizing, setIsResizing] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [tabsOverflow, setTabsOverflow] = useState(false)
 
-  // Use simple effect for global mouse move to handle resizing
+  // Floating window state
+  const DEFAULT_W = 600
+  const DEFAULT_H = 340
+  const MIN_W = 320
+  const MIN_H = 220
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const [size, setSize] = useState({ w: DEFAULT_W, h: DEFAULT_H })
+  const [initialized, setInitialized] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const tabRowRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
+  const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null)
+
+  // Copy ID to clipboard and show brief confirmation (must be before early returns)
+  const copyEdgeId = useCallback((id: string) => {
+    navigator.clipboard.writeText(id).catch(() => {});
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  }, []);
+
+  // ── Drag (must be before early returns) ──────────────────────────────
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y }
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth - size.w, dragRef.current.origX + ev.clientX - dragRef.current.startX)),
+        y: Math.max(0, Math.min(window.innerHeight - size.h, dragRef.current.origY + ev.clientY - dragRef.current.startY)),
+      })
+    }
+    const onUp = () => {
+      dragRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [pos, size])
+
+  // ── Resize (must be before early returns) ────────────────────────────
+  const onResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizeRef.current = { startX: e.clientX, startY: e.clientY, origW: size.w, origH: size.h }
+    const onMove = (ev: MouseEvent) => {
+      if (!resizeRef.current) return
+      setSize({
+        w: Math.max(MIN_W, resizeRef.current.origW + ev.clientX - resizeRef.current.startX),
+        h: Math.max(MIN_H, resizeRef.current.origH + ev.clientY - resizeRef.current.startY),
+      })
+    }
+    const onUp = () => {
+      resizeRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [size])
+
+  // Initialize position to bottom-right when first opened
   useEffect(() => {
-    if (!isResizing) return;
+    if (isDetailPanelOpen && !initialized) {
+      setPos({
+        x: Math.max(0, Math.round((window.innerWidth - DEFAULT_W) / 2)),
+        y: Math.max(0, Math.round((window.innerHeight - DEFAULT_H) / 2)),
+      })
+      setInitialized(true)
+    }
+  }, [isDetailPanelOpen, initialized])
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newHeight = window.innerHeight - e.clientY;
-      // Constraint height between 150px and 90% of window height
-      setPanelHeight(Math.max(150, Math.min(newHeight, window.innerHeight * 0.9)));
-    };
+  useEffect(() => {
+    // Tab widths: each tab ~100px average, 5 tabs + 40px padding = ~540px threshold
+    setTabsOverflow(size.w < 540)
+  }, [size.w])
 
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = 'default';
-    };
+  // Keyboard shortcuts for the detail panel
+  useEffect(() => {
+    if (!isDetailPanelOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement
+      const isTyping =
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement)?.isContentEditable ||
+        activeEl?.closest('.cm-editor')
+      if (isTyping || e.repeat) return
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing]);
+      if (e.key === 'Escape') {
+        setIsDetailPanelOpen(false)
+        return
+      }
 
-  if (isDetailPanelSuppressed) return null
+      // 1–5: switch tabs (only when a table is selected)
+      const tabIds = ['conceptual', 'logical', 'physical', 'implementation', 'sample']
+      const idx = parseInt(e.key) - 1
+      if (idx >= 0 && idx < tabIds.length && getSelectedTable()) {
+        e.preventDefault()
+        setActiveTab(tabIds[idx])
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isDetailPanelOpen, setIsDetailPanelOpen, getSelectedTable])
 
-  const startResizing = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    document.body.style.cursor = 'ns-resize';
-  };
+  if (!isDetailPanelOpen) return null
+  if (!table && !domain && !consumer && !relationshipData && !annotation) return null
 
-  // Helper to prevent event propagation to React Flow canvas
+  // Helper to prevent event propagation to canvas
   const stopPropagation = (e: React.MouseEvent | React.TouchEvent | React.PointerEvent) => {
     e.stopPropagation();
   };
@@ -115,108 +196,42 @@ const DetailPanel = memo(() => {
     return ['1', '1']
   }
 
-  const CardBadge = ({ label }: { label: string }) => (
-    <span style={{ fontSize: '11px', fontWeight: 900, padding: '0px 5px', borderRadius: '3px', backgroundColor: 'rgba(132, 204, 22, 0.15)', color: '#84cc16', border: '1px solid rgba(132, 204, 22, 0.3)', fontFamily: 'monospace', flexShrink: 0 }}>
-      {label}
-    </span>
-  )
-
-  // Copy ID to clipboard and show brief confirmation
-  const copyEdgeId = useCallback((id: string) => {
-    navigator.clipboard.writeText(id).catch(() => {});
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 1500);
-  }, []);
-
-  // Common Wrapper Style
+  // Floating window style
   const panelStyle: React.CSSProperties = {
-    height: `${panelHeight}px`,
-    maxHeight: '90vh',
-    minHeight: '150px',
-    backgroundColor: 'var(--node-bg)', 
-    borderTop: `2px solid ${theme === 'dark' ? LINEAGE_BASE : '#60a5fa'}`,
-    display: 'flex', 
+    position: 'absolute',
+    left: pos.x,
+    top: pos.y,
+    width: size.w,
+    height: size.h,
+    zIndex: 200,
+    backgroundColor: 'var(--node-bg)',
+    border: `1px solid ${theme === 'dark' ? '#1e293b' : '#e2e8f0'}`,
+    display: 'flex',
     flexDirection: 'column',
     color: 'var(--text-primary)',
-    boxShadow: theme === 'dark' ? '0 -10px 25px -5px rgba(0, 0, 0, 0.4)' : '0 -4px 12px rgba(0, 0, 0, 0.05)',
+    boxShadow: theme === 'dark' ? '0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)' : '0 8px 32px rgba(0,0,0,0.15)',
     fontFamily: 'sans-serif',
-    position: 'relative',
+    borderRadius: 10,
     transition: 'background-color 0.3s, color 0.3s'
   };
 
-  // --- Minimized State Rendering ---
-  if (isDetailPanelMinimized) {
-    const selectedName = table?.name || domain?.name || consumer?.name || (relationshipData ? `${relationshipData.relationship.from.table} → ${relationshipData.relationship.to.table}` : null) || annotation?.text?.substring(0, 20);
-    const hasSelection = !!selectedName;
-
-    // Determine active theme color for border synchronization
-    let activeColor = theme === 'dark' ? '#334155' : '#e2e8f0'; // Subtle gray if nothing selected
-    if (table) {
-      const tc = table.appearance?.type ? TYPE_CONFIG[table.appearance.type] : null;
-      activeColor = table.appearance?.color || tc?.color || activeColor;
-    } else if (domain) {
-      activeColor = domain.color || activeColor;
-    } else if (consumer) {
-      activeColor = consumer.appearance?.color || CONSUMER_DEFAULT_COLOR;
-    } else if (annotation) {
-      activeColor = annotation.color || ANNOTATION_DEFAULT_COLOR;
-    }
-
-    return (
-      <div 
-        className={`shadow-2xl z-50 flex items-center justify-between px-6 transition-all border-t-2 ${hasSelection ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900' : 'cursor-default opacity-80'}`}
-        onClick={(e) => {
-          if (!hasSelection) return;
-          e.stopPropagation();
-          setIsDetailPanelMinimized(false);
-        }}
-        onMouseDown={stopPropagation}
-        onPointerDown={stopPropagation}
-        style={{ 
-          height: '40px', 
-          backgroundColor: 'var(--node-bg)', 
-          borderColor: activeColor,
-          color: 'var(--text-primary)'
-        }}
+  const dragBar = (color: string) => (
+    <div
+      onMouseDown={onDragStart}
+      style={{ height: '30px', backgroundColor: color, display: 'flex', alignItems: 'center', padding: '0 8px 0 12px', cursor: 'grab', flexShrink: 0, borderRadius: '9px 9px 0 0' }}
+    >
+      <GripHorizontal size={13} style={{ color: 'rgba(255,255,255,0.55)', flexShrink: 0 }} />
+      <div style={{ flex: 1 }} />
+      <button
+        onMouseDown={e => e.stopPropagation()}
+        onClick={() => setIsDetailPanelOpen(false)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', borderRadius: '4px' }}
+        title="Close"
       >
-        <div className="flex items-center gap-2 overflow-hidden flex-1">
-          {relationshipData && relationshipData.kind !== 'lineage' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', overflow: 'hidden' }}>
-              {(() => {
-                const [src, tgt] = cardinalityOf(relationshipData.relationship.type)
-                const rel = relationshipData.relationship
-                return (<>
-                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rel.from.table}</span>
-                  <CardBadge label={src} />
-                  <span style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>-</span>
-                  <CardBadge label={tgt} />
-                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rel.to.table}</span>
-                </>)
-              })()}
-            </div>
-          ) : (
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis">
-              {hasSelection ? `Selected: ${selectedName}` : 'Select an object on the canvas to view its details'}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          {hasSelection && (
-            <>
-              <div className="text-[10px] font-medium text-slate-400 italic hidden sm:block">
-                Click to expand
-              </div>
-              <button 
-                className={`p-1 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}
-              >
-                <ChevronUp size={18} style={{ color: activeColor }} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
+        <X size={14} />
+      </button>
+    </div>
+  );
 
   const handleUpdateTable = (updates: Partial<Table>) => {
     if (table?.isImported) return; // Imported tables are read-only
@@ -226,57 +241,33 @@ const DetailPanel = memo(() => {
   // --- Annotation Editor Rendering ---
   if (annotation) {
     return (
-      <div 
+      <div
+        ref={panelRef}
         className="shadow-2xl z-50 flex flex-col sidebar-content"
         onClick={stopPropagation}
         onMouseDown={stopPropagation}
         onPointerDown={stopPropagation}
-        style={{ ...panelStyle, borderTopColor: annotation.color || ANNOTATION_DEFAULT_COLOR }}
+        style={panelStyle}
       >
-        {/* Resize Handle */}
-        <div 
-          onMouseDown={startResizing}
-          style={{
-            position: 'absolute',
-            top: '-4px',
-            left: 0,
-            right: 0,
-            height: '8px',
-            cursor: 'ns-resize',
-            zIndex: 60
-          }}
-        />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <TagIcon size={18} style={{ color: annotation.color || ANNOTATION_DEFAULT_COLOR }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Annotation</span>
-              </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0 }}>
-                {annotation.targetId ? `Sticky to ${annotation.targetId} (${annotation.targetType})` : 'Floating Note'}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {annotation.id}</span>
-                <button
-                  onClick={() => copyEdgeId(annotation.id)}
-                  title="Copy ID"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
-                >
-                  <Copy size={11} />
-                </button>
-                {copiedId === annotation.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
-              </div>
+        {dragBar(annotation.color || ANNOTATION_DEFAULT_COLOR)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+          <TagIcon size={16} style={{ color: annotation.color || ANNOTATION_DEFAULT_COLOR, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Annotation</span>
+            <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: '2px 0 0' }}>
+              {annotation.targetId ? `Sticky to ${annotation.targetId} (${annotation.targetType})` : 'Floating Note'}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+              <button
+                onMouseDown={e => e.stopPropagation()}
+                onClick={() => copyEdgeId(annotation.id)}
+                title="Copy ID"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+              >
+                <Copy size={11} />
+              </button>
+              <span style={{ fontSize: '10px', color: copiedId === annotation.id ? '#22c55e' : 'var(--text-secondary)', fontFamily: 'monospace', fontWeight: copiedId === annotation.id ? 600 : 400 }}>ID: {annotation.id}</span>
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setIsDetailPanelMinimized(true)} 
-              className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}
-              title="Minimize Details"
-            >
-              <ChevronDown size={18} />
-            </button>
           </div>
         </div>
 
@@ -387,6 +378,7 @@ const DetailPanel = memo(() => {
             </div>
           </div>
         </div>
+        <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
       </div>
     );
   }
@@ -396,41 +388,33 @@ const DetailPanel = memo(() => {
     const CONSUMER_COLOR = consumer.appearance?.color || CONSUMER_DEFAULT_COLOR
     return (
       <div
+        ref={panelRef}
         className="shadow-2xl z-50 flex flex-col sidebar-content"
         onClick={stopPropagation}
         onMouseDown={stopPropagation}
         onPointerDown={stopPropagation}
-        style={{ ...panelStyle, borderTop: `2px solid ${CONSUMER_COLOR}` }}
+        style={panelStyle}
       >
-        {/* Resize Handle */}
-        <div onMouseDown={startResizing} style={{ position: 'absolute', top: '-4px', left: 0, right: 0, height: '8px', cursor: 'ns-resize', zIndex: 60 }} />
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <FileChartColumnIncreasing size={18} style={{ color: CONSUMER_COLOR }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{consumer.name}</span>
-                <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(124, 58, 237, 0.1)', color: CONSUMER_DEFAULT_COLOR, border: '1px solid rgba(124, 58, 237, 0.2)', textTransform: 'uppercase' }}>
-                  CONSUMER
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, fontFamily: 'monospace' }}>{consumer.id}</p>
-                <button
-                  onClick={() => copyEdgeId(consumer.id)}
-                  title="Copy ID"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
-                >
-                  <Copy size={11} />
-                </button>
-                {copiedId === consumer.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
-              </div>
+        {dragBar(CONSUMER_COLOR)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+          <FileChartColumnIncreasing size={16} style={{ color: CONSUMER_COLOR, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{consumer.name}</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(124, 58, 237, 0.1)', color: CONSUMER_DEFAULT_COLOR, border: '1px solid rgba(124, 58, 237, 0.2)', textTransform: 'uppercase' }}>CONSUMER</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+              <button
+                onMouseDown={e => e.stopPropagation()}
+                onClick={() => copyEdgeId(consumer.id)}
+                title="Copy ID"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+              >
+                <Copy size={11} />
+              </button>
+              <p style={{ fontSize: '11px', color: copiedId === consumer.id ? '#22c55e' : 'var(--text-secondary)', margin: 0, fontFamily: 'monospace', fontWeight: copiedId === consumer.id ? 600 : 400 }}>ID: {consumer.id}</p>
             </div>
           </div>
-          <button onClick={() => setIsDetailPanelMinimized(true)} className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}>
-            <ChevronDown size={18} />
-          </button>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
@@ -520,6 +504,7 @@ const DetailPanel = memo(() => {
             </section>
           </div>
         </div>
+        <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
       </div>
     )
   }
@@ -531,43 +516,38 @@ const DetailPanel = memo(() => {
     const currentDescription = lineageEdge?.description ?? '';
     return (
       <div
+        ref={panelRef}
         className="shadow-2xl z-50 flex flex-col sidebar-content"
         onClick={stopPropagation}
         onMouseDown={stopPropagation}
         onPointerDown={stopPropagation}
         style={panelStyle}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <LinkIcon size={18} style={{ color: LINEAGE_BASE }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Lineage</span>
-                <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)', textTransform: 'uppercase' }}>
-                  UPSTREAM
-                </span>
-              </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
-                {relationship.from.table} → {relationship.to.table}
-              </p>
-              {lineageEdge?.id && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {lineageEdge.id}</span>
-                  <button
-                    onClick={() => copyEdgeId(lineageEdge.id!)}
-                    title="Copy ID"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
-                  >
-                    <Copy size={11} />
-                  </button>
-                  {copiedId === lineageEdge.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
-                </div>
-              )}
+        {dragBar(LINEAGE_BASE)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+          <LinkIcon size={16} style={{ color: LINEAGE_BASE, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Lineage</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)', textTransform: 'uppercase' }}>UPSTREAM</span>
             </div>
+            <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+              {relationship.from.table} → {relationship.to.table}
+            </p>
+            {lineageEdge?.id && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                <button
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={() => copyEdgeId(lineageEdge.id!)}
+                  title="Copy ID"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                >
+                  <Copy size={11} />
+                </button>
+                <span style={{ fontSize: '10px', color: copiedId === lineageEdge.id ? '#22c55e' : 'var(--text-secondary)', fontFamily: 'monospace', fontWeight: copiedId === lineageEdge.id ? 600 : 400 }}>ID: {lineageEdge.id}</span>
+              </div>
+            )}
           </div>
-          <button onClick={() => setIsDetailPanelMinimized(true)} className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}>
-            <ChevronDown size={18} />
-          </button>
         </div>
         <div style={{ flex: 1, padding: '20px', fontSize: '13px', overflowY: 'auto' }}>
           <div style={{ marginBottom: '16px' }}>
@@ -608,6 +588,7 @@ const DetailPanel = memo(() => {
             />
           </div>
         </div>
+        <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
       </div>
     )
   }
@@ -615,68 +596,44 @@ const DetailPanel = memo(() => {
   if (relationshipData) {
     const { relationship, index } = relationshipData;
     return (
-      <div 
+      <div
+        ref={panelRef}
         className="shadow-2xl z-50 flex flex-col sidebar-content"
         onClick={stopPropagation}
         onMouseDown={stopPropagation}
         onPointerDown={stopPropagation}
         style={panelStyle}
       >
-        {/* Resize Handle */}
-        <div 
-          onMouseDown={startResizing}
-          style={{
-            position: 'absolute',
-            top: '-4px',
-            left: 0,
-            right: 0,
-            height: '8px',
-            cursor: 'ns-resize',
-            zIndex: 60
-          }}
-        />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <Database size={18} style={{ color: LINEAGE_BASE }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Relationship</span>
-                <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)', textTransform: 'uppercase' }}>
-                  EDGE
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                {(() => { const [src, tgt] = cardinalityOf(relationship.type); return (<>
-                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{relationship.from.table}{relationship.from.column?.length ? `.${relationship.from.column.join(', ')}` : ''}</span>
-                  <CardBadge label={src} />
-                  <span>-</span>
-                  <CardBadge label={tgt} />
-                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{relationship.to.table}{relationship.to.column?.length ? `.${relationship.to.column.join(', ')}` : ''}</span>
-                </>) })()}
-              </div>
-              {relationship.id && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>ID: {relationship.id}</span>
-                  <button
-                    onClick={() => copyEdgeId(relationship.id!)}
-                    title="Copy ID"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
-                  >
-                    <Copy size={11} />
-                  </button>
-                  {copiedId === relationship.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
-                </div>
-              )}
+        {dragBar(LINEAGE_BASE)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+          <Database size={16} style={{ color: LINEAGE_BASE, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Relationship</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)', textTransform: 'uppercase' }}>EDGE</span>
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setIsDetailPanelMinimized(true)}
-              className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}
-              title="Minimize Details"
-            >
-              <ChevronDown size={18} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', flexWrap: 'wrap' }}>
+              {(() => { const [src, tgt] = cardinalityOf(relationship.type); return (<>
+                <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{relationship.from.table}{relationship.from.column?.length ? `.${relationship.from.column.join(', ')}` : ''}</span>
+                <CardBadge label={src} />
+                <span>-</span>
+                <CardBadge label={tgt} />
+                <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{relationship.to.table}{relationship.to.column?.length ? `.${relationship.to.column.join(', ')}` : ''}</span>
+              </>) })()}
+            </div>
+            {relationship.id && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                <button
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={() => copyEdgeId(relationship.id!)}
+                  title="Copy ID"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                >
+                  <Copy size={11} />
+                </button>
+                <span style={{ fontSize: '10px', color: copiedId === relationship.id ? '#22c55e' : 'var(--text-secondary)', fontFamily: 'monospace', fontWeight: copiedId === relationship.id ? 600 : 400 }}>ID: {relationship.id}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -775,80 +732,58 @@ const DetailPanel = memo(() => {
             </section>
           </div>
         </div>
+        <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
       </div>
     );
   }
   if (domain) {
     return (
-      <div 
+      <div
+        ref={panelRef}
         className="shadow-2xl z-50 flex flex-col sidebar-content"
         onClick={stopPropagation}
         onMouseDown={stopPropagation}
         onPointerDown={stopPropagation}
-        style={{ ...panelStyle, borderTopColor: domain.color || LINEAGE_BASE }}
+        style={panelStyle}
       >
-        {/* Resize Handle */}
-        <div 
-          onMouseDown={startResizing}
-          style={{
-            position: 'absolute',
-            top: '-4px',
-            left: 0,
-            right: 0,
-            height: '8px',
-            cursor: 'ns-resize',
-            zIndex: 60
-          }}
-        />
+        {dragBar(domain.color || LINEAGE_BASE)}
         {/* Panel Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <Database size={18} style={{ color: domain.color || LINEAGE_BASE }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input 
-                  value={domain.name ?? ''}
-                  onChange={(e) => updateDomain(domain.id, { name: e.target.value })}
-                  onBlur={(e) => { if (!e.target.value) updateDomain(domain.id, { name: 'UNNAMED_DOMAIN' }) }}
-                  style={{ 
-                    fontSize: '16px', 
-                    fontWeight: 'bold', 
-                    color: 'var(--text-primary)', 
-                    backgroundColor: 'transparent', 
-                    border: 'none',
-                    borderBottom: '1px solid transparent',
-                    padding: '2px 0',
-                    outline: 'none',
-                    width: 'fit-content',
-                    minWidth: '200px'
-                  }}
-                  onFocus={(e) => (e.target as HTMLInputElement).style.borderBottom = `1px solid ${LINEAGE_BASE}`}
-                />
-                <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)', textTransform: 'uppercase' }}>
-                  DOMAIN
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: 0, fontFamily: 'monospace' }}>{domain.id}</p>
-                <button
-                  onClick={() => copyEdgeId(domain.id)}
-                  title="Copy ID"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
-                >
-                  <Copy size={11} />
-                </button>
-                {copiedId === domain.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>Copied!</span>}
-              </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+          <Database size={16} style={{ color: domain.color || LINEAGE_BASE, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                value={domain.name ?? ''}
+                onChange={(e) => updateDomain(domain.id, { name: e.target.value })}
+                onBlur={(e) => { if (!e.target.value) updateDomain(domain.id, { name: 'UNNAMED_DOMAIN' }) }}
+                onMouseDown={e => e.stopPropagation()}
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderBottom: '1px solid transparent',
+                  padding: '2px 0',
+                  outline: 'none',
+                  width: 'fit-content',
+                  minWidth: '150px'
+                }}
+                onFocus={(e) => (e.target as HTMLInputElement).style.borderBottom = `1px solid ${LINEAGE_BASE}`}
+              />
+              <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)', textTransform: 'uppercase' }}>DOMAIN</span>
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setIsDetailPanelMinimized(true)} 
-              className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}
-              title="Minimize Details"
-            >
-              <ChevronDown size={18} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+              <button
+                onMouseDown={e => e.stopPropagation()}
+                onClick={() => copyEdgeId(domain.id)}
+                title="Copy ID"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+              >
+                <Copy size={11} />
+              </button>
+              <p style={{ fontSize: '11px', color: copiedId === domain.id ? '#22c55e' : 'var(--text-secondary)', margin: 0, fontFamily: 'monospace', fontWeight: copiedId === domain.id ? 600 : 400 }}>ID: {domain.id}</p>
+            </div>
           </div>
         </div>
 
@@ -912,6 +847,7 @@ const DetailPanel = memo(() => {
             </section>
           </div>
         </div>
+        <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
       </div>
     );
   }
@@ -920,11 +856,11 @@ const DetailPanel = memo(() => {
   if (!table) return null;
 
   const tabs = [
-    { id: 'conceptual', label: 'Conceptual', icon: <TagIcon size={14} /> },
-    { id: 'logical', label: 'Logical', icon: <Database size={14} /> },
-    { id: 'physical', label: 'Physical', icon: <Database size={14} /> },
-    { id: 'implementation', label: 'Implementation', icon: <Cpu size={14} /> },
-    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} /> }
+    { id: 'conceptual', label: 'Conceptual', icon: <TagIcon size={14} />, shortcut: '1' },
+    { id: 'logical', label: 'Logical', icon: <Database size={14} />, shortcut: '2' },
+    { id: 'physical', label: 'Physical', icon: <Database size={14} />, shortcut: '3' },
+    { id: 'implementation', label: 'Implementation', icon: <Cpu size={14} />, shortcut: '4' },
+    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '5' }
   ]
 
   const typeConfig = table!.appearance?.type ? TYPE_CONFIG[table!.appearance.type] : null;
@@ -1061,29 +997,18 @@ const DetailPanel = memo(() => {
   };
 
   return (
-    <div 
+    <div
+      ref={panelRef}
       className="shadow-2xl z-50 flex flex-col sidebar-content"
       onClick={stopPropagation}
       onMouseDown={stopPropagation}
       onPointerDown={stopPropagation}
-      style={{ ...panelStyle, borderTopColor: themeColor }}
+      style={panelStyle}
     >
-      {/* Resize Handle */}
-      <div 
-        onMouseDown={startResizing}
-        style={{
-          position: 'absolute',
-          top: '-4px',
-          left: 0,
-          right: 0,
-          height: '8px',
-          cursor: 'ns-resize',
-          zIndex: 60
-        }}
-      />
+      {dragBar(themeColor)}
       {/* Panel Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-        <div style={{ flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)', overflow: 'hidden' }}>
+        <div style={{ minWidth: 0 }}>
           {/* Top Row: Icon, ID, and Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             {icon && <span style={{ fontSize: '16px' }}>{icon}</span>}
@@ -1126,6 +1051,7 @@ const DetailPanel = memo(() => {
               value={table!.name ?? ''}
               onChange={(e) => handleUpdateTable({ name: e.target.value })}
               onBlur={(e) => { if (!e.target.value) handleUpdateTable({ name: 'UNNAMED_TABLE' }) }}
+              onMouseDown={e => e.stopPropagation()}
               readOnly={!!table!.isImported}
               title="Conceptual Table Name"
               style={{
@@ -1146,8 +1072,15 @@ const DetailPanel = memo(() => {
 
           {/* ID field */}
           {!table!.isImported && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>ID</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+              <button
+                onClick={() => copyEdgeId(table!.id)}
+                title="Copy ID"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: copiedId === table!.id ? '#22c55e' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+              >
+                <Copy size={11} />
+              </button>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'monospace', flexShrink: 0 }}>ID:</span>
               <input
                 key={table!.id}
                 defaultValue={table!.id}
@@ -1162,7 +1095,7 @@ const DetailPanel = memo(() => {
                 style={{
                   fontSize: '11px',
                   fontFamily: 'monospace',
-                  color: 'var(--text-secondary)',
+                  color: copiedId === table!.id ? '#22c55e' : 'var(--text-secondary)',
                   backgroundColor: 'transparent',
                   border: 'none',
                   borderBottom: '1px solid transparent',
@@ -1177,20 +1110,12 @@ const DetailPanel = memo(() => {
               {error && (
                 <span style={{ fontSize: '10px', color: '#ef4444', flexShrink: 0 }}>{error}</span>
               )}
-              <button
-                onClick={() => copyEdgeId(table!.id)}
-                title="Copy ID"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-              >
-                <Copy size={11} />
-              </button>
-              {copiedId === table!.id && <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>Copied!</span>}
             </div>
           )}
         </div>
 
         {/* Quick Access Metadata Selectors */}
-        <div style={{ display: 'flex', gap: '8px', marginRight: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
           <select 
             value={table!.appearance?.type || 'fact'}
             onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, type: e.target.value as any } })}
@@ -1290,44 +1215,57 @@ const DetailPanel = memo(() => {
           )}
         </div>
 
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={() => setIsDetailPanelMinimized(true)} 
-            className={`p-1.5 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-200 text-slate-400'}`}
-            title="Minimize Details"
-          >
-            <ChevronDown size={18} />
-          </button>
-        </div>
       </div>
-      
+
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '24px', padding: '0 20px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveTab(tab.id);
-            }}
-            style={{ 
-              padding: '12px 0', 
-              backgroundColor: 'transparent', 
-              border: 'none', 
-              borderBottom: activeTab === tab.id ? `2px solid ${LINEAGE_BASE}` : '2px solid transparent',
-              color: activeTab === tab.id ? (theme === 'dark' ? '#60a5fa' : '#2563eb') : 'var(--text-secondary)',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s'
-            }}
-          >
-            {tab.icon} {tab.label}
-          </button>
-        ))}
+      <div style={{ borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+        {tabsOverflow ? (
+          <div style={{ padding: '6px 16px' }}>
+            <select
+              value={activeTab}
+              onChange={(e) => { e.stopPropagation(); setActiveTab(e.target.value); }}
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`w-full border rounded text-[12px] px-2 py-1.5 outline-none cursor-pointer ${
+                theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
+              }`}
+            >
+              {tabs.map(tab => (
+                <option key={tab.id} value={tab.id}>{tab.label}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div ref={tabRowRef} style={{ display: 'flex', padding: '0 20px', overflowX: 'hidden' }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveTab(tab.id);
+                }}
+                style={{
+                  padding: '10px 12px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderBottom: activeTab === tab.id ? `2px solid ${LINEAGE_BASE}` : '2px solid transparent',
+                  color: activeTab === tab.id ? (theme === 'dark' ? '#60a5fa' : '#2563eb') : 'var(--text-secondary)',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s',
+                  flexShrink: 0,
+                }}
+              >
+                {tab.icon} {tab.label}
+                <span style={{ fontSize: '10px', opacity: 0.4, marginLeft: '2px' }}>{tab.shortcut}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Content */}
@@ -1930,6 +1868,7 @@ const DetailPanel = memo(() => {
           </div>
         )}
       </div>
+      <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
     </div>
   )
 })

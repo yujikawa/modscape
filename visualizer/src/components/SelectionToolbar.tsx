@@ -1,4 +1,4 @@
-import { X, Database, Layout, GitGraph, Tag, AlignVerticalJustifyCenter, AlignHorizontalJustifyCenter, Layers, FileChartColumnIncreasing } from 'lucide-react'
+import { X, Database, Layout, GitGraph, Tag, AlignVerticalJustifyCenter, AlignHorizontalJustifyCenter, Layers, FileChartColumnIncreasing, PanelBottomOpen, PanelBottomClose, StickyNote } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const SelectionToolbar = () => {
@@ -7,12 +7,15 @@ const SelectionToolbar = () => {
     getSelectedDomain,
     getSelectedConsumer,
     getSelectedRelationship,
+    getSelectedAnnotation,
     selectedTableIds,
     setSelectedTableIds,
     distributeSelectedTables,
     setSelectedTableId,
     setSelectedEdgeId,
     setSelectedAnnotationId,
+    isDetailPanelOpen,
+    setIsDetailPanelOpen,
     theme
   } = useStore()
 
@@ -20,15 +23,17 @@ const SelectionToolbar = () => {
   const domain = getSelectedDomain()
   const consumer = getSelectedConsumer()
   const relationshipData = getSelectedRelationship()
+  const annotation = getSelectedAnnotation()
   const isMultiSelect = selectedTableIds.length > 1
 
-  if (!table && !domain && !consumer && !relationshipData && !isMultiSelect) return null
+  if (!table && !domain && !consumer && !relationshipData && !annotation && !isMultiSelect) return null
 
   const handleClearSelection = () => {
     setSelectedTableId(null)
     setSelectedTableIds([])
     setSelectedEdgeId(null)
     setSelectedAnnotationId(null)
+    setIsDetailPanelOpen(false)
   }
 
   return (
@@ -44,6 +49,7 @@ const SelectionToolbar = () => {
             {table && <Database size={16} className="text-emerald-500" />}
             {domain && <Layout size={16} className="text-blue-500" />}
             {consumer && <FileChartColumnIncreasing size={16} className="text-violet-400" />}
+            {annotation && <StickyNote size={16} className="text-yellow-400" />}
             {relationshipData && (
               ((relationshipData.relationship.type as any) === 'lineage')
                 ? <GitGraph size={16} className="text-blue-400" />
@@ -51,13 +57,13 @@ const SelectionToolbar = () => {
             )}
           </>
         )}
-        
+
         <div className="flex flex-col leading-tight">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            {isMultiSelect ? 'Multi-Selection' : `Selected ${table ? 'Table' : domain ? 'Domain' : consumer ? 'Consumer' : (((relationshipData?.relationship.type as any) === 'lineage') ? 'Lineage' : 'Relation')}`}
+            {isMultiSelect ? 'Multi-Selection' : `Selected ${table ? 'Table' : domain ? 'Domain' : consumer ? 'Consumer' : annotation ? 'Annotation' : (((relationshipData?.relationship.type as any) === 'lineage') ? 'Lineage' : 'Relation')}`}
           </span>
           <span className={`text-xs font-semibold truncate max-w-[180px] ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
-            {isMultiSelect ? `${selectedTableIds.length} tables selected` : (table ? table.name : domain ? domain.name : consumer ? consumer.name : relationshipData ? `${relationshipData.relationship.from.table} → ${relationshipData.relationship.to.table}` : '')}
+            {isMultiSelect ? `${selectedTableIds.length} tables selected` : (table ? table.name : domain ? domain.name : consumer ? consumer.name : annotation ? (annotation.text?.slice(0, 30) || annotation.id) : relationshipData ? `${relationshipData.relationship.from.table} → ${relationshipData.relationship.to.table}` : '')}
           </span>
         </div>
       </div>
@@ -81,6 +87,21 @@ const SelectionToolbar = () => {
               <AlignHorizontalJustifyCenter size={16} />
             </button>
           </div>
+        )}
+
+        {/* Inspect button (single selection only) */}
+        {!isMultiSelect && (
+          <button
+            onClick={() => setIsDetailPanelOpen(!isDetailPanelOpen)}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
+              isDetailPanelOpen
+                ? 'bg-blue-600/10 text-blue-500'
+                : theme === 'dark' ? 'hover:bg-slate-800 text-slate-500 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+            }`}
+            title={isDetailPanelOpen ? 'Close Details' : 'Open Details'}
+          >
+            {isDetailPanelOpen ? <PanelBottomClose size={16} /> : <PanelBottomOpen size={16} />}
+          </button>
         )}
 
         <button
