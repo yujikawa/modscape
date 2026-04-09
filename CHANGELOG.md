@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-04-09
+
+### Added
+- **`modscape extract --with-downstream`** — New flag that recursively collects all downstream tables from the specified starting tables via BFS lineage traversal.
+  - Accepts multiple starting table IDs (`--tables id1,id2,...`) and collects the union of all downstreams in a single command.
+  - Works across multiple input YAMLs: lineage graphs from all input files are merged before traversal.
+  - `--record` correctly maps each downstream table to the source YAML it was extracted from; unregistered source YAMLs are auto-added to `spec-config.yaml`.
+  - SDD `design` skill updated to use `--with-downstream` for initial extraction. `Affected Tables` in `design.md` now distinguishes **Direct Impact** (tables specified in `--tables`) from **Downstream Impact** (auto-collected tables).
+- **`modscape validate` — circular lineage warning** — Detects cycles in the `lineage` graph and reports them as a warning (valid YAML, but logically incorrect model).
+- **`modscape validate` — column logical completeness warning** — When a column has a `logical` section, missing `name` or `type` fields are now flagged as warnings with `(will cause UI crash)` note.
+
+### Fixed
+- **Detail Panel white screen crash** — `col.logical?.name?.toLowerCase().replace()` and `col.logical?.type.toUpperCase()` crashed when `logical.name` or `logical.type` was missing. Fixed by adding `?.` to all method chains on optional fields.
+
 ## [2.7.2] - 2026-04-09
 
 ### Added

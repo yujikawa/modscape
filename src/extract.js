@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { buildLineageGraph, hasLineageCycle } from './model-utils.js';
 
 const collectYamlFiles = (inputPath) => {
   const stat = fs.statSync(inputPath);
@@ -12,6 +13,32 @@ const collectYamlFiles = (inputPath) => {
   return [inputPath];
 };
 
+// BFS from multiple starting IDs, collecting all downstream table IDs.
+// The visited set naturally prevents infinite loops including cycles.
+function collectDownstream(startIds, graph) {
+  // Warn if graph has a cycle (shared utility)
+  if (hasLineageCycle(graph)) {
+    process.stderr.write('  ⚠️  Circular lineage detected — cycle guard activated\n');
+  }
+
+  // BFS to collect all downstream IDs from starting points
+  const visited = new Set(startIds);
+  const queue = [...startIds];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    for (const next of graph.get(current) || []) {
+      if (!visited.has(next)) {
+        visited.add(next);
+        queue.push(next);
+      }
+    }
+  }
+
+  // Return only the downstream IDs (exclude the starting IDs themselves)
+  return [...visited].filter(id => !startIds.includes(id));
+}
+
 export function extractModels(inputs, options) {
   const outputPath = options.output || 'extracted.yaml';
   const tableIds = options.tables
@@ -19,6 +46,7 @@ export function extractModels(inputs, options) {
     : [];
   const appendMode = !!options.append;
   const recordPath = options.record || null;
+  const withDownstream = !!options.withDownstream;
 
   if (tableIds.length === 0) {
     console.error('  ❌ --tables option is required. Specify comma-separated table IDs.');
@@ -78,85 +106,120 @@ export function extractModels(inputs, options) {
     return;
   }
 
-  const extractedIds = [];
-
+  // Parse all YAML files upfront (needed for downstream graph if --with-downstream)
+  const parsedFiles = [];
   for (const filePath of allFiles) {
     try {
       const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
-      if (!data) continue;
-
-      let matched = 0;
-      for (const table of data.tables || []) {
-        if (tableIds.includes(table.id)) {
-          tableMap.set(table.id, table); // upsert: 新規追加 or 既存上書き
-          extractedIds.push(table.id);
-          matched++;
-        }
-      }
-
-      // relationships: 両端ともに対象テーブルに含まれるものだけ抽出
-      for (const rel of data.relationships || []) {
-        const fromId = rel.from?.table;
-        const toId = rel.to?.table;
-        if (tableIds.includes(fromId) && tableIds.includes(toId)) {
-          if (!rel.id) {
-            relationshipsList.push(rel);
-          } else if (!seenRelIds.has(rel.id)) {
-            relationshipsList.push(rel);
-            seenRelIds.add(rel.id);
-          }
-        }
-      }
-
-      // lineage: 両端ともに対象テーブルに含まれるものだけ抽出
-      for (const lin of data.lineage || []) {
-        if (tableIds.includes(lin.from) && tableIds.includes(lin.to)) {
-          if (!lin.id) {
-            lineageList.push(lin);
-          } else if (!seenLinIds.has(lin.id)) {
-            lineageList.push(lin);
-            seenLinIds.add(lin.id);
-          }
-        }
-      }
-
-      // annotations: targetId が対象テーブルに含まれるものだけ抽出
-      for (const ann of data.annotations || []) {
-        if (!ann.targetId || tableIds.includes(ann.targetId)) {
-          if (!ann.id) {
-            annotationsList.push(ann);
-          } else if (!seenAnnIds.has(ann.id)) {
-            annotationsList.push(ann);
-            seenAnnIds.add(ann.id);
-          }
-        }
-      }
-
-      // domains: members に対象テーブルを含むものだけ抽出（membersを対象IDのみに絞る）
-      for (const domain of data.domains || []) {
-        if (seenDomIds.has(domain.id)) continue;
-        const filteredMembers = (domain.members || []).filter(m => tableIds.includes(m));
-        if (filteredMembers.length > 0) {
-          domainsList.push({ ...domain, members: filteredMembers });
-          seenDomIds.add(domain.id);
-        }
-      }
-
-      // layout: 対象テーブルIDとドメインIDのエントリのみ抽出
-      for (const [key, value] of Object.entries(data.layout || {})) {
-        if ((tableIds.includes(key) || seenDomIds.has(key)) && !(key in layoutMap)) {
-          layoutMap[key] = value;
-        }
-      }
-
-      console.log(`  📄 ${filePath} (${matched} matched)`);
+      if (data) parsedFiles.push({ filePath, data });
     } catch (e) {
       console.error(`  ❌ Failed to read ${filePath}: ${e.message}`);
     }
   }
 
+  // Resolve effective table IDs to extract (expand with downstream if requested)
+  let effectiveTableIds = [...tableIds];
+  // Track which downstream IDs came from which source file (for --record)
+  const downstreamSourceMap = new Map(); // tableId → filePath
+
+  if (withDownstream) {
+    // Merge lineage entries from all parsed files into one graph
+    const allLineage = parsedFiles.flatMap(f => f.data.lineage || []);
+    const graph = buildLineageGraph(allLineage);
+    const downstreamIds = collectDownstream(tableIds, graph);
+
+    // For each downstream ID, find which file it lives in
+    for (const { filePath, data } of parsedFiles) {
+      for (const table of data.tables || []) {
+        if (downstreamIds.includes(table.id) && !downstreamSourceMap.has(table.id)) {
+          downstreamSourceMap.set(table.id, filePath);
+        }
+      }
+    }
+
+    effectiveTableIds = [...tableIds, ...downstreamIds];
+    if (downstreamIds.length > 0) {
+      console.log(`  🔽 Downstream tables collected: ${downstreamIds.join(', ')}`);
+    }
+  }
+
+  const extractedIds = [];
+  // Track source file for each extracted table (for --record)
+  const tableSourceMap = new Map(); // tableId → filePath
+
+  for (const { filePath, data } of parsedFiles) {
+    let matched = 0;
+    for (const table of data.tables || []) {
+      if (effectiveTableIds.includes(table.id)) {
+        tableMap.set(table.id, table); // upsert: 新規追加 or 既存上書き
+        extractedIds.push(table.id);
+        if (!tableSourceMap.has(table.id)) {
+          tableSourceMap.set(table.id, filePath);
+        }
+        matched++;
+      }
+    }
+
+    // relationships: 両端ともに対象テーブルに含まれるものだけ抽出
+    for (const rel of data.relationships || []) {
+      const fromId = rel.from?.table;
+      const toId = rel.to?.table;
+      if (effectiveTableIds.includes(fromId) && effectiveTableIds.includes(toId)) {
+        if (!rel.id) {
+          relationshipsList.push(rel);
+        } else if (!seenRelIds.has(rel.id)) {
+          relationshipsList.push(rel);
+          seenRelIds.add(rel.id);
+        }
+      }
+    }
+
+    // lineage: 両端ともに対象テーブルに含まれるものだけ抽出
+    for (const lin of data.lineage || []) {
+      if (effectiveTableIds.includes(lin.from) && effectiveTableIds.includes(lin.to)) {
+        if (!lin.id) {
+          lineageList.push(lin);
+        } else if (!seenLinIds.has(lin.id)) {
+          lineageList.push(lin);
+          seenLinIds.add(lin.id);
+        }
+      }
+    }
+
+    // annotations: targetId が対象テーブルに含まれるものだけ抽出
+    for (const ann of data.annotations || []) {
+      if (!ann.targetId || effectiveTableIds.includes(ann.targetId)) {
+        if (!ann.id) {
+          annotationsList.push(ann);
+        } else if (!seenAnnIds.has(ann.id)) {
+          annotationsList.push(ann);
+          seenAnnIds.add(ann.id);
+        }
+      }
+    }
+
+    // domains: members に対象テーブルを含むものだけ抽出（membersを対象IDのみに絞る）
+    for (const domain of data.domains || []) {
+      if (seenDomIds.has(domain.id)) continue;
+      const filteredMembers = (domain.members || []).filter(m => effectiveTableIds.includes(m));
+      if (filteredMembers.length > 0) {
+        domainsList.push({ ...domain, members: filteredMembers });
+        seenDomIds.add(domain.id);
+      }
+    }
+
+    // layout: 対象テーブルIDとドメインIDのエントリのみ抽出
+    for (const [key, value] of Object.entries(data.layout || {})) {
+      if ((effectiveTableIds.includes(key) || seenDomIds.has(key)) && !(key in layoutMap)) {
+        layoutMap[key] = value;
+      }
+    }
+
+    console.log(`  📄 ${filePath} (${matched} matched)`);
+  }
+
   // マッチしなかった ID を警告
-  for (const id of tableIds) {
+  for (const id of effectiveTableIds) {
     if (!tableMap.has(id)) {
       console.warn(`  ⚠️  Table ID not found: "${id}"`);
     }
@@ -175,7 +238,6 @@ export function extractModels(inputs, options) {
 
   // --record: spec-config.yaml にソース情報を記録
   if (recordPath && extractedIds.length > 0) {
-    const sourceFile = allFiles[0]; // 抽出元の最初のファイル
     let config = { master_yamls: [] };
 
     if (fs.existsSync(recordPath)) {
@@ -186,15 +248,26 @@ export function extractModels(inputs, options) {
       }
     }
 
-    // sourceFile のエントリを探してupsert
-    const entry = config.master_yamls.find(e => e.path === sourceFile);
-    if (entry) {
-      // 既存エントリにテーブルIDをupsert
-      const existing = new Set(entry.tables || []);
-      for (const id of extractedIds) existing.add(id);
-      entry.tables = [...existing];
-    } else {
-      config.master_yamls.push({ path: sourceFile, tables: extractedIds });
+    // Group extracted IDs by their source file
+    const idsBySource = new Map(); // filePath → [tableId, ...]
+    for (const id of extractedIds) {
+      const src = tableSourceMap.get(id);
+      if (!src) continue;
+      if (!idsBySource.has(src)) idsBySource.set(src, []);
+      idsBySource.get(src).push(id);
+    }
+
+    // Upsert each source file entry in spec-config.yaml
+    for (const [sourceFile, ids] of idsBySource) {
+      const entry = config.master_yamls.find(e => e.path === sourceFile);
+      if (entry) {
+        const existing = new Set(entry.tables || []);
+        for (const id of ids) existing.add(id);
+        entry.tables = [...existing];
+      } else {
+        // Auto-add unregistered source YAML
+        config.master_yamls.push({ path: sourceFile, tables: ids });
+      }
     }
 
     fs.writeFileSync(recordPath, yaml.dump(config, { lineWidth: -1 }), 'utf8');

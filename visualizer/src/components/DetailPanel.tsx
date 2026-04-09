@@ -1531,7 +1531,7 @@ const DetailPanel = memo(() => {
                         <input 
                           value={col.physical?.name ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { name: e.target.value })}
-                          placeholder={col.logical?.name.toLowerCase().replace(/ /g, '_')}
+                          placeholder={col.logical?.name?.toLowerCase()?.replace(/ /g, '_')}
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-blue-400 focus:bg-slate-800' : 'text-blue-600 focus:bg-slate-50'
                           }`}
@@ -1541,7 +1541,7 @@ const DetailPanel = memo(() => {
                         <input 
                           value={col.physical?.type ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { type: e.target.value })}
-                          placeholder={col.logical?.type.toUpperCase()}
+                          placeholder={col.logical?.type?.toUpperCase()}
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-400 focus:bg-slate-800' : 'text-slate-500 focus:bg-slate-50'
                           }`}
@@ -1817,7 +1817,7 @@ const DetailPanel = memo(() => {
                             <div className="flex flex-col gap-0.5">
                               <span className={`font-bold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{col?.logical?.name || col.id}</span>
                               <span className={`text-[10px] font-mono italic ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                                {col?.physical?.name || col?.logical?.name?.toLowerCase().replace(/ /g, '_') || col.id}
+                                {col?.physical?.name || col?.logical?.name?.toLowerCase()?.replace(/ /g, '_') || col.id}
                               </span>
                             </div>
                           </th>

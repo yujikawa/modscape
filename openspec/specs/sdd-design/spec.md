@@ -5,7 +5,7 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 
 スキルは以下を実行しなければならない（SHALL）:
 - `.modscape/rules.md`・`.modscape/changes/modscape-spec.custom.md`（存在する場合）・`specs/*.md`（存在する場合）を読み込む
-- `spec.md` の Data Sources をもとに関連テーブルを自動判定し、`modscape extract <master>.yaml --tables <ids>` で `changes/<name>/model.yaml` を生成する
+- `spec.md` の Data Sources をもとに関連テーブルを自動判定し、`modscape extract <master>.yaml --tables <ids> --with-downstream` で `changes/<name>/model.yaml` を生成する（Downstream Impact のテーブルも自動包含）
 - 新規テーブルを `changes/<name>/model.yaml` に追加設計する（mutation CLIの対象は `changes/<name>/model.yaml`）
 - 設計判断と影響テーブルリストを `changes/<name>/design.md` に記録する
 - 設計完了後に `modscape layout changes/<name>/model.yaml` でレイアウトを更新する
@@ -31,7 +31,7 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 
 #### Scenario: spec.md のData Sourcesから関連テーブルを抽出して作業用YAMLを生成する
 - **WHEN** `changes/<name>/spec.md` が存在し `/modscape:spec:design <name>` を実行する
-- **THEN** AIはData Sourcesを読み、`modscape extract`で関連テーブルを抽出して `changes/<name>/model.yaml` を生成する
+- **THEN** AIはData Sourcesを読み、`modscape extract --with-downstream`で関連テーブルおよびその下流（Downstream Impact）を抽出して `changes/<name>/model.yaml` を生成する
 
 #### Scenario: 本番YAMLを変更しない
 - **WHEN** `/modscape:spec:design <name>` を実行する
