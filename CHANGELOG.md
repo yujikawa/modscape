@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [2.8.0] - 2026-04-09
 
 ### Added
+- **`metadata` field on tables** — Free-form key-value map at the table level for project-specific information (owner, SLA, SQL file path, sensitivity label, etc.). Any string key is accepted; values must be scalar. Preserved as-is by all CLI commands.
+- **Detail Panel — Metadata tab** — New 6th tab in the table Detail Panel (`6` key shortcut). Displays metadata fields as an editable key-value form with inline add / delete support. Changes are immediately persisted to the YAML.
 - **`modscape extract --with-downstream`** — New flag that recursively collects all downstream tables from the specified starting tables via BFS lineage traversal.
   - Accepts multiple starting table IDs (`--tables id1,id2,...`) and collects the union of all downstreams in a single command.
   - Works across multiple input YAMLs: lineage graphs from all input files are merged before traversal.

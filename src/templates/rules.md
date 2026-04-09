@@ -91,7 +91,26 @@ conceptual:
   tags: [WHAT, HOW_MUCH]   # BEAM* tags: WHO | WHAT | WHEN | WHERE | HOW | COUNT | HOW_MUCH
 ```
 
-### 2-4. `columns` Fields
+### 2-4. `metadata` Fields (user-defined key-value pairs)
+
+Free-form key-value map for project-specific information that does not fit the standard schema.
+Any string key is accepted; values can be strings, numbers, or booleans.
+
+```yaml
+metadata:
+  owner: data-platform        # Team or person responsible for this table
+  sla: "daily 6AM JST"        # Delivery SLA
+  sql_path: "models/marts/fct_orders.sql"  # Path to the SQL or model file
+  sensitivity: PII            # Data sensitivity label
+  cost_center: CC-1234        # Any custom label
+```
+
+**Rules:**
+- `metadata` is **OPTIONAL**. Omit entirely if not needed.
+- All keys must be strings. Values must be scalar (string, number, boolean) — do **not** nest objects or arrays inside `metadata`.
+- This field is preserved as-is and never modified by Modscape CLI commands.
+
+### 2-5. `columns` Fields
 
 Each column has an `id` plus optional `logical` and `physical` blocks.
 

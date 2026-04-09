@@ -167,6 +167,11 @@ tables:
           type: "BIGINT"
           constraints: [NOT NULL]
 
+    metadata:  # optional – user-defined key-value pairs (any string key)
+      owner: data-platform
+      sla: "daily 6AM JST"
+      sql_path: "models/marts/fct_orders.sql"
+
     sampleData:  # 2D array of realistic values
       - [1001, 50.0, "COMPLETED"]
       - [1002, 120.5, "PENDING"]

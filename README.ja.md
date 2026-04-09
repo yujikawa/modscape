@@ -166,6 +166,11 @@ tables:
           type: "BIGINT"
           constraints: [NOT NULL]
 
+    metadata:  # 任意 – ユーザー定義のキーバリューペア（任意の文字列キー）
+      owner: data-platform
+      sla: "daily 6AM JST"
+      sql_path: "models/marts/fct_orders.sql"
+
     sampleData:  # 実数値の2次元配列
       - [1001, 50.0, "COMPLETED"]
       - [1002, 120.5, "PENDING"]

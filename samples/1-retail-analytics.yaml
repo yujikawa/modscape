@@ -428,6 +428,9 @@ tables:
         - 1
         - 499
         - 499
+    metadata:
+      sla: 99%
+      sql_path: fct_orders.sql
   - id: mart_daily_revenue
     name: Daily Revenue
     logical_name: Daily Revenue Summary

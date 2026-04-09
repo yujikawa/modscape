@@ -98,6 +98,7 @@ export interface Table {
     schema?: string;
   };
   implementation?: Implementation; // Optional code-generation hints
+  metadata?: Record<string, unknown>; // Optional user-defined key-value pairs (owner, sql_path, sla, etc.)
   columns?: Column[]; // Optional
   sampleData?: any[][]; // New simplified format: 2D array
 }

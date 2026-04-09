@@ -236,6 +236,10 @@ tables:
           name: order_id
           type: "BIGINT"
           constraints: [NOT NULL]
+    metadata:                  # optional user-defined key-value pairs
+      owner: data-platform
+      sla: "daily 6AM JST"
+      sql_path: "models/marts/fct_orders.sql"
     sampleData:                # 2D array of plain data rows (no header)
       - [1001, 150.00]
       - [1002, 89.50]
