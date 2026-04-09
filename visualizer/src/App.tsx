@@ -44,6 +44,7 @@ function Flow() {
     selectedTableIds,
     toggleTableSelection,
     toggleEdgeSelection,
+    toggleAnnotationSelection,
     currentModelSlug,
     setIsDetailPanelOpen,
   } = useStore(useShallow(s => ({
@@ -77,6 +78,7 @@ function Flow() {
     selectedTableIds: s.selectedTableIds,
     toggleTableSelection: s.toggleTableSelection,
     toggleEdgeSelection: s.toggleEdgeSelection,
+    toggleAnnotationSelection: s.toggleAnnotationSelection,
     currentModelSlug: s.currentModelSlug,
     setIsDetailPanelOpen: s.setIsDetailPanelOpen,
   })))
@@ -306,16 +308,12 @@ function Flow() {
   }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen])
 
   const handleAnnotationClick = useCallback((id: string) => {
-    setSelectedTableId(null)
-    setSelectedEdgeId(null)
-    setSelectedAnnotationId(id)
-  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId])
+    toggleAnnotationSelection(id)
+  }, [toggleAnnotationSelection])
 
   const handleDomainClick = useCallback((id: string) => {
-    setSelectedAnnotationId(null)
-    setSelectedEdgeId(null)
     toggleTableSelection(id)
-  }, [setSelectedAnnotationId, setSelectedEdgeId, toggleTableSelection])
+  }, [toggleTableSelection])
 
   const handleEdgeCreated = useCallback((kind: 'lineage' | 'er', sourceId: string, targetId: string) => {
     if (kind === 'lineage') {
