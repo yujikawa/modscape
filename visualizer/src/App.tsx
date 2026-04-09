@@ -309,8 +309,7 @@ function Flow() {
     setSelectedTableId(null)
     setSelectedEdgeId(null)
     setSelectedAnnotationId(id)
-    setIsDetailPanelOpen(true)
-  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen])
+  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId])
 
   const handleDomainClick = useCallback((id: string) => {
     setSelectedAnnotationId(null)
