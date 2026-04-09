@@ -151,6 +151,35 @@ const DetailPanel = memo(() => {
     setTabsOverflow(size.w < 540)
   }, [size.w])
 
+  // Keyboard shortcuts for the detail panel
+  useEffect(() => {
+    if (!isDetailPanelOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement
+      const isTyping =
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement)?.isContentEditable ||
+        activeEl?.closest('.cm-editor')
+      if (isTyping || e.repeat) return
+
+      if (e.key === 'Escape') {
+        setIsDetailPanelOpen(false)
+        return
+      }
+
+      // 1–5: switch tabs (only when a table is selected)
+      const tabIds = ['conceptual', 'logical', 'physical', 'implementation', 'sample']
+      const idx = parseInt(e.key) - 1
+      if (idx >= 0 && idx < tabIds.length && getSelectedTable()) {
+        e.preventDefault()
+        setActiveTab(tabIds[idx])
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isDetailPanelOpen, setIsDetailPanelOpen, getSelectedTable])
+
   if (!isDetailPanelOpen) return null
   if (!table && !domain && !consumer && !relationshipData && !annotation) return null
 
@@ -827,11 +856,11 @@ const DetailPanel = memo(() => {
   if (!table) return null;
 
   const tabs = [
-    { id: 'conceptual', label: 'Conceptual', icon: <TagIcon size={14} /> },
-    { id: 'logical', label: 'Logical', icon: <Database size={14} /> },
-    { id: 'physical', label: 'Physical', icon: <Database size={14} /> },
-    { id: 'implementation', label: 'Implementation', icon: <Cpu size={14} /> },
-    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} /> }
+    { id: 'conceptual', label: 'Conceptual', icon: <TagIcon size={14} />, shortcut: '1' },
+    { id: 'logical', label: 'Logical', icon: <Database size={14} />, shortcut: '2' },
+    { id: 'physical', label: 'Physical', icon: <Database size={14} />, shortcut: '3' },
+    { id: 'implementation', label: 'Implementation', icon: <Cpu size={14} />, shortcut: '4' },
+    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '5' }
   ]
 
   const typeConfig = table!.appearance?.type ? TYPE_CONFIG[table!.appearance.type] : null;
@@ -1232,6 +1261,7 @@ const DetailPanel = memo(() => {
                 }}
               >
                 {tab.icon} {tab.label}
+                <span style={{ fontSize: '10px', opacity: 0.4, marginLeft: '2px' }}>{tab.shortcut}</span>
               </button>
             ))}
           </div>

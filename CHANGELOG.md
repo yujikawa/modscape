@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [2.7.2] - 2026-04-09
 
+### Added
+- **Detail Panel keyboard shortcuts** — Keyboard shortcuts for the Detail Panel:
+  - `Enter` — Opens the Detail Panel for the currently selected table / edge / annotation.
+  - `Escape` — Closes the Detail Panel.
+  - `1`–`5` — Switches tabs (Conceptual / Logical / Physical / Implementation / Sample Data) when a table is selected. The shortcut number is shown as a subtle hint on each tab.
+
 ### Changed
 - **Detail Panel floating window** — The Detail Panel is now a freely movable and resizable floating overlay (inspired by TerminalBar). It no longer pushes the canvas when opened.
   - Default size: 600×340px (landscape), centered on screen at first open.

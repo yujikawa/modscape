@@ -237,6 +237,15 @@ function Flow() {
       }
 
 
+      if (e.key === 'Enter') {
+        const state = useStore.getState()
+        if (state.selectedTableId || state.selectedEdgeId || state.selectedAnnotationId) {
+          e.preventDefault()
+          state.setIsDetailPanelOpen(true)
+        }
+        return
+      }
+
       if ((key === 'v' || key === 'h') && selectedTableIds.length > 1) {
         e.preventDefault()
         distributeSelectedTables?.(key === 'v' ? 'vertical' : 'horizontal')
