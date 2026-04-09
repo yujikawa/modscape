@@ -17,6 +17,14 @@ All notable changes to this project will be documented in this file.
 - **`modscape validate` — circular lineage warning** — Detects cycles in the `lineage` graph and reports them as a warning (valid YAML, but logically incorrect model).
 - **`modscape validate` — column logical completeness warning** — When a column has a `logical` section, missing `name` or `type` fields are now flagged as warnings with `(will cause UI crash)` note.
 
+- **`columns[].expression`** — Optional SQL transformation formula per column. When set, the SDD implement skill uses it verbatim as the SELECT clause expression instead of inferring from column names.
+- **`lineage[].join_type`** — Optional field on each lineage edge (`inner` | `left` | `cross` | `none`). The SDD implement skill uses it to generate the correct JOIN clause. When omitted, defaults to `left` if a `relationships` entry exists, otherwise `none`.
+- **`implementation.incremental_key`** — Optional column ID specifying the timestamp/date filter column for incremental models. SDD generates `WHERE <key> > {{ last_run_timestamp() }}`.
+- **`implementation.incremental_lookback`** — Optional safety margin (e.g. `"3 days"`) subtracted from the incremental filter boundary.
+- **`implementation.scd2`** — Optional SCD Type2 configuration block with `business_key` (array), `valid_from`, `valid_to`, and optional `current_flag`. SDD uses it to generate MERGE/snapshot SQL without guessing column roles.
+- All four fields are **optional** and backwards-compatible — existing YAML requires no changes.
+
+
 ### Fixed
 - **Detail Panel white screen crash** — `col.logical?.name?.toLowerCase().replace()` and `col.logical?.type.toUpperCase()` crashed when `logical.name` or `logical.type` was missing. Fixed by adding `?.` to all method chains on optional fields.
 

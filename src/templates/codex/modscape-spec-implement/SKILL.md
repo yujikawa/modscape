@@ -59,6 +59,51 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 - Add `-- TODO:` comments where `spec-model.yaml` lacks sufficient information to generate definitive code
 - Keep generated code minimal and correct — do not add logic not supported by the YAML
 
+### SELECT clause — `columns[].expression`
+
+For each column in the target table:
+- **If `expression` is set**: use it verbatim as the SELECT expression.
+  ```sql
+  -- expression: "CAST(raw_amount AS DECIMAL(18,2)) * fx_rate"
+  CAST(raw_amount AS DECIMAL(18,2)) * fx_rate AS amount
+  ```
+- **If `expression` is absent**: derive the expression from `physical.name` → `logical.name` → column `id` (in that priority order), or add a `-- TODO:` comment if none can be resolved.
+
+### FROM / JOIN clause — `lineage[].join_type`
+
+For each `lineage` entry where `to` is the current table:
+- **`inner`**: generate `INNER JOIN {{ ref('from_table') }} ON ...`
+- **`left`**: generate `LEFT JOIN {{ ref('from_table') }} ON ...`
+- **`cross`**: generate `CROSS JOIN {{ ref('from_table') }}`
+- **`none`**: reference the table as a CTE only; do not generate a JOIN clause
+- **When omitted**:
+  - If a `relationships` entry exists for the pair → default to `LEFT JOIN` using the relationship columns
+  - Otherwise → treat as `none` (CTE reference)
+
+### WHERE clause — `implementation.incremental_key` / `incremental_lookback`
+
+When `implementation.materialization: incremental` and `incremental_key` is set:
+```sql
+WHERE {{ incremental_key }} > {{ last_run_timestamp() }}
+```
+If `incremental_lookback` is also set (e.g. `"3 days"`):
+```sql
+WHERE {{ incremental_key }} > {{ last_run_timestamp() }} - INTERVAL 3 DAY
+```
+When `incremental_key` is absent, infer from column names (`updated_at`, `created_at`, `loaded_at`) or add `-- TODO: specify incremental_key`.
+
+### SCD Type2 SQL — `implementation.scd2`
+
+When `appearance.scd: type2` and `implementation.scd2` is set, generate a MERGE/snapshot pattern:
+- Use `scd2.business_key` columns as the JOIN condition to identify existing records
+- Use `scd2.valid_from` / `scd2.valid_to` as the effective date range columns
+- If `scd2.current_flag` is set, include it as a boolean flag for the active record
+- For composite `business_key`, build a multi-column JOIN: `ON src.a = tgt.a AND src.b = tgt.b`
+
+When `scd2` is absent but `appearance.scd: type2`:
+- Attempt to infer roles from column names (`valid_from`, `valid_to`, `is_current`, `current_flag`, etc.)
+- Add `-- TODO: set implementation.scd2 to specify column roles` for any unresolved column
+
 ## If You Discover Issues During Implementation
 
 If running the pipeline reveals unexpected results (wrong grain, high NULL rate, upstream data issues, etc.):

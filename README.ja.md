@@ -150,9 +150,17 @@ tables:
         - column: total_revenue
           agg: sum              # sum | count | count_distinct | avg | min | max
           source_column: fct_sales.amount
+      incremental_key: updated_at    # 任意 – インクリメンタルフィルターに使うカラム ID
+      incremental_lookback: "3 days" # 任意 – インクリメンタルフィルターの安全マージン
+      scd2:                          # 任意 – SCD Type2 の列役割（appearance.scd: type2 が必要）
+        business_key: [customer_id]  # 自然キーのカラム ID（複合キーも可）
+        valid_from: valid_from       # 有効開始日のカラム ID
+        valid_to: valid_to           # 有効終了日のカラム ID
+        current_flag: is_current     # 任意 – 現在レコードフラグのカラム ID
 
     columns:
       - id: order_id
+        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # 任意 – SELECT 句生成に使う SQL 式
         logical:
           name: "注文ID"
           type: Int         # Int | String | Decimal | Date | Timestamp | Boolean など
@@ -185,10 +193,12 @@ lineage:
   - id: lin_orders_revenue   # 任意。省略時はパーサーが lin-{from}-{to} 形式で自動生成。
     from: fct_orders         # ソーステーブル ID
     to: mart_revenue         # 派生テーブル ID
+    join_type: left          # 任意 – inner | left | cross | none
     description: "日次注文金額を月次バケットに集計"  # 任意。変換内容の説明。
   - id: lin_dates_revenue
     from: dim_dates
     to: mart_revenue
+    join_type: inner
 ```
 
 ### Relationships（リレーションシップ）
