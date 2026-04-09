@@ -9,7 +9,9 @@ All notable changes to this project will be documented in this file.
   - Accepts multiple starting table IDs (`--tables id1,id2,...`) and collects the union of all downstreams in a single command.
   - Works across multiple input YAMLs: lineage graphs from all input files are merged before traversal.
   - `--record` correctly maps each downstream table to the source YAML it was extracted from; unregistered source YAMLs are auto-added to `spec-config.yaml`.
-  - SDD `design` skill updated to use `--with-downstream` for initial extraction. `Affected Tables` in `design.md` now distinguishes **Direct Impact** (tables specified in `--tables`) from **Downstream Impact** (auto-collected tables).
+  - SDD `design` skill updated to use `--with-downstream` for initial extraction. `Affected Tables` in `design.md` now distinguishes **Direct Impact** (tables specified in `--tables`) from **Downstream Impact — Implement** (downstream tables that must be updated) and **Downstream Impact — Context Only** (downstream tables collected for reference only, no code changes required). The classification is AI-proposed and editable in `design.md`.
+- SDD `implement` skill now reads `design.md` and skips tables listed under `### Downstream Impact — Context Only` (outputs `⏭️ Skipping <id> (Context Only)`). Falls back to implementing all tables when `design.md` is absent.
+- SDD `archive` skill now applies full spec sync only to Direct Impact and Downstream Impact — Implement tables; Context Only tables receive a Changelog-only entry. Falls back to full sync when `design.md` is absent.
 - **`modscape validate` — circular lineage warning** — Detects cycles in the `lineage` graph and reports them as a warning (valid YAML, but logically incorrect model).
 - **`modscape validate` — column logical completeness warning** — When a column has a `logical` section, missing `name` or `type` fields are now flagged as warnings with `(will cause UI crash)` note.
 
