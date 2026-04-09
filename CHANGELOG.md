@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.2] - 2026-04-09
+
+### Changed
+- **Detail Panel floating window** — The Detail Panel is now a freely movable and resizable floating overlay (inspired by TerminalBar). It no longer pushes the canvas when opened.
+  - Default size: 600×340px (landscape), centered on screen at first open.
+  - Drag via the colored title bar; resize from the bottom-right corner handle.
+  - Opened explicitly via the "Open Details" button in SelectionToolbar (single-node selection only).
+  - Closing triggers: × button in title bar, Esc key, or clicking empty canvas.
+- **Annotation click opens Detail Panel automatically** — Clicking a sticky note / annotation now opens the Detail Panel immediately, without requiring the SelectionToolbar button flow (annotations have no other editing surface).
+- **Detail Panel header redesign** — Each panel type (table, domain, annotation, etc.) now shows a slim colored drag bar at the top matching the entity's theme color, with a grip icon on the left and × close button on the right.
+- **Copy ID button moved** — The copy icon now appears immediately before `ID: {id}` text so they stay visually adjacent regardless of panel width.
+- **Metadata selectors layout** — Table type / sub-type / SCD selectors are stacked below the table name (column direction) to prevent overlapping when the panel is narrow.
+- **Tab overflow handling** — When the Detail Panel is too narrow to show all tabs (Conceptual / Logical / Physical / Implementation / Sample Data), they collapse into a compact select dropdown.
+
 ## [2.7.1] - 2026-04-08
 
 ### Fixed

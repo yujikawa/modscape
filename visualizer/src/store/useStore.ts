@@ -59,8 +59,7 @@ interface AppState {
   isCompactMode: boolean;
   isDrawMode: boolean;
   theme: 'dark' | 'light';
-  isDetailPanelSuppressed: boolean;
-  isDetailPanelMinimized: boolean;
+  isDetailPanelOpen: boolean;
   
   // Actions
   setSchema: (schema: any) => void;
@@ -69,8 +68,7 @@ interface AppState {
   setSelectedEdgeId: (id: string | null) => void;
   setSelectedAnnotationId: (id: string | null) => void;
   setHighlightedNodeIds: (ids: string[]) => void;
-  setIsDetailPanelSuppressed: (suppressed: boolean) => void;
-  setIsDetailPanelMinimized: (minimized: boolean) => void;
+  setIsDetailPanelOpen: (open: boolean) => void;
   setHoveredColumnId: (id: string | null) => void;
   setIsCliMode: (isCli: boolean) => void;
   setShowER: (show: boolean) => void;
@@ -226,8 +224,7 @@ export const useStore = create<AppState>()(persist(
   isCompactMode: false,
   isDrawMode: false,
   theme: 'dark',
-  isDetailPanelSuppressed: false,
-  isDetailPanelMinimized: true,
+  isDetailPanelOpen: false,
   cyInstance: null,
 
   setSchema: (schema) => {
@@ -249,11 +246,11 @@ export const useStore = create<AppState>()(persist(
     }
   },
 
-  setSelectedTableId: (id) => set({ 
-    selectedTableId: id, 
-    selectedEdgeId: null, 
+  setSelectedTableId: (id) => set({
+    selectedTableId: id,
+    selectedEdgeId: null,
     selectedAnnotationId: null,
-    isDetailPanelMinimized: id ? get().isDetailPanelMinimized : true
+    isDetailPanelOpen: id ? get().isDetailPanelOpen : false
   }),
 
   setSelectedTableIds: (ids) => set({
@@ -265,20 +262,19 @@ export const useStore = create<AppState>()(persist(
     selectedEdgeKind: null,
     selectedTableId: null,
     selectedAnnotationId: null,
-    isDetailPanelMinimized: id ? get().isDetailPanelMinimized : true
+    isDetailPanelOpen: id ? get().isDetailPanelOpen : false
   }),
 
-  setSelectedAnnotationId: (id) => set({ 
-    selectedAnnotationId: id, 
-    selectedTableId: null, 
+  setSelectedAnnotationId: (id) => set({
+    selectedAnnotationId: id,
+    selectedTableId: null,
     selectedEdgeId: null,
-    isDetailPanelMinimized: id ? get().isDetailPanelMinimized : true
+    isDetailPanelOpen: id ? get().isDetailPanelOpen : false
   }),
 
   setHighlightedNodeIds: (ids) => set({ highlightedNodeIds: ids }),
 
-  setIsDetailPanelSuppressed: (suppressed) => set({ isDetailPanelSuppressed: suppressed }),
-  setIsDetailPanelMinimized: (minimized) => set({ isDetailPanelMinimized: minimized }),
+  setIsDetailPanelOpen: (open) => set({ isDetailPanelOpen: open }),
   setHoveredColumnId: (id) => set({ hoveredColumnId: id }),
   setIsCliMode: (isCli) => set({ isCliMode: isCli }),
   setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
@@ -436,7 +432,7 @@ export const useStore = create<AppState>()(persist(
         selectedAnnotationId: null,
         error: null,
         // Close panel only if the selected entity no longer exists
-        isDetailPanelMinimized: nextSelectedTableId ? get().isDetailPanelMinimized : true,
+        isDetailPanelOpen: nextSelectedTableId ? get().isDetailPanelOpen : false,
       });
       // Update YAML viewer without triggering a redundant write-back to disk
       const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
@@ -1079,7 +1075,7 @@ export const useStore = create<AppState>()(persist(
 
   toggleTableSelection: (id) => {
     const { selectedTableId } = get();
-    if (selectedTableId === id) set({ selectedTableId: null, isDetailPanelMinimized: true });
+    if (selectedTableId === id) set({ selectedTableId: null, isDetailPanelOpen: false });
     else set({ selectedTableId: id, selectedEdgeId: null, selectedAnnotationId: null });
   },
 

@@ -45,6 +45,7 @@ function Flow() {
     toggleTableSelection,
     toggleEdgeSelection,
     currentModelSlug,
+    setIsDetailPanelOpen,
   } = useStore(useShallow(s => ({
     schema: s.schema,
     error: s.error,
@@ -77,6 +78,7 @@ function Flow() {
     toggleTableSelection: s.toggleTableSelection,
     toggleEdgeSelection: s.toggleEdgeSelection,
     currentModelSlug: s.currentModelSlug,
+    setIsDetailPanelOpen: s.setIsDetailPanelOpen,
   })))
 
   // Draw mode state
@@ -180,6 +182,7 @@ function Flow() {
         setSelectedTableId(null)
         setSelectedEdgeId(null)
         setSelectedAnnotationId(null)
+        setIsDetailPanelOpen(false)
         useStore.getState().setSelectedTableIds([])
         return
       }
@@ -276,7 +279,7 @@ function Flow() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
-    setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId,
+    setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen,
     selectedTableId, selectedEdgeId, selectedEdgeKind, selectedAnnotationId,
     selectedTableIds, distributeSelectedTables,
     schema, removeNode, bulkRemoveTables, removeEdge, removeAnnotation,
@@ -298,14 +301,16 @@ function Flow() {
     setSelectedTableId(null)
     setSelectedEdgeId(null)
     setSelectedAnnotationId(null)
+    setIsDetailPanelOpen(false)
     useStore.getState().setSelectedTableIds([])
-  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId])
+  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen])
 
   const handleAnnotationClick = useCallback((id: string) => {
     setSelectedTableId(null)
     setSelectedEdgeId(null)
     setSelectedAnnotationId(id)
-  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId])
+    setIsDetailPanelOpen(true)
+  }, [setSelectedTableId, setSelectedEdgeId, setSelectedAnnotationId, setIsDetailPanelOpen])
 
   const handleDomainClick = useCallback((id: string) => {
     setSelectedAnnotationId(null)
@@ -411,9 +416,8 @@ function Flow() {
             onAutoLayout={handleAutoLayout}
           />
         )}
+        <DetailPanel />
       </div>
-
-      <DetailPanel />
     </div>
   )
 }
