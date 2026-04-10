@@ -23,8 +23,8 @@ interface ConsumerCardProps {
 }
 
 const ConsumerCard = ({ consumer, isSelected, isDimmed, theme }: ConsumerCardProps) => {
-  const color = consumer.appearance?.color || DEFAULT_COLOR
-  const icon = consumer.appearance?.icon || DEFAULT_ICON
+  const color = consumer.display?.color || DEFAULT_COLOR
+  const icon = consumer.display?.icon || DEFAULT_ICON
   const dark = theme === 'dark'
 
   return (

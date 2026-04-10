@@ -61,11 +61,9 @@ export async function syncDbt(projectDir, options) {
 
       latestTablesMap.set(tableId, {
         id: tableId,
-        name: node.name,
-        logical_name: node.name,
-        physical_name: node.alias || node.name,
-        appearance: { type: 'table' },
-        conceptual: { description: node.description || '' },
+        conceptual: { name: node.name, kind: 'table', description: node.description || '' },
+        logical: { name: node.name },
+        physical: { name: node.alias || node.name },
         columns,
       });
     }
@@ -97,10 +95,9 @@ export async function syncDbt(projectDir, options) {
 
         return {
           ...table,
-          name: latest.name,
-          logical_name: latest.logical_name,
-          physical_name: latest.physical_name,
           conceptual: latest.conceptual,
+          logical: latest.logical,
+          physical: { ...(table.physical || {}), name: latest.physical.name },
           columns: latest.columns,
         };
       });

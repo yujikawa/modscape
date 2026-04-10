@@ -61,11 +61,9 @@ export async function importDbt(projectDir, options) {
 
       const tableEntry = {
         id: tableId,
-        name: node.name,
-        logical_name: node.name,
-        physical_name: node.alias || node.name,
-        appearance: { type: 'table' },
-        conceptual: { description: node.description || '' },
+        conceptual: { name: node.name, kind: 'table', description: node.description || '' },
+        logical: { name: node.name },
+        physical: { name: node.alias || node.name },
         columns,
       };
 

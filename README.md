@@ -114,62 +114,64 @@ domains:
   - id: core_sales
     name: "Core Sales"
     description: "Transactional data for the sales team."  # optional
-    color: "rgba(59, 130, 246, 0.1)"  # background fill
+    display:
+      color: "rgba(59, 130, 246, 0.1)"  # background fill
     members: [orders, dim_customers]   # logical membership
 ```
 
 ### Tables
 
+The table schema uses a 3-layer ontology plus a visual axis:
+
 ```yaml
 tables:
   - id: orders
-    name: Orders                          # Conceptual name (large)
-    logical_name: "Customer Purchase Record"  # Logical name (medium)
-    physical_name: "fct_retail_sales"         # Physical table name (small)
+    conceptual:  # Business layer — AI-facing
+      name: Orders             # Display name (large, required)
+      kind: fact               # fact | dimension | mart | hub | link | satellite | table
+      description: "One row per order line item."  # AI-readable context
+      tags: [WHO, WHAT, WHEN]  # BEAM* tags: WHO|WHAT|WHEN|WHERE|HOW|COUNT|HOW_MUCH
 
-    appearance:
-      type: fact        # fact | dimension | mart | hub | link | satellite | table
-      sub_type: transaction  # transaction | periodic | accumulating | etc.
-      scd: type2        # SCD type for dimensions: type0–type6
-      icon: "💰"
-      color: "#e0f2fe"  # optional custom header color
-
-    conceptual:  # optional – business context for AI agents
-      description: "One row per order line item."
-      tags: [WHO, WHAT, WHEN]  # BEAM* tags
-
-    implementation:  # optional – hints for AI code generation
-      materialization: incremental  # table | view | incremental | ephemeral
-      incremental_strategy: merge   # merge | append | delete+insert
-      unique_key: order_id
-      partition_by:
-        field: order_date       # use a DATE/TIMESTAMP column, not a surrogate key
-        granularity: day        # day | month | year | hour
-      cluster_by: [customer_id]
+    logical:  # Analytic layer — optional
+      name: "Customer Purchase Record"  # Formal business name (medium)
       grain: [month_key]        # GROUP BY columns (mart only)
-      measures:                 # aggregation definitions (mart only)
-        - column: total_revenue
-          agg: sum              # sum | count | count_distinct | avg | min | max
-          source_column: fct_sales.amount
-      incremental_key: updated_at   # optional – column id for WHERE filter (incremental only)
-      incremental_lookback: "3 days" # optional – safety margin for incremental filter
-      scd2:                          # optional – SCD Type2 column roles (requires appearance.scd: type2)
+      scd:                      # SCD config for dimensions only
+        type: type2             # type0–type6
         business_key: [customer_id]  # natural key column id(s)
         valid_from: valid_from       # column id for start date
         valid_to: valid_to           # column id for end date
         current_flag: is_current     # optional – column id for current record flag
 
+    physical:  # Build/storage layer — optional
+      name: "fct_retail_sales"        # Warehouse table name (small)
+      strategy: incremental           # table | view | incremental | ephemeral
+      update_mode: merge              # merge | append | delete_insert
+      merge_key: order_id
+      partition:
+        field: order_date             # use a DATE/TIMESTAMP column
+        granularity: day              # day | month | year | hour
+      cluster: [customer_id]
+      filter_key: updated_at          # optional – column id for WHERE filter (incremental only)
+      lookback: "3 days"              # optional – safety margin for incremental filter
+      measures:                       # aggregation definitions (mart only)
+        - column: total_revenue
+          agg: sum                    # sum | count | count_distinct | avg | min | max
+          source_column: fct_sales.amount
+
+    display:  # Visual layer — optional
+      icon: "💰"
+      color: "#e0f2fe"  # optional custom header color
+
     columns:
       - id: order_id
+        name: "Order ID"              # flat structure (no logical: wrapper)
+        type: Int                     # Int | String | Decimal | Date | Timestamp | Boolean | ...
+        description: "Surrogate key."
+        isPrimaryKey: true
+        isForeignKey: false
+        isPartitionKey: false
+        additivity: fully             # fully | semi | non
         expression: "CAST(raw_amount AS DECIMAL(18,2))"  # optional – SQL expression for SELECT clause
-        logical:
-          name: "Order ID"
-          type: Int         # Int | String | Decimal | Date | Timestamp | Boolean | ...
-          description: "Surrogate key."
-          isPrimaryKey: true
-          isForeignKey: false
-          isPartitionKey: false
-          additivity: fully  # fully | semi | non
         physical:  # optional warehouse overrides
           name: order_id
           type: "BIGINT"
@@ -242,7 +244,7 @@ consumers:
   - id: revenue_dashboard       # unique ID — used in lineage and layout
     name: "Revenue Dashboard"   # display name
     description: "Monthly KPI dashboard for the finance team."  # optional
-    appearance:
+    display:
       icon: "📊"                # optional (defaults to 📊)
       color: "#e0f2fe"          # optional accent color
     url: "https://bi.example.com/revenue"  # optional link
@@ -263,11 +265,12 @@ Consumers can also be added to domain `members` lists just like tables.
 ```yaml
 annotations:
   - id: note_001
-    type: sticky   # sticky | callout
     text: "Grain: one row per invoice line item."
-    color: "#fef9c3"          # optional background color
-    targetId: fct_orders      # ID of the attached object (optional)
-    targetType: table         # table | domain | relationship | lineage | column
+    target:                  # optional – attachment target
+      id: fct_orders         # ID of the attached object
+      type: table            # table | domain | relationship | lineage | column
+    display:
+      color: "#fef9c3"       # optional background color
     offset:
       x: 100    # offset from target's top-left (or absolute if no target)
       y: -80
@@ -276,6 +279,8 @@ annotations:
 ### Layout
 
 All coordinate data lives in `layout`, keyed by object ID. **Never** place `x`/`y` inside `tables` or `domains`.
+
+All coordinate data lives in `layout`, keyed by object ID. Domain membership is declared in `domains.members` — **not** via `parentId` in layout.
 
 ```yaml
 layout:
@@ -287,10 +292,10 @@ layout:
     height: 480
 
   # Table inside a domain – coordinates are relative to domain origin
+  # (membership declared in domains.members, not here)
   orders:
     x: 280
     y: 200
-    parentId: core_sales  # declare domain membership
 
   # Standalone table – absolute canvas coordinates
   mart_summary:

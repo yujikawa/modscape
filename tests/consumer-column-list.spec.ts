@@ -8,18 +8,18 @@ const FIXTURE_DIR = 'tests/fixtures/consumer-column-test';
 const MODEL_FILE = path.join(FIXTURE_DIR, 'model.yaml');
 
 const INITIAL_MODEL = {
+  version: '2.0.0',
   tables: [
     {
       id: 'fct_orders',
-      name: 'Orders',
-      appearance: { type: 'fact' },
+      conceptual: { name: 'Orders', kind: 'fact' },
       columns: [
-        { id: 'order_id', logical: { name: 'Order ID', type: 'Int', isPrimaryKey: true, isForeignKey: false } },
-        { id: 'customer_id', logical: { name: 'Customer ID', type: 'Int', isPrimaryKey: false, isForeignKey: true } },
-        { id: 'amount', logical: { name: 'Amount', type: 'Decimal', isPrimaryKey: false, isForeignKey: false } },
+        { id: 'order_id', name: 'Order ID', type: 'Int', isPrimaryKey: true, isForeignKey: false },
+        { id: 'customer_id', name: 'Customer ID', type: 'Int', isPrimaryKey: false, isForeignKey: true },
+        { id: 'amount', name: 'Amount', type: 'Decimal', isPrimaryKey: false, isForeignKey: false },
       ],
     },
-    { id: 'dim_customers', name: 'Customers', appearance: { type: 'dimension' } },
+    { id: 'dim_customers', conceptual: { name: 'Customers', kind: 'dimension' } },
   ],
 };
 
@@ -92,8 +92,8 @@ test.describe('CLI: consumer commands', () => {
     const model = readModel();
     const c = model.consumers[0];
     expect(c.description).toBe('Main dashboard');
-    expect(c.appearance.icon).toBe('📊');
-    expect(c.appearance.color).toBe('#e0f2fe');
+    expect(c.display.icon).toBe('📊');
+    expect(c.display.color).toBe('#e0f2fe');
     expect(c.url).toBe('https://example.com/dashboard');
   });
 

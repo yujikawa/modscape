@@ -32,9 +32,9 @@ const TableCard = ({
   isConnectMode = false,
   isPendingSource = false,
 }: TableCardProps) => {
-  const typeConfig = table.appearance?.type ? TYPE_CONFIG[table.appearance.type] : null
-  const themeColor = table.appearance?.color || typeConfig?.color || '#334155'
-  const icon = table.appearance?.icon || typeConfig?.icon || ''
+  const typeConfig = table.conceptual?.kind ? TYPE_CONFIG[table.conceptual.kind] : null
+  const themeColor = table.display?.color || typeConfig?.color || '#334155'
+  const icon = table.display?.icon || typeConfig?.icon || ''
   const typeLabel = buildTypeLabel(table)
   const hasColumns = table.columns && table.columns.length > 0
   const isMinimal = zoom < 0.35   // reduces header size at low zoom
@@ -173,13 +173,13 @@ const TableCard = ({
                 wordBreak: 'break-all',
               }}
             >
-              {table.name}
+              {table.conceptual?.name ?? table.id}
             </div>
           </div>
 
           {!isMinimal && (
             <>
-              {table.logical_name && table.logical_name !== table.name && (
+              {table.logical?.name && table.logical.name !== table.conceptual?.name && (
                 <div
                   style={{
                     fontSize: '11px',
@@ -189,11 +189,11 @@ const TableCard = ({
                     opacity: 0.8,
                   }}
                 >
-                  {table.logical_name}
+                  {table.logical.name}
                 </div>
               )}
               <div
-                title={table.physical_name || table.id}
+                title={table.physical?.name || table.id}
                 style={{
                   fontSize: '9px',
                   color: theme === 'dark' ? '#94a3b8' : '#64748b',
@@ -207,7 +207,7 @@ const TableCard = ({
                   maxWidth: '100%',
                 }}
               >
-                {table.physical_name || table.id}
+                {table.physical?.name || table.id}
               </div>
             </>
           )}
@@ -219,7 +219,7 @@ const TableCard = ({
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
               <tbody>
                 {table.columns!.slice(0, MAX_COLUMNS).map((col, index) => {
-                  const logicalName = col.logical?.name || col.id
+                  const logicalName = col.name || col.id
                   const physicalName = col.physical?.name || col.id
                   const showPhysical = logicalName !== physicalName
 
@@ -274,26 +274,26 @@ const TableCard = ({
                                 overflow: 'hidden',
                               }}
                             >
-                              {col.logical?.isPrimaryKey && (
+                              {col.isPrimaryKey && (
                                 <span style={{ color: '#eab308' }}>🔑</span>
                               )}
-                              {col.logical?.isForeignKey && (
+                              {col.isForeignKey && (
                                 <span style={{ opacity: 0.8 }}>🔩</span>
                               )}
-                              {col.logical?.isPartitionKey && (
+                              {col.isPartitionKey && (
                                 <span style={{ opacity: 0.8 }}>📂</span>
                               )}
-                              {col.logical?.additivity === 'fully' && (
+                              {col.additivity === 'fully' && (
                                 <span style={{ color: '#4ade80' }} title="Fully Additive">
                                   Σ
                                 </span>
                               )}
-                              {col.logical?.additivity === 'semi' && (
+                              {col.additivity === 'semi' && (
                                 <span style={{ color: '#fbbf24' }} title="Semi-Additive">
                                   Σ~
                                 </span>
                               )}
-                              {col.logical?.additivity === 'non' && (
+                              {col.additivity === 'non' && (
                                 <span style={{ color: '#f87171' }} title="Non-Additive">
                                   ⊘
                                 </span>
@@ -304,7 +304,7 @@ const TableCard = ({
                                   textOverflow: 'ellipsis',
                                   whiteSpace: 'nowrap',
                                 }}
-                                title={col.logical?.description || logicalName}
+                                title={col.description || logicalName}
                               >
                                 {logicalName}
                               </span>
@@ -343,7 +343,7 @@ const TableCard = ({
                           opacity: 0.8,
                         }}
                       >
-                        {col.logical?.type || 'Unknown'}
+                        {col.type || 'Unknown'}
                       </td>
                     </tr>
                   )

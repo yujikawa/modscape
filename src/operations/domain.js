@@ -22,7 +22,7 @@ export function addDomain(filePath, { id, name, description, color }) {
   if (findDomainById(data, id)) throw new Error(`Domain "${id}" already exists. Use updateDomain instead.`);
   const domain = { id, name, members: [] };
   if (description) domain.description = description;
-  if (color) domain.color = color;
+  if (color) domain.display = { color };
   if (!data.domains) data.domains = [];
   data.domains.push(domain);
   writeYaml(filePath, data);
@@ -35,7 +35,10 @@ export function updateDomain(filePath, { id, name, description, color }) {
   if (!domain) throw new Error(`Domain "${id}" not found. Use addDomain instead.`);
   if (name) domain.name = name;
   if (description) domain.description = description;
-  if (color) domain.color = color;
+  if (color) {
+    domain.display = domain.display || {};
+    domain.display.color = color;
+  }
   writeYaml(filePath, data);
   return { id };
 }

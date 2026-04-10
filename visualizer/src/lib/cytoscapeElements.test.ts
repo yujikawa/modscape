@@ -21,8 +21,8 @@ describe('yamlToElements', () => {
   it('returns one node per table', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'tbl_a', name: 'A', appearance: { type: 'fact' }, columns: [] },
-        { id: 'tbl_b', name: 'B', appearance: { type: 'dimension' }, columns: [] },
+        { id: 'tbl_a', conceptual: { name: 'A', kind: 'fact' }, columns: [] },
+        { id: 'tbl_b', conceptual: { name: 'B', kind: 'dimension' }, columns: [] },
       ],
     })
     const elements = yamlToElements(schema)
@@ -32,7 +32,7 @@ describe('yamlToElements', () => {
   })
 
   it('includes table object in node data', () => {
-    const table = { id: 'tbl_x', name: 'X', appearance: { type: 'mart' as const }, columns: [] }
+    const table = { id: 'tbl_x', conceptual: { name: 'X', kind: 'mart' as const }, columns: [] }
     const elements = yamlToElements(makeSchema({ tables: [table] }))
     const node = elements.find(e => e.data.id === 'tbl_x')!
     expect(node.data.table).toEqual(table)
@@ -40,34 +40,33 @@ describe('yamlToElements', () => {
 
   it('uses schema.layout coordinates when available', () => {
     const schema = makeSchema({
-      tables: [{ id: 'tbl_a', name: 'A', appearance: { type: 'table' }, columns: [] }],
+      tables: [{ id: 'tbl_a', conceptual: { name: 'A', kind: 'table' }, columns: [] }],
       layout: { tbl_a: { x: 100, y: 200 } },
     })
     const elements = yamlToElements(schema)
     expect(elements[0].position).toEqual({ x: 100, y: 200 })
   })
 
-  it('treats layout coordinates as absolute even when parentId is present', () => {
+  it('treats layout coordinates as absolute even when domain has members', () => {
     const schema = makeSchema({
-      tables: [{ id: 'tbl_a', name: 'A', appearance: { type: 'fact' }, columns: [] }],
-      domains: [{ id: 'dom1', name: 'Domain 1', color: '#fff', members: ['tbl_a'] }],
+      tables: [{ id: 'tbl_a', conceptual: { name: 'A', kind: 'fact' }, columns: [] }],
+      domains: [{ id: 'dom1', name: 'Domain 1', display: { color: '#fff' }, members: ['tbl_a'] }],
       layout: {
         dom1: { x: 500, y: 300 },
-        tbl_a: { x: 60, y: 60, parentId: 'dom1' },
+        tbl_a: { x: 60, y: 60 },
       },
     })
     const elements = yamlToElements(schema)
-    // parentId is semantic metadata only — x/y are always absolute
     expect(elements[0].position).toEqual({ x: 60, y: 60 })
   })
 
   it('falls back to grid positions when layout is absent', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'a', name: 'A', appearance: { type: 'table' }, columns: [] },
-        { id: 'b', name: 'B', appearance: { type: 'table' }, columns: [] },
-        { id: 'c', name: 'C', appearance: { type: 'table' }, columns: [] },
-        { id: 'd', name: 'D', appearance: { type: 'table' }, columns: [] },
+        { id: 'a', conceptual: { name: 'A', kind: 'table' }, columns: [] },
+        { id: 'b', conceptual: { name: 'B', kind: 'table' }, columns: [] },
+        { id: 'c', conceptual: { name: 'C', kind: 'table' }, columns: [] },
+        { id: 'd', conceptual: { name: 'D', kind: 'table' }, columns: [] },
       ],
     })
     const elements = yamlToElements(schema)
@@ -79,8 +78,8 @@ describe('yamlToElements', () => {
   it('creates lineage edges from lineage.upstream', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'src', name: 'Source', appearance: { type: 'fact' }, columns: [] },
-        { id: 'mart', name: 'Mart', appearance: { type: 'mart' }, columns: [] },
+        { id: 'src', conceptual: { name: 'Source', kind: 'fact' }, columns: [] },
+        { id: 'mart', conceptual: { name: 'Mart', kind: 'mart' }, columns: [] },
       ],
       lineage: [{ id: 'lin1', from: 'src', to: 'mart' }],
     })
@@ -96,8 +95,8 @@ describe('yamlToElements', () => {
   it('creates ER edges from relationships', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'dim', name: 'Dim', appearance: { type: 'dimension' }, columns: [] },
-        { id: 'fct', name: 'Fact', appearance: { type: 'fact' }, columns: [] },
+        { id: 'dim', conceptual: { name: 'Dim', kind: 'dimension' }, columns: [] },
+        { id: 'fct', conceptual: { name: 'Fact', kind: 'fact' }, columns: [] },
       ],
       relationships: [
         {
@@ -125,8 +124,8 @@ describe('yamlToElements', () => {
   it('handles composite columns in relationships', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'orders', name: 'Orders', appearance: { type: 'fact' }, columns: [] },
-        { id: 'lines', name: 'Lines', appearance: { type: 'fact' }, columns: [] },
+        { id: 'orders', conceptual: { name: 'Orders', kind: 'fact' }, columns: [] },
+        { id: 'lines', conceptual: { name: 'Lines', kind: 'fact' }, columns: [] },
       ],
       relationships: [
         {
@@ -146,10 +145,10 @@ describe('yamlToElements', () => {
   it('maps domain membership to domainId on nodes', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'tbl_a', name: 'A', appearance: { type: 'fact' }, columns: [] },
-        { id: 'tbl_b', name: 'B', appearance: { type: 'table' }, columns: [] },
+        { id: 'tbl_a', conceptual: { name: 'A', kind: 'fact' }, columns: [] },
+        { id: 'tbl_b', conceptual: { name: 'B', kind: 'table' }, columns: [] },
       ],
-      domains: [{ id: 'dom1', name: 'Domain 1', color: '#fff', members: ['tbl_a'] }],
+      domains: [{ id: 'dom1', name: 'Domain 1', display: { color: '#fff' }, members: ['tbl_a'] }],
     })
     const elements = yamlToElements(schema)
     const nodeA = elements.find(e => e.data.id === 'tbl_a')!
@@ -160,7 +159,7 @@ describe('yamlToElements', () => {
 
   it('produces no edges for empty relationships and no lineage', () => {
     const schema = makeSchema({
-      tables: [{ id: 't', name: 'T', appearance: { type: 'table' }, columns: [] }],
+      tables: [{ id: 't', conceptual: { name: 'T', kind: 'table' }, columns: [] }],
     })
     const elements = yamlToElements(schema)
     const edges = elements.filter(e => e.classes)
@@ -170,9 +169,9 @@ describe('yamlToElements', () => {
   it('handles multiple lineage upstreams', () => {
     const schema = makeSchema({
       tables: [
-        { id: 'a', name: 'A', appearance: { type: 'fact' }, columns: [] },
-        { id: 'b', name: 'B', appearance: { type: 'fact' }, columns: [] },
-        { id: 'mart', name: 'Mart', appearance: { type: 'mart' }, columns: [] },
+        { id: 'a', conceptual: { name: 'A', kind: 'fact' }, columns: [] },
+        { id: 'b', conceptual: { name: 'B', kind: 'fact' }, columns: [] },
+        { id: 'mart', conceptual: { name: 'Mart', kind: 'mart' }, columns: [] },
       ],
       lineage: [{ from: 'a', to: 'mart' }, { from: 'b', to: 'mart' }],
     })
@@ -185,31 +184,32 @@ describe('yamlToElements', () => {
 // ── buildTypeLabel ────────────────────────────────────────────────────────────
 
 describe('buildTypeLabel', () => {
-  it('returns uppercase type name for basic types', () => {
-    const table = { id: 't', name: 'T', appearance: { type: 'dimension' as const }, columns: [] }
+  it('returns uppercase kind name for basic kinds', () => {
+    const table = { id: 't', conceptual: { name: 'T', kind: 'dimension' as const }, columns: [] }
     expect(buildTypeLabel(table)).toBe('DIMENSION')
   })
 
   it('appends SCD label when scd is present', () => {
     const table = {
-      id: 't', name: 'T',
-      appearance: { type: 'dimension' as const, scd: 'type2' },
+      id: 't',
+      conceptual: { name: 'T', kind: 'dimension' as const },
+      logical: { scd: { type: 'type2' } },
       columns: [],
     }
     expect(buildTypeLabel(table)).toBe('DIMENSION / SCD T2')
   })
 
-  it('formats fact sub_type correctly', () => {
+  it('returns only SCD label when no kind', () => {
     const table = {
-      id: 't', name: 'T',
-      appearance: { type: 'fact' as const, sub_type: 'transaction' },
+      id: 't',
+      logical: { scd: { type: 'type2' } },
       columns: [],
     }
-    expect(buildTypeLabel(table)).toBe('FACT (Trans.)')
+    expect(buildTypeLabel(table)).toBe('SCD T2')
   })
 
-  it('returns empty string when appearance is missing', () => {
-    const table = { id: 't', name: 'T', columns: [] } as unknown as Parameters<typeof buildTypeLabel>[0]
+  it('returns empty string when neither kind nor scd', () => {
+    const table = { id: 't', columns: [] }
     expect(buildTypeLabel(table)).toBe('')
   })
 })

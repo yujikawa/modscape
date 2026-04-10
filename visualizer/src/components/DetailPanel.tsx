@@ -1,7 +1,7 @@
 import { memo, useState, useCallback, useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, Cpu, FileChartColumnIncreasing, Copy } from 'lucide-react'
+import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, FileChartColumnIncreasing, Copy } from 'lucide-react'
 import type { Table, Column } from '../types/schema'
 import { TYPE_CONFIG } from '../lib/cytoscapeElements'
 import { LINEAGE_BASE, CONSUMER_DEFAULT_COLOR, ANNOTATION_DEFAULT_COLOR } from '../lib/colors'
@@ -170,8 +170,8 @@ const DetailPanel = memo(() => {
         return
       }
 
-      // 1–6: switch tabs (only when a table is selected)
-      const tabIds = ['conceptual', 'logical', 'physical', 'implementation', 'sample', 'metadata']
+      // 1–5: switch tabs (only when a table is selected)
+      const tabIds = ['conceptual', 'logical', 'physical', 'sample', 'metadata']
       const idx = parseInt(e.key) - 1
       if (idx >= 0 && idx < tabIds.length && getSelectedTable()) {
         e.preventDefault()
@@ -261,13 +261,13 @@ const DetailPanel = memo(() => {
         onPointerDown={stopPropagation}
         style={panelStyle}
       >
-        {dragBar(annotation.color || ANNOTATION_DEFAULT_COLOR)}
+        {dragBar(annotation.display?.color || ANNOTATION_DEFAULT_COLOR)}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <TagIcon size={16} style={{ color: annotation.color || ANNOTATION_DEFAULT_COLOR, flexShrink: 0 }} />
+          <TagIcon size={16} style={{ color: annotation.display?.color || ANNOTATION_DEFAULT_COLOR, flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Annotation</span>
             <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', margin: '2px 0 0' }}>
-              {annotation.targetId ? `Sticky to ${annotation.targetId} (${annotation.targetType})` : 'Floating Note'}
+              {annotation.target?.id ? `Sticky to ${annotation.target.id} (${annotation.target.type})` : 'Floating Note'}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <button
@@ -311,21 +311,20 @@ const DetailPanel = memo(() => {
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Target Binding</h3>
                 <div className="flex flex-col gap-2">
                   <div className="flex gap-2">
-                    <select 
-                      value={annotation.targetId || ''}
+                    <select
+                      value={annotation.target?.id || ''}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (!val) {
-                          const targetLayout = schema?.layout?.[annotation.targetId!];
-                          const parentLayout = targetLayout?.parentId ? schema?.layout?.[targetLayout.parentId] : null;
-                          const absX = (parentLayout?.x ?? 0) + (targetLayout?.x ?? 0) + annotation.offset.x;
-                          const absY = (parentLayout?.y ?? 0) + (targetLayout?.y ?? 0) + annotation.offset.y;
-                          updateAnnotation(annotation.id, { targetId: undefined, targetType: undefined, offset: { x: absX, y: absY } });
+                          const targetLayout = schema?.layout?.[annotation.target?.id!];
+                          const parentLayout = (targetLayout as any)?.parentId ? schema?.layout?.[(targetLayout as any).parentId] : null;
+                          const absX = (parentLayout?.x ?? 0) + (targetLayout?.x ?? 0) + (annotation.offset?.x ?? 0);
+                          const absY = (parentLayout?.y ?? 0) + (targetLayout?.y ?? 0) + (annotation.offset?.y ?? 0);
+                          updateAnnotation(annotation.id, { target: undefined, offset: { x: absX, y: absY } });
                         } else {
                           const isTable = schema?.tables.some(t => t.id === val);
-                          updateAnnotation(annotation.id, { 
-                            targetId: val, 
-                            targetType: isTable ? 'table' : 'domain',
+                          updateAnnotation(annotation.id, {
+                            target: { id: val, type: isTable ? 'table' : 'domain' },
                             offset: { x: 50, y: -50 } // Reset to a safe offset when binding
                           });
                         }
@@ -336,20 +335,20 @@ const DetailPanel = memo(() => {
                     >
                       <option value="">- Floating (No Target) -</option>
                       <optgroup label="Tables">
-                        {schema?.tables.map(t => <option key={t.id} value={t.id}>{t.name} ({t.id})</option>)}
+                        {schema?.tables.map(t => <option key={t.id} value={t.id}>{t.conceptual?.name ?? t.id} ({t.id})</option>)}
                       </optgroup>
                       <optgroup label="Domains">
                         {schema?.domains?.map(d => <option key={d.id} value={d.id}>{d.name} ({d.id})</option>)}
                       </optgroup>
                     </select>
-                    {annotation.targetId ? (
-                      <button 
+                    {annotation.target?.id ? (
+                      <button
                         onClick={() => {
-                          const targetLayout = schema?.layout?.[annotation.targetId!];
-                          const parentLayout = targetLayout?.parentId ? schema?.layout?.[targetLayout.parentId] : null;
-                          const absX = (parentLayout?.x ?? 0) + (targetLayout?.x ?? 0) + annotation.offset.x;
-                          const absY = (parentLayout?.y ?? 0) + (targetLayout?.y ?? 0) + annotation.offset.y;
-                          updateAnnotation(annotation.id, { targetId: undefined, targetType: undefined, offset: { x: absX, y: absY } });
+                          const targetLayout = schema?.layout?.[annotation.target!.id];
+                          const parentLayout = (targetLayout as any)?.parentId ? schema?.layout?.[(targetLayout as any).parentId] : null;
+                          const absX = (parentLayout?.x ?? 0) + (targetLayout?.x ?? 0) + (annotation.offset?.x ?? 0);
+                          const absY = (parentLayout?.y ?? 0) + (targetLayout?.y ?? 0) + (annotation.offset?.y ?? 0);
+                          updateAnnotation(annotation.id, { target: undefined, offset: { x: absX, y: absY } });
                         }}
                         className="p-2 text-red-500 hover:bg-red-50 rounded border border-red-100"
                         title="Unbind Target"
@@ -370,15 +369,15 @@ const DetailPanel = memo(() => {
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Note Color</h3>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="color" 
-                      value={annotation.color || (theme === 'dark' ? '#334155' : '#fef3c7')}
-                      onChange={(e) => updateAnnotation(annotation.id, { color: e.target.value })}
+                    <input
+                      type="color"
+                      value={annotation.display?.color || (theme === 'dark' ? '#334155' : '#fef3c7')}
+                      onChange={(e) => updateAnnotation(annotation.id, { display: { ...annotation.display, color: e.target.value } })}
                       className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent"
                     />
-                    <input 
-                      value={annotation.color || ''}
-                      onChange={(e) => updateAnnotation(annotation.id, { color: e.target.value })}
+                    <input
+                      value={annotation.display?.color || ''}
+                      onChange={(e) => updateAnnotation(annotation.id, { display: { ...annotation.display, color: e.target.value || undefined } })}
                       placeholder="e.g. #fef3c7"
                       className={`flex-1 border rounded text-[10px] p-1.5 outline-none font-mono ${
                         theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-900'
@@ -397,7 +396,7 @@ const DetailPanel = memo(() => {
 
   // --- Consumer Editor Rendering ---
   if (consumer) {
-    const CONSUMER_COLOR = consumer.appearance?.color || CONSUMER_DEFAULT_COLOR
+    const CONSUMER_COLOR = consumer.display?.color || CONSUMER_DEFAULT_COLOR
     return (
       <div
         ref={panelRef}
@@ -469,8 +468,8 @@ const DetailPanel = memo(() => {
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Icon</h3>
                 <input
-                  value={consumer.appearance?.icon || ''}
-                  onChange={(e) => updateConsumer(consumer.id, { appearance: { ...consumer.appearance, icon: e.target.value || undefined } })}
+                  value={consumer.display?.icon || ''}
+                  onChange={(e) => updateConsumer(consumer.id, { display: { ...consumer.display, icon: e.target.value || undefined } })}
                   placeholder="🔗"
                   className={`w-full border rounded text-sm p-2 outline-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
                 />
@@ -482,13 +481,13 @@ const DetailPanel = memo(() => {
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={consumer.appearance?.color || CONSUMER_DEFAULT_COLOR}
-                    onChange={(e) => updateConsumer(consumer.id, { appearance: { ...consumer.appearance, color: e.target.value } })}
+                    value={consumer.display?.color || CONSUMER_DEFAULT_COLOR}
+                    onChange={(e) => updateConsumer(consumer.id, { display: { ...consumer.display, color: e.target.value } })}
                     className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent"
                   />
                   <input
-                    value={consumer.appearance?.color || ''}
-                    onChange={(e) => updateConsumer(consumer.id, { appearance: { ...consumer.appearance, color: e.target.value || undefined } })}
+                    value={consumer.display?.color || ''}
+                    onChange={(e) => updateConsumer(consumer.id, { display: { ...consumer.display, color: e.target.value || undefined } })}
                     placeholder="#a78bfa"
                     className={`flex-1 border rounded text-[10px] p-1.5 outline-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
                   />
@@ -758,10 +757,10 @@ const DetailPanel = memo(() => {
         onPointerDown={stopPropagation}
         style={panelStyle}
       >
-        {dragBar(domain.color || LINEAGE_BASE)}
+        {dragBar(domain.display?.color || LINEAGE_BASE)}
         {/* Panel Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
-          <Database size={16} style={{ color: domain.color || LINEAGE_BASE, flexShrink: 0 }} />
+          <Database size={16} style={{ color: domain.display?.color || LINEAGE_BASE, flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input
@@ -830,7 +829,7 @@ const DetailPanel = memo(() => {
                 <input
                   type="color"
                   value={(() => {
-                    const c = domain.color;
+                    const c = domain.display?.color;
                     if (!c) return LINEAGE_BASE;
                     const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
                     if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n).toString(16).padStart(2, '0')).join('');
@@ -841,17 +840,17 @@ const DetailPanel = memo(() => {
                     const r = parseInt(hex.slice(1, 3), 16);
                     const g = parseInt(hex.slice(3, 5), 16);
                     const b = parseInt(hex.slice(5, 7), 16);
-                    updateDomain(domain.id, { color: `rgba(${r}, ${g}, ${b}, 0.12)` });
+                    updateDomain(domain.id, { display: { ...domain.display, color: `rgba(${r}, ${g}, ${b}, 0.12)` } });
                   }}
                   style={{ width: '40px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}
                 />
-                <input 
-                  value={domain.color || ''}
-                  onChange={(e) => updateDomain(domain.id, { color: e.target.value })}
+                <input
+                  value={domain.display?.color || ''}
+                  onChange={(e) => updateDomain(domain.id, { display: { ...domain.display, color: e.target.value || undefined } })}
                   placeholder="e.g. #3b82f6 or rgba(...)"
                   className={`border rounded font-mono text-sm p-2 outline-none flex-1 transition-colors ${
-                    theme === 'dark' 
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500' 
+                    theme === 'dark'
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
                   }`}
                 />
@@ -871,36 +870,24 @@ const DetailPanel = memo(() => {
     { id: 'conceptual', label: 'Conceptual', icon: <TagIcon size={14} />, shortcut: '1' },
     { id: 'logical', label: 'Logical', icon: <Database size={14} />, shortcut: '2' },
     { id: 'physical', label: 'Physical', icon: <Database size={14} />, shortcut: '3' },
-    { id: 'implementation', label: 'Implementation', icon: <Cpu size={14} />, shortcut: '4' },
-    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '5' },
-    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '6' }
+    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '4' },
+    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '5' }
   ]
 
-  const typeConfig = table!.appearance?.type ? TYPE_CONFIG[table!.appearance.type] : null;
-  const themeColor = table!.appearance?.color || typeConfig?.color || '#334155';
-  const icon = table!.appearance?.icon || typeConfig?.icon || '';
-  
-  // Advanced Labels
-  let typeLabel = typeConfig?.label || '';
-  const subType = table!.appearance?.sub_type;
-  const scd = table!.appearance?.scd;
+  const typeConfig = table!.conceptual?.kind ? TYPE_CONFIG[table!.conceptual.kind] : null;
+  const themeColor = table!.display?.color || typeConfig?.color || '#334155';
+  const icon = table!.display?.icon || typeConfig?.icon || '';
 
-  if (table!.appearance?.type === 'fact' && subType) {
-    const strategyMap: Record<string, string> = {
-      transaction: 'Trans.',
-      periodic: 'Periodic',
-      accumulating: 'Accum.',
-      factless: 'Factless'
-    };
-    typeLabel = `FACT (${strategyMap[subType] || subType})`;
-  } else if (table!.appearance?.type && subType) {
-    typeLabel = `${table!.appearance.type.toUpperCase()} (${subType})`;
-  } else if (table!.appearance?.type) {
-    typeLabel = table!.appearance.type.toUpperCase();
+  // Build type label
+  let typeLabel = '';
+  const scd = table!.logical?.scd;
+
+  if (table!.conceptual?.kind) {
+    typeLabel = table!.conceptual.kind.toUpperCase();
   }
 
-  if (scd) {
-    const scdLabel = `SCD ${scd.replace('type', 'T')}`;
+  if (scd?.type) {
+    const scdLabel = `SCD ${scd.type.replace('type', 'T')}`;
     typeLabel = typeLabel ? `${typeLabel} / ${scdLabel}` : scdLabel;
   }
 
@@ -908,7 +895,9 @@ const DetailPanel = memo(() => {
     e.stopPropagation();
     const newCol: Column = {
       id: `col_${Date.now()}`,
-      logical: { name: 'New Column', type: 'String', description: '' },
+      name: 'New Column',
+      type: 'String',
+      description: '',
       physical: { name: '', type: 'VARCHAR(255)', constraints: [] }
     };
     handleUpdateTable({ columns: [...(table!.columns || []), newCol] });
@@ -920,18 +909,10 @@ const DetailPanel = memo(() => {
     handleUpdateTable({ columns: newColumns });
   };
 
-  const handleUpdateLogicalColumn = (colId: string, updates: Partial<NonNullable<Column['logical']>>) => {
+  const handleUpdateColumn = (colId: string, updates: Partial<Column>) => {
     const newColumns: Column[] = table!.columns?.map(col => {
       if (col.id === colId) {
-        return { 
-          ...col, 
-          logical: { 
-            name: col.logical?.name || col.id,
-            type: col.logical?.type || 'String',
-            ...col.logical, 
-            ...updates 
-          } 
-        };
+        return { ...col, ...updates };
       }
       return col;
     }) || [];
@@ -956,11 +937,11 @@ const DetailPanel = memo(() => {
 
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && tagInput.trim()) {
-      const currentTags = table!.conceptual?.tags || [];
+      const currentTags = (table!.metadata?.tags as string[] | undefined) || [];
       if (!currentTags.includes(tagInput.trim())) {
         handleUpdateTable({
-          conceptual: {
-            ...table!.conceptual,
+          metadata: {
+            ...table!.metadata,
             tags: [...currentTags, tagInput.trim()]
           }
         });
@@ -971,11 +952,12 @@ const DetailPanel = memo(() => {
 
   const handleRemoveTag = (e: React.MouseEvent, tagToRemove: string) => {
     e.stopPropagation();
-    const currentTags = table!.conceptual?.tags || [];
+    const currentTags = (table!.metadata?.tags as string[] | undefined) || [];
+    const newTags = currentTags.filter(t => t !== tagToRemove);
     handleUpdateTable({
-      conceptual: {
-        ...table!.conceptual,
-        tags: currentTags.filter(t => t !== tagToRemove)
+      metadata: {
+        ...table!.metadata,
+        tags: newTags.length > 0 ? newTags : undefined
       }
     });
   };
@@ -1061,9 +1043,9 @@ const DetailPanel = memo(() => {
           {/* Primary Row: Editable Conceptual Name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input
-              value={table!.name ?? ''}
-              onChange={(e) => handleUpdateTable({ name: e.target.value })}
-              onBlur={(e) => { if (!e.target.value) handleUpdateTable({ name: 'UNNAMED_TABLE' }) }}
+              value={table!.conceptual?.name ?? ''}
+              onChange={(e) => handleUpdateTable({ conceptual: { ...table!.conceptual, name: e.target.value } })}
+              onBlur={(e) => { if (!e.target.value) handleUpdateTable({ conceptual: { ...table!.conceptual, name: 'UNNAMED_TABLE' } }) }}
               onMouseDown={e => e.stopPropagation()}
               readOnly={!!table!.isImported}
               title="Conceptual Table Name"
@@ -1129,16 +1111,17 @@ const DetailPanel = memo(() => {
 
         {/* Quick Access Metadata Selectors */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-          <select 
-            value={table!.appearance?.type || 'fact'}
-            onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, type: e.target.value as any } })}
+          <select
+            value={table!.conceptual?.kind || ''}
+            onChange={(e) => handleUpdateTable({ conceptual: { ...table!.conceptual, kind: (e.target.value || undefined) as any } })}
             className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors ${
-              theme === 'dark' 
-                ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500' 
+              theme === 'dark'
+                ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                 : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
             }`}
-            title="Table Type"
+            title="Table Kind"
           >
+            <option value="">- Kind -</option>
             <option value="fact">Fact</option>
             <option value="dimension">Dimension</option>
             <option value="mart">Mart</option>
@@ -1148,32 +1131,15 @@ const DetailPanel = memo(() => {
             <option value="satellite">Satellite</option>
           </select>
 
-          <select 
-            value={table!.appearance?.sub_type || ''}
-            onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, sub_type: (e.target.value || undefined) as any } })}
+          <select
+            value={table!.logical?.scd?.type || ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              handleUpdateTable({ logical: { ...table!.logical, scd: val ? { ...(table!.logical?.scd || {}), type: val } : undefined } });
+            }}
             className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors ${
-              theme === 'dark' 
-                ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500' 
-                : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
-            }`}
-            title="Table Sub-type"
-          >
-            <option value="">- Sub-type -</option>
-            <option value="transaction">Transaction</option>
-            <option value="periodic">Periodic Snapshot</option>
-            <option value="accumulating">Accumulating Snapshot</option>
-            <option value="factless">Factless</option>
-            <option value="conformed">Conformed</option>
-            <option value="junk">Junk</option>
-            <option value="degenerate">Degenerate</option>
-          </select>
-          
-          <select 
-            value={table!.appearance?.scd || ''}
-            onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, scd: (e.target.value || undefined) as any } })}
-            className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors ${
-              theme === 'dark' 
-                ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500' 
+              theme === 'dark'
+                ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                 : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
             }`}
             title="SCD Type"
@@ -1192,10 +1158,10 @@ const DetailPanel = memo(() => {
           {/* Icon input */}
           {!table!.isImported && (
             <input
-              value={table!.appearance?.icon || ''}
-              onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, icon: e.target.value || undefined } })}
+              value={table!.display?.icon || ''}
+              onChange={(e) => handleUpdateTable({ display: { ...table!.display, icon: e.target.value || undefined } })}
               placeholder="Icon"
-              title="Appearance Icon (emoji)"
+              title="Display Icon (emoji)"
               maxLength={4}
               className={`border rounded text-[13px] px-2 py-1 outline-none transition-colors w-14 text-center ${
                 theme === 'dark'
@@ -1211,12 +1177,12 @@ const DetailPanel = memo(() => {
               <input
                 type="color"
                 value={themeColor}
-                onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, color: e.target.value } })}
+                onChange={(e) => handleUpdateTable({ display: { ...table!.display, color: e.target.value } })}
                 style={{ width: '28px', height: '28px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}
               />
               <input
-                value={table!.appearance?.color || ''}
-                onChange={(e) => handleUpdateTable({ appearance: { ...table!.appearance, color: e.target.value || undefined } })}
+                value={table!.display?.color || ''}
+                onChange={(e) => handleUpdateTable({ display: { ...table!.display, color: e.target.value || undefined } })}
                 placeholder={typeConfig?.color || '#334155'}
                 className={`border rounded text-[10px] px-2 py-1 outline-none font-mono w-24 ${
                   theme === 'dark'
@@ -1331,7 +1297,7 @@ const DetailPanel = memo(() => {
             <section>
               <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Tags</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                {table!.conceptual?.tags?.map(tag => (
+                {(table!.metadata?.tags as string[] | undefined)?.map(tag => (
                   <span key={tag} className={`flex items-center gap-2 px-3 py-1 border rounded-full text-xs font-medium transition-colors ${
                     theme === 'dark' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'
                   }`}>
@@ -1368,13 +1334,13 @@ const DetailPanel = memo(() => {
             <div className="flex flex-col gap-4 mb-6">
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Logical Table Name</h3>
-                <input 
-                  value={table!.logical_name || ''}
-                  onChange={(e) => handleUpdateTable({ logical_name: e.target.value })}
-                  placeholder={table!.name}
+                <input
+                  value={table!.logical?.name || ''}
+                  onChange={(e) => handleUpdateTable({ logical: { ...table!.logical, name: e.target.value || undefined } })}
+                  placeholder={table!.conceptual?.name ?? table!.id}
                   className={`w-full border rounded text-sm p-2 outline-none transition-colors ${
-                    theme === 'dark' 
-                      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-blue-500' 
+                    theme === 'dark'
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
                   }`}
                 />
@@ -1405,15 +1371,15 @@ const DetailPanel = memo(() => {
                       <td style={{ padding: '6px 16px' }}>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleUpdateLogicalColumn(col.id, { isPrimaryKey: !col.logical?.isPrimaryKey })}
+                            onClick={() => handleUpdateColumn(col.id, { isPrimaryKey: !col.isPrimaryKey })}
                             title="Primary Key"
-                            className={`transition-opacity ${col.logical?.isPrimaryKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
+                            className={`transition-opacity ${col.isPrimaryKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
                           >🔑</button>
                           <div className="flex flex-col flex-1 min-w-0">
                             <input
-                              value={col.logical?.name ?? ''}
-                              onChange={(e) => handleUpdateLogicalColumn(col.id, { name: e.target.value })}
-                              onBlur={(e) => { if (!e.target.value) handleUpdateLogicalColumn(col.id, { name: col.id }) }}
+                              value={col.name ?? ''}
+                              onChange={(e) => handleUpdateColumn(col.id, { name: e.target.value })}
+                              onBlur={(e) => { if (!e.target.value) handleUpdateColumn(col.id, { name: col.id }) }}
                               className={`bg-transparent border-none w-full outline-none p-1 rounded font-medium transition-colors ${
                                 theme === 'dark' ? 'text-white focus:bg-slate-800' : 'text-slate-900 focus:bg-slate-50'
                               }`}
@@ -1439,18 +1405,18 @@ const DetailPanel = memo(() => {
                       <td style={{ padding: '6px 16px' }}>
                         <div className="flex items-center gap-2 flex-wrap">
                           <button
-                            onClick={() => handleUpdateLogicalColumn(col.id, { isForeignKey: !col.logical?.isForeignKey })}
+                            onClick={() => handleUpdateColumn(col.id, { isForeignKey: !col.isForeignKey })}
                             title="Foreign Key"
-                            className={`transition-opacity text-sm ${col.logical?.isForeignKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
+                            className={`transition-opacity text-sm ${col.isForeignKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
                           >🔩</button>
                           <button
-                            onClick={() => handleUpdateLogicalColumn(col.id, { isPartitionKey: !col.logical?.isPartitionKey })}
+                            onClick={() => handleUpdateColumn(col.id, { isPartitionKey: !col.isPartitionKey })}
                             title="Partition Key"
-                            className={`transition-opacity text-sm ${col.logical?.isPartitionKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
+                            className={`transition-opacity text-sm ${col.isPartitionKey ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}
                           >📂</button>
                           <select
-                            value={col.logical?.additivity || ''}
-                            onChange={(e) => handleUpdateLogicalColumn(col.id, { additivity: (e.target.value || undefined) as any })}
+                            value={col.additivity || ''}
+                            onChange={(e) => handleUpdateColumn(col.id, { additivity: (e.target.value || undefined) as any })}
                             title="Additivity (for Measures)"
                             style={{ fontSize: '10px' }}
                             className={`border rounded outline-none transition-colors ${
@@ -1467,10 +1433,10 @@ const DetailPanel = memo(() => {
                         </div>
                       </td>
                       <td style={{ padding: '6px 16px' }}>
-                        <input 
-                          value={col.logical?.type ?? ''}
-                          onChange={(e) => handleUpdateLogicalColumn(col.id, { type: e.target.value })}
-                          onBlur={(e) => { if (!e.target.value) handleUpdateLogicalColumn(col.id, { type: 'String' }) }}
+                        <input
+                          value={col.type ?? ''}
+                          onChange={(e) => handleUpdateColumn(col.id, { type: e.target.value })}
+                          onBlur={(e) => { if (!e.target.value) handleUpdateColumn(col.id, { type: 'String' }) }}
                           placeholder="Type..."
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-400 focus:bg-slate-800' : 'text-slate-500 focus:bg-slate-50'
@@ -1478,9 +1444,9 @@ const DetailPanel = memo(() => {
                         />
                       </td>
                       <td style={{ padding: '6px 16px' }}>
-                        <input 
-                          value={col.logical?.description || ''}
-                          onChange={(e) => handleUpdateLogicalColumn(col.id, { description: e.target.value })}
+                        <input
+                          value={col.description || ''}
+                          onChange={(e) => handleUpdateColumn(col.id, { description: e.target.value })}
                           placeholder="Description..."
                           className={`bg-transparent border-none text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-500 focus:bg-slate-800' : 'text-slate-400 focus:bg-slate-50'
@@ -1505,13 +1471,13 @@ const DetailPanel = memo(() => {
             <div className="flex flex-col gap-4 mb-6">
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Physical Table Name</h3>
-                <input 
-                  value={table!.physical_name || ''}
-                  onChange={(e) => handleUpdateTable({ physical_name: e.target.value })}
+                <input
+                  value={table!.physical?.name || ''}
+                  onChange={(e) => handleUpdateTable({ physical: { ...table!.physical, name: e.target.value || undefined } })}
                   placeholder={table!.id}
                   className={`w-full border rounded font-mono text-sm p-2 outline-none transition-colors ${
-                    theme === 'dark' 
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500' 
+                    theme === 'dark'
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
                   }`}
                 />
@@ -1536,25 +1502,25 @@ const DetailPanel = memo(() => {
                   {(table!.columns || []).map(col => (
                     <tr key={col.id} style={{ borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--node-bg)' }}>
                       <td style={{ padding: '6px 16px', color: 'var(--text-secondary)', borderRight: '1px solid var(--border-main)' }}>
-                        <div className="text-[11px] font-medium truncate" title={col.logical?.name || col.id}>
-                          {col.logical?.name || col.id}
+                        <div className="text-[11px] font-medium truncate" title={col.name || col.id}>
+                          {col.name || col.id}
                         </div>
                       </td>
                       <td style={{ padding: '6px 16px' }}>
-                        <input 
+                        <input
                           value={col.physical?.name ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { name: e.target.value })}
-                          placeholder={col.logical?.name?.toLowerCase()?.replace(/ /g, '_')}
+                          placeholder={col.name?.toLowerCase()?.replace(/ /g, '_')}
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-blue-400 focus:bg-slate-800' : 'text-blue-600 focus:bg-slate-50'
                           }`}
                         />
                       </td>
                       <td style={{ padding: '6px 16px' }}>
-                        <input 
+                        <input
                           value={col.physical?.type ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { type: e.target.value })}
-                          placeholder={col.logical?.type?.toUpperCase()}
+                          placeholder={col.type?.toUpperCase()}
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-400 focus:bg-slate-800' : 'text-slate-500 focus:bg-slate-50'
                           }`}
@@ -1575,214 +1541,143 @@ const DetailPanel = memo(() => {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-        
-        {activeTab === 'implementation' && (
-          <div className="flex flex-col gap-5">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Implementation Hints</h3>
-            <p className="text-[10px] text-slate-400 -mt-3">Code generation hints for AI agents (dbt, Spark, SQLMesh, etc.).</p>
 
-            {/* Materialization */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Materialization</label>
-              <select
-                value={table!.implementation?.materialization || ''}
-                onChange={(e) => {
-                  const val = e.target.value as any
-                  const isIncremental = val === 'incremental'
-                  const hasPhysicalTable = val === 'table' || val === 'incremental'
-                  handleUpdateTable({
-                    implementation: {
-                      ...table!.implementation,
-                      materialization: val || undefined,
-                      // incremental固有のフィールドはincremental以外に変更時クリア
-                      incremental_strategy: isIncremental ? table!.implementation?.incremental_strategy : undefined,
-                      unique_key: isIncremental ? table!.implementation?.unique_key : undefined,
-                      // partition_byは物理テーブル(table/incremental)以外に変更時クリア
-                      partition_by: hasPhysicalTable ? table!.implementation?.partition_by : undefined,
-                    }
-                  })
-                }}
-                className={`w-full px-3 py-2 rounded border text-sm transition-colors ${
-                  theme === 'dark'
-                    ? 'bg-slate-800 border-slate-700 text-slate-100'
-                    : 'bg-white border-slate-300 text-slate-800'
-                }`}
-              >
-                <option value=""></option>
-                <option value="table">📋 table</option>
-                <option value="view">👁 view</option>
-                <option value="incremental">⚡ incremental</option>
-                <option value="ephemeral">👻 ephemeral</option>
-              </select>
-            </div>
+            {/* Build Settings */}
+            <div className="flex flex-col gap-4 mt-6">
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Build Settings</h3>
+              <p className="text-[10px] text-slate-400 -mt-2">Code generation hints for AI agents (dbt, Spark, SQLMesh, etc.).</p>
 
-            {/* Incremental options */}
-            {table!.implementation?.materialization === 'incremental' && (
-              <div className={`flex flex-col gap-3 p-3 rounded-lg border ${
-                theme === 'dark' ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Incremental Settings</div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-slate-500">Strategy</label>
-                  <select
-                    value={table!.implementation?.incremental_strategy || ''}
-                    onChange={(e) => {
-                      const val = e.target.value as any
-                      handleUpdateTable({
-                        implementation: {
-                          ...table!.implementation,
-                          incremental_strategy: val || undefined
-                        }
-                      })
-                    }}
-                    className={`w-full px-3 py-2 rounded border text-sm transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-slate-700 border-slate-600 text-slate-100'
-                        : 'bg-white border-slate-300 text-slate-800'
-                    }`}
-                  >
-                    <option value=""></option>
-                    <option value="merge">merge</option>
-                    <option value="append">append</option>
-                    <option value="delete+insert">delete+insert</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-slate-500">Unique Key</label>
-                  <div className="flex flex-wrap gap-1.5 mb-1">
-                    {(Array.isArray(table!.implementation?.unique_key) ? table!.implementation!.unique_key! : []).map((key) => (
-                      <span
-                        key={key}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono ${
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Strategy</label>
+                <select
+                  value={table!.physical?.strategy || ''}
+                  onChange={(e) => handleUpdateTable({ physical: { ...table!.physical, strategy: (e.target.value || undefined) as any } })}
+                  className={`w-full px-3 py-2 rounded border text-sm transition-colors ${
+                    theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                  }`}
+                >
+                  <option value=""></option>
+                  <option value="full">📋 full</option>
+                  <option value="view">👁 view</option>
+                  <option value="incremental">⚡ incremental</option>
+                  <option value="ephemeral">👻 ephemeral</option>
+                </select>
+              </div>
+
+              {table!.physical?.strategy === 'incremental' && (
+                <div className={`flex flex-col gap-3 p-3 rounded-lg border ${
+                  theme === 'dark' ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Incremental Settings</div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold text-slate-500">Update Mode</label>
+                    <select
+                      value={table!.physical?.update_mode || ''}
+                      onChange={(e) => handleUpdateTable({ physical: { ...table!.physical, update_mode: (e.target.value || undefined) as any } })}
+                      className={`w-full px-3 py-2 rounded border text-sm transition-colors ${
+                        theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                      }`}
+                    >
+                      <option value=""></option>
+                      <option value="merge">merge</option>
+                      <option value="append">append</option>
+                      <option value="delete_insert">delete_insert</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold text-slate-500">Merge Key</label>
+                    <div className="flex flex-wrap gap-1.5 mb-1">
+                      {(table!.physical?.merge_key || []).map((key) => (
+                        <span key={key} className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono ${
                           theme === 'dark' ? 'bg-slate-600 text-slate-200' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {key}
+                          <button
+                            onClick={() => {
+                              const updated = (table!.physical?.merge_key || []).filter(k => k !== key)
+                              handleUpdateTable({ physical: { ...table!.physical, merge_key: updated.length ? updated : undefined } })
+                            }}
+                            className="text-slate-400 hover:text-red-400 ml-0.5"
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (!val) return
+                        const current = table!.physical?.merge_key || []
+                        if (!current.includes(val)) {
+                          handleUpdateTable({ physical: { ...table!.physical, merge_key: [...current, val] } })
+                        }
+                      }}
+                      className={`w-full px-3 py-2 rounded border text-sm font-mono transition-colors ${
+                        theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                      }`}
+                    >
+                      <option value="">+ Add column</option>
+                      {(table!.columns || [])
+                        .filter(col => !(table!.physical?.merge_key || []).includes(col.physical?.name || col.id))
+                        .map(col => {
+                          const physName = col.physical?.name || col.id
+                          return <option key={col.id} value={physName}>{physName}</option>
+                        })}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {!['view', 'ephemeral'].includes(table!.physical?.strategy || '') && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Partition</label>
+                    {!table!.physical?.partition && (
+                      <button
+                        onClick={() => handleUpdateTable({ physical: { ...table!.physical, partition: { field: '' } } })}
+                        className="text-[11px] text-blue-500 hover:text-blue-400"
+                      >+ Add</button>
+                    )}
+                  </div>
+                  {table!.physical?.partition && (
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={table!.physical.partition.field}
+                        onChange={(e) => handleUpdateTable({ physical: { ...table!.physical, partition: { ...table!.physical!.partition!, field: e.target.value } } })}
+                        className={`flex-1 px-3 py-2 rounded border text-sm font-mono transition-colors ${
+                          theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
                         }`}
                       >
-                        {key}
-                        <button
-                          onClick={() => {
-                            const updated = (table!.implementation?.unique_key || []).filter(k => k !== key)
-                            handleUpdateTable({
-                              implementation: {
-                                ...table!.implementation,
-                                unique_key: updated.length ? updated : undefined
-                              }
-                            })
-                          }}
-                          className="text-slate-400 hover:text-red-400 ml-0.5"
-                        >×</button>
-                      </span>
-                    ))}
-                  </div>
-                  <select
-                    value=""
-                    onChange={(e) => {
-                      const val = e.target.value
-                      if (!val) return
-                      const current = Array.isArray(table!.implementation?.unique_key) ? table!.implementation!.unique_key! : []
-                      if (!current.includes(val)) {
-                        handleUpdateTable({
-                          implementation: {
-                            ...table!.implementation,
-                            unique_key: [...current, val]
-                          }
-                        })
-                      }
-                    }}
-                    className={`w-full px-3 py-2 rounded border text-sm font-mono transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-slate-700 border-slate-600 text-slate-100'
-                        : 'bg-white border-slate-300 text-slate-800'
-                    }`}
-                  >
-                    <option value="">+ Add column</option>
-                    {(table!.columns || [])
-                      .filter(col => !(table!.implementation?.unique_key || []).includes(col.physical?.name || col.id))
-                      .map(col => {
-                        const physName = col.physical?.name || col.id
-                        return <option key={col.id} value={physName}>{physName}</option>
-                      })}
-                  </select>
+                        <option value=""></option>
+                        {(table!.columns || []).map(col => {
+                          const physName = col.physical?.name || col.id
+                          return <option key={col.id} value={physName}>{physName}</option>
+                        })}
+                      </select>
+                      <select
+                        value={table!.physical.partition.granularity || ''}
+                        onChange={(e) => handleUpdateTable({ physical: { ...table!.physical, partition: { ...table!.physical!.partition!, granularity: (e.target.value as any) || undefined } } })}
+                        className={`px-2 py-2 rounded border text-sm transition-colors ${
+                          theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                        }`}
+                      >
+                        <option value=""></option>
+                        <option value="day">day</option>
+                        <option value="month">month</option>
+                        <option value="year">year</option>
+                        <option value="hour">hour</option>
+                      </select>
+                      <button
+                        onClick={() => handleUpdateTable({ physical: { ...table!.physical, partition: undefined } })}
+                        className="text-slate-400 hover:text-red-400 text-sm px-1"
+                      >×</button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Partition By — 物理テーブル(table/incremental)のみ表示 */}
-            {!['view', 'ephemeral'].includes(table!.implementation?.materialization || '') && (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Partition By</label>
-                <button
-                  onClick={() => {
-                    const current = Array.isArray(table!.implementation?.partition_by) ? table!.implementation!.partition_by! : []
-                    handleUpdateTable({
-                      implementation: {
-                        ...table!.implementation,
-                        partition_by: [...current, { field: '' }]
-                      }
-                    })
-                  }}
-                  className="text-[11px] text-blue-500 hover:text-blue-400"
-                >+ Add field</button>
-              </div>
-              {(Array.isArray(table!.implementation?.partition_by) ? table!.implementation!.partition_by! : []).map((p, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <select
-                    value={p.field}
-                    onChange={(e) => {
-                      const updated = [...(table!.implementation?.partition_by || [])]
-                      updated[i] = { ...updated[i], field: e.target.value }
-                      handleUpdateTable({
-                        implementation: { ...table!.implementation, partition_by: updated }
-                      })
-                    }}
-                    className={`flex-1 px-3 py-2 rounded border text-sm font-mono transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-slate-800 border-slate-700 text-slate-100'
-                        : 'bg-white border-slate-300 text-slate-800'
-                    }`}
-                  >
-                    <option value=""></option>
-                    {(table!.columns || []).map(col => {
-                      const physName = col.physical?.name || col.id
-                      return <option key={col.id} value={physName}>{physName}</option>
-                    })}
-                  </select>
-                  <select
-                    value={p.granularity || ''}
-                    onChange={(e) => {
-                      const updated = [...(table!.implementation?.partition_by || [])]
-                      updated[i] = { ...updated[i], granularity: (e.target.value as any) || undefined }
-                      handleUpdateTable({
-                        implementation: { ...table!.implementation, partition_by: updated }
-                      })
-                    }}
-                    className={`px-2 py-2 rounded border text-sm transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-slate-800 border-slate-700 text-slate-100'
-                        : 'bg-white border-slate-300 text-slate-800'
-                    }`}
-                  >
-                    <option value=""></option>
-                    <option value="day">day</option>
-                    <option value="month">month</option>
-                    <option value="year">year</option>
-                    <option value="hour">hour</option>
-                  </select>
-                  <button
-                    onClick={() => {
-                      const updated = (Array.isArray(table!.implementation?.partition_by) ? table!.implementation!.partition_by! : []).filter((_, idx) => idx !== i)
-                      handleUpdateTable({
-                        implementation: { ...table!.implementation, partition_by: updated.length ? updated : undefined }
-                      })
-                    }}
-                    className="text-slate-400 hover:text-red-400 text-sm px-1"
-                  >×</button>
-                </div>
-              ))}
+              )}
             </div>
-            )}
           </div>
         )}
 
@@ -1828,9 +1723,9 @@ const DetailPanel = memo(() => {
                             theme === 'dark' ? 'border-slate-800' : 'border-slate-200'
                           }`}>
                             <div className="flex flex-col gap-0.5">
-                              <span className={`font-bold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{col?.logical?.name || col.id}</span>
+                              <span className={`font-bold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{col?.name || col.id}</span>
                               <span className={`text-[10px] font-mono italic ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                                {col?.physical?.name || col?.logical?.name?.toLowerCase()?.replace(/ /g, '_') || col.id}
+                                {col?.physical?.name || col?.name?.toLowerCase()?.replace(/ /g, '_') || col.id}
                               </span>
                             </div>
                           </th>

@@ -36,7 +36,7 @@ const PathFinderTab = () => {
   const tables = useMemo(() => schema?.tables || [], [schema])
   const consumers = useMemo(() => schema?.consumers || [], [schema])
   const allNodes = useMemo(() => [
-    ...tables.map(t => ({ id: t.id, name: t.name, kind: 'table' as const })),
+    ...tables.map(t => ({ id: t.id, name: t.conceptual?.name ?? t.id, kind: 'table' as const })),
     ...consumers.map(c => ({ id: c.id, name: c.name, kind: 'consumer' as const })),
   ], [tables, consumers])
 

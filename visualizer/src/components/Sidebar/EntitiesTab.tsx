@@ -45,7 +45,7 @@ const EntitiesTab = memo(() => {
     // Map tables to domains
     schema.tables.forEach(table => {
       const parentDomain = schema.domains?.find(d => d.members.includes(table.id))
-      const matchesSearch = table.name.toLowerCase().includes(search.toLowerCase()) || 
+      const matchesSearch = (table.conceptual?.name ?? table.id).toLowerCase().includes(search.toLowerCase()) ||
                            table.id.toLowerCase().includes(search.toLowerCase())
 
       if (matchesSearch) {
@@ -67,7 +67,7 @@ const EntitiesTab = memo(() => {
     }))
 
     const unassignedTables = schema.tables.filter(t => {
-      const isMatch = t.name.toLowerCase().includes(search.toLowerCase()) || 
+      const isMatch = (t.conceptual?.name ?? t.id).toLowerCase().includes(search.toLowerCase()) ||
                      t.id.toLowerCase().includes(search.toLowerCase())
       return isMatch && !assignedTableIds.has(t.id) && !schema.domains?.some(d => d.members.includes(t.id))
     })
@@ -109,7 +109,7 @@ const EntitiesTab = memo(() => {
                   {isCollapsed ? <ChevronRight size={12} className="text-slate-500" /> : <ChevronDown size={12} className="text-slate-500" />}
                   <div 
                     className="w-2 h-2 rounded-full shrink-0" 
-                    style={{ backgroundColor: d.color || LINEAGE_BASE }}
+                    style={{ backgroundColor: d.display?.color || LINEAGE_BASE }}
                   />
                   <h3 className={`text-[10px] font-bold uppercase tracking-wider truncate ${
                     theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
@@ -143,7 +143,7 @@ const EntitiesTab = memo(() => {
                         theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'
                       }`}
                     >
-                      <span className="truncate">{t.name}</span>
+                      <span className="truncate">{t.conceptual?.name ?? t.id}</span>
                       <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100" />
                     </button>
                   ))}
@@ -193,7 +193,7 @@ const EntitiesTab = memo(() => {
                       theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'
                     }`}
                   >
-                    <span className="truncate">{t.name}</span>
+                    <span className="truncate">{t.conceptual?.name ?? t.id}</span>
                     <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100" />
                   </button>
                 ))}

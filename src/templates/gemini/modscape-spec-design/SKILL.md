@@ -80,11 +80,11 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
 9. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the master YAML**:
-   - Propose tables (with `appearance.type`: staging → core fact/dimension → mart)
+   - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
-   - Add `implementation` hints where the target tool and table type make them clear
+   - Add `physical` strategy hints where the target tool and table type make them clear
 
 10. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
     ```bash
@@ -93,7 +93,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
     # domain add: only when explicitly requested by the user
     modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
     ```
-    Edit YAML directly only for complex nested fields (`implementation`, `columns`, `sampleData`).
+    Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
 
 11. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash

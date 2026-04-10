@@ -77,7 +77,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
-   - Add `implementation` hints where the target tool and table type make them clear
+   - Add `physical` strategy hints where the target tool and table type make them clear
 
 10. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
     ```bash
@@ -86,7 +86,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
     # domain add: only when explicitly requested by the user
     modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
     ```
-    Edit YAML directly only for complex nested fields (`implementation`, `columns`, `sampleData`).
+    Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
 
 11. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash

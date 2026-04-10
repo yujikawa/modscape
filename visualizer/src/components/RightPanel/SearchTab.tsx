@@ -36,18 +36,17 @@ function searchModel(tables: Table[], keyword: string): TableResult[] {
     if (results.length >= MAX_RESULTS) break
 
     const tableMatched =
-      matchesKeyword(table.name, kw) ||
+      matchesKeyword(table.conceptual?.name, kw) ||
       matchesKeyword(table.id, kw) ||
-      matchesKeyword(table.logical_name, kw) ||
-      matchesKeyword(table.physical_name, kw) ||
+      matchesKeyword(table.logical?.name, kw) ||
+      matchesKeyword(table.physical?.name, kw) ||
       matchesKeyword(table.conceptual?.description, kw)
 
     const matchedColumns = (table.columns ?? []).filter(column =>
       matchesKeyword(column.id, kw) ||
-      matchesKeyword(column.logical?.name, kw) ||
-      matchesKeyword(column.logical?.description, kw) ||
-      matchesKeyword(column.physical?.name, kw) ||
-      (column.logical as any)?.tags?.some((tag: string) => tag.toLowerCase().includes(kw))
+      matchesKeyword(column.name, kw) ||
+      matchesKeyword(column.description, kw) ||
+      matchesKeyword(column.physical?.name, kw)
     )
 
     if (tableMatched || matchedColumns.length > 0) {
@@ -181,7 +180,7 @@ const SearchTab = memo(() => {
                   >
                     <div className="flex items-center gap-2 overflow-hidden">
                       {isCollapsed ? <ChevronRight size={12} className="text-slate-500" /> : <ChevronDown size={12} className="text-slate-500" />}
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color || LINEAGE_BASE }} />
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.display?.color || LINEAGE_BASE }} />
                       <h3 className={`text-[10px] font-bold uppercase tracking-wider truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{d.name}</h3>
                       <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${theme === 'dark' ? 'text-slate-600 bg-slate-800/50' : 'text-slate-400 bg-slate-100'}`}>{(d as any).tables.length}</span>
                     </div>
@@ -197,8 +196,8 @@ const SearchTab = memo(() => {
                       {(d as any).tables.map((t: Table) => (
                         <button key={t.id} onClick={() => handleFocus(t.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}>
                           <span className="flex flex-col min-w-0">
-                            <span className="truncate">{t.name}</span>
-                            {t.name !== t.id && <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>}
+                            <span className="truncate">{t.conceptual?.name ?? t.id}</span>
+                            {(t.conceptual?.name ?? t.id) !== t.id && <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>}
                           </span>
                           <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 shrink-0" />
                         </button>
@@ -230,8 +229,8 @@ const SearchTab = memo(() => {
                     {treeData.unassigned.map(t => (
                       <button key={t.id} onClick={() => handleFocus(t.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}>
                         <span className="flex flex-col min-w-0">
-                          <span className="truncate">{t.name}</span>
-                          {t.name !== t.id && <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>}
+                          <span className="truncate">{t.conceptual?.name ?? t.id}</span>
+                          {(t.conceptual?.name ?? t.id) !== t.id && <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>}
                         </span>
                         <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 shrink-0" />
                       </button>
@@ -299,16 +298,16 @@ const SearchTab = memo(() => {
                 <div className="mb-1.5 flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-semibold leading-tight truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                      {table.name}
+                      {table.conceptual?.name ?? table.id}
                     </p>
-                    {table.logical_name && (
+                    {table.logical?.name && table.logical.name !== table.conceptual?.name && (
                       <p className={`text-xs leading-tight truncate ${textBody}`}>
-                        {table.logical_name}
+                        {table.logical.name}
                       </p>
                     )}
-                    {table.physical_name && (
+                    {table.physical?.name && (
                       <p className={`text-[10px] leading-tight truncate font-mono ${textMuted}`}>
-                        {table.physical_name}
+                        {table.physical.name}
                       </p>
                     )}
                   </div>
@@ -331,13 +330,13 @@ const SearchTab = memo(() => {
                           col
                         </span>
                         <span className={`font-medium truncate max-w-[120px] ${textBody}`}>
-                          {column.logical?.name ?? column.id}
+                          {column.name ?? column.id}
                         </span>
-                        {column.logical?.description && (
+                        {column.description && (
                           <>
                             <span className={textMuted}>—</span>
                             <span className={`truncate flex-1 ${textMuted}`}>
-                              {column.logical.description}
+                              {column.description}
                             </span>
                           </>
                         )}

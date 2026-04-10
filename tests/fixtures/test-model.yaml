@@ -1,55 +1,58 @@
+version: "2.0.0"
 tables:
   - id: users
-    name: USERS
-    description: System users
+    conceptual:
+      name: USERS
+      kind: dimension
+      description: System users
     columns:
       - id: id
-        logical:
-          name: ID
-          type: Integer
-          isPrimaryKey: true
+        name: ID
+        type: Integer
+        isPrimaryKey: true
       - id: name
-        logical:
-          name: Name
-          type: String
+        name: Name
+        type: String
     sampleData: []
   - id: orders
-    name: ORDERS
-    description: Customer orders
+    conceptual:
+      name: ORDERS
+      kind: fact
+      description: Customer orders
     columns:
       - id: id
-        logical:
-          name: ID
-          type: Integer
-          isPrimaryKey: true
+        name: ID
+        type: Integer
+        isPrimaryKey: true
       - id: user_id
-        logical:
-          name: User ID
-          type: Integer
+        name: User ID
+        type: Integer
     sampleData: []
 relationships:
-  - id: rel_users_posts
+  - id: rel_users_orders
     from:
       table: users
       column: [id]
     to:
-      table: posts
+      table: orders
       column: [user_id]
     type: one-to-many
 domains:
   - id: core
     name: Core Domain
-    tables:
+    members:
       - orders
       - users
 annotations:
   - id: note_1
     text: Test Note
-    type: sticky
     offset:
       x: 1000
       'y': 1000
 layout:
   users:
     x: 30
+    'y': 30
+  orders:
+    x: 350
     'y': 30

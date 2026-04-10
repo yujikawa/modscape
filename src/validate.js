@@ -28,11 +28,18 @@ export function validateModel(filePath) {
   const lineageIds = new Set();
   const consumerIds = new Set(consumers.map(c => c.id).filter(Boolean));
 
+  // ── v1 schema detection ──────────────────────────────────────────────────
+  const version = typeof data.version === 'string' ? data.version : '1.0.0';
+  if (version !== '2.0.0') {
+    err('version', `Schema v${version} detected. Run: modscape migrate <path> to upgrade to v2.0.0`);
+    return { valid: false, errors, warnings };
+  }
+
   // ── Structural checks: tables ─────────────────────────────────────────────
   for (const [i, table] of tables.entries()) {
     const prefix = `tables[${i}]`;
     if (!table.id) { err(prefix, 'Missing required field: id'); continue; }
-    if (!table.name) err(`${prefix}(${table.id})`, 'Missing required field: name');
+    if (!table.conceptual?.name) warn(`${prefix}(${table.id})`, 'Missing conceptual.name');
 
     // Duplicate ID check
     if (tableIds.has(table.id)) err(prefix, `Duplicate table id: "${table.id}"`);
@@ -42,6 +49,13 @@ export function validateModel(filePath) {
     for (const field of COORD_FIELDS) {
       if (field in table) err(`tables[${table.id}].${field}`, `Coordinate field "${field}" must be placed in layout, not inside tables`);
     }
+
+    // v1 field detection
+    if ('name' in table && !table.conceptual) warn(`tables[${table.id}]`, 'Top-level "name" field detected — this is a v1 field. Run: modscape migrate <path>');
+    if ('appearance' in table) warn(`tables[${table.id}]`, '"appearance" field detected — this is a v1 field. Run: modscape migrate <path>');
+    if ('implementation' in table) warn(`tables[${table.id}]`, '"implementation" field detected — this is a v1 field. Run: modscape migrate <path>');
+    if ('logical_name' in table) warn(`tables[${table.id}]`, '"logical_name" field detected — this is a v1 field. Run: modscape migrate <path>');
+    if ('physical_name' in table) warn(`tables[${table.id}]`, '"physical_name" field detected — this is a v1 field. Run: modscape migrate <path>');
   }
 
   // ── Structural checks: domains ────────────────────────────────────────────
@@ -90,12 +104,13 @@ export function validateModel(filePath) {
     else if (!validLineageTargets.has(entry.to)) err(`${prefix}.to`, `"${entry.to}" not found in tables or consumers`);
   }
 
-  // ── Column logical completeness ───────────────────────────────────────────
+  // ── Column completeness ───────────────────────────────────────────────────
   for (const table of tables) {
     for (const col of table.columns || []) {
-      if (!col.logical) continue;
-      if (!col.logical.name) warn(`tables[${table.id}].columns[${col.id}].logical`, 'Missing required field: name (will cause UI crash)');
-      if (!col.logical.type) warn(`tables[${table.id}].columns[${col.id}].logical`, 'Missing required field: type (will cause UI crash)');
+      if (!col.name) warn(`tables[${table.id}].columns[${col.id}]`, 'Missing field: name');
+      if (!col.type) warn(`tables[${table.id}].columns[${col.id}]`, 'Missing field: type');
+      // v1 field detection
+      if (col.logical) warn(`tables[${table.id}].columns[${col.id}]`, '"logical" wrapper detected — this is a v1 field. Run: modscape migrate <path>');
     }
   }
 

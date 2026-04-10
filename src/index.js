@@ -17,6 +17,7 @@ import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
 import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
+import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
 
 const require = createRequire(import.meta.url);
@@ -141,6 +142,16 @@ program
   .option('-o, --output <path>', 'output file path (defaults to overwriting input)')
   .action((path, options) => {
     applyLayout(path, options);
+  });
+
+program
+  .command('migrate')
+  .description('Migrate a YAML model file to the latest schema version')
+  .argument('<path>', 'path to the YAML model file')
+  .option('--dry-run', 'preview the migration without writing files')
+  .option('-o, --out <path>', 'write migrated output to a different file')
+  .action((filePath, options) => {
+    migrateModel(filePath, { dryRun: options.dryRun, out: options.out });
   });
 
 program

@@ -113,62 +113,64 @@ domains:
   - id: core_sales
     name: "主要売上"
     description: "営業チームのトランザクションデータ。"  # 任意
-    color: "rgba(59, 130, 246, 0.1)"  # 背景色
+    display:
+      color: "rgba(59, 130, 246, 0.1)"  # 背景色
     members: [orders, dim_customers]   # 論理的な所属リスト
 ```
 
 ### Tables（テーブル）
 
+テーブルスキーマは3層オントロジーとビジュアル軸で構成されます：
+
 ```yaml
 tables:
   - id: orders
-    name: 注文                           # 概念名（大）
-    logical_name: "顧客注文履歴"          # 論理名（中）
-    physical_name: "fct_retail_sales"   # 物理名（小）
+    conceptual:  # ビジネス層 – AI向け
+      name: 注文                         # 表示名（大、必須）
+      kind: fact                         # fact | dimension | mart | hub | link | satellite | table
+      description: "1行 = 1注文明細。"  # AIが読むコンテキスト
+      tags: [WHO, WHAT, WHEN]           # BEAM* タグ
 
-    appearance:
-      type: fact        # fact | dimension | mart | hub | link | satellite | table
-      sub_type: transaction  # transaction | periodic | accumulating など
-      scd: type2        # ディメンション用 SCD タイプ: type0〜type6
+    logical:  # 分析層 – 任意
+      name: "顧客注文履歴"               # 正式な業務名（中）
+      grain: [month_key]                 # GROUP BY カラム（martのみ）
+      scd:                               # ディメンション用 SCD 設定
+        type: type2                      # type0〜type6
+        business_key: [customer_id]      # 自然キーのカラム ID（複合キーも可）
+        valid_from: valid_from           # 有効開始日のカラム ID
+        valid_to: valid_to               # 有効終了日のカラム ID
+        current_flag: is_current         # 任意 – 現在レコードフラグのカラム ID
+
+    physical:  # 構築・ストレージ層 – 任意
+      name: "fct_retail_sales"           # ウェアハウスのテーブル名（小）
+      strategy: incremental              # table | view | incremental | ephemeral
+      update_mode: merge                 # merge | append | delete_insert
+      merge_key: order_id
+      partition:
+        field: order_date                # DATE/TIMESTAMP型カラムを指定
+        granularity: day                 # day | month | year | hour
+      cluster: [customer_id]
+      filter_key: updated_at             # 任意 – インクリメンタルフィルターのカラム ID
+      lookback: "3 days"                 # 任意 – インクリメンタルフィルターの安全マージン
+      measures:                          # 集計定義（martのみ）
+        - column: total_revenue
+          agg: sum                       # sum | count | count_distinct | avg | min | max
+          source_column: fct_sales.amount
+
+    display:  # ビジュアル層 – 任意
       icon: "💰"
       color: "#e0f2fe"  # 任意のヘッダーカラー
 
-    conceptual:  # 任意 – AIエージェント向けビジネスコンテキスト
-      description: "1行 = 1注文明細。"
-      tags: [WHO, WHAT, WHEN]  # BEAM* タグ
-
-    implementation:  # 任意 – AIコード生成へのヒント
-      materialization: incremental  # table | view | incremental | ephemeral
-      incremental_strategy: merge   # merge | append | delete+insert
-      unique_key: order_id
-      partition_by:
-        field: order_date       # DATE/TIMESTAMP型カラムを指定（サロゲートキーは不可）
-        granularity: day        # day | month | year | hour
-      cluster_by: [customer_id]
-      grain: [month_key]        # GROUP BY カラム（martのみ）
-      measures:                 # 集計定義（martのみ）
-        - column: total_revenue
-          agg: sum              # sum | count | count_distinct | avg | min | max
-          source_column: fct_sales.amount
-      incremental_key: updated_at    # 任意 – インクリメンタルフィルターに使うカラム ID
-      incremental_lookback: "3 days" # 任意 – インクリメンタルフィルターの安全マージン
-      scd2:                          # 任意 – SCD Type2 の列役割（appearance.scd: type2 が必要）
-        business_key: [customer_id]  # 自然キーのカラム ID（複合キーも可）
-        valid_from: valid_from       # 有効開始日のカラム ID
-        valid_to: valid_to           # 有効終了日のカラム ID
-        current_flag: is_current     # 任意 – 現在レコードフラグのカラム ID
-
     columns:
       - id: order_id
-        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # 任意 – SELECT 句生成に使う SQL 式
-        logical:
-          name: "注文ID"
-          type: Int         # Int | String | Decimal | Date | Timestamp | Boolean など
-          description: "サロゲートキー。"
-          isPrimaryKey: true
-          isForeignKey: false
-          isPartitionKey: false
-          additivity: fully  # fully | semi | non
+        name: "注文ID"                   # フラット構造（logical: ラッパー不要）
+        type: Int                        # Int | String | Decimal | Date | Timestamp | Boolean など
+        description: "サロゲートキー。"
+        isPrimaryKey: true
+        isForeignKey: false
+        isPartitionKey: false
+        additivity: fully                # fully | semi | non
+        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # 任意 – SELECT 句に使う SQL 式
         physical:  # 任意 – ウェアハウスの物理定義を上書き
           name: order_id
           type: "BIGINT"
@@ -241,7 +243,7 @@ consumers:
   - id: revenue_dashboard       # 一意のID — lineageやlayoutで使用
     name: "Revenue Dashboard"   # 表示名
     description: "財務チーム向け月次KPIダッシュボード"  # 任意
-    appearance:
+    display:
       icon: "📊"                # 任意（デフォルト: 📊）
       color: "#e0f2fe"          # 任意のアクセントカラー
     url: "https://bi.example.com/revenue"  # 任意のリンク
@@ -262,19 +264,21 @@ lineage:
 ```yaml
 annotations:
   - id: note_001
-    type: sticky   # sticky | callout
     text: "粒度：1行 = 1注文明細"
-    color: "#fef9c3"          # 任意の背景色
-    targetId: fct_orders      # 貼り付け先のオブジェクト ID（任意）
-    targetType: table         # table | domain | relationship | lineage | column
+    target:                  # 任意 – 貼り付け先
+      id: fct_orders         # 貼り付け先のオブジェクト ID
+      type: table            # table | domain | relationship | lineage | column
+    display:
+      color: "#fef9c3"       # 任意の背景色
     offset:
-      x: 100    # 対象の左上からのオフセット（targetId 未指定時は絶対座標）
+      x: 100    # 対象の左上からのオフセット（target 未指定時は絶対座標）
       y: -80
 ```
 
 ### Layout（レイアウト）
 
 全座標データはオブジェクト ID をキーとして `layout` に記述します。**`tables` や `domains` の中に `x`/`y` を書いてはいけません。**
+ドメインへの所属は `domains.members` で宣言します（`parentId` は不要）。
 
 ```yaml
 layout:
@@ -286,10 +290,10 @@ layout:
     height: 480
 
   # ドメイン内のテーブル – 座標はドメインの原点からの相対値
+  # （所属は domains.members で宣言）
   orders:
     x: 280
     y: 200
-    parentId: core_sales  # ドメインへの所属を宣言
 
   # スタンドアロンテーブル – キャンバス絶対座標
   mart_summary:

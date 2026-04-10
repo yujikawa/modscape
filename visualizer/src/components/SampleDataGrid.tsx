@@ -29,7 +29,7 @@ const SampleDataGrid = ({ table, sampleData }: SampleDataGridProps) => {
                   whiteSpace: 'nowrap'
                 }}
               >
-                {col.logical?.name || col.id}
+                {col.name || col.id}
               </th>
             ))}
           </tr>
