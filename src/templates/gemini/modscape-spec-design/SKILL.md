@@ -106,6 +106,16 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 14. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
 
+15. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
+
+```markdown
+- [ ] **Q-NNN** <question text>
+  **Assumption:** <what you assumed to proceed> (unconfirmed)
+```
+
+    If there are unresolved questions (`- [ ]`) at the end of design, output:
+    > ⚠ **Q-NNN** 件の未解決の質問があります。`modscape spec answer <id> "<回答>"` で回答するか、このまま実装に進む場合は `@modscape-spec-implement <name>` を実行してください。
+
 ## design.md Format
 
 ```markdown

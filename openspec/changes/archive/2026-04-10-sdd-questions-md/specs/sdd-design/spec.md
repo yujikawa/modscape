@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: spec.md と既存specを読み込んで spec-model.yaml を設計する
 AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs/*.md`（既存の恒久テーブルspec）を読み込み、影響テーブルを自動特定して `changes/<name>/spec-model.yaml`（作業用YAML）を設計・更新しなければならない（SHALL）。本番のmodel.yaml（HR.yaml等）は直接変更してはならない（SHALL NOT）。
@@ -26,7 +26,7 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 
 各タスクには以下を含めなければならない（SHALL）:
 - テーブルID（バッククォートで表記）
-- materialization 種別（`implementation.materialization` または `appearance.type` から推定）
+- materialization 種別（`physical.strategy` または `conceptual.kind` から推定）
 - 上流依存テーブル（`←` で表記）
 
 スキルは下流テーブルを以下のように分類しなければならない（SHALL）:
@@ -62,11 +62,3 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 #### Scenario: 完了後に次スキルへ誘導する
 - **WHEN** `changes/<name>/spec-model.yaml` の更新が完了する
 - **THEN** AIは「実装を始めますか？ `/modscape:spec:implement <name>` を実行してください」というメッセージを表示する
-
-#### Scenario: Downstream Impact の分類を design.md に記録する
-- **WHEN** 下流テーブルが特定される
-- **THEN** AIは各テーブルを Direct / Downstream Impact — Implement / Downstream Impact — Context Only に分類し、免責注記とともに `design.md` の `## Affected Tables` セクションに記録する
-
-#### Scenario: Context Only テーブルを tasks.md に含めない
-- **WHEN** tasks.md を生成する
-- **THEN** Downstream Impact — Context Only に分類されたテーブルのタスクは tasks.md に含めない

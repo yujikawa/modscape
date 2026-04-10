@@ -60,6 +60,12 @@ export function specNew(name) {
     `# Pipeline Tasks\n> Generated from: .modscape/changes/${name}/spec-model.yaml\n> Spec: .modscape/changes/${name}/spec.md\n> Progress: 0 / 0\n\n## Phase 1: Staging\n\n## Phase 2: Core\n\n## Phase 3: Mart\n\n## Phase 4: Tests\n`
   );
 
+  // questions.md
+  writeIfNotExists(
+    path.join(dir, 'questions.md'),
+    `# Questions: ${name}\n\n## Pipeline-level\n\n## Table-level\n`
+  );
+
   console.log(`\n  ✅ Scaffold complete: ${dir}/`);
   console.log(`\n  Next: run /modscape:spec:requirements to fill in spec.md\n`);
 }

@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: SDD作業完了時に恒久テーブルspecを自動同期する
 AIスキル `/modscape:spec:archive <name>` は `changes/<name>/spec.md`・`changes/<name>/design.md`・`changes/<name>/spec-model.yaml` を解析し、影響テーブルを特定して `.modscape/specs/<table-id>.md` を自動生成または更新しなければならない（SHALL）。また `changes/<name>/spec-model.yaml` を本番のmaster model.yaml（HR.yaml等）にマージしなければならない（SHALL）。

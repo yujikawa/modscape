@@ -65,6 +65,15 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
 10. Set `Status: requirements` in the spec file.
 
+11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question to `.modscape/changes/<name>/questions.md` using the format below. If proceeding with an assumption, record it on the `**Assumption:**` line.
+
+```markdown
+- [ ] **Q-NNN** <question text>
+  **Assumption:** <what you assumed to proceed> (unconfirmed)
+```
+
+Question IDs are sequential within the change (`Q-001`, `Q-002`, ...). Do **not** add a question if the user already provided a clear answer during the conversation.
+
 ## spec.md Format
 
 ```markdown

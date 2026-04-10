@@ -56,7 +56,10 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 6. After generating code for a task, immediately update the checkbox in `.modscape/changes/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
-7. After each task, confirm with the user before proceeding:
+7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md` using the next available Q-NNN ID, then ask the user whether to pause or continue with an assumption:
+   > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として questions.md に記録しました）。回答を待ちますか、それとも仮定で進めますか？
+
+8. After each task, confirm with the user before proceeding:
    > Task complete. Ready to move on to the next task?
 
 ## Code Generation Guidelines
