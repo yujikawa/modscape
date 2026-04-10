@@ -45,6 +45,10 @@ modscape migrate <path>   # in-place migration (creates .bak backup)
 
 ### Added
 
+- **`modscape spec answer` command** — Answers a question in `questions.md` by Q-NNN ID. Marks the question `[x]` and appends `**A:** <answer>`. Change name can be omitted when only one active change exists; required otherwise.
+  - `modscape spec answer <id> "<answer>" --change <name>`
+  - `modscape spec answer <id> "<answer>"` (auto-resolves if single active change)
+- **`questions.md` in SDD workflow** — `modscape spec new` now generates a `questions.md` template in `.modscape/changes/<name>/`. AI skills (requirements/design/implement) append unanswered investigation items as `Q-NNN` entries. Archive syncs all questions to `.modscape/specs/questions.md` via flat-merge per table.
 - **`modscape migrate` command** — Converts v1 YAML files to v2 format via a chain-based migration system.
   - `modscape migrate <path>` — in-place migration with `.bak` backup
   - `modscape migrate <path> --dry-run` — preview without writing
