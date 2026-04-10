@@ -151,9 +151,17 @@ tables:
         - column: total_revenue
           agg: sum              # sum | count | count_distinct | avg | min | max
           source_column: fct_sales.amount
+      incremental_key: updated_at   # optional – column id for WHERE filter (incremental only)
+      incremental_lookback: "3 days" # optional – safety margin for incremental filter
+      scd2:                          # optional – SCD Type2 column roles (requires appearance.scd: type2)
+        business_key: [customer_id]  # natural key column id(s)
+        valid_from: valid_from       # column id for start date
+        valid_to: valid_to           # column id for end date
+        current_flag: is_current     # optional – column id for current record flag
 
     columns:
       - id: order_id
+        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # optional – SQL expression for SELECT clause
         logical:
           name: "Order ID"
           type: Int         # Int | String | Decimal | Date | Timestamp | Boolean | ...
@@ -166,6 +174,11 @@ tables:
           name: order_id
           type: "BIGINT"
           constraints: [NOT NULL]
+
+    metadata:  # optional – user-defined key-value pairs (any string key)
+      owner: data-platform
+      sla: "daily 6AM JST"
+      sql_path: "models/marts/fct_orders.sql"
 
     sampleData:  # 2D array of realistic values
       - [1001, 50.0, "COMPLETED"]
@@ -181,10 +194,12 @@ lineage:
   - id: lin_orders_revenue   # optional; auto-generated as lin-{from}-{to} if omitted
     from: fct_orders         # source table ID
     to: mart_revenue         # derived table ID
+    join_type: left          # optional – inner | left | cross | none
     description: "Aggregated daily amounts into monthly buckets."  # optional
   - id: lin_dates_revenue
     from: dim_dates
     to: mart_revenue
+    join_type: inner
 ```
 
 ### Relationships

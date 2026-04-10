@@ -1,4 +1,4 @@
-import { readYaml } from './model-utils.js';
+import { readYaml, buildLineageGraph, hasLineageCycle } from './model-utils.js';
 
 const COORD_FIELDS = ['x', 'y', 'width', 'height'];
 
@@ -88,6 +88,23 @@ export function validateModel(filePath) {
     else if (!validLineageTargets.has(entry.from)) err(`${prefix}.from`, `"${entry.from}" not found in tables or consumers`);
     if (!entry.to) err(prefix, 'Missing to');
     else if (!validLineageTargets.has(entry.to)) err(`${prefix}.to`, `"${entry.to}" not found in tables or consumers`);
+  }
+
+  // ── Column logical completeness ───────────────────────────────────────────
+  for (const table of tables) {
+    for (const col of table.columns || []) {
+      if (!col.logical) continue;
+      if (!col.logical.name) warn(`tables[${table.id}].columns[${col.id}].logical`, 'Missing required field: name (will cause UI crash)');
+      if (!col.logical.type) warn(`tables[${table.id}].columns[${col.id}].logical`, 'Missing required field: type (will cause UI crash)');
+    }
+  }
+
+  // ── Lineage cycle check ───────────────────────────────────────────────────
+  if (lineage.length > 0) {
+    const graph = buildLineageGraph(lineage);
+    if (hasLineageCycle(graph)) {
+      warn('lineage', 'Circular lineage detected — lineage graph contains a cycle');
+    }
   }
 
   // ── Layout checks ─────────────────────────────────────────────────────────

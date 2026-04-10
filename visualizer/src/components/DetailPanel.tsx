@@ -73,6 +73,8 @@ const DetailPanel = memo(() => {
   const [tagInput, setTagInput] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [tabsOverflow, setTabsOverflow] = useState(false)
+  const [metadataEntries, setMetadataEntries] = useState<Array<{ key: string; value: string }>>([])
+  const tableIdRef = useRef<string | undefined>(undefined)
 
   // Floating window state
   const DEFAULT_W = 600
@@ -168,8 +170,8 @@ const DetailPanel = memo(() => {
         return
       }
 
-      // 1–5: switch tabs (only when a table is selected)
-      const tabIds = ['conceptual', 'logical', 'physical', 'implementation', 'sample']
+      // 1–6: switch tabs (only when a table is selected)
+      const tabIds = ['conceptual', 'logical', 'physical', 'implementation', 'sample', 'metadata']
       const idx = parseInt(e.key) - 1
       if (idx >= 0 && idx < tabIds.length && getSelectedTable()) {
         e.preventDefault()
@@ -179,6 +181,16 @@ const DetailPanel = memo(() => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isDetailPanelOpen, setIsDetailPanelOpen, getSelectedTable])
+
+  // Sync metadataEntries when the selected table changes
+  useEffect(() => {
+    const t = getSelectedTable()
+    if (!t || t.id === tableIdRef.current) return
+    tableIdRef.current = t.id
+    setMetadataEntries(
+      t.metadata ? Object.entries(t.metadata).map(([k, v]) => ({ key: k, value: String(v) })) : []
+    )
+  })
 
   if (!isDetailPanelOpen) return null
   if (!table && !domain && !consumer && !relationshipData && !annotation) return null
@@ -860,7 +872,8 @@ const DetailPanel = memo(() => {
     { id: 'logical', label: 'Logical', icon: <Database size={14} />, shortcut: '2' },
     { id: 'physical', label: 'Physical', icon: <Database size={14} />, shortcut: '3' },
     { id: 'implementation', label: 'Implementation', icon: <Cpu size={14} />, shortcut: '4' },
-    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '5' }
+    { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '5' },
+    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '6' }
   ]
 
   const typeConfig = table!.appearance?.type ? TYPE_CONFIG[table!.appearance.type] : null;
@@ -1531,7 +1544,7 @@ const DetailPanel = memo(() => {
                         <input 
                           value={col.physical?.name ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { name: e.target.value })}
-                          placeholder={col.logical?.name.toLowerCase().replace(/ /g, '_')}
+                          placeholder={col.logical?.name?.toLowerCase()?.replace(/ /g, '_')}
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-blue-400 focus:bg-slate-800' : 'text-blue-600 focus:bg-slate-50'
                           }`}
@@ -1541,7 +1554,7 @@ const DetailPanel = memo(() => {
                         <input 
                           value={col.physical?.type ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { type: e.target.value })}
-                          placeholder={col.logical?.type.toUpperCase()}
+                          placeholder={col.logical?.type?.toUpperCase()}
                           className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-400 focus:bg-slate-800' : 'text-slate-500 focus:bg-slate-50'
                           }`}
@@ -1817,7 +1830,7 @@ const DetailPanel = memo(() => {
                             <div className="flex flex-col gap-0.5">
                               <span className={`font-bold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{col?.logical?.name || col.id}</span>
                               <span className={`text-[10px] font-mono italic ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                                {col?.physical?.name || col?.logical?.name?.toLowerCase().replace(/ /g, '_') || col.id}
+                                {col?.physical?.name || col?.logical?.name?.toLowerCase()?.replace(/ /g, '_') || col.id}
                               </span>
                             </div>
                           </th>
@@ -1863,6 +1876,86 @@ const DetailPanel = memo(() => {
                     )}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+        {activeTab === 'metadata' && (
+          <div className="flex flex-col h-full gap-3">
+            <div className="flex justify-between items-center">
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Metadata</h3>
+              <button
+                onClick={() => setMetadataEntries(prev => [...prev, { key: '', value: '' }])}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-white bg-emerald-600 hover:bg-emerald-700 rounded text-xs font-medium shadow-md shadow-emerald-500/20 transition-colors"
+              >
+                <Plus size={13} /> Add Field
+              </button>
+            </div>
+
+            {metadataEntries.length === 0 ? (
+              <div className={`flex-1 flex flex-col items-center justify-center p-8 rounded-lg border border-dashed transition-colors ${
+                theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <FileChartColumnIncreasing size={32} className={`${theme === 'dark' ? 'text-slate-700' : 'text-slate-300'} mb-4`} />
+                <p className="text-sm text-slate-500 mb-1">No metadata fields yet.</p>
+                <p className="text-xs text-slate-400 italic">Click "Add Field" to add owner, SLA, sql_path, etc.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5 overflow-auto flex-1">
+                {metadataEntries.map((entry, idx) => {
+                  const saveEntries = (next: typeof metadataEntries) => {
+                    const valid = next.filter(e => e.key.trim())
+                    const obj = valid.length > 0
+                      ? Object.fromEntries(valid.map(e => [e.key.trim(), e.value]))
+                      : undefined
+                    updateTable(table!.id, { metadata: obj })
+                  }
+                  return (
+                    <div key={idx} className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${
+                      theme === 'dark' ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-white'
+                    }`}>
+                      <input
+                        placeholder="key"
+                        value={entry.key}
+                        onChange={e => {
+                          const next = metadataEntries.map((en, i) => i === idx ? { ...en, key: e.target.value } : en)
+                          setMetadataEntries(next)
+                          saveEntries(next)
+                        }}
+                        className={`flex-1 min-w-0 bg-transparent border rounded px-2 py-1 text-xs font-mono outline-none transition-colors ${
+                          theme === 'dark'
+                            ? 'border-slate-700 text-slate-200 placeholder-slate-600 focus:border-blue-500'
+                            : 'border-slate-300 text-slate-700 placeholder-slate-400 focus:border-blue-400'
+                        }`}
+                      />
+                      <span className={`text-xs flex-shrink-0 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>:</span>
+                      <input
+                        placeholder="value"
+                        value={entry.value}
+                        onChange={e => {
+                          const next = metadataEntries.map((en, i) => i === idx ? { ...en, value: e.target.value } : en)
+                          setMetadataEntries(next)
+                          saveEntries(next)
+                        }}
+                        className={`flex-[2] min-w-0 bg-transparent border rounded px-2 py-1 text-xs font-mono outline-none transition-colors ${
+                          theme === 'dark'
+                            ? 'border-slate-700 text-slate-300 placeholder-slate-600 focus:border-blue-500'
+                            : 'border-slate-300 text-slate-700 placeholder-slate-400 focus:border-blue-400'
+                        }`}
+                      />
+                      <button
+                        onClick={() => {
+                          const next = metadataEntries.filter((_, i) => i !== idx)
+                          setMetadataEntries(next)
+                          saveEntries(next)
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

@@ -21,11 +21,15 @@ CLI は `extract <source...> --tables <ids> [-o <output>]` コマンドを提供
 - **THEN** 出力の `dim_customers` は `file_b.yaml` の定義になる
 
 ### Requirement: 出力セクションの制限
-出力 YAML には `tables` セクションのみを含めなければならない（SHALL）。`relationships` / `domains` / `lineage` / `annotations` / `layout` は出力に含めてはならない（SHALL NOT）。
+出力 YAML には `tables` セクションのみを含めなければならない（SHALL）。`relationships` / `domains` / `lineage` / `annotations` / `layout` は出力に含めてはならない（SHALL NOT）。ただし `--with-downstream` フラグを指定した場合は、下流トラバーサルに使用するために `lineage` セクションを読み込むが、出力 YAML には含めない（SHALL NOT）。
 
 #### Scenario: relationships を含むソースファイルから抽出
 - **WHEN** relationships を持つ YAML から extract する
 - **THEN** 出力 YAML に relationships キーは存在しない
+
+#### Scenario: --with-downstream 指定時も lineage は出力に含まない
+- **WHEN** `--with-downstream` フラグを指定して extract する
+- **THEN** 出力 YAML に lineage キーは存在しない（下流テーブルの tables エントリのみ出力される）
 
 ### Requirement: マッチしない ID の警告
 `--tables` に指定した ID がいずれのソースファイルにも存在しない場合、警告メッセージを出力しなければならない（SHALL）。

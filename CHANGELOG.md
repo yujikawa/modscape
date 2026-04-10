@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-04-09
+
+### Added
+- **`metadata` field on tables** — Free-form key-value map at the table level for project-specific information (owner, SLA, SQL file path, sensitivity label, etc.). Any string key is accepted; values must be scalar. Preserved as-is by all CLI commands.
+- **Detail Panel — Metadata tab** — New 6th tab in the table Detail Panel (`6` key shortcut). Displays metadata fields as an editable key-value form with inline add / delete support. Changes are immediately persisted to the YAML.
+- **`modscape extract --with-downstream`** — New flag that recursively collects all downstream tables from the specified starting tables via BFS lineage traversal.
+  - Accepts multiple starting table IDs (`--tables id1,id2,...`) and collects the union of all downstreams in a single command.
+  - Works across multiple input YAMLs: lineage graphs from all input files are merged before traversal.
+  - `--record` correctly maps each downstream table to the source YAML it was extracted from; unregistered source YAMLs are auto-added to `spec-config.yaml`.
+  - SDD `design` skill updated to use `--with-downstream` for initial extraction. `Affected Tables` in `design.md` now distinguishes **Direct Impact** (tables specified in `--tables`) from **Downstream Impact — Implement** (downstream tables that must be updated) and **Downstream Impact — Context Only** (downstream tables collected for reference only, no code changes required). The classification is AI-proposed and editable in `design.md`.
+- SDD `implement` skill now reads `design.md` and skips tables listed under `### Downstream Impact — Context Only` (outputs `⏭️ Skipping <id> (Context Only)`). Falls back to implementing all tables when `design.md` is absent.
+- SDD `archive` skill now applies full spec sync only to Direct Impact and Downstream Impact — Implement tables; Context Only tables receive a Changelog-only entry. Falls back to full sync when `design.md` is absent.
+- **`modscape validate` — circular lineage warning** — Detects cycles in the `lineage` graph and reports them as a warning (valid YAML, but logically incorrect model).
+- **`modscape validate` — column logical completeness warning** — When a column has a `logical` section, missing `name` or `type` fields are now flagged as warnings with `(will cause UI crash)` note.
+
+- **`columns[].expression`** — Optional SQL transformation formula per column. When set, the SDD implement skill uses it verbatim as the SELECT clause expression instead of inferring from column names.
+- **`lineage[].join_type`** — Optional field on each lineage edge (`inner` | `left` | `cross` | `none`). The SDD implement skill uses it to generate the correct JOIN clause. When omitted, defaults to `left` if a `relationships` entry exists, otherwise `none`.
+- **`implementation.incremental_key`** — Optional column ID specifying the timestamp/date filter column for incremental models. SDD generates `WHERE <key> > {{ last_run_timestamp() }}`.
+- **`implementation.incremental_lookback`** — Optional safety margin (e.g. `"3 days"`) subtracted from the incremental filter boundary.
+- **`implementation.scd2`** — Optional SCD Type2 configuration block with `business_key` (array), `valid_from`, `valid_to`, and optional `current_flag`. SDD uses it to generate MERGE/snapshot SQL without guessing column roles.
+- All four fields are **optional** and backwards-compatible — existing YAML requires no changes.
+
+
+### Fixed
+- **Detail Panel white screen crash** — `col.logical?.name?.toLowerCase().replace()` and `col.logical?.type.toUpperCase()` crashed when `logical.name` or `logical.type` was missing. Fixed by adding `?.` to all method chains on optional fields.
+
 ## [2.7.2] - 2026-04-09
 
 ### Added

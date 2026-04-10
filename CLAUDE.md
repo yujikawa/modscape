@@ -222,8 +222,16 @@ tables:
         - column: total_revenue
           agg: sum                         # sum|count|count_distinct|avg|min|max
           source_column: fct_sales.amount  # upstream column (<table_id>.<col_id>)
+      incremental_key: updated_at          # optional; column id for WHERE filter (incremental only)
+      incremental_lookback: "3 days"       # optional; safety margin for incremental filter
+      scd2:                                # optional; SCD Type2 column roles (requires appearance.scd: type2)
+        business_key: [customer_id]        # natural key column id(s)
+        valid_from: valid_from             # column id for start date
+        valid_to: valid_to                 # column id for end date
+        current_flag: is_current           # optional; column id for current record flag
     columns:
       - id: order_id
+        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # optional; SQL expression for SELECT clause
         logical:
           name: "Order ID"
           type: Int
@@ -236,6 +244,10 @@ tables:
           name: order_id
           type: "BIGINT"
           constraints: [NOT NULL]
+    metadata:                  # optional user-defined key-value pairs
+      owner: data-platform
+      sla: "daily 6AM JST"
+      sql_path: "models/marts/fct_orders.sql"
     sampleData:                # 2D array of plain data rows (no header)
       - [1001, 150.00]
       - [1002, 89.50]
@@ -245,6 +257,7 @@ lineage:
   - id: lin_orders_summary  # optional; auto-generated as lin-{from}-{to} if omitted
     from: fct_orders        # upstream table id
     to: mart_summary        # downstream table id
+    join_type: left         # optional; inner|left|cross|none
   # Do not duplicate entries in relationships
 
 # ── Relationships ─────────────────────────────────────────

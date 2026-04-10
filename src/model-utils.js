@@ -123,6 +123,47 @@ export function outputWarn(json, message) {
   }
 }
 
+/**
+ * Build a lineage adjacency list from an array of lineage entries.
+ * @param {Array} lineageEntries - Array of { from, to } objects
+ * @returns {Map<string, string[]>}
+ */
+export function buildLineageGraph(lineageEntries) {
+  const graph = new Map();
+  for (const lin of lineageEntries) {
+    if (!lin.from || !lin.to) continue;
+    if (!graph.has(lin.from)) graph.set(lin.from, []);
+    graph.get(lin.from).push(lin.to);
+  }
+  return graph;
+}
+
+/**
+ * Detect cycles in a lineage graph via DFS.
+ * @param {Map<string, string[]>} graph
+ * @returns {boolean} true if at least one cycle exists
+ */
+export function hasLineageCycle(graph) {
+  const visited = new Set();
+  const stack = new Set();
+
+  const dfs = (node) => {
+    visited.add(node);
+    stack.add(node);
+    for (const neighbor of graph.get(node) || []) {
+      if (stack.has(neighbor)) return true;
+      if (!visited.has(neighbor) && dfs(neighbor)) return true;
+    }
+    stack.delete(node);
+    return false;
+  };
+
+  for (const node of graph.keys()) {
+    if (!visited.has(node) && dfs(node)) return true;
+  }
+  return false;
+}
+
 export function outputOk(json, action, resource, id, extra = {}) {
   if (json) {
     console.log(JSON.stringify({ ok: true, action, resource, id, ...extra }));

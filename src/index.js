@@ -120,6 +120,7 @@ program
   .option('-o, --output <path>', 'output file path', 'extracted.yaml')
   .option('-a, --append', 'upsert into existing output file instead of overwriting')
   .option('--record <path>', 'record source YAML → table mapping into spec-config.yaml')
+  .option('--with-downstream', 'Recursively collect all downstream tables via lineage traversal')
   .action((paths, options) => {
     extractModels(paths, options);
   });

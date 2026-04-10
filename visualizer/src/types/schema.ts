@@ -3,6 +3,7 @@ export interface LineageEdge {
   from: string; // source table id
   to: string;   // target table or consumer id
   description?: string; // optional description of the transformation/filter
+  join_type?: 'inner' | 'left' | 'cross' | 'none'; // Optional: how the downstream joins this upstream
 }
 
 export interface Consumer {
@@ -74,6 +75,14 @@ export interface Implementation {
   cluster_by?: string[];
   grain?: string[];
   measures?: Measure[];
+  incremental_key?: string;   // Column ID used in WHERE clause for incremental models
+  incremental_lookback?: string; // Safety margin for incremental filter (e.g. "3 days")
+  scd2?: {
+    business_key: string[];  // Natural key column IDs
+    valid_from: string;      // Column ID for start date
+    valid_to: string;        // Column ID for end date
+    current_flag?: string;   // Optional column ID for current record flag
+  };
 }
 
 export interface Table {
@@ -98,12 +107,14 @@ export interface Table {
     schema?: string;
   };
   implementation?: Implementation; // Optional code-generation hints
+  metadata?: Record<string, unknown>; // Optional user-defined key-value pairs (owner, sql_path, sla, etc.)
   columns?: Column[]; // Optional
   sampleData?: any[][]; // New simplified format: 2D array
 }
 
 export interface Column {
   id: string; // Logical ID (unique per table)
+  expression?: string; // Optional SQL expression for SELECT clause generation (e.g. "CAST(amount AS DECIMAL(18,2))")
   logical?: { // Optional
     name: string;
     type: string;
