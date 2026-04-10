@@ -8,11 +8,12 @@ const FIXTURE_DIR = 'tests/fixtures/ai-tools-test';
 const MODEL_FILE = path.join(FIXTURE_DIR, 'model.yaml');
 
 const INITIAL_MODEL = {
+  version: '2.0.0',
   tables: [
-    { id: 'fct_orders', name: 'Orders', appearance: { type: 'fact' } },
-    { id: 'dim_customers', name: 'Customers', appearance: { type: 'dimension' } },
-    { id: 'dim_products', name: 'Products', appearance: { type: 'dimension' } },
-    { id: 'mart_summary', name: 'Summary', appearance: { type: 'mart' } },
+    { id: 'fct_orders', conceptual: { name: 'Orders', kind: 'fact' } },
+    { id: 'dim_customers', conceptual: { name: 'Customers', kind: 'dimension' } },
+    { id: 'dim_products', conceptual: { name: 'Products', kind: 'dimension' } },
+    { id: 'mart_summary', conceptual: { name: 'Summary', kind: 'mart' } },
   ],
   domains: [
     { id: 'sales', name: 'Sales', members: ['fct_orders', 'dim_customers'] },
@@ -53,21 +54,20 @@ test.describe('CLI: annotation commands', () => {
   });
 
   test('annotation add creates annotation with auto-generated id', () => {
-    cli(`annotation add ${MODEL_FILE} --text "Test note" --type sticky`);
+    cli(`annotation add ${MODEL_FILE} --text "Test note"`);
     const model = readModel();
     expect(model.annotations).toHaveLength(1);
     expect(model.annotations[0].text).toBe('Test note');
-    expect(model.annotations[0].type).toBe('sticky');
     expect(model.annotations[0].id).toMatch(/^note-\d+$/);
   });
 
   test('annotation add with explicit id', () => {
-    cli(`annotation add ${MODEL_FILE} --id my_note --text "Explicit ID" --type callout --target-id fct_orders --target-type table`);
+    cli(`annotation add ${MODEL_FILE} --id my_note --text "Explicit ID" --target-id fct_orders --target-type table`);
     const model = readModel();
     const note = model.annotations.find((a: any) => a.id === 'my_note');
     expect(note).toBeDefined();
-    expect(note.targetId).toBe('fct_orders');
-    expect(note.targetType).toBe('table');
+    expect(note.target?.id).toBe('fct_orders');
+    expect(note.target?.type).toBe('table');
   });
 
   test('annotation add with duplicate id throws error', () => {
@@ -77,7 +77,7 @@ test.describe('CLI: annotation commands', () => {
 
   test('annotation list returns all annotations as JSON', () => {
     cli(`annotation add ${MODEL_FILE} --id n1 --text "Note 1"`);
-    cli(`annotation add ${MODEL_FILE} --id n2 --text "Note 2" --type callout`);
+    cli(`annotation add ${MODEL_FILE} --id n2 --text "Note 2"`);
     const result = cliJson(`annotation list ${MODEL_FILE} --json`);
     expect(result).toHaveLength(2);
     expect(result.map((a: any) => a.id)).toContain('n1');
@@ -85,12 +85,12 @@ test.describe('CLI: annotation commands', () => {
   });
 
   test('annotation update modifies text without changing other fields', () => {
-    cli(`annotation add ${MODEL_FILE} --id n1 --text "Original" --type callout`);
+    cli(`annotation add ${MODEL_FILE} --id n1 --text "Original" --target-id fct_orders --target-type table`);
     cli(`annotation update ${MODEL_FILE} --id n1 --text "Updated"`);
     const model = readModel();
     const note = model.annotations.find((a: any) => a.id === 'n1');
     expect(note.text).toBe('Updated');
-    expect(note.type).toBe('callout');
+    expect(note.target?.id).toBe('fct_orders');
   });
 
   test('annotation update with non-existent id throws error', () => {

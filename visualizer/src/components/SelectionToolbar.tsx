@@ -63,7 +63,7 @@ const SelectionToolbar = () => {
             {isMultiSelect ? 'Multi-Selection' : `Selected ${table ? 'Table' : domain ? 'Domain' : consumer ? 'Consumer' : annotation ? 'Annotation' : (((relationshipData?.relationship.type as any) === 'lineage') ? 'Lineage' : 'Relation')}`}
           </span>
           <span className={`text-xs font-semibold truncate max-w-[180px] ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
-            {isMultiSelect ? `${selectedTableIds.length} tables selected` : (table ? table.name : domain ? domain.name : consumer ? consumer.name : annotation ? (annotation.text?.slice(0, 30) || annotation.id) : relationshipData ? `${relationshipData.relationship.from.table} → ${relationshipData.relationship.to.table}` : '')}
+            {isMultiSelect ? `${selectedTableIds.length} tables selected` : (table ? (table.conceptual?.name ?? table.id) : domain ? domain.name : consumer ? consumer.name : annotation ? (annotation.text?.slice(0, 30) || annotation.id) : relationshipData ? `${relationshipData.relationship.from.table} → ${relationshipData.relationship.to.table}` : '')}
           </span>
         </div>
       </div>

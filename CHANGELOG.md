@@ -2,6 +2,78 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2026-04-10
+
+### Breaking Changes
+
+This release introduces **YAML schema v2.0.0** — a complete redesign of the table schema based on a 3-layer ontology (Conceptual / Logical / Physical) plus a visual display axis. **Existing v1 YAML files must be migrated before use.**
+
+```bash
+modscape migrate <path>   # in-place migration (creates .bak backup)
+```
+
+#### Removed fields (v1 → v2 replacement)
+
+| Removed (v1) | Replacement (v2) |
+|---|---|
+| `table.name` | `table.conceptual.name` |
+| `table.logical_name` | `table.logical.name` |
+| `table.physical_name` | `table.physical.name` |
+| `table.appearance.type` | `table.conceptual.kind` |
+| `table.appearance.scd` | `table.logical.scd.type` |
+| `table.appearance.icon` | `table.display.icon` |
+| `table.appearance.color` | `table.display.color` |
+| `table.appearance.sub_type` | *(removed)* |
+| `table.implementation.materialization` | `table.physical.strategy` |
+| `table.implementation.incremental_strategy` | `table.physical.update_mode` (`delete+insert` → `delete_insert`) |
+| `table.implementation.unique_key` | `table.physical.merge_key` |
+| `table.implementation.partition_by` | `table.physical.partition` |
+| `table.implementation.cluster_by` | `table.physical.cluster` |
+| `table.implementation.incremental_key` | `table.physical.filter_key` |
+| `table.implementation.incremental_lookback` | `table.physical.lookback` |
+| `table.implementation.grain` | `table.logical.grain` |
+| `table.implementation.measures` | `table.physical.measures` |
+| `table.implementation.scd2` | *(merged into `table.logical.scd`)* |
+| `table.conceptual.tags` | `table.metadata.tags` |
+| `column.logical.{name,type,...}` | `column.{name,type,...}` (flat structure) |
+| `domain.color` | `domain.display.color` |
+| `consumer.appearance` | `consumer.display` |
+| `annotation.type` (sticky/callout) | *(removed)* |
+| `annotation.color` | `annotation.display.color` |
+| `annotation.targetId` + `annotation.targetType` | `annotation.target.{id,type}` |
+| `layout[id].parentId` | *(removed; domain membership declared in `domains.members`)* |
+
+### Added
+
+- **`modscape spec answer` command** — Answers a question in `questions.md` by Q-NNN ID. Marks the question `[x]` and appends `**A:** <answer>`. Change name can be omitted when only one active change exists; required otherwise.
+  - `modscape spec answer <id> "<answer>" --change <name>`
+  - `modscape spec answer <id> "<answer>"` (auto-resolves if single active change)
+- **`questions.md` in SDD workflow** — `modscape spec new` now generates a `questions.md` template in `.modscape/changes/<name>/`. AI skills (requirements/design/implement) append unanswered investigation items as `Q-NNN` entries. Archive syncs all questions to `.modscape/specs/questions.md` via flat-merge per table.
+- **`modscape migrate` command** — Converts v1 YAML files to v2 format via a chain-based migration system.
+  - `modscape migrate <path>` — in-place migration with `.bak` backup
+  - `modscape migrate <path> --dry-run` — preview without writing
+  - `modscape migrate <path> --out <new>` — write to new file
+  - Future v2→v3 migrations can be added as a single entry in the `MIGRATIONS` chain.
+- **`table.conceptual`** — Business layer: `name` (required), `kind`, `description`, `tags`
+- **`table.logical`** — Analytic layer: `name`, `grain`, `scd` (with `type`, `business_key`, `valid_from`, `valid_to`, `current_flag`)
+- **`table.physical`** — Build/storage layer: `name`, `schema`, `strategy`, `update_mode`, `merge_key`, `partition`, `cluster`, `filter_key`, `lookback`, `measures`
+- **`table.display`** — Visual layer: `icon`, `color`
+- **`domain.display.color`** — Domain background color moved to `display.color`
+- **`consumer.display`** — Consumer visual settings moved to `display` object
+- **`annotation.target`** — Annotation attachment as `{ id, type }` object
+- **`annotation.display.color`** — Annotation background color moved to `display.color`
+- **Detail Panel redesign** — Tabs now: `conceptual | logical | physical | sample | metadata` (implementation tab removed, build settings moved to physical tab)
+- **`modscape validate`** — Now warns when v1 fields (`appearance`, `implementation`, `logical_name`, etc.) are detected and suggests running `modscape migrate`
+
+### Changed
+
+- `MODEL_FORMAT_VERSION` bumped to `2.0.0`
+- Parser now returns an error for v1 YAML (`version: "1.0.0"` or no version field) with a message directing the user to run `modscape migrate`
+- All CLI mutation commands updated to use v2 field names
+- `dbt import` / `dbt sync` now generate v2-schema YAML
+- All AI skill templates (Claude, Gemini, Codex) updated to reference v2 fields
+- `samples/1-retail-analytics.yaml` and `samples/2-conformed-dims.yaml` migrated to v2
+
 ## [2.8.0] - 2026-04-09
 
 ### Added

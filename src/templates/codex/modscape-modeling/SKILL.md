@@ -22,12 +22,12 @@ Recommended flow:
 2. Add or update: `modscape table add` / `modscape table update`
 3. After adding tables: `modscape layout model.yaml` to assign coordinates
 
-See Section 13 of `.modscape/rules.md` for the full command reference.
+See Section 12 of `.modscape/rules.md` for the full command reference.
 
-Only edit YAML directly for complex nested fields not covered by CLI flags (e.g., `implementation`, `sampleData`, full `columns` definition).
+Only edit YAML directly for complex nested fields not covered by CLI flags (e.g., `physical`, `logical.scd`, `sampleData`, full `columns` definition).
 
-## Appearance & Layout
-- **Appearance**: When creating new tables, include the `appearance` block with an appropriate `type`.
+## Conceptual Kind & Layout
+- **Kind**: When creating new tables, set `conceptual: { name: "...", kind: "..." }` with an appropriate kind (`fact`, `dimension`, `mart`, `hub`, `link`, `satellite`, `table`).
 - **Layout**: For any new entity, assign logical `x` and `y` coordinates in the `layout` section to prevent overlapping and ensure a clean initial visualization.
 
 ALWAYS follow the rules defined in `.modscape/rules.md` (and `.modscape/rules.custom.md` if present) for any modeling tasks.

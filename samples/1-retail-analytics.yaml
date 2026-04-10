@@ -1,30 +1,67 @@
+version: 2.0.0
+imports:
+  - from: ./2-conformed-dims.yaml
+    ids:
+      - dim_dates
+domains:
+  - id: raw_vault
+    name: Raw Vault
+    description: Immutable historical record loaded from source systems
+    members:
+      - hub_customer
+      - hub_product
+      - hub_order
+      - lnk_order_line
+      - sat_customer_profile
+      - sat_product_details
+      - sat_order_header
+    display:
+      color: rgba(234, 179, 8, 0.08)
+  - id: star_schema
+    name: Star Schema
+    description: Conformed dimensional model built from the Raw Vault
+    members:
+      - dim_customers
+      - dim_products
+      - dim_dates
+      - fct_orders
+    display:
+      color: rgba(59, 130, 246, 0.08)
+  - id: mart
+    name: Data Mart
+    description: Aggregated models ready for BI consumption
+    members:
+      - mart_daily_revenue
+      - mart_product_performance
+    display:
+      color: rgba(249, 115, 22, 0.08)
 tables:
   - id: hub_customer
-    name: Customer Hub
-    physical_name: hub_customer
-    appearance:
-      type: hub
-      icon: 👤
     conceptual:
+      name: Customer Hub
+      kind: hub
       description: Business key for all customer entities across source systems.
+    logical:
+      name: Customer Hub Table
+    physical:
+      name: hub_customer
+    display:
+      icon: 👤
     columns:
       - id: customer_hk
-        logical:
-          name: Customer Hash Key
-          type: String
-          isPrimaryKey: true
+        name: Customer Hash Key
+        type: String
+        isPrimaryKey: true
       - id: customer_bk
-        logical:
-          name: Customer ID (BK)
-          type: String
+        name: Customer ID (BK)
+        type: String
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
+        name: Load Date
+        type: Timestamp
+        additivity: non
       - id: record_source
-        logical:
-          name: Record Source
-          type: String
+        name: Record Source
+        type: String
     sampleData:
       - - a1b2c3d4
         - CUST-00042
@@ -36,369 +73,328 @@ tables:
         - CUST-00091
         - erp.sap
   - id: hub_product
-    name: Product Hub
-    physical_name: hub_product
-    appearance:
-      type: hub
-      icon: 📦
     conceptual:
+      name: Product Hub
+      kind: hub
       description: Business key for all product entities.
+    physical:
+      name: hub_product
+    display:
+      icon: 📦
     columns:
       - id: product_hk
-        logical:
-          name: Product Hash Key
-          type: String
-          isPrimaryKey: true
+        name: Product Hash Key
+        type: String
+        isPrimaryKey: true
       - id: product_bk
-        logical:
-          name: SKU (BK)
-          type: String
+        name: SKU (BK)
+        type: String
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
+        name: Load Date
+        type: Timestamp
       - id: record_source
-        logical:
-          name: Record Source
-          type: String
+        name: Record Source
+        type: String
     sampleData: []
   - id: hub_order
-    name: Order Hub
-    physical_name: hub_order
-    appearance:
-      type: hub
-      icon: 🧾
     conceptual:
+      name: Order Hub
+      kind: hub
       description: Business key for all order transactions.
+    physical:
+      name: hub_order
+    display:
+      icon: 🧾
     columns:
       - id: order_hk
-        logical:
-          name: Order Hash Key
-          type: String
-          isPrimaryKey: true
+        name: Order Hash Key
+        type: String
+        isPrimaryKey: true
       - id: order_bk
-        logical:
-          name: Order Number (BK)
-          type: String
+        name: Order Number (BK)
+        type: String
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
+        name: Load Date
+        type: Timestamp
       - id: record_source
-        logical:
-          name: Record Source
-          type: String
+        name: Record Source
+        type: String
     sampleData: []
   - id: lnk_order_line
-    name: Order Line
-    physical_name: lnk_order_line
-    appearance:
-      type: link
     conceptual:
+      name: Order Line
+      kind: link
       description: Connects orders to products (one order can contain multiple products).
+    physical:
+      name: lnk_order_line
     columns:
       - id: lnk_hk
-        logical:
-          name: Link Hash Key
-          type: String
-          isPrimaryKey: true
+        name: Link Hash Key
+        type: String
+        isPrimaryKey: true
       - id: order_hk
-        logical:
-          name: Order Hash Key
-          type: String
-          isForeignKey: true
+        name: Order Hash Key
+        type: String
+        isForeignKey: true
       - id: customer_hk
-        logical:
-          name: Customer Hash Key
-          type: String
-          isForeignKey: true
+        name: Customer Hash Key
+        type: String
+        isForeignKey: true
       - id: product_hk
-        logical:
-          name: Product Hash Key
-          type: String
-          isForeignKey: true
+        name: Product Hash Key
+        type: String
+        isForeignKey: true
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
+        name: Load Date
+        type: Timestamp
       - id: record_source
-        logical:
-          name: Record Source
-          type: String
+        name: Record Source
+        type: String
     sampleData: []
   - id: sat_customer_profile
-    name: Customer Profile
-    physical_name: sat_customer_profile
-    appearance:
-      type: satellite
+    conceptual:
+      name: Customer Profile
+      kind: satellite
+    physical:
+      name: sat_customer_profile
+    display:
       icon: 🛰️
     columns:
       - id: customer_hk
-        logical:
-          name: Customer Hash Key
-          type: String
-          isForeignKey: true
+        name: Customer Hash Key
+        type: String
+        isForeignKey: true
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
-          isPrimaryKey: true
+        name: Load Date
+        type: Timestamp
+        isPrimaryKey: true
       - id: hash_diff
-        logical:
-          name: Hash Diff
-          type: String
+        name: Hash Diff
+        type: String
       - id: full_name
-        logical:
-          name: Full Name
-          type: String
+        name: Full Name
+        type: String
       - id: email
-        logical:
-          name: Email
-          type: String
+        name: Email
+        type: String
       - id: country_code
-        logical:
-          name: Country Code
-          type: String
+        name: Country Code
+        type: String
       - id: segment
-        logical:
-          name: Customer Segment
-          type: String
+        name: Customer Segment
+        type: String
     sampleData: []
   - id: sat_product_details
-    name: Product Details
-    physical_name: sat_product_details
-    appearance:
-      type: satellite
+    conceptual:
+      name: Product Details
+      kind: satellite
+    physical:
+      name: sat_product_details
+    display:
       icon: 🛰️
     columns:
       - id: product_hk
-        logical:
-          name: Product Hash Key
-          type: String
-          isForeignKey: true
+        name: Product Hash Key
+        type: String
+        isForeignKey: true
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
-          isPrimaryKey: true
+        name: Load Date
+        type: Timestamp
+        isPrimaryKey: true
       - id: hash_diff
-        logical:
-          name: Hash Diff
-          type: String
+        name: Hash Diff
+        type: String
       - id: product_name
-        logical:
-          name: Product Name
-          type: String
+        name: Product Name
+        type: String
       - id: category
-        logical:
-          name: Category
-          type: String
+        name: Category
+        type: String
       - id: brand
-        logical:
-          name: Brand
-          type: String
+        name: Brand
+        type: String
       - id: unit_cost
-        logical:
-          name: Unit Cost
-          type: Decimal
+        name: Unit Cost
+        type: Decimal
     sampleData: []
   - id: sat_order_header
-    name: Order Header
-    physical_name: sat_order_header
-    appearance:
-      type: satellite
+    conceptual:
+      name: Order Header
+      kind: satellite
+    physical:
+      name: sat_order_header
+    display:
       icon: 🛰️
     columns:
       - id: order_hk
-        logical:
-          name: Order Hash Key
-          type: String
-          isForeignKey: true
+        name: Order Hash Key
+        type: String
+        isForeignKey: true
       - id: load_dts
-        logical:
-          name: Load Date
-          type: Timestamp
-          isPrimaryKey: true
+        name: Load Date
+        type: Timestamp
+        isPrimaryKey: true
       - id: hash_diff
-        logical:
-          name: Hash Diff
-          type: String
+        name: Hash Diff
+        type: String
       - id: order_date
-        logical:
-          name: Order Date
-          type: Date
+        name: Order Date
+        type: Date
       - id: quantity
-        logical:
-          name: Quantity
-          type: Int
+        name: Quantity
+        type: Int
       - id: unit_price
-        logical:
-          name: Unit Price
-          type: Decimal
+        name: Unit Price
+        type: Decimal
       - id: discount_amount
-        logical:
-          name: Discount Amount
-          type: Decimal
+        name: Discount Amount
+        type: Decimal
       - id: net_revenue
-        logical:
-          name: Net Revenue
-          type: Decimal
+        name: Net Revenue
+        type: Decimal
     sampleData: []
   - id: dim_customers
-    name: Customers
-    logical_name: Customer Dimension
-    physical_name: dim_customers
-    appearance:
-      type: dimension
-      icon: 👤
-      scd: type2
     conceptual:
+      name: Customers
+      kind: dimension
       description: SCD Type 2 customer dimension derived from hub_customer + sat_customer_profile.
-      tags:
-        - WHO
-    implementation:
-      materialization: table
+    logical:
+      name: Customer Dimension
+      scd:
+        type: type2
+    physical:
+      name: dim_customers
+      strategy: table
+    display:
+      icon: 👤
     columns:
       - id: customer_key
-        logical:
-          name: Customer Key
-          type: Int
-          isPrimaryKey: true
+        name: Customer Key
+        type: Int
+        isPrimaryKey: true
+        additivity: fully
       - id: customer_id
-        logical:
-          name: Customer ID (BK)
-          type: String
+        name: Customer ID (BK)
+        type: String
       - id: full_name
-        logical:
-          name: Full Name
-          type: String
+        name: Full Name
+        type: String
       - id: email
-        logical:
-          name: Email
-          type: String
+        name: Email
+        type: String
       - id: country_code
-        logical:
-          name: Country Code
-          type: String
+        name: Country Code
+        type: String
       - id: segment
-        logical:
-          name: Customer Segment
-          type: String
+        name: Customer Segment
+        type: String
       - id: is_current
-        logical:
-          name: Is Current
-          type: Boolean
+        name: Is Current
+        type: Boolean
       - id: valid_from
-        logical:
-          name: Valid From
-          type: Date
+        name: Valid From
+        type: Date
       - id: valid_to
-        logical:
-          name: Valid To
-          type: Date
+        name: Valid To
+        type: Date
+    metadata:
+      tags:
+        - WHO
     sampleData: []
   - id: dim_products
-    name: Products
-    logical_name: Product Catalog
-    physical_name: dim_products
-    appearance:
-      type: dimension
-      icon: 📦
     conceptual:
+      name: Products
+      kind: dimension
       description: Product dimension derived from hub_product + sat_product_details.
-      tags:
-        - WHAT
-    implementation:
-      materialization: table
+    logical:
+      name: Product Catalog
+    physical:
+      name: dim_products
+      strategy: table
+    display:
+      icon: 📦
     columns:
       - id: product_key
-        logical:
-          name: Product Key
-          type: Int
-          isPrimaryKey: true
+        name: Product Key
+        type: Int
+        isPrimaryKey: true
       - id: product_id
-        logical:
-          name: SKU (BK)
-          type: String
+        name: SKU (BK)
+        type: String
       - id: product_name
-        logical:
-          name: Product Name
-          type: String
+        name: Product Name
+        type: String
       - id: category
-        logical:
-          name: Category
-          type: String
+        name: Category
+        type: String
       - id: brand
-        logical:
-          name: Brand
-          type: String
+        name: Brand
+        type: String
       - id: unit_cost
-        logical:
-          name: Unit Cost
-          type: Decimal
+        name: Unit Cost
+        type: Decimal
+    metadata:
+      tags:
+        - WHAT
     sampleData: []
   - id: fct_orders
-    name: Orders
-    logical_name: Order Transactions
-    physical_name: fct_orders
-    appearance:
-      type: fact
-      icon: 📊
     conceptual:
+      name: Orders
+      kind: fact
       description: One row = one order line item. Built from hub_order + lnk_order_line + sat_order_header.
+    logical:
+      name: Order Transactions
+    physical:
+      name: fct_orders
+      strategy: incremental
+      update_mode: merge
+      merge_key:
+        - order_id
+        - product_key
+      partition:
+        field: order_date
+        granularity: day
+    display:
+      icon: 📊
+    columns:
+      - id: order_id
+        name: Order ID
+        type: String
+        isPrimaryKey: true
+      - id: customer_key
+        name: Customer Key
+        type: Int
+        isForeignKey: true
+      - id: product_key
+        name: Product Key
+        type: Int
+        isForeignKey: true
+      - id: date_key
+        name: Date Key
+        type: Int
+        isForeignKey: true
+      - id: order_date
+        name: Order Date
+        type: Date
+        isPartitionKey: true
+      - id: quantity
+        name: Quantity
+        type: Int
+        additivity: fully
+      - id: unit_price
+        name: Unit Price
+        type: Decimal
+        additivity: non
+      - id: net_revenue
+        name: Net Revenue
+        type: Decimal
+        additivity: fully
+    metadata:
+      sla: 99%
+      sql_path: fct_orders.sql
       tags:
         - WHAT
         - HOW_MUCH
-    implementation:
-      materialization: incremental
-      incremental_strategy: merge
-      unique_key:
-        - order_id
-        - product_key
-      partition_by:
-        - field: order_date
-          granularity: day
-    columns:
-      - id: order_id
-        logical:
-          name: Order ID
-          type: String
-          isPrimaryKey: true
-      - id: customer_key
-        logical:
-          name: Customer Key
-          type: Int
-          isForeignKey: true
-      - id: product_key
-        logical:
-          name: Product Key
-          type: Int
-          isForeignKey: true
-      - id: date_key
-        logical:
-          name: Date Key
-          type: Int
-          isForeignKey: true
-      - id: order_date
-        logical:
-          name: Order Date
-          type: Date
-          isPartitionKey: true
-      - id: quantity
-        logical:
-          name: Quantity
-          type: Int
-          additivity: fully
-      - id: unit_price
-        logical:
-          name: Unit Price
-          type: Decimal
-          additivity: non
-      - id: net_revenue
-        logical:
-          name: Net Revenue
-          type: Decimal
-          additivity: fully
     sampleData:
       - - ORD-1001
         - 42
@@ -428,121 +424,139 @@ tables:
         - 1
         - 499
         - 499
-    metadata:
-      sla: 99%
-      sql_path: fct_orders.sql
   - id: mart_daily_revenue
-    name: Daily Revenue
-    logical_name: Daily Revenue Summary
-    physical_name: mart_daily_revenue
-    appearance:
-      type: mart
-      icon: 📈
     conceptual:
+      name: Daily Revenue
+      kind: mart
       description: Daily revenue aggregated by category and region. Refreshed hourly.
-      tags:
-        - HOW_MUCH
-        - WHEN
-      businessDefinitions:
-        gross_revenue: Sum of net_revenue before any returns or adjustments.
-    implementation:
-      materialization: table
+    logical:
+      name: Daily Revenue Summary
       grain:
         - date_key
         - category
         - country_code
-      measures:
-        - column: gross_revenue
-          agg: sum
-          source_column: fct_orders.net_revenue
-        - column: order_count
-          agg: count_distinct
-          source_column: fct_orders.order_id
-        - column: units_sold
-          agg: sum
-          source_column: fct_orders.quantity
+    physical:
+      name: mart_daily_revenue
+      strategy: table
+    display:
+      icon: 📈
     columns:
       - id: date_key
-        logical:
-          name: Date Key
-          type: Int
-          isPrimaryKey: true
+        name: Date Key
+        type: Int
+        isPrimaryKey: true
       - id: category
-        logical:
-          name: Category
-          type: String
-          isPrimaryKey: true
+        name: Category
+        type: String
+        isPrimaryKey: true
       - id: country_code
-        logical:
-          name: Country Code
-          type: String
-          isPrimaryKey: true
+        name: Country Code
+        type: String
+        isPrimaryKey: true
       - id: gross_revenue
-        logical:
-          name: Gross Revenue
-          type: Decimal
-          additivity: fully
+        name: Gross Revenue
+        type: Decimal
+        additivity: fully
       - id: order_count
-        logical:
-          name: Order Count
-          type: Int
-          additivity: fully
+        name: Order Count
+        type: Int
+        additivity: fully
       - id: units_sold
-        logical:
-          name: Units Sold
-          type: Int
-          additivity: fully
+        name: Units Sold
+        type: Int
+        additivity: fully
+    metadata:
+      tags:
+        - HOW_MUCH
+        - WHEN
     sampleData: []
   - id: mart_product_performance
-    name: Product Performance
-    physical_name: mart_product_performance
-    appearance:
-      type: mart
-      icon: 🏆
     conceptual:
+      name: Product Performance
+      kind: mart
       description: Monthly product ranking by revenue and units. Used for merchandising decisions.
-      tags:
-        - WHAT
-        - HOW_MUCH
-    implementation:
-      materialization: table
+    logical:
       grain:
         - month_key
         - product_key
-      measures:
-        - column: total_revenue
-          agg: sum
-          source_column: fct_orders.net_revenue
-        - column: total_units
-          agg: sum
-          source_column: fct_orders.quantity
+    physical:
+      name: mart_product_performance
+      strategy: table
+    display:
+      icon: 🏆
     columns:
       - id: month_key
-        logical:
-          name: Month Key
-          type: Int
-          isPrimaryKey: true
+        name: Month Key
+        type: Int
+        isPrimaryKey: true
       - id: product_key
-        logical:
-          name: Product Key
-          type: Int
-          isPrimaryKey: true
+        name: Product Key
+        type: Int
+        isPrimaryKey: true
       - id: total_revenue
-        logical:
-          name: Total Revenue
-          type: Decimal
-          additivity: fully
+        name: Total Revenue
+        type: Decimal
+        additivity: fully
       - id: total_units
-        logical:
-          name: Total Units
-          type: Int
-          additivity: fully
+        name: Total Units
+        type: Int
+        additivity: fully
       - id: revenue_rank
-        logical:
-          name: Revenue Rank
-          type: Int
-          additivity: non
+        name: Revenue Rank
+        type: Int
+        additivity: non
+    metadata:
+      tags:
+        - WHAT
+        - HOW_MUCH
     sampleData: []
+lineage:
+  - from: hub_customer
+    to: dim_customers
+    id: lin-hub_customer-dim_customers
+  - from: sat_customer_profile
+    to: dim_customers
+    id: lin-sat_customer_profile-dim_customers
+  - from: hub_product
+    to: dim_products
+    description: You can write description
+    id: lin-hub_product-dim_products
+  - from: sat_product_details
+    to: dim_products
+    id: lin-sat_product_details-dim_products
+  - from: hub_order
+    to: fct_orders
+    id: lin-hub_order-fct_orders
+  - from: lnk_order_line
+    to: fct_orders
+    id: lin-lnk_order_line-fct_orders
+  - from: sat_order_header
+    to: fct_orders
+    id: lin-sat_order_header-fct_orders
+  - from: dim_customers
+    to: fct_orders
+    id: lin-dim_customers-fct_orders
+  - from: dim_products
+    to: fct_orders
+    id: lin-dim_products-fct_orders
+  - from: dim_dates
+    to: fct_orders
+    id: lin-dim_dates-fct_orders
+  - from: fct_orders
+    to: mart_daily_revenue
+    id: lin-fct_orders-mart_daily_revenue
+  - from: fct_orders
+    to: mart_product_performance
+    id: lin-fct_orders-mart_product_performance
+  - from: mart_daily_revenue
+    to: sales_dashboard
+    id: lin-mart_daily_revenue-sales_dashboard
+  - from: mart_daily_revenue
+    to: exec_report
+    id: lin-mart_daily_revenue-exec_report
+  - from: mart_product_performance
+    to: exec_report
+    id: lin-mart_product_performance-exec_report
 relationships:
   - from:
       table: lnk_order_line
@@ -634,131 +648,44 @@ relationships:
         - date_key
     type: many-to-one
     id: rel-fct_orders.date_key-dim_dates.date_key
-lineage:
-  - from: hub_customer
-    to: dim_customers
-    id: lin-hub_customer-dim_customers
-  - from: sat_customer_profile
-    to: dim_customers
-    id: lin-sat_customer_profile-dim_customers
-  - from: hub_product
-    to: dim_products
-    description: You can write description
-    id: lin-hub_product-dim_products
-  - from: sat_product_details
-    to: dim_products
-    id: lin-sat_product_details-dim_products
-  - from: hub_order
-    to: fct_orders
-    id: lin-hub_order-fct_orders
-  - from: lnk_order_line
-    to: fct_orders
-    id: lin-lnk_order_line-fct_orders
-  - from: sat_order_header
-    to: fct_orders
-    id: lin-sat_order_header-fct_orders
-  - from: dim_customers
-    to: fct_orders
-    id: lin-dim_customers-fct_orders
-  - from: dim_products
-    to: fct_orders
-    id: lin-dim_products-fct_orders
-  - from: dim_dates
-    to: fct_orders
-    id: lin-dim_dates-fct_orders
-  - from: fct_orders
-    to: mart_daily_revenue
-    id: lin-fct_orders-mart_daily_revenue
-  - from: fct_orders
-    to: mart_product_performance
-    id: lin-fct_orders-mart_product_performance
-  - from: mart_daily_revenue
-    to: sales_dashboard
-    id: lin-mart_daily_revenue-sales_dashboard
-  - from: mart_daily_revenue
-    to: exec_report
-    id: lin-mart_daily_revenue-exec_report
-  - from: mart_product_performance
-    to: exec_report
-    id: lin-mart_product_performance-exec_report
-domains:
-  - id: raw_vault
-    name: Raw Vault
-    description: Immutable historical record loaded from source systems
-    color: rgba(234, 179, 8, 0.08)
-    members:
-      - hub_customer
-      - hub_product
-      - hub_order
-      - lnk_order_line
-      - sat_customer_profile
-      - sat_product_details
-      - sat_order_header
-  - id: star_schema
-    name: Star Schema
-    description: Conformed dimensional model built from the Raw Vault
-    color: rgba(59, 130, 246, 0.08)
-    members:
-      - dim_customers
-      - dim_products
-      - dim_dates
-      - fct_orders
-  - id: mart
-    name: Data Mart
-    description: Aggregated models ready for BI consumption
-    color: rgba(249, 115, 22, 0.08)
-    members:
-      - mart_daily_revenue
-      - mart_product_performance
-consumers:
-  - id: sales_dashboard
-    name: Sales Dashboard
-    description: Real-time revenue and order metrics for the sales team
-    appearance:
-      icon: 📊
-      color: '#f97316'
-    url: https://bi.example.com/sales
-  - id: exec_report
-    name: Executive Report
-    description: Weekly summary report delivered to leadership
-    appearance:
-      icon: 📋
-      color: '#8b5cf6'
 annotations:
   - id: note_vault_to_star
-    type: callout
     text: |-
       Raw Vault → Star Schema
       Hub + Satellite = Dimension
       Hub + Link + Satellite = Fact
-    color: '#fef9c3'
-    targetId: raw_vault
-    targetType: domain
     offset:
       x: 20
       'y': -80
+    target:
+      id: raw_vault
+      type: domain
+    display:
+      color: '#fef9c3'
   - id: note_grain
-    type: sticky
     text: |-
       Grain: order_id × product
       (one row per order line)
-    color: '#7f7348'
-    targetId: fct_orders
-    targetType: table
     offset:
       x: 300
       'y': 20
+    target:
+      id: fct_orders
+      type: table
+    display:
+      color: '#7f7348'
   - id: note_import
-    type: callout
     text: |-
       Imported from conformed-dims.yaml
       Edit the source to update.
-    color: '#2a5498'
-    targetId: dim_dates
-    targetType: table
     offset:
       x: 300
       'y': 0
+    target:
+      id: dim_dates
+      type: table
+    display:
+      color: '#2a5498'
 layout:
   lnk_order_line:
     x: 257
@@ -833,7 +760,17 @@ layout:
   exec_report:
     x: 2410
     'y': 736
-imports:
-  - from: ./2-conformed-dims.yaml
-    ids:
-      - dim_dates
+consumers:
+  - id: sales_dashboard
+    name: Sales Dashboard
+    description: Real-time revenue and order metrics for the sales team
+    url: https://bi.example.com/sales
+    display:
+      icon: 📊
+      color: '#f97316'
+  - id: exec_report
+    name: Executive Report
+    description: Weekly summary report delivered to leadership
+    display:
+      icon: 📋
+      color: '#8b5cf6'

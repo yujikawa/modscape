@@ -17,7 +17,9 @@ import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
 import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
+import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
+import { answerQuestion, resolveChangeName } from './operations/questions.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -144,6 +146,16 @@ program
   });
 
 program
+  .command('migrate')
+  .description('Migrate a YAML model file to the latest schema version')
+  .argument('<path>', 'path to the YAML model file')
+  .option('--dry-run', 'preview the migration without writing files')
+  .option('-o, --out <path>', 'write migrated output to a different file')
+  .action((filePath, options) => {
+    migrateModel(filePath, { dryRun: options.dryRun, out: options.out });
+  });
+
+program
   .command('validate')
   .description('Validate a YAML model file for structural errors')
   .argument('<file>', 'path to the YAML model file')
@@ -162,6 +174,23 @@ specCommand
   .argument('<name>', 'kebab-case name for the spec (e.g. monthly-sales-summary)')
   .action((name) => {
     specNew(name);
+  });
+
+specCommand
+  .command('answer')
+  .description('Answer a question in questions.md by ID')
+  .argument('<id>', 'question ID (e.g. Q-001)')
+  .argument('<answer>', 'answer text')
+  .option('--change <name>', 'change name (required when multiple active changes exist)')
+  .action((id, answer, opts) => {
+    try {
+      const changeName = resolveChangeName(opts.change);
+      answerQuestion(changeName, id, answer);
+      console.log(`  ✅ ${id} answered in .modscape/changes/${changeName}/questions.md`);
+    } catch (e) {
+      console.error(`  ❌ ${e.message}`);
+      process.exit(1);
+    }
   });
 
 program

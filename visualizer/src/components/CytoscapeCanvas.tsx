@@ -301,11 +301,11 @@ function renderDomainBackgrounds(
 
     const labelText = memberNodes.length === 0 ? `${domain.name} (empty)` : domain.name
     const fontSize = `${Math.max(10, 12 * zoom)}px`
-    const bgColor = domain.color ?? 'rgba(99,102,241,0.07)'
-    
+    const bgColor = domain.display?.color ?? 'rgba(99,102,241,0.07)'
+
     // Robust color derivation:
-    // If domain.color is rgba(r,g,b,a), create a solid version for header and a themed border
-    const baseColor = domain.color || 'rgba(99,102,241,1)'
+    // If domain.display.color is rgba(r,g,b,a), create a solid version for header and a themed border
+    const baseColor = domain.display?.color || 'rgba(99,102,241,1)'
     const headerColor = baseColor.replace(/[\d.]+\)$/, '0.8)') // make it more opaque
     const borderColor = baseColor.replace(/[\d.]+\)$/, '0.4)') // make it slightly transparent
 
@@ -582,19 +582,19 @@ function renderAnnotations(
     let absX: number
     let absY: number
 
-    if (ann.targetId) {
-      const targetNode = cy.getElementById(ann.targetId)
+    if (ann.target?.id) {
+      const targetNode = cy.getElementById(ann.target.id)
       if (targetNode.length === 0) return
       const pos: { x: number; y: number } = targetNode.position()
-      absX = (pos.x + ann.offset.x) * zoom + pan.x
-      absY = (pos.y + ann.offset.y) * zoom + pan.y
+      absX = (pos.x + (ann.offset?.x ?? 0)) * zoom + pan.x
+      absY = (pos.y + (ann.offset?.y ?? 0)) * zoom + pan.y
     } else {
-      absX = ann.offset.x * zoom + pan.x
-      absY = ann.offset.y * zoom + pan.y
+      absX = (ann.offset?.x ?? 0) * zoom + pan.x
+      absY = (ann.offset?.y ?? 0) * zoom + pan.y
     }
 
     const isSelected = selectedAnnotationId === ann.id
-    const bgColor = ann.color ?? (theme === 'dark' ? '#1e293b' : '#fef9c3')
+    const bgColor = ann.display?.color ?? (theme === 'dark' ? '#1e293b' : '#fef9c3')
     const textColor = textColorForBg(bgColor)
     const div = document.createElement('div')
     div.style.cssText = `
@@ -624,8 +624,8 @@ function renderAnnotations(
       startEvt.stopPropagation()
       const startScreenX = startEvt.clientX
       const startScreenY = startEvt.clientY
-      const startOffsetX = ann.offset.x
-      const startOffsetY = ann.offset.y
+      const startOffsetX = ann.offset?.x ?? 0
+      const startOffsetY = ann.offset?.y ?? 0
       let moved = false
 
       const onMouseMove = (moveEvt: MouseEvent) => {

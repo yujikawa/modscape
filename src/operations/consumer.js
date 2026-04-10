@@ -22,9 +22,9 @@ export function addConsumer(filePath, { id, name, description, icon, color, url 
   const consumer = { id, name };
   if (description) consumer.description = description;
   if (icon || color) {
-    consumer.appearance = {};
-    if (icon) consumer.appearance.icon = icon;
-    if (color) consumer.appearance.color = color;
+    consumer.display = {};
+    if (icon) consumer.display.icon = icon;
+    if (color) consumer.display.color = color;
   }
   if (url) consumer.url = url;
   if (!data.consumers) data.consumers = [];
@@ -40,9 +40,9 @@ export function updateConsumer(filePath, { id, name, description, icon, color, u
   if (name) consumer.name = name;
   if (description !== undefined) consumer.description = description;
   if (icon !== undefined || color !== undefined) {
-    consumer.appearance = consumer.appearance || {};
-    if (icon !== undefined) consumer.appearance.icon = icon;
-    if (color !== undefined) consumer.appearance.color = color;
+    consumer.display = consumer.display || {};
+    if (icon !== undefined) consumer.display.icon = icon;
+    if (color !== undefined) consumer.display.color = color;
   }
   if (url !== undefined) consumer.url = url;
   writeYaml(filePath, data);

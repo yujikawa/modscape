@@ -20,9 +20,9 @@ Recommended flow:
 2. Add or update: `modscape table add` / `modscape table update`
 3. After adding tables: `modscape layout model.yaml` to assign coordinates
 
-See Section 13 of `.modscape/rules.md` for the full command reference.
+See Section 12 of `.modscape/rules.md` for the full command reference.
 
-Only edit YAML directly for complex nested fields not covered by CLI flags (e.g., `implementation`, `sampleData`, full `columns` definition).
+Only edit YAML directly for complex nested fields not covered by CLI flags (e.g., `physical`, `logical.scd`, `sampleData`, full `columns` definition).
 
 ## 📁 Multi-file Awareness
 `modscape dev` supports pointing to a directory (e.g., `modscape dev samples/`).
@@ -30,8 +30,8 @@ Only edit YAML directly for complex nested fields not covered by CLI flags (e.g.
 -   **Domain Separation**: Suggest splitting large models into multiple, domain-specific YAML files to improve organization.
 -   **Slug-based Access**: Be aware that the visualizer identifies models via slugs (filename without extension).
 
-## Layout & Appearance Management
-- **Appearance**: When creating new tables, assign an appropriate `appearance.type` (e.g., `fact`, `hub`) to ensure correct visualization.
+## Layout & Conceptual Kind Management
+- **Kind**: When creating new tables, set `conceptual: { name: "...", kind: "..." }` with an appropriate kind (`fact`, `dimension`, `mart`, `hub`, `link`, `satellite`, `table`) to ensure correct visualization.
 - **Layout**: You are responsible for the initial placement of new entities. Assign logical `x` and `y` coordinates in the `layout` section so they don't overlap existing nodes. The user will fine-tune the layout via the GUI.
 
 ## Interactive Modeling

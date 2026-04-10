@@ -75,7 +75,7 @@ const TerminalBar = memo(() => {
   const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null)
 
   // Schema candidates
-  const tableIds = useMemo(() => (schema?.tables ?? []).map(t => ({ id: t.id, name: t.name })), [schema])
+  const tableIds = useMemo(() => (schema?.tables ?? []).map(t => ({ id: t.id, name: t.conceptual?.name ?? t.id })), [schema])
   const domainIds = useMemo(() => (schema?.domains ?? []).map(d => ({ id: d.id, name: d.name })), [schema])
   const columnIds = useMemo(() => {
     if (!schema) return [] as { value: string }[]
@@ -172,7 +172,7 @@ const TerminalBar = memo(() => {
           .map(c => ({
             value: `${tableId}.${c.id}`,
             label: `${tableId}.${c.id}`,
-            desc: c.logical?.name ?? '',
+            desc: c.name ?? '',
             type: 'column' as const,
           }))
       } else {
@@ -229,7 +229,7 @@ const TerminalBar = memo(() => {
         next = (table?.columns ?? [])
           .filter(c => c.id.toLowerCase().includes(q) && c.id !== currentArg)
           .slice(0, 10)
-          .map(c => ({ value: c.id, label: c.id, desc: c.logical?.name ?? '', type: 'column' as const }))
+          .map(c => ({ value: c.id, label: c.id, desc: c.name ?? '', type: 'column' as const }))
       }
     } else if (cmd === '/ln') {
       next = tableIds

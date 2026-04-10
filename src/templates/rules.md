@@ -15,7 +15,7 @@ ROOT KEYS      version | imports | domains | tables | relationships | lineage | 
 COORDINATES    ONLY in `layout`. NEVER inside tables or domains.
 LINEAGE        Use top-level `lineage` section (not relationships, not table.lineage.upstream).
                lineage.to can reference either a table ID or a consumer ID.
-parentId       Declare a table's domain membership inside layout, not inside domains.
+DOMAIN         Declare a table's domain membership in `domains.members`. NOT in layout.
 IDs            Every object (table, domain, annotation, consumer) needs a unique `id`.
 sampleData     Plain data rows only (no header row). At least 3 realistic data rows.
 Grid           All x/y values must be multiples of 40.
@@ -49,29 +49,27 @@ consumers:     # (array) downstream consumers (BI dashboards, ML models, apps) �
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | **REQUIRED** | Unique identifier used as a key in `layout`, `domains.tables`, `lineage`, etc. Use snake_case. |
-| `name` | **REQUIRED** | Conceptual (business) name shown large on the canvas. |
-| `logical_name` | optional | Formal business name shown medium. Omit if same as `name`. |
-| `physical_name` | optional | Actual database table name shown small. |
-| `appearance` | optional | Visual type, icon, color. |
-| `conceptual` | optional | AI-friendly business context metadata. |
+| `id` | **REQUIRED** | Unique identifier used as a key in `layout`, `domains.members`, `lineage`, etc. Use snake_case. |
+| `conceptual` | **REQUIRED** | Business-layer metadata. Contains `name` and `kind` at minimum. |
+| `logical` | optional | Analytic structure metadata (business name, grain, SCD). |
+| `physical` | optional | Build/storage metadata (warehouse name, strategy, partitioning). |
+| `display` | optional | Visual decoration (icon, color). |
 | `columns` | optional | Column definitions. |
 | `sampleData` | optional | 2D array of sample rows. Strongly recommended. |
 
-### 2-2. `appearance` Fields
+### 2-2. `conceptual` Fields (Business Layer)
 
 ```yaml
-appearance:
-  type: fact          # REQUIRED if used. See table below.
-  sub_type: transaction  # optional free text (transaction | periodic | accumulating | ...)
-  scd: type2          # optional. dimension tables only. type0|type1|type2|type3|type4|type6
-  icon: "💰"          # optional. any single emoji.
-  color: "#e0f2fe"    # optional. hex or CSS color for the header.
+conceptual:
+  name: "Orders"        # REQUIRED. Conceptual (business) name shown large on the canvas.
+  kind: fact            # REQUIRED. See table below.
+  description: "One row per order line item."  # optional. AI-readable business context.
+  tags: [WHAT, HOW_MUCH]  # optional. BEAM* tags: WHO | WHAT | WHEN | WHERE | HOW | COUNT | HOW_MUCH
 ```
 
-**`appearance.type` values:**
+**`conceptual.kind` values:**
 
-| type | Use when... |
+| kind | Use when... |
 |------|-------------|
 | `fact` | Events, transactions, measurements. Has measures (numbers) and FK columns. |
 | `dimension` | Entities, master data, reference lists. Descriptive attributes. |
@@ -81,17 +79,75 @@ appearance:
 | `satellite` | Data Vault: descriptive attributes of a hub, tracked over time. |
 | `table` | Generic. Use when none of the above apply. |
 
-**MUST NOT** use `scd` on `fact`, `mart`, `hub`, `link`, or `satellite` tables.
+**MUST NOT** use `logical.scd` on `fact`, `mart`, `hub`, `link`, or `satellite` tables.
 
-### 2-3. `conceptual` Fields (AI-readable business context)
+### 2-3. `logical` Fields (Analytic Layer)
 
 ```yaml
-conceptual:
-  description: "One row per order line item."
-  tags: [WHAT, HOW_MUCH]   # BEAM* tags: WHO | WHAT | WHEN | WHERE | HOW | COUNT | HOW_MUCH
+logical:
+  name: "Order Transactions"    # optional. Formal business name shown medium.
+  grain: [month_key]            # optional. GROUP BY columns (mart only).
+  scd:                          # optional. SCD config for dimension tables only.
+    type: type2                 # type0 | type1 | type2 | type3 | type4 | type6
+    business_key: [customer_id] # optional. natural key column id(s)
+    valid_from: valid_from      # optional. column id for start date
+    valid_to: valid_to          # optional. column id for end date
+    current_flag: is_current    # optional. column id for current record flag
 ```
 
-### 2-4. `metadata` Fields (user-defined key-value pairs)
+### 2-4. `physical` Fields (Build/Storage Layer)
+
+```yaml
+physical:
+  name: "fct_sales_orders"        # optional. Actual database table name shown small.
+  schema: "sales"                  # optional. Database schema override.
+  strategy: incremental            # optional. table | view | incremental | ephemeral
+  update_mode: merge               # optional. merge | append | delete_insert
+  merge_key: order_id              # optional. column id used for upsert
+  partition:
+    field: event_date
+    granularity: day               # day | month | year | hour
+  cluster: [customer_id, region_id]  # optional. clustering columns
+  filter_key: updated_at           # optional. column id for WHERE filter (incremental only)
+  lookback: "3 days"               # optional. safety margin for incremental filter
+  measures:                        # optional. Aggregation definitions (mart only)
+    - column: total_revenue        # output column id in this table
+      agg: sum                     # sum | count | count_distinct | avg | min | max
+      source_column: fct_orders.amount  # upstream column id (<table_id>.<col_id> to disambiguate)
+```
+
+**`filter_key`** (optional) — Column ID used as the timestamp/date filter for incremental loads.
+- Only meaningful when `strategy: incremental`.
+- SDD generates: `WHERE <filter_key> > {{ last_run_timestamp }}`.
+- When omitted, SDD infers from column names (e.g. `updated_at`, `created_at`).
+
+**`lookback`** (optional) — Safety margin subtracted from the incremental filter boundary.
+- Format: `"N days"`, `"N hours"`, `"N minutes"`.
+- When omitted, no lookback margin is applied.
+
+**`measures`** and **`grain`** are for `mart` tables only.
+**`update_mode`** and **`merge_key`** are only relevant when `strategy: incremental`.
+
+### AI Inference Defaults (when `physical.strategy` is absent)
+
+| `conceptual.kind` | `logical.scd.type` | Inferred `strategy` |
+|------------------|--------------------|---------------------|
+| `fact` | — | `incremental` |
+| `dimension` | `type2` | `table` (snapshot pattern) |
+| `dimension` | other | `table` |
+| `mart` | — | `table` |
+| `hub` / `link` / `satellite` | — | `incremental` |
+| `table` | — | `view` |
+
+### 2-5. `display` Fields (Visual Layer)
+
+```yaml
+display:
+  icon: "💰"          # optional. any single emoji.
+  color: "#e0f2fe"    # optional. hex or CSS color for the header.
+```
+
+### 2-6. `metadata` Fields (user-defined key-value pairs)
 
 Free-form key-value map for project-specific information that does not fit the standard schema.
 Any string key is accepted; values can be strings, numbers, or booleans.
@@ -102,31 +158,30 @@ metadata:
   sla: "daily 6AM JST"        # Delivery SLA
   sql_path: "models/marts/fct_orders.sql"  # Path to the SQL or model file
   sensitivity: PII            # Data sensitivity label
-  cost_center: CC-1234        # Any custom label
+  tags: [WHAT, HOW_MUCH]     # BEAM* business classification tags
 ```
 
 **Rules:**
 - `metadata` is **OPTIONAL**. Omit entirely if not needed.
-- All keys must be strings. Values must be scalar (string, number, boolean) — do **not** nest objects or arrays inside `metadata`.
+- All keys must be strings. Values must be scalar (string, number, boolean) or an array of scalars.
 - This field is preserved as-is and never modified by Modscape CLI commands.
 
-### 2-5. `columns` Fields
+### 2-7. `columns` Fields
 
-Each column has an `id` plus optional `logical` and `physical` blocks.
+Each column has an `id` plus flat fields at the top level (no `logical:` wrapper), and an optional `physical` override block.
 
 ```yaml
 columns:
-  - id: order_id           # REQUIRED. Unique within the table.
-    expression: "CAST(raw.amount AS DECIMAL(18,2)) * fx.rate"  # optional. SQL expression for SELECT clause generation.
-    logical:
-      name: "Order ID"     # Display name
-      type: Int            # Int | String | Decimal | Date | Timestamp | Boolean | ...
-      description: "Surrogate key."   # optional
-      isPrimaryKey: true   # optional. default false.
-      isForeignKey: false  # optional. default false.
-      isPartitionKey: false # optional. default false.
-      additivity: fully    # optional. fully=summable | semi=balance/stock | non=price/rate/ID
-    physical:              # optional. override when warehouse names/types differ.
+  - id: order_id              # REQUIRED. Unique within the table.
+    name: "Order ID"          # REQUIRED. Display name.
+    type: Int                 # REQUIRED. Int | String | Decimal | Date | Timestamp | Boolean | ...
+    description: "Surrogate key."   # optional
+    isPrimaryKey: true        # optional. default false.
+    isForeignKey: false       # optional. default false.
+    isPartitionKey: false     # optional. default false.
+    additivity: fully         # optional. fully=summable | semi=balance/stock | non=price/rate/ID
+    expression: "CAST(raw.amount AS DECIMAL(18,2)) * fx.rate"  # optional. SQL expression for SELECT clause.
+    physical:                 # optional. override when warehouse names/types differ.
       name: order_id_pk
       type: "BIGINT"
       constraints: [NOT NULL, UNIQUE]
@@ -166,7 +221,7 @@ relationships:
 | `many-to-one` | Fact → Dimension *(inverse notation of above)* |
 | `many-to-many` | Via a bridge / link table |
 
-**`description`** (optional) — A free-text explanation of the relationship's business meaning (e.g. why this join exists, what the key represents). Use it to document non-obvious joins.
+**`description`** (optional) — A free-text explanation of the relationship's business meaning.
 
 **MUST NOT** use `relationships` to express data lineage (use the top-level `lineage` section instead).
 
@@ -247,7 +302,8 @@ domains:
   - id: sales_ops           # REQUIRED. Used as key in layout.
     name: "Sales Operations"  # REQUIRED. Display name.
     description: "..."      # optional
-    color: "rgba(59, 130, 246, 0.1)"  # optional. rgba recommended.
+    display:
+      color: "rgba(59, 130, 246, 0.1)"  # optional. rgba recommended.
     members:                # REQUIRED. List of table or consumer IDs inside this domain.
       - fct_orders
       - dim_customers
@@ -307,7 +363,7 @@ consumers:
   - id: revenue_dashboard       # REQUIRED. Unique ID. Used in lineage and layout.
     name: "Revenue Dashboard"   # REQUIRED. Display name.
     description: "Monthly KPI dashboard for finance team."  # optional
-    appearance:
+    display:
       icon: "📊"                # optional. Defaults to 📊.
       color: "#e0f2fe"          # optional. Header/accent color.
     url: "https://..."          # optional. Link to the actual dashboard or service.
@@ -315,7 +371,7 @@ consumers:
 
 **Field rules:**
 - `id` and `name` are **REQUIRED**. All other fields are optional.
-- Add a `layout` entry for each consumer (same as tables — absolute coordinates or relative inside a domain with `parentId`).
+- Add a `layout` entry for each consumer (same as tables — absolute coordinates or relative inside a domain).
 - To connect a consumer with lineage, set `lineage.to` to the consumer's `id`. The `lineage.from` must be a table ID.
 - Consumers can be added to domain `members` lists just like tables.
 
@@ -337,6 +393,7 @@ domains:
 ## 6. Layout
 
 **All coordinates live here.** Never put `x`, `y`, `width`, or `height` inside `tables` or `domains`.
+Domain membership is declared in `domains.members` — do **not** add `parentId` to layout entries.
 
 ### 6-1. Field Reference
 
@@ -346,7 +403,9 @@ domains:
 | `y` | all entries | Canvas y coordinate (integer, multiple of 40) |
 | `width` | domains | Total pixel width of the domain container |
 | `height` | domains | Total pixel height of the domain container |
-| `parentId` | tables inside a domain | ID of the containing domain. Makes coordinates relative to domain origin. |
+
+Tables that belong to a domain (listed in `domains.members`) use coordinates **relative to the domain's top-left corner (0, 0)**.
+Standalone tables (not in any domain) use **absolute canvas coordinates**.
 
 ### 6-2. Domain Size Formula
 
@@ -365,9 +424,13 @@ Examples:
 
 ### 6-3. Table Positioning Inside a Domain
 
-When `parentId` is set, `x`/`y` are **relative to the domain's top-left corner (0, 0)**.
+When a table is listed in `domains.members`, its layout `x`/`y` are **relative to the domain's top-left corner (0, 0)**.
 
 ```yaml
+domains:
+  - id: sales_ops
+    members: [dim_customers, fct_orders]
+
 layout:
   sales_ops:
     x: 0        # absolute canvas position
@@ -377,11 +440,9 @@ layout:
   dim_customers:
     x: 80       # 80px from domain's left edge
     y: 80       # 80px from domain's top edge
-    parentId: sales_ops
   fct_orders:
     x: 480      # 480px from domain's left edge
     y: 80
-    parentId: sales_ops
 ```
 
 **MUST NOT** let any table's right edge (`x + 320`) or bottom edge (`y + 240`) exceed the domain's `width` or `height`.
@@ -404,11 +465,10 @@ layout:
     width: <W>        # use formula above
     height: <H>
 
-  # --- Table inside domain ---
+  # --- Table inside domain (coords relative to domain origin) ---
   <table_id>:
-    x: <relative_x>   # relative to domain origin
+    x: <relative_x>
     y: <relative_y>
-    parentId: <domain_id>
 
   # --- Standalone table ---
   <table_id>:
@@ -423,16 +483,19 @@ layout:
 ```yaml
 annotations:
   - id: note_001          # REQUIRED. Unique ID.
-    type: sticky          # REQUIRED. sticky | callout
     text: "..."           # REQUIRED. Note content.
-    color: "#fef9c3"      # optional. background color.
-    targetId: fct_orders  # optional. ID of the object to attach to.
-    targetType: table     # required if targetId is set. table | domain | relationship | lineage | column
+    display:
+      color: "#fef9c3"    # optional. background color.
+    target:               # optional. Object to attach to.
+      id: fct_orders      # ID of the object to attach to.
+      type: table         # table | domain | relationship | lineage | column
                           # 'relationship' and 'lineage' require the entry to have an explicit id field
     offset:
-      x: 100    # offset from target's top-left. if no targetId, this is absolute canvas position.
+      x: 100    # offset from target's top-left. if no target, this is absolute canvas position.
       y: -80    # negative y = above the target.
 ```
+
+**Note:** `type` (sticky/callout) has been removed from annotations in schema v2. All annotations are treated uniformly.
 
 ---
 
@@ -456,83 +519,7 @@ sampleData:
 
 ---
 
-## 9. Implementation Hints
-
-`implementation` is an **optional** block inside each table. AI agents read it to generate dbt / Spark / SQLMesh code. Omitting it is fine — the visualizer works without it.
-
-```yaml
-tables:
-  - id: fct_orders
-    appearance: { type: fact }
-    implementation:
-      materialization: incremental      # table | view | incremental | ephemeral
-      incremental_strategy: merge       # merge | append | delete+insert
-      unique_key: order_id              # column id used for upsert
-      partition_by:
-        field: event_date
-        granularity: day                # day | month | year | hour
-      cluster_by: [customer_id, region_id]
-      grain: [month_key, region_id]     # GROUP BY columns (mart only)
-      measures:
-        - column: total_revenue         # output column id in this table
-          agg: sum                      # sum | count | count_distinct | avg | min | max
-          source_column: amount         # upstream column id (use <table_id>.<col_id> to disambiguate)
-      incremental_key: updated_at       # optional. column id for WHERE filter in incremental models
-      incremental_lookback: "3 days"    # optional. safety margin added to incremental filter
-```
-
-**`incremental_key`** (optional) — Column ID used as the timestamp/date filter for incremental loads.
-- Only meaningful when `materialization: incremental`.
-- SDD generates: `WHERE <incremental_key> > {{ last_run_timestamp }}`.
-- When omitted, SDD infers from column names (e.g. `updated_at`, `created_at`).
-
-**`incremental_lookback`** (optional) — Safety margin subtracted from the incremental filter boundary.
-- Format: `"N days"`, `"N hours"`, `"N minutes"`.
-- SDD generates: `WHERE updated_at > {{ last_run_timestamp }} - INTERVAL 3 DAY`.
-- When omitted, no lookback margin is applied.
-
-For SCD Type2 dimensions, add an `scd2` block:
-
-```yaml
-tables:
-  - id: dim_customers
-    appearance: { type: dimension, scd: type2 }
-    implementation:
-      materialization: table
-      scd2:
-        business_key: [customer_id]     # natural key column id(s)
-        valid_from: valid_from          # column id for start date
-        valid_to: valid_to              # column id for end date
-        current_flag: is_current        # optional. column id for current record flag
-```
-
-**`scd2`** (optional) — Specifies SCD Type2 column roles for the SDD implement skill.
-- Only valid when `appearance.scd: type2`.
-- `business_key`: array of natural key column IDs (supports composite keys).
-- `valid_from` / `valid_to`: column IDs holding the effective date range.
-- `current_flag`: optional boolean flag column for the active record.
-- When omitted, SDD infers column roles from names and outputs TODO comments for unknowns.
-
-### AI Inference Defaults (when `implementation` is absent)
-
-| `appearance.type` | `appearance.scd` | Inferred `materialization` |
-|------------------|-----------------|--------------------------|
-| `fact` | — | `incremental` |
-| `dimension` | `type2` | `table` (snapshot pattern) |
-| `dimension` | other | `table` |
-| `mart` | — | `table` |
-| `hub` / `link` / `satellite` | — | `incremental` |
-| `table` | — | `view` |
-
-**Rules:**
-- `measures` and `grain` are for `mart` tables only.
-- `incremental_strategy` and `unique_key` are only relevant when `materialization: incremental`.
-- When `source_column` is ambiguous across multiple upstream tables, qualify it as `<table_id>.<column_id>` (e.g., `fct_orders.amount`).
-- **MUST NOT** define `implementation` inside `domains`, `relationships`, or `annotations`.
-
----
-
-## 10. Common Mistakes (Before → After)
+## 9. Common Mistakes (Before → After)
 
 ### ❌ Coordinates inside a table definition
 
@@ -548,12 +535,48 @@ tables:
 # CORRECT
 tables:
   - id: fct_orders
-    name: Orders
+    conceptual:
+      name: Orders
 
 layout:
   fct_orders:
     x: 200        # ✅ coordinates belong in layout
     y: 400
+```
+
+---
+
+### ❌ Using v1 field names
+
+```yaml
+# WRONG (v1 schema)
+tables:
+  - id: fct_orders
+    name: "Orders"             # ❌ top-level name removed
+    logical_name: "..."        # ❌ removed
+    physical_name: "..."       # ❌ removed
+    appearance:
+      type: fact               # ❌ removed
+    columns:
+      - id: order_id
+        logical: { name: "Order ID", type: Int }  # ❌ logical wrapper removed
+```
+
+```yaml
+# CORRECT (v2 schema)
+tables:
+  - id: fct_orders
+    conceptual:
+      name: "Orders"           # ✅ name moved here
+      kind: fact               # ✅ type moved here as kind
+    logical:
+      name: "Order Transactions"  # ✅ logical name moved here
+    physical:
+      name: "fct_sales_orders"    # ✅ physical name moved here
+    columns:
+      - id: order_id
+        name: "Order ID"          # ✅ flat structure
+        type: Int
 ```
 
 ---
@@ -587,7 +610,7 @@ domains:
 
 layout:
   sales_ops: { x: 0, y: 0, width: 880, height: 400 }
-  fct_orders: { x: 480, y: 80, parentId: sales_ops }
+  fct_orders: { x: 480, y: 80 }
   # ❌ dim_customers has no layout entry → will render at origin (0,0)
 ```
 
@@ -595,8 +618,8 @@ layout:
 # CORRECT — every table in a domain MUST have a layout entry
 layout:
   sales_ops:    { x: 0, y: 0, width: 880, height: 400 }
-  dim_customers: { x: 80,  y: 80, parentId: sales_ops }  # ✅
-  fct_orders:   { x: 480, y: 80, parentId: sales_ops }  # ✅
+  dim_customers: { x: 80,  y: 80 }  # ✅
+  fct_orders:   { x: 480, y: 80 }  # ✅
 ```
 
 ---
@@ -607,23 +630,23 @@ layout:
 # WRONG — domain width is 480 but table at x:280 + width:320 = 600 > 480
 layout:
   small_domain: { x: 0, y: 0, width: 480, height: 400 }
-  fct_orders:   { x: 280, y: 80, parentId: small_domain }  # ❌ right edge = 600
+  fct_orders:   { x: 280, y: 80 }  # ❌ right edge = 600
 ```
 
 ```yaml
 # CORRECT — use the formula: 1 col = width 480
 layout:
   small_domain: { x: 0, y: 0, width: 480, height: 400 }
-  fct_orders:   { x: 80, y: 80, parentId: small_domain }   # ✅ right edge = 400
+  fct_orders:   { x: 80, y: 80 }   # ✅ right edge = 400
 ```
 
 ---
 
-## 11. dbt Project Integration
+## 10. dbt Project Integration
 
 If the user has a dbt project, AI agents SHOULD recommend using the built-in import commands instead of writing YAML from scratch.
 
-### 11-1. Commands
+### 10-1. Commands
 
 ```bash
 # Prerequisite: generate manifest.json first
@@ -645,28 +668,28 @@ modscape dbt sync [project-dir] [options]
 | `--split-by schema` | One YAML file per database schema |
 | `--split-by tag` | One YAML file per dbt tag |
 
-### 11-2. What `dbt import` generates
+### 10-2. What `dbt import` generates
 
 The command reads `target/manifest.json` and produces YAML with:
 
 | Field | Source | Notes |
 |-------|--------|-------|
 | `id` | `node.unique_id` | Format: `model.project.name` or `source.project.src.table` |
-| `name` | `node.name` | Model / source name |
-| `physical_name` | `node.alias` | Falls back to `node.name` |
+| `conceptual.name` | `node.name` | Model / source name |
+| `physical.name` | `node.alias` | Falls back to `node.name` |
 | `conceptual.description` | `node.description` | From dbt docs |
-| `columns[].logical.name/type/description` | `node.columns` | From dbt schema.yml |
+| `columns[].name/type/description` | `node.columns` | Flat structure (no `logical:` wrapper) |
 | `lineage` (top-level) | `node.depends_on.nodes` | Auto-populated as `{from, to}` entries |
-| `appearance.type` | — | **Always `table`. Must be reclassified.** |
+| `conceptual.kind` | — | **Always `table`. Must be reclassified.** |
 | `sampleData` | — | **Not generated. Must be added.** |
 | `layout` | — | **Not generated. Must be added.** |
 | `domains` | dbt folder structure | Auto-grouped by `fqn[1]` |
 
-### 11-3. What AI agents MUST do after `dbt import`
+### 10-3. What AI agents MUST do after `dbt import`
 
 After running `modscape dbt import`, the generated YAML needs enrichment. AI agents MUST:
 
-1. **Reclassify `appearance.type`** — All tables default to `type: table`. Inspect the table name and columns to assign the correct type (`fact`, `dimension`, `mart`, etc.).
+1. **Reclassify `conceptual.kind`** — All tables default to `kind: table`. Inspect the table name and columns to assign the correct kind (`fact`, `dimension`, `mart`, etc.).
    - Tables named `fct_*` → `fact`
    - Tables named `dim_*` → `dimension`
    - Tables named `mart_*` or `rpt_*` → `mart`
@@ -678,18 +701,19 @@ After running `modscape dbt import`, the generated YAML needs enrichment. AI age
 
 4. **Do NOT re-generate `lineage` entries** — Top-level `lineage` is already correctly populated from `depends_on.nodes`.
 
-### 11-4. `dbt sync` — Incremental updates
+### 10-4. `dbt sync` — Incremental updates
 
 Use `modscape dbt sync` when the dbt project has changed (new models, updated columns, etc.) and you want to update the existing Modscape YAML without losing manual edits.
 
 **What `sync` overwrites:**
-- `name`, `logical_name`, `physical_name`
+- `conceptual.name`, `logical.name`, `physical.name`
 - `conceptual.description`
 - `columns` (all)
 - `lineage` (top-level)
 
 **What `sync` preserves (safe to edit manually):**
-- `appearance` (type, icon, color, scd)
+- `conceptual.kind`, `display` (icon, color)
+- `logical.scd`
 - `sampleData`
 - `layout`
 - `domains`
@@ -698,7 +722,7 @@ Use `modscape dbt sync` when the dbt project has changed (new models, updated co
 
 > **Workflow**: `dbt import` once → enrich with AI → `dbt sync` when dbt changes → re-enrich as needed.
 
-### 11-5. Table ID format in dbt-imported models
+### 10-5. Table ID format in dbt-imported models
 
 In dbt-imported YAML, table IDs are dbt `unique_id` strings, not short names:
 
@@ -720,7 +744,7 @@ lineage:
 
 ---
 
-## 12. Merging YAML Files
+## 11. Merging YAML Files
 
 When a user asks to **combine, merge, or consolidate** multiple YAML model files, use the built-in `merge` command instead of editing YAML manually.
 
@@ -752,13 +776,13 @@ modscape merge ./sales ./marketing -o combined.yaml
 
 ---
 
-## 13. Model Mutation CLI
+## 12. Model Mutation CLI
 
 Use the built-in mutation commands to **add, update, or remove individual entities** in a YAML model. These commands validate input and write atomically — safer than editing YAML directly.
 
-**MUST** use these commands when making targeted changes. Only edit YAML directly for complex nested fields not covered by CLI flags (e.g., `implementation`, `sampleData`, `columns` full definition).
+**MUST** use these commands when making targeted changes. Only edit YAML directly for complex nested fields not covered by CLI flags (e.g., `physical.measures`, `sampleData`, `columns` full definition).
 
-### 13-1. Available Operations
+### 12-1. Available Operations
 
 | Resource | Operations |
 |----------|-----------|
@@ -772,7 +796,7 @@ Use the built-in mutation commands to **add, update, or remove individual entiti
 | `consumer` | `list` `get` `add` `update` `remove` |
 | `summary` | (model overview) |
 
-### 13-2. Recommended AI Agent Flow
+### 12-2. Recommended AI Agent Flow
 
 When inspecting a model's current state, **prefer using the list/get commands** over reading the YAML file directly.
 They return validated, structured JSON output that is easier to process.
@@ -808,7 +832,7 @@ modscape table add model.yaml --id fct_orders --name "Orders" --type fact
 modscape table update model.yaml --id fct_orders --physical-name fct_sales_orders
 ```
 
-### 13-3. CLI Flag Reference
+### 12-3. CLI Flag Reference
 
 **table add / update**
 ```bash
@@ -881,11 +905,11 @@ modscape consumer remove model.yaml --id <id> [--json]
 ```bash
 modscape annotation list model.yaml [--json]
 modscape annotation add model.yaml \
-  --text <text> [--id <id>] [--type sticky|callout] \
+  --text <text> [--id <id>] \
   [--color <color>] [--target-id <id>] [--target-type table|domain|relationship|lineage|column] \
   [--offset-x <x>] [--offset-y <y>] [--json]
 modscape annotation update model.yaml --id <id> \
-  [--text <text>] [--type sticky|callout] [--color <color>] \
+  [--text <text>] [--color <color>] \
   [--target-id <id>] [--target-type <type>] [--offset-x <x>] [--offset-y <y>] [--json]
 modscape annotation remove model.yaml --id <id> [--json]
 ```
@@ -896,7 +920,7 @@ modscape summary model.yaml        # human-readable overview
 modscape summary model.yaml --json # machine-readable JSON
 ```
 
-### 13-4. After Adding Tables
+### 12-4. After Adding Tables
 
 `table add` does **not** create layout coordinates. After adding tables, run:
 
@@ -906,7 +930,7 @@ modscape layout model.yaml
 
 This assigns coordinates to all layout-less entries automatically.
 
-### 13-5. Validate
+### 12-5. Validate
 
 Check a model.yaml file for structural errors before visualizing or committing:
 
@@ -921,7 +945,7 @@ Checks performed:
 - Broken references in `relationships`, `lineage`, `domains.members`, and `layout`
 - Orphaned `layout` entries (keys not found in tables or domains)
 
-### 13-5. Reading Model Information
+### 12-6. Reading Model Information
 
 When investigating or querying a YAML model, always prefer modscape CLI commands or MCP tools over `grep` / `cat` / direct file reads:
 
@@ -939,7 +963,7 @@ If the modscape MCP server is active, prefer `mcp__modscape__*` tools (e.g. `mcp
 
 Fall back to `grep` or direct file reads only when the information genuinely cannot be obtained from the above commands.
 
-### 13-5. JSON Output for AI Pipelines
+### 12-7. JSON Output for AI Pipelines
 
 All commands support `--json` for machine-readable output:
 
@@ -950,7 +974,7 @@ All commands support `--json` for machine-readable output:
 
 ---
 
-## 13-6. Project Initialization Flags
+## 13. Project Initialization Flags
 
 ```bash
 modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
@@ -1023,7 +1047,7 @@ Customize SDD behavior by creating `.modscape/changes/modscape-spec.custom.md` (
 
 ---
 
-## 14. Schema Version
+## 14. Schema Version and Migration
 
 `model.yaml` supports an optional `version` field at the root level to indicate the schema version.
 
@@ -1031,10 +1055,21 @@ Customize SDD behavior by creating `.modscape/changes/modscape-spec.custom.md` (
 version: "{{MODEL_FORMAT_VERSION}}"   # optional. semver string. Current schema version is "{{MODEL_FORMAT_VERSION}}".
 ```
 
-- The field is **optional** — omitting it is valid and backward-compatible.
+- The field is **optional** — omitting it is valid.
 - The current schema version is `"{{MODEL_FORMAT_VERSION}}"`.
 - AI agents SHOULD include `version: "{{MODEL_FORMAT_VERSION}}"` in newly generated files.
-- The parser does not branch on the version value (reserved for future migrations).
+
+### Migrating from v1
+
+If you have an existing `model.yaml` using the v1 schema (with `appearance`, `implementation`, `logical_name`, `physical_name`, column `logical:` wrapper), run:
+
+```bash
+modscape migrate <path>              # In-place migration (creates .bak backup)
+modscape migrate <path> --dry-run    # Preview changes without writing
+modscape migrate <path> --out <new>  # Write to a new file
+```
+
+The migration tool automatically converts all v1 fields to v2 equivalents.
 
 ---
 
@@ -1065,7 +1100,7 @@ A project MAY place a `.modscape/rules.custom.md` file to define rules that exte
 - Every new table MUST be assigned to one of these domains
 
 ## SCD Policy
-- Dimension tables use SCD Type 1 only. Do NOT apply `scd: type2` or higher.
+- Dimension tables use SCD Type 1 only. Do NOT apply `scd.type: type2` or higher.
 ```
 
 `rules.custom.md` is NOT generated by `modscape init`. Create it manually when your project needs it.
@@ -1075,100 +1110,135 @@ A project MAY place a `.modscape/rules.custom.md` file to define rules that exte
 ## 16. Complete Example
 
 ```yaml
+version: "{{MODEL_FORMAT_VERSION}}"
+
 domains:
   - id: sales_domain
     name: "Sales Operations"
     description: "Core transactional data."
-    color: "rgba(239, 68, 68, 0.1)"
+    display:
+      color: "rgba(239, 68, 68, 0.1)"
     members: [dim_customers, fct_orders]
 
   - id: analytics_domain
     name: "Analytics & Insights"
-    color: "rgba(245, 158, 11, 0.1)"
+    display:
+      color: "rgba(245, 158, 11, 0.1)"
     members: [mart_monthly_revenue]
 
   - id: dashboards_domain
     name: "BI Dashboards"
-    color: "rgba(139, 92, 246, 0.1)"
+    display:
+      color: "rgba(139, 92, 246, 0.1)"
     members: [revenue_dashboard]
 
 consumers:
   - id: revenue_dashboard
     name: "Revenue Dashboard"
     description: "Monthly KPI dashboard for the finance team."
-    appearance:
+    display:
       icon: "📊"
       color: "#e0f2fe"
     url: "https://bi.example.com/revenue"
 
 tables:
   - id: dim_customers
-    name: "Customers"
-    logical_name: "Customer Master"
-    physical_name: "dim_customers_v2"
-    appearance:
-      type: dimension
-      scd: type2
-      icon: "👤"
     conceptual:
+      name: "Customers"
+      kind: dimension
       description: "One row per unique customer version (SCD Type 2)."
       tags: [WHO]
+    logical:
+      name: "Customer Master"
+      scd:
+        type: type2
+        business_key: [customer_id]
+        valid_from: dw_valid_from
+        valid_to: dw_valid_to
+    physical:
+      name: "dim_customers_v2"
+      strategy: table
+    display:
+      icon: "👤"
     columns:
       - id: customer_key
-        logical: { name: "Customer Key", type: Int, isPrimaryKey: true }
+        name: "Customer Key"
+        type: Int
+        isPrimaryKey: true
       - id: customer_name
-        logical: { name: "Name", type: String }
+        name: "Name"
+        type: String
       - id: dw_valid_from
-        logical: { name: "Valid From", type: Timestamp }
+        name: "Valid From"
+        type: Timestamp
     sampleData:
       - [1, "Acme Corp", "2024-01-01T00:00:00Z"]
       - [2, "Beta Ltd",  "2024-03-15T00:00:00Z"]
       - [3, "Gamma Inc", "2024-06-01T00:00:00Z"]
 
   - id: fct_orders
-    name: "Orders"
-    logical_name: "Order Transactions"
-    physical_name: "fct_sales_orders"
-    appearance: { type: fact, sub_type: transaction, icon: "🛒" }
     conceptual:
+      name: "Orders"
+      kind: fact
       description: "One row per order line item."
       tags: [WHAT, HOW_MUCH]
-    implementation:
-      materialization: incremental
-      incremental_strategy: merge
-      unique_key: order_id
-      partition_by: { field: order_date, granularity: day }
-      cluster_by: [customer_key]
+    logical:
+      name: "Order Transactions"
+    physical:
+      name: "fct_sales_orders"
+      strategy: incremental
+      update_mode: merge
+      merge_key: order_id
+      partition:
+        field: order_date
+        granularity: day
+      cluster: [customer_key]
+    display:
+      icon: "🛒"
     columns:
       - id: order_id
-        logical: { name: "Order ID", type: Int, isPrimaryKey: true }
+        name: "Order ID"
+        type: Int
+        isPrimaryKey: true
         physical: { name: "order_id", type: "BIGINT", constraints: [NOT NULL] }
       - id: customer_key
-        logical: { name: "Customer Key", type: Int, isForeignKey: true }
+        name: "Customer Key"
+        type: Int
+        isForeignKey: true
       - id: amount
-        logical: { name: "Amount", type: Decimal, additivity: fully }
+        name: "Amount"
+        type: Decimal
+        additivity: fully
     sampleData:
       - [1001, 1, 150.00]
       - [1002, 2,  89.50]
       - [1003, 1, 210.00]
 
   - id: mart_monthly_revenue
-    name: "Monthly Revenue"
-    logical_name: "Executive Revenue Summary"
-    physical_name: "mart_finance_monthly_revenue_agg"
-    appearance: { type: mart, icon: "📈" }
-    implementation:
-      materialization: table
+    conceptual:
+      name: "Monthly Revenue"
+      kind: mart
+    logical:
+      name: "Executive Revenue Summary"
       grain: [month_key]
+    physical:
+      name: "mart_finance_monthly_revenue_agg"
+      strategy: table
       measures:
         - column: total_revenue
           agg: sum
           source_column: fct_orders.amount
+    display:
+      icon: "📈"
     columns:
       - id: month_key
-        logical: { name: "Month", type: String, isPrimaryKey: true }
+        name: "Month"
+        type: String
+        isPrimaryKey: true
       - id: total_revenue
-        logical: { name: "Revenue", type: Decimal, additivity: fully }
+        name: "Revenue"
+        type: Decimal
+        additivity: fully
     sampleData:
       - ["2024-01", 12450.50]
       - ["2024-02", 15200.00]
@@ -1193,10 +1263,10 @@ relationships:                      # ER only — not for lineage
 
 annotations:
   - id: note_001
-    type: sticky
     text: "Grain: one row per order line item."
-    targetId: fct_orders
-    targetType: table
+    target:
+      id: fct_orders
+      type: table
     offset: { x: 100, y: -80 }
 
 layout:
@@ -1212,12 +1282,10 @@ layout:
   dim_customers:
     x: 80
     y: 80
-    parentId: sales_domain
 
   fct_orders:
     x: 480
     y: 80
-    parentId: sales_domain
 
   # analytics_domain: 1 table → 1-col × 1-row → w:480, h:400
   analytics_domain:
@@ -1229,7 +1297,6 @@ layout:
   mart_monthly_revenue:
     x: 80
     y: 80
-    parentId: analytics_domain
 
   # dashboards_domain: 1 consumer → w:480, h:280
   dashboards_domain:
@@ -1241,5 +1308,4 @@ layout:
   revenue_dashboard:
     x: 80
     y: 80
-    parentId: dashboards_domain
 ```

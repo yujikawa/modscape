@@ -41,8 +41,8 @@ test.describe('CLI: dbt import', () => {
     const stgOrders = model.tables.find(t => t.id === 'model.my_project.stg_orders');
     expect(stgOrders).toBeDefined();
     expect(stgOrders.conceptual.description).toContain('staging table'); // from dbt description
-    expect(stgOrders.logical_name).toBe('stg_orders'); // from dbt name
-    expect(stgOrders.physical_name).toBe('stg_orders_v1'); // from dbt alias
+    expect(stgOrders.logical?.name).toBe('stg_orders'); // from dbt name
+    expect(stgOrders.physical?.name).toBe('stg_orders_v1'); // from dbt alias
 
     // Verify lineage
     const lineageEntry = model.lineage.find(l => l.to === 'model.my_project.stg_orders');

@@ -21,27 +21,17 @@ export const TYPE_CONFIG: Record<string, { color: string; icon: string; label: s
 const CONSUMER_DEFAULT_ICON = '📊'
 
 export function buildTypeLabel(table: Table): string {
-  const typeConfig = table.appearance?.type ? TYPE_CONFIG[table.appearance.type] : null
+  const kind = table.conceptual?.kind
+  const typeConfig = kind ? TYPE_CONFIG[kind] : null
   let typeLabel = typeConfig?.label || ''
-  const subType = table.appearance?.sub_type
-  const scd = table.appearance?.scd
 
-  if (table.appearance?.type === 'fact' && subType) {
-    const strategyMap: Record<string, string> = {
-      transaction: 'Trans.',
-      periodic: 'Periodic',
-      accumulating: 'Accum.',
-      factless: 'Factless',
-    }
-    typeLabel = `FACT (${strategyMap[subType] || subType})`
-  } else if (table.appearance?.type && subType) {
-    typeLabel = `${table.appearance.type.toUpperCase()} (${subType})`
-  } else if (table.appearance?.type) {
-    typeLabel = table.appearance.type.toUpperCase()
+  if (kind) {
+    typeLabel = kind.toUpperCase()
   }
 
-  if (scd) {
-    const scdLabel = `SCD ${scd.replace('type', 'T')}`
+  const scd = table.logical?.scd
+  if (scd?.type) {
+    const scdLabel = `SCD ${scd.type.replace('type', 'T')}`
     typeLabel = typeLabel ? `${typeLabel} / ${scdLabel}` : scdLabel
   }
 
@@ -86,13 +76,12 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
     const col = index % GRID_COLS
     const row = Math.floor(index / GRID_COLS)
 
-    // Always treat layout x/y as absolute canvas coordinates.
-    // parentId in layout is semantic metadata only (domain membership), not used for coordinate math.
     const x = layout?.x ?? col * (TABLE_WIDTH + 40)
     const y = layout?.y ?? row * (TABLE_HEIGHT + 40)
 
-    const typeConfig = table.appearance?.type ? TYPE_CONFIG[table.appearance.type] : null
-    const typeColor = table.appearance?.color || typeConfig?.color || '#334155'
+    const kind = table.conceptual?.kind
+    const typeConfig = kind ? TYPE_CONFIG[kind] : null
+    const typeColor = table.display?.color || typeConfig?.color || '#334155'
 
     elements.push({
       data: {
@@ -101,7 +90,7 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
         domainId: domainByMemberId.get(table.id) ?? null,
         typeColor,
         typeLabel: buildTypeLabel(table),
-        typeIcon: table.appearance?.icon || typeConfig?.icon || '',
+        typeIcon: table.display?.icon || typeConfig?.icon || '',
       },
       position: { x, y },
     })
@@ -114,8 +103,8 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
     const x = layout?.x ?? (schema.tables.length + index) * (TABLE_WIDTH + 40)
     const y = layout?.y ?? Math.floor(index / GRID_COLS) * (TABLE_HEIGHT + 40)
 
-    const color = consumer.appearance?.color || CONSUMER_DEFAULT_COLOR
-    const icon = consumer.appearance?.icon || CONSUMER_DEFAULT_ICON
+    const color = consumer.display?.color || CONSUMER_DEFAULT_COLOR
+    const icon = consumer.display?.icon || CONSUMER_DEFAULT_ICON
 
     elements.push({
       data: {
@@ -135,10 +124,9 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
   const tableIdSet = new Set(schema.tables.map(t => t.id))
   const allNodeIdSet = new Set([...tableIdSet, ...usecaseIdSet])
 
-  // Lineage edges (from top-level schema.lineage[])
-  // `to` can reference either a table or a consumer node
+  // Lineage edges
   schema.lineage?.forEach((edge) => {
-    if (!allNodeIdSet.has(edge.from) || !allNodeIdSet.has(edge.to)) return // skip dangling edges
+    if (!allNodeIdSet.has(edge.from) || !allNodeIdSet.has(edge.to)) return
     elements.push({
       data: {
         id: edge.id,
@@ -151,9 +139,9 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
     })
   })
 
-  // ER edges (from relationships[])
+  // ER edges
   schema.relationships?.forEach((rel) => {
-    if (!tableIdSet.has(rel.from.table) || !tableIdSet.has(rel.to.table)) return // skip dangling edges
+    if (!tableIdSet.has(rel.from.table) || !tableIdSet.has(rel.to.table)) return
     elements.push({
       data: {
         id: rel.id,

@@ -155,7 +155,7 @@ When adding or modifying fields or sections, verify all of the following:
 
 1. `src/index.js` — Verify command is registered
 2. `README.md` / `README.ja.md` — Update CLI reference sections
-3. `src/templates/rules.md` — Update Section 13 (CLI Flag Reference)
+3. `src/templates/rules.md` — Update Section 12 (CLI Flag Reference)
 4. `CHANGELOG.md` — Add a changelog entry
 
 ### When updating SDD skills
@@ -184,71 +184,72 @@ When reading/writing YAML from CLI commands, field names must exactly match the 
 ## YAML Model Format
 
 Seven root-level sections. Do not write coordinates inside `tables` or `domains`.
+Domain membership is declared in `domains.members` (not via `parentId` in layout).
 
 ```yaml
-version: "1.0.0"   # optional; current model format version
+version: "2.0.0"   # optional; current model format version
 
 # ── Domains ──────────────────────────────────────────────
 domains:
   - id: sales_ops
     name: "Sales Operations"
     description: "Group of sales-related tables."  # optional
-    color: "rgba(59, 130, 246, 0.1)"
+    display:
+      color: "rgba(59, 130, 246, 0.1)"
     members: [fct_orders, dim_customers]
 
 # ── Tables ───────────────────────────────────────────────
 tables:
   - id: fct_orders
-    name: Orders                               # conceptual name
-    logical_name: "Order Transactions"         # optional
-    physical_name: "fct_retail_sales"          # optional
-    appearance:
-      type: fact       # fact|dimension|mart|hub|link|satellite|table
-      sub_type: transaction  # optional sub-classification
-      scd: type2       # SCD for dimensions (type0–type6)
-      icon: "💰"
-      color: "#e0f2fe" # optional header color
-    conceptual:        # Business context for AI agents (optional)
+    conceptual:              # Business layer (AI-facing)
+      name: Orders           # display name (required)
+      kind: fact             # fact|dimension|mart|hub|link|satellite|table
       description: "One row = one order line item."
-      tags: [WHAT, HOW_MUCH]   # BEAM* tags: WHO|WHAT|WHEN|WHERE|HOW|COUNT|HOW_MUCH
-    implementation:    # AI codegen hints (optional); inferred from appearance.type if omitted
-      materialization: incremental          # table|view|incremental|ephemeral
-      incremental_strategy: merge          # merge|append|delete+insert
-      unique_key: order_id
-      partition_by: { field: event_date, granularity: day }  # day|month|year|hour
-      cluster_by: [customer_id]
-      grain: [month_key]                   # GROUP BY (mart only)
-      measures:                            # Aggregation definitions (mart only)
+      tags: [WHAT, HOW_MUCH]  # BEAM* tags: WHO|WHAT|WHEN|WHERE|HOW|COUNT|HOW_MUCH
+    logical:                 # Analytic layer
+      name: "Order Transactions"  # optional formal name
+      grain: [month_key]     # GROUP BY (mart only)
+      scd:                   # SCD for dimensions only
+        type: type2          # type0–type6
+        business_key: [customer_id]
+        valid_from: valid_from
+        valid_to: valid_to
+        current_flag: is_current
+    physical:                # Build/storage layer
+      name: "fct_retail_sales"      # warehouse table name
+      strategy: incremental         # table|view|incremental|ephemeral
+      update_mode: merge            # merge|append|delete_insert
+      merge_key: order_id
+      partition: { field: event_date, granularity: day }  # day|month|year|hour
+      cluster: [customer_id]
+      filter_key: updated_at        # column id for WHERE filter (incremental only)
+      lookback: "3 days"            # safety margin for incremental filter
+      measures:                     # Aggregation definitions (mart only)
         - column: total_revenue
-          agg: sum                         # sum|count|count_distinct|avg|min|max
-          source_column: fct_sales.amount  # upstream column (<table_id>.<col_id>)
-      incremental_key: updated_at          # optional; column id for WHERE filter (incremental only)
-      incremental_lookback: "3 days"       # optional; safety margin for incremental filter
-      scd2:                                # optional; SCD Type2 column roles (requires appearance.scd: type2)
-        business_key: [customer_id]        # natural key column id(s)
-        valid_from: valid_from             # column id for start date
-        valid_to: valid_to                 # column id for end date
-        current_flag: is_current           # optional; column id for current record flag
+          agg: sum                  # sum|count|count_distinct|avg|min|max
+          source_column: fct_sales.amount
+    display:                 # Visual layer
+      icon: "💰"
+      color: "#e0f2fe"       # optional header color
     columns:
       - id: order_id
-        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # optional; SQL expression for SELECT clause
-        logical:
-          name: "Order ID"
-          type: Int
-          description: "Surrogate key."
-          isPrimaryKey: true
-          isForeignKey: false
-          isPartitionKey: false
-          additivity: fully    # fully|semi|non
-        physical:              # Override physical definition (optional)
+        name: "Order ID"            # flat structure (no logical: wrapper)
+        type: Int
+        description: "Surrogate key."
+        isPrimaryKey: true
+        isForeignKey: false
+        isPartitionKey: false
+        additivity: fully           # fully|semi|non
+        expression: "CAST(raw_amount AS DECIMAL(18,2))"  # optional SQL expression
+        physical:                   # Override physical definition (optional)
           name: order_id
           type: "BIGINT"
           constraints: [NOT NULL]
-    metadata:                  # optional user-defined key-value pairs
+    metadata:                # optional user-defined key-value pairs
       owner: data-platform
       sla: "daily 6AM JST"
       sql_path: "models/marts/fct_orders.sql"
-    sampleData:                # 2D array of plain data rows (no header)
+    sampleData:              # 2D array of plain data rows (no header)
       - [1001, 150.00]
       - [1002, 89.50]
 
@@ -271,11 +272,12 @@ relationships:
 # ── Annotations ──────────────────────────────────────────
 annotations:
   - id: note_001
-    type: sticky             # sticky|callout
     text: "Grain: one row = one order line item"
-    color: "#fef9c3"         # optional background color
-    targetId: fct_orders     # attachment target ID (optional)
-    targetType: table        # table|domain|relationship|lineage|column
+    target:                  # optional; attachment target
+      id: fct_orders
+      type: table            # table|domain|relationship|lineage|column
+    display:
+      color: "#fef9c3"       # optional background color
     offset: { x: 100, y: -80 }  # offset from target top-left (absolute coord if omitted)
 
 # ── Layout ───────────────────────────────────────────────
@@ -285,10 +287,9 @@ layout:
     y: 0
     width: 880
     height: 480
-  fct_orders:                 # Table inside domain: coords relative to domain origin
-    x: 280
+  fct_orders:                 # Table in domain: coords relative to domain origin
+    x: 280                    # (domain membership declared in domains.members)
     y: 200
-    parentId: sales_ops       # Declares domain membership
   mart_summary:               # Standalone table: absolute canvas coordinates
     x: 1060
     y: 200

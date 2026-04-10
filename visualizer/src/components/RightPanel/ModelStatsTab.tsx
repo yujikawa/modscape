@@ -116,7 +116,7 @@ const ModelStatsTab = memo(() => {
                 <div className={`flex-1 flex flex-col gap-0.5 min-w-0`}>
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <span className={`text-xs truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                      {table.name}
+                      {table.conceptual?.name ?? table.id}
                     </span>
                     <span className={`text-[10px] font-bold tabular-nums shrink-0 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                       {total}
@@ -172,8 +172,8 @@ const ModelStatsTab = memo(() => {
                 }`}
               >
                 <span className="flex flex-col min-w-0">
-                  <span className="truncate">{t.name}</span>
-                  {t.name !== t.id && (
+                  <span className="truncate">{t.conceptual?.name ?? t.id}</span>
+                  {(t.conceptual?.name ?? t.id) !== t.id && (
                     <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>
                   )}
                 </span>

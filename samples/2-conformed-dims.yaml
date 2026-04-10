@@ -1,123 +1,111 @@
-tables:
-  - id: dim_dates
-    name: Calendar
-    logical_name: Enterprise Date Dimension
-    physical_name: dim_dates
-    appearance:
-      type: dimension
-      icon: 📅
-    conceptual:
-      description: Conformed date dimension shared across all fact tables.
-      tags:
-        - WHEN
-    implementation:
-      materialization: table
-    columns:
-      - id: date_key
-        logical:
-          name: Date Key
-          type: Int
-          isPrimaryKey: true
-      - id: date_value
-        logical:
-          name: Date
-          type: Date
-      - id: year
-        logical:
-          name: Year
-          type: Int
-      - id: quarter
-        logical:
-          name: Quarter
-          type: Int
-      - id: month
-        logical:
-          name: Month
-          type: Int
-      - id: month_name
-        logical:
-          name: Month Name
-          type: String
-      - id: week_of_year
-        logical:
-          name: Week of Year
-          type: Int
-      - id: day_of_week
-        logical:
-          name: Day of Week
-          type: String
-      - id: is_weekend
-        logical:
-          name: Is Weekend
-          type: Boolean
-      - id: fiscal_year
-        logical:
-          name: Fiscal Year
-          type: Int
-      - id: fiscal_quarter
-        logical:
-          name: Fiscal Quarter
-          type: Int
-    sampleData: []
-  - id: dim_geography
-    name: Geography
-    logical_name: Geographic Hierarchy
-    physical_name: dim_geography
-    appearance:
-      type: dimension
-      icon: 🌍
-    conceptual:
-      description: Conformed geography dimension with country → region → city hierarchy.
-      tags:
-        - WHERE
-    implementation:
-      materialization: table
-    columns:
-      - id: geo_key
-        logical:
-          name: Geography Key
-          type: Int
-          isPrimaryKey: true
-      - id: country_code
-        logical:
-          name: Country Code
-          type: String
-      - id: country_name
-        logical:
-          name: Country Name
-          type: String
-      - id: region
-        logical:
-          name: Region
-          type: String
-      - id: city
-        logical:
-          name: City
-          type: String
-    sampleData: []
-relationships: []
-lineage: []
+version: 2.0.0
 domains:
   - id: conformed
     name: Conformed Dimensions
     description: Shared dimensions reused across multiple data marts
-    color: rgba(99, 102, 241, 0.08)
     members:
       - dim_dates
       - dim_geography
-consumers: []
+    display:
+      color: rgba(99, 102, 241, 0.08)
+tables:
+  - id: dim_dates
+    conceptual:
+      name: Calendar
+      kind: dimension
+      description: Conformed date dimension shared across all fact tables.
+    logical:
+      name: Enterprise Date Dimension
+    physical:
+      name: dim_dates
+      strategy: table
+    display:
+      icon: 📅
+    columns:
+      - id: date_key
+        name: Date Key
+        type: Int
+        isPrimaryKey: true
+      - id: date_value
+        name: Date
+        type: Date
+      - id: year
+        name: Year
+        type: Int
+      - id: quarter
+        name: Quarter
+        type: Int
+      - id: month
+        name: Month
+        type: Int
+      - id: month_name
+        name: Month Name
+        type: String
+      - id: week_of_year
+        name: Week of Year
+        type: Int
+      - id: day_of_week
+        name: Day of Week
+        type: String
+      - id: is_weekend
+        name: Is Weekend
+        type: Boolean
+      - id: fiscal_year
+        name: Fiscal Year
+        type: Int
+      - id: fiscal_quarter
+        name: Fiscal Quarter
+        type: Int
+    metadata:
+      tags:
+        - WHEN
+    sampleData: []
+  - id: dim_geography
+    conceptual:
+      name: Geography
+      kind: dimension
+      description: Conformed geography dimension with country → region → city hierarchy.
+    logical:
+      name: Geographic Hierarchy
+    physical:
+      name: dim_geography
+      strategy: table
+    display:
+      icon: 🌍
+    columns:
+      - id: geo_key
+        name: Geography Key
+        type: Int
+        isPrimaryKey: true
+      - id: country_code
+        name: Country Code
+        type: String
+      - id: country_name
+        name: Country Name
+        type: String
+      - id: region
+        name: Region
+        type: String
+      - id: city
+        name: City
+        type: String
+    metadata:
+      tags:
+        - WHERE
+    sampleData: []
+lineage: []
+relationships: []
 annotations: []
 layout:
   dim_dates:
     x: -50
     'y': 396
-    parentId: conformed
   dim_geography:
     x: 270
     'y': 396
-    parentId: conformed
   conformed:
     x: -238
     'y': 134
     width: 696
     height: 496
+consumers: []

@@ -86,9 +86,23 @@ modscape summary <file> --json
    > - Updated: `specs/fct_orders.md`
    > - Changelog only: `specs/stg_raw_orders.md`
 
-### Step 3: Move to archives
+### Step 3: Sync questions.md
 
-10. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+10. If `.modscape/changes/<name>/questions.md` exists, sync it to `.modscape/specs/questions.md` using flat merge per table:
+
+    **Merge rules:**
+    - Read the existing `.modscape/specs/questions.md` (create it if absent with `# Questions\n\n## Pipeline-level\n\n## Table-level\n`)
+    - For each table section in `changes/<name>/questions.md`: find or create the matching `### <table-id>` section in `specs/questions.md`
+    - Append new questions that do not already exist (compare by question text, not ID)
+    - For questions that were answered (`[x]`) in this change, update the corresponding unresolved entry in `specs/questions.md` if one exists
+    - If a previously recorded question is now invalidated by this change, add a strikethrough note:
+      `~~- [ ] **Q-NNN** <original question>~~ <!-- <name>: <reason> -->`
+    - Append `<!-- <name> -->` as a comment after each newly added question line
+    - Pipeline-level questions are merged into the `## Pipeline-level` section similarly
+
+### Step 4: Move to archives
+
+11. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
     ```bash
     mkdir -p .modscape/archives
     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>

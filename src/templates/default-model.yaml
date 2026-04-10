@@ -5,51 +5,73 @@ version: "{{MODEL_FORMAT_VERSION}}"
 domains:
   - id: sample_domain
     name: Sample Domain
-    color: "rgba(59, 130, 246, 0.1)"
+    display:
+      color: "rgba(59, 130, 246, 0.1)"
     description: "A logical grouping of related business entities."
     members: [source_table, derived_table]
 
 tables:
   - id: source_table
-    name: Source Table
-    logical_name: "Original Business Record"
-    physical_name: "raw_source_table"
-    appearance:
-      type: table
+    conceptual:
+      name: Source Table
+      kind: table
+      description: "Raw source records."
+    logical:
+      name: "Original Business Record"
+    physical:
+      name: "raw_source_table"
+    display:
       icon: "📋"
     columns:
       - id: id
-        logical: { name: ID, type: Int, isPrimaryKey: true }
+        name: ID
+        type: Int
+        isPrimaryKey: true
         physical: { name: id, type: BIGINT }
       - id: name
-        logical: { name: Name, type: String }
+        name: Name
+        type: String
         physical: { name: name, type: VARCHAR(255) }
     sampleData:
       - [1, "Example Record A"]
       - [2, "Example Record B"]
 
   - id: derived_table
-    name: Derived Mart
-    logical_name: "Processed Analytics Summary"
-    physical_name: "mart_derived_summary"
-    appearance:
-      type: mart
+    conceptual:
+      name: Derived Mart
+      kind: mart
+      description: "Processed analytics summary."
+    logical:
+      name: "Processed Analytics Summary"
+    physical:
+      name: "mart_derived_summary"
+      strategy: incremental
+    display:
       icon: "📈"
-    lineage:
-      upstream: [source_table] # Lineage: Defines the flow of data (dashed arrows)
     columns:
       - id: id
-        logical: { name: ID, type: Int, isPrimaryKey: true }
+        name: ID
+        type: Int
+        isPrimaryKey: true
         physical: { name: id, type: BIGINT }
       - id: source_id
-        logical: { name: Source ID, type: Int, isForeignKey: true }
+        name: Source ID
+        type: Int
+        isForeignKey: true
         physical: { name: source_id, type: BIGINT }
       - id: summary_value
-        logical: { name: Value, type: Decimal, additivity: fully }
+        name: Value
+        type: Decimal
+        additivity: fully
         physical: { name: total_val, type: NUMBER(18,2) }
     sampleData:
       - [101, 1, 150.50]
       - [102, 2, 300.75]
+
+lineage:
+  - id: lin-source_table-derived_table
+    from: source_table
+    to: derived_table
 
 relationships:
   # Relationships: Defines Entity-Relationship connections (solid lines with 1:N badges)
@@ -57,5 +79,3 @@ relationships:
     from: { table: source_table, column: [id] }
     to: { table: derived_table, column: [source_id] }
     type: one-to-many
-
-lineage: [] # Note: Table-level lineage is also supported here, or inside tables[].lineage

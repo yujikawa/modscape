@@ -17,9 +17,15 @@ AIスキル `/modscape:spec:implement <name>` は `.modscape/changes/<name>/task
 
 スキップリストに含まれるテーブルIDのタスクは `⏭️ Skipping \`<id>\` (Context Only)` を出力してスキップしなければならない（SHALL）。
 
+スキルは実装中に人間の調査なしに判断できない事項（例：型の不一致、想定外のNULL、ソースレコードの不在）を検知した場合、`.modscape/changes/<name>/questions.md` に質問を追記しなければならない（SHALL）。質問がある場合、実装を一時停止してユーザーに確認するか、仮定を記録して続行するかを選択しなければならない（SHALL）。
+
 #### Scenario: 未完了タスクを順に実装する
 - **WHEN** `changes/<name>/tasks.md` に未完了タスクが存在する状態で `/modscape:spec:implement <name>` を実行する
 - **THEN** AIは `changes/<name>/spec-model.yaml` を参照して最初の未完了タスクのコードを生成し、tasks.md のチェックボックスを更新して次タスクへの確認を行う
+
+#### Scenario: 実装中に不明な事項を questions.md に積む
+- **WHEN** 実装中にAIが型の不一致や想定外のNULLを発見した
+- **THEN** AIは `questions.md` に質問を追記し、ユーザーに確認するか仮定で進むかを提示する
 
 #### Scenario: すべてのタスクが完了している場合にメッセージを表示する
 - **WHEN** `changes/<name>/tasks.md` の全タスクが完了済み（`- [x]`）の状態で `/modscape:spec:implement <name>` を実行する

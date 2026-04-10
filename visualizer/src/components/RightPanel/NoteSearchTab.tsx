@@ -63,9 +63,9 @@ const NoteSearchTab = () => {
             }`}
           >
             <div className="flex items-center gap-2 mb-1.5">
-              <Tag size={12} className={note.type === 'callout' ? 'text-blue-400' : 'text-amber-400'} />
+              <Tag size={12} className="text-amber-400" />
               <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-500">
-                {note.type === 'callout' ? 'Callout' : 'Sticky Note'}
+                Annotation
               </span>
               <ArrowUpRight size={12} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-blue-500" />
             </div>
@@ -74,10 +74,10 @@ const NoteSearchTab = () => {
             }`}>
               {note.text}
             </p>
-            {note.targetId && (
+            {note.target?.id && (
               <div className="mt-2 flex items-center gap-1.5 opacity-60">
                 <div className="w-1 h-1 rounded-full bg-slate-400" />
-                <span className="text-[9px] font-medium truncate italic">Attached to {note.targetId}</span>
+                <span className="text-[9px] font-medium truncate italic">Attached to {note.target.id}</span>
               </div>
             )}
           </button>

@@ -80,11 +80,11 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
 9. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the master YAML**:
-   - Propose tables (with `appearance.type`: staging → core fact/dimension → mart)
+   - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
-   - Add `implementation` hints where the target tool and table type make them clear
+   - Add `physical` strategy hints where the target tool and table type make them clear
 
 10. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
     ```bash
@@ -93,7 +93,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
     # domain add: only when explicitly requested by the user
     modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
     ```
-    Edit YAML directly only for complex nested fields (`implementation`, `columns`, `sampleData`).
+    Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
 
 11. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash
@@ -105,6 +105,16 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 13. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
 
 14. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
+
+15. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
+
+```markdown
+- [ ] **Q-NNN** <question text>
+  **Assumption:** <what you assumed to proceed> (unconfirmed)
+```
+
+    If there are unresolved questions (`- [ ]`) at the end of design, output:
+    > ⚠ **Q-NNN** 件の未解決の質問があります。`modscape spec answer <id> "<回答>"` で回答するか、このまま実装に進む場合は `@modscape-spec-implement <name>` を実行してください。
 
 ## design.md Format
 

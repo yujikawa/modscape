@@ -9,7 +9,7 @@ export function listAnnotations(filePath) {
   return data.annotations || [];
 }
 
-export function addAnnotation(filePath, { id, type, text, color, targetId, targetType, offset }) {
+export function addAnnotation(filePath, { id, text, color, targetId, targetType, offset }) {
   const data = readYaml(filePath);
   const annotations = data.annotations || [];
   const resolvedId = id || `note-${Date.now()}`;
@@ -17,29 +17,32 @@ export function addAnnotation(filePath, { id, type, text, color, targetId, targe
     throw new Error(`Annotation "${resolvedId}" already exists. Use updateAnnotation instead.`);
   }
   const annotation = { id: resolvedId };
-  if (type) annotation.type = type;
   if (text !== undefined) annotation.text = text;
-  if (color) annotation.color = color;
-  if (targetId) annotation.targetId = targetId;
-  if (targetType) annotation.targetType = targetType;
+  if (targetId) annotation.target = { id: targetId, type: targetType || 'table' };
   annotation.offset = offset ?? { x: 0, y: 0 };
+  if (color) annotation.display = { color };
   data.annotations = [...annotations, annotation];
   writeYaml(filePath, data);
   return { id: resolvedId };
 }
 
-export function updateAnnotation(filePath, { id, type, text, color, targetId, targetType, offset }) {
+export function updateAnnotation(filePath, { id, text, color, targetId, targetType, offset }) {
   const data = readYaml(filePath);
   const annotations = data.annotations || [];
   const idx = annotations.findIndex(a => a.id === id);
   if (idx === -1) throw new Error(`Annotation "${id}" not found. Use addAnnotation instead.`);
   const updated = { ...annotations[idx] };
-  if (type !== undefined) updated.type = type;
   if (text !== undefined) updated.text = text;
-  if (color !== undefined) updated.color = color;
-  if (targetId !== undefined) updated.targetId = targetId;
-  if (targetType !== undefined) updated.targetType = targetType;
+  if (targetId !== undefined) {
+    updated.target = { id: targetId, type: targetType || updated.target?.type || 'table' };
+  } else if (targetType !== undefined && updated.target) {
+    updated.target = { ...updated.target, type: targetType };
+  }
   if (offset !== undefined) updated.offset = offset;
+  if (color !== undefined) {
+    updated.display = updated.display || {};
+    updated.display.color = color;
+  }
   data.annotations = [...annotations.slice(0, idx), updated, ...annotations.slice(idx + 1)];
   writeYaml(filePath, data);
   return { id };

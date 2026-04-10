@@ -89,15 +89,29 @@ modscape summary <file> --json
    > - Updated: `specs/fct_orders.md`
    > - Changelog only: `specs/stg_raw_orders.md`
 
-### Step 3: Move to archives
+### Step 3: Sync questions.md
 
-9. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
-   ```bash
-   mkdir -p .modscape/archives
-   mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
-   ```
+9. If `.modscape/changes/<name>/questions.md` exists, sync it to `.modscape/specs/questions.md` using flat merge per table:
 
-10. **Always output the following summary at the end, without exception:**
+   **Merge rules:**
+   - Read the existing `.modscape/specs/questions.md` (create it if absent with `# Questions\n\n## Pipeline-level\n\n## Table-level\n`)
+   - For each table section in `changes/<name>/questions.md`: find or create the matching `### <table-id>` section in `specs/questions.md`
+   - Append new questions that do not already exist (compare by question text, not ID)
+   - For questions that were answered (`[x]`) in this change, update the corresponding unresolved entry in `specs/questions.md` if one exists
+   - If a previously recorded question in `specs/questions.md` is now invalidated by this change (e.g. the column was removed, the table was restructured), add a strikethrough note:
+     `~~- [ ] **Q-NNN** <original question>~~ <!-- <name>: <reason e.g. column removed> -->`
+   - Append `<!-- <name> -->` as a comment after each newly added question line
+   - Pipeline-level questions are merged into the `## Pipeline-level` section similarly
+
+### Step 4: Move to archives
+
+10. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+    ```bash
+    mkdir -p .modscape/archives
+    mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
+    ```
+
+11. **Always output the following summary at the end, without exception:**
 
 ---
 ✅ Archive complete.
@@ -106,6 +120,8 @@ modscape summary <file> --json
 - Created: `specs/<table-id>.md` ...
 - Updated: `specs/<table-id>.md` ...
 - Changelog only: `specs/<table-id>.md` ...
+
+**Questions synced:** `specs/questions.md` updated (<n> questions added/updated).
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">

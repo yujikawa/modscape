@@ -116,7 +116,7 @@ interface AppState {
   toggleAnnotationSelection: (id: string) => void;
   
   // Annotation Actions
-  addAnnotation: (offset: { x: number, y: number }, targetId?: string, targetType?: Annotation['targetType']) => void;
+  addAnnotation: (offset: { x: number, y: number }, targetId?: string, targetType?: string) => void;
   updateAnnotation: (id: string, updates: Partial<Annotation>) => void;
   removeAnnotation: (id: string) => void;
   
@@ -329,7 +329,7 @@ export const useStore = create<AppState>()(persist(
     const existing = currentLayout[id] || {};
     const newLayout = {
       ...currentLayout,
-      [id]: { ...existing, x: Math.round(x), y: Math.round(y), ...(parentId ? { parentId } : {}) }
+      [id]: { ...existing, x: Math.round(x), y: Math.round(y), ...(parentId ? { parentId } as any : {}) }
     };
     set({ schema: { ...schema, layout: newLayout }, lastUpdateSource: 'visual' });
     get().syncToYamlInput();
@@ -344,7 +344,7 @@ export const useStore = create<AppState>()(persist(
     const newLayout = { ...currentLayout };
     updates.forEach(({ id, x, y, parentId }) => {
       const existing = newLayout[id] || {};
-      newLayout[id] = { ...existing, x: Math.round(x), y: Math.round(y), ...(parentId ? { parentId } : {}) };
+      newLayout[id] = { ...existing, x: Math.round(x), y: Math.round(y), ...(parentId ? { parentId } as any : {}) };
     });
     set({ schema: { ...schema, layout: newLayout }, lastUpdateSource: 'visual' });
     get().syncToYamlInput();
@@ -448,9 +448,8 @@ export const useStore = create<AppState>()(persist(
     const newId = name ? name.toLowerCase().replace(/\s+/g, '_') : `new_table_${Date.now()}`;
     const newTable: Table = {
       id: newId,
-      name: name || 'NEW_TABLE',
-      appearance: { type: 'table' },
-      columns: [{ id: 'id', logical: { name: 'ID', type: 'Integer', isPrimaryKey: true } }]
+      conceptual: { name: name || 'NEW_TABLE', kind: 'table' },
+      columns: [{ id: 'id', name: 'ID', type: 'Integer', isPrimaryKey: true }]
     };
     const newSchema = {
       ...schema,
@@ -490,7 +489,7 @@ export const useStore = create<AppState>()(persist(
     const newUsecase = {
       id: newId,
       name: name || 'NEW_CONSUMER',
-      appearance: { icon: '📊' }
+      display: { icon: '📊' }
     };
     const newSchema = {
       ...schema,
@@ -628,11 +627,11 @@ export const useStore = create<AppState>()(persist(
     const newLayout = { ...(schema.layout || {}) };
     delete newLayout[id];
 
-    // CRITICAL: If a domain was deleted, clear parentId for all tables that were inside it
+    // If a domain was deleted, clear parentId for all tables that were inside it (internal use)
     if (isDomain) {
       Object.keys(newLayout).forEach(key => {
-        if (newLayout[key].parentId === id) {
-          delete newLayout[key].parentId;
+        if ((newLayout[key] as any).parentId === id) {
+          delete (newLayout[key] as any).parentId;
         }
       });
     }
@@ -704,7 +703,7 @@ export const useStore = create<AppState>()(persist(
     }));
     const newAnnotations = (schema.annotations || []).map(a => ({
       ...a,
-      targetId: a.targetId === oldId ? trimmed : a.targetId,
+      target: a.target?.id === oldId ? { ...a.target, id: trimmed } : a.target,
     }));
     const newSchema: Schema = {
       ...schema,
@@ -776,7 +775,7 @@ export const useStore = create<AppState>()(persist(
     const newLayout = {
       ...(schema.layout || {}),
       // 既存の width/height を保持しつつ parentId を設定する
-      [tableId]: { x: 20, y: 20, ...schema.layout?.[tableId], ...(domainId ? { parentId: domainId } : {}) }
+      [tableId]: { x: 20, y: 20, ...schema.layout?.[tableId], ...(domainId ? { parentId: domainId } as any : {}) }
     };
     set({ schema: { ...schema, domains: newDomains, layout: newLayout } });
     get().syncToYamlInput();
@@ -793,10 +792,10 @@ export const useStore = create<AppState>()(persist(
       return { ...domain, members: filteredTables };
     });
     const newLayout = { ...(schema.layout || {}) };
-    // 既存の width/height/x/y を保持しつつ parentId を設定する（未設定なら x/y はデフォルト値）
+    // Preserve existing x/y; set parentId internally for Cytoscape rendering
     if (domainId) tableIds.forEach(id => {
       const existing = newLayout[id] || {};
-      newLayout[id] = { ...existing, x: existing.x ?? 20, y: existing.y ?? 20, parentId: domainId };
+      newLayout[id] = { ...existing, x: existing.x ?? 20, y: existing.y ?? 20, ...(domainId ? { parentId: domainId } as any : {}) };
     });
     set({ schema: { ...schema, domains: newDomains, layout: newLayout } });
     get().syncToYamlInput();
@@ -952,7 +951,7 @@ export const useStore = create<AppState>()(persist(
         if (!schema) return { status: 'error', message: 'No model loaded' };
         const query = args.join(' ').toLowerCase();
         const match =
-          schema.tables.find(t => t.id.toLowerCase().includes(query) || t.name.toLowerCase().includes(query)) ||
+          schema.tables.find(t => t.id.toLowerCase().includes(query) || (t.conceptual?.name ?? '').toLowerCase().includes(query)) ||
           (schema.domains || []).find(d => d.id.toLowerCase().includes(query) || d.name.toLowerCase().includes(query));
         if (!match) return { status: 'error', message: `Not found: ${query}` };
         get().setFocusNodeId(match.id);
@@ -985,14 +984,14 @@ export const useStore = create<AppState>()(persist(
         if (table) {
           const domain = (schema.domains ?? []).find(d => (d.members ?? []).includes(id));
           const cols = (table.columns ?? []).map(c => {
-            const flags = [c.logical?.isPrimaryKey ? '*' : '', c.logical?.isForeignKey ? '†' : ''].filter(Boolean).join('');
+            const flags = [c.isPrimaryKey ? '*' : '', c.isForeignKey ? '†' : ''].filter(Boolean).join('');
             return c.id + (flags ? `(${flags})` : '');
           }).join(', ') || '—';
           const ers = (schema.relationships ?? []).filter(r => r.from.table === id || r.to.table === id)
             .map(r => `${r.from.table} → ${r.to.table} [${r.type ?? '1n'}]`).join(', ') || '—';
           const lns = (schema.lineage ?? []).filter(l => l.from === id || l.to === id)
             .map(l => `${l.from} → ${l.to}`).join(', ') || '—';
-          const msg = `${id}  (${table.appearance?.type ?? 'table'})  [${domain?.id ?? '—'}]\n  name   : ${table.name}\n  columns: ${cols}\n  er     : ${ers}\n  lineage: ${lns}`;
+          const msg = `${id}  (${table.conceptual?.kind ?? 'table'})  [${domain?.id ?? '—'}]\n  name   : ${table.conceptual?.name ?? id}\n  columns: ${cols}\n  er     : ${ers}\n  lineage: ${lns}`;
           return { status: 'success', message: msg };
         }
         const domain = (schema.domains ?? []).find(d => d.id === id);
@@ -1030,7 +1029,8 @@ export const useStore = create<AppState>()(persist(
         const [id, ...nameParts] = args;
         const name = nameParts.join(' ');
         if (schema.tables.some(t => t.id === id)) {
-          get().updateTable(id, { name });
+          const table = schema.tables.find(t => t.id === id)!;
+          get().updateTable(id, { conceptual: { ...table.conceptual, name } });
           return { status: 'success', message: `Updated name: ${id} → "${name}"` };
         }
         if ((schema.domains ?? []).some(d => d.id === id)) {
@@ -1096,7 +1096,7 @@ export const useStore = create<AppState>()(persist(
     const { schema } = get();
     if (!schema) return;
     const newId = `note_${Date.now()}`;
-    const newAnnotation: Annotation = { id: newId, targetId, targetType, text: 'New Note', type: 'sticky', offset };
+    const newAnnotation: Annotation = { id: newId, target: targetId ? { id: targetId, type: (targetType ?? 'table') as any } : undefined, text: 'New Note', offset };
     const newSchema = { ...schema, annotations: [...(schema.annotations || []), newAnnotation] };
     set({ schema: normalizeSchema(newSchema), selectedAnnotationId: newId, selectedTableId: null, selectedEdgeId: null });
     if (!targetId) get().setFocusNodeId(newId);

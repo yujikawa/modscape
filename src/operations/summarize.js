@@ -8,7 +8,7 @@ export function summarizeModel(filePath) {
   // Count tables by appearance type
   const byType = {};
   for (const table of tables) {
-    const type = table.appearance?.type || 'table';
+    const type = table.conceptual?.kind || 'table';
     byType[type] = (byType[type] || 0) + 1;
   }
 

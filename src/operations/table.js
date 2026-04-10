@@ -2,7 +2,11 @@ import { readYaml, writeYaml, findTableById } from '../model-utils.js';
 
 export function listTables(filePath, { type, domainId, orphanOnly } = {}) {
   const data = readYaml(filePath);
-  let tables = (data.tables || []).map(t => ({ id: t.id, name: t.name, type: t.appearance?.type ?? null }));
+  let tables = (data.tables || []).map(t => ({
+    id: t.id,
+    name: t.conceptual?.name ?? null,
+    type: t.conceptual?.kind ?? null,
+  }));
 
   if (type) {
     tables = tables.filter(t => t.type === type);
@@ -34,34 +38,40 @@ export function getTable(filePath, id) {
   return table;
 }
 
-export function addTable(filePath, { id, name, type, logicalName, physicalName, description }) {
+export function addTable(filePath, { id, name, kind, logicalName, physicalName, description }) {
   const data = readYaml(filePath);
   if (findTableById(data, id)) throw new Error(`Table "${id}" already exists. Use updateTable instead.`);
-  const table = { id, name };
-  if (logicalName) table.logical_name = logicalName;
-  if (physicalName) table.physical_name = physicalName;
-  if (type) table.appearance = { type };
-  if (description) table.conceptual = { description };
+  const table = { id };
+  const conceptual = {};
+  if (name) conceptual.name = name;
+  if (kind) conceptual.kind = kind;
+  if (description) conceptual.description = description;
+  if (Object.keys(conceptual).length > 0) table.conceptual = conceptual;
+  if (logicalName) table.logical = { name: logicalName };
+  if (physicalName) table.physical = { name: physicalName };
   if (!data.tables) data.tables = [];
   data.tables.push(table);
   writeYaml(filePath, data);
   return { id };
 }
 
-export function updateTable(filePath, { id, name, type, logicalName, physicalName, description }) {
+export function updateTable(filePath, { id, name, kind, logicalName, physicalName, description }) {
   const data = readYaml(filePath);
   const table = findTableById(data, id);
   if (!table) throw new Error(`Table "${id}" not found. Use addTable instead.`);
-  if (name) table.name = name;
-  if (logicalName) table.logical_name = logicalName;
-  if (physicalName) table.physical_name = physicalName;
-  if (type) {
-    table.appearance = table.appearance || {};
-    table.appearance.type = type;
-  }
-  if (description) {
+  if (name || kind || description) {
     table.conceptual = table.conceptual || {};
-    table.conceptual.description = description;
+    if (name) table.conceptual.name = name;
+    if (kind) table.conceptual.kind = kind;
+    if (description) table.conceptual.description = description;
+  }
+  if (logicalName) {
+    table.logical = table.logical || {};
+    table.logical.name = logicalName;
+  }
+  if (physicalName) {
+    table.physical = table.physical || {};
+    table.physical.name = physicalName;
   }
   writeYaml(filePath, data);
   return { id };

@@ -1,15 +1,33 @@
 import yaml from 'js-yaml'
 import type { Schema } from '../types/schema'
 
+const SUPPORTED_VERSION = '2.0.0'
+
+function detectVersion(data: any): string {
+  return typeof data.version === 'string' ? data.version : '1.0.0'
+}
+
 export function normalizeSchema(data: any): Schema {
-  // Basic validation and mapping
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid YAML: Root must be an object')
   }
 
-  // Normalization: Ensure tables, relationships, domains, consumers and annotations are always arrays
+  const version = detectVersion(data)
+
+  // v1 YAML is not supported — must be migrated first
+  if (version !== SUPPORTED_VERSION) {
+    throw new Error(
+      `This file uses schema v${version}, but schema v${SUPPORTED_VERSION} is required.\n` +
+      `Run: modscape migrate <path>`
+    )
+  }
+
+  return normalizeV2(data)
+}
+
+function normalizeV2(data: any): Schema {
   const schema: Schema = {
-    version: typeof data.version === 'string' ? data.version : undefined,
+    version: data.version,
     tables: Array.isArray(data.tables) ? data.tables : [],
     relationships: Array.isArray(data.relationships) ? data.relationships : [],
     lineage: Array.isArray(data.lineage) ? data.lineage : [],
@@ -21,10 +39,10 @@ export function normalizeSchema(data: any): Schema {
           offset: a.offset ?? { x: 0, y: 0 },
         }))
       : [],
-    layout: data.layout || {}
+    layout: data.layout || {},
   }
 
-  // Normalize relationships: filter out type='lineage' entries, normalize column to string[], auto-generate id
+  // Normalize relationships: filter out type='lineage', normalize columns, auto-generate id
   schema.relationships = schema.relationships!.filter((rel: any) => {
     if (rel.type === 'lineage') {
       console.warn(`[modscape] Relationship with type='lineage' is invalid and has been ignored. Use the lineage section instead. (from: ${rel.from?.table}, to: ${rel.to?.table})`)
@@ -62,36 +80,30 @@ export function normalizeSchema(data: any): Schema {
     return { ...edge, id: `lin-${edge.from}-${edge.to}` }
   })
 
-  // Normalize domains: support both `members` (new) and `tables` (legacy) field names
+  // Normalize domains
   schema.domains = schema.domains!.map((domain: any) => ({
     ...domain,
-    members: Array.isArray(domain.members)
-      ? domain.members
-      : Array.isArray(domain.tables)
-        ? domain.tables
-        : [],
-    tables: undefined,
+    members: Array.isArray(domain.members) ? domain.members : [],
   }))
 
-  // Auto-repair: Sync layout.parentId with domain.members membership
+  // Sync layout with domain membership (no parentId in v2 layout, but needed internally for Cytoscape)
   if (schema.domains && schema.layout) {
     schema.domains.forEach(domain => {
       domain.members.forEach(memberId => {
         if (schema.layout![memberId]) {
-          schema.layout![memberId].parentId = domain.id;
+          (schema.layout![memberId] as any).parentId = domain.id
         } else {
-          // If no layout exists for this member, create a placeholder so it has a parent
-          schema.layout![memberId] = { x: 0, y: 0, parentId: domain.id };
+          (schema.layout![memberId] as any) = { x: 0, y: 0, parentId: domain.id }
         }
-      });
-    });
+      })
+    })
   }
 
-  // Further normalization for each table
+  // Normalize tables
   schema.tables = schema.tables.map((table: any) => {
-    let sampleData = table.sampleData;
+    let sampleData = table.sampleData
 
-    // Detect and remove header row in sampleData (exact match with column id list)
+    // Detect and remove header row in sampleData
     if (Array.isArray(sampleData) && sampleData.length > 0 && Array.isArray(table.columns)) {
       const firstRow = sampleData[0]
       const colIds = (table.columns as any[]).map((c: any) => c.id)
@@ -106,65 +118,28 @@ export function normalizeSchema(data: any): Schema {
       }
     }
 
-    // Migrate legacy format { columns: [...], rows: [[...]] } to new [[...]] format
-    if (sampleData && typeof sampleData === 'object' && !Array.isArray(sampleData)) {
-      const legacyColumns = Array.isArray(sampleData.columns) ? sampleData.columns : [];
-      const legacyRows = Array.isArray(sampleData.rows) ? sampleData.rows : [];
-
-      if (legacyColumns.length > 0 && legacyRows.length > 0) {
-        // Map legacy columns (ID list) to current table column order
-        const currentColumns = Array.isArray(table.columns) ? table.columns : [];
-        sampleData = legacyRows.map((row: any[]) => {
-          return currentColumns.map((col: any) => {
-            const colIndex = legacyColumns.indexOf(col.id);
-            return colIndex !== -1 ? row[colIndex] : null;
-          });
-        });
-      } else if (legacyRows.length > 0) {
-        sampleData = legacyRows;
-      } else {
-        sampleData = [];
-      }
+    // Normalize partition: accept both object and array (single object)
+    const physical = table.physical ? { ...table.physical } : undefined
+    if (physical?.partition && Array.isArray(physical.partition)) {
+      physical.partition = physical.partition[0]
     }
-
-    const appearance = table.appearance ? { ...table.appearance } : undefined;
-    if (appearance) {
-      // Compatibility mapping: sub_type (if type0-7) -> scd
-      if (appearance.sub_type && /^type[0-7]$/.test(appearance.sub_type) && !appearance.scd) {
-        appearance.scd = appearance.sub_type;
-        appearance.sub_type = undefined;
-      }
+    if (physical?.merge_key && !Array.isArray(physical.merge_key)) {
+      physical.merge_key = [physical.merge_key]
+    }
+    if (physical?.cluster && !Array.isArray(physical.cluster)) {
+      physical.cluster = [physical.cluster]
     }
 
     return {
       ...table,
       id: table.id || 'unknown',
-      name: table.name !== undefined ? table.name : (table.id || 'Unnamed Table'),
-      logical_name: table.logical_name,
-      physical_name: table.physical_name,
-      appearance,
-      lineage: undefined, // Explicitly clear legacy lineage if present
-      implementation: table.implementation ? {
-        ...table.implementation,
-        // Normalize unique_key: YAML may have a single string or an array
-        unique_key: table.implementation.unique_key
-          ? (Array.isArray(table.implementation.unique_key)
-              ? table.implementation.unique_key
-              : [table.implementation.unique_key])
-          : undefined,
-        // Normalize partition_by: YAML may have a single object or an array
-        partition_by: table.implementation.partition_by
-          ? (Array.isArray(table.implementation.partition_by)
-              ? table.implementation.partition_by
-              : [table.implementation.partition_by])
-          : undefined,
-      } : undefined,
+      physical: physical || undefined,
+      lineage: undefined,
       columns: Array.isArray(table.columns) ? table.columns.map((col: any) => ({
         ...col,
-        logical: col.logical ? { ...col.logical } : undefined,
-        physical: col.physical ? { ...col.physical } : undefined
+        physical: col.physical ? { ...col.physical } : undefined,
       })) : [],
-      sampleData: Array.isArray(sampleData) ? sampleData : []
+      sampleData: Array.isArray(sampleData) ? sampleData : [],
     }
   })
 

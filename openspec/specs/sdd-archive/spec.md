@@ -14,6 +14,7 @@ AIスキル `/modscape:spec:archive <name>` は `changes/<name>/spec.md`・`chan
   - `design.md` が存在しない、または `## Affected Tables` セクションが存在しない場合: `spec-model.yaml` のすべてのテーブルを Direct Impact として扱う（後方互換）
 - Direct Impact および Downstream Impact — Implement テーブルに対して `specs/<table-id>.md` の Overview / Business Context / Business Rules / Known Issues を生成・更新する（フル同期）
 - Downstream Impact — Context Only テーブルに対して `specs/<table-id>.md` の Changelog のみ追記する
+- `changes/<name>/questions.md` を `.modscape/specs/questions.md` へテーブル単位フラットマージでsyncする
 - 同期完了後、作業フォルダを `.modscape/archives/YYYY-MM-DD-<name>/` に移動する
 
 #### Scenario: 作業用YAMLを本番YAMLにマージする
@@ -35,6 +36,10 @@ AIスキル `/modscape:spec:archive <name>` は `changes/<name>/spec.md`・`chan
 #### Scenario: Context Only テーブルは Changelog のみ追記する
 - **WHEN** archive を実行し、テーブルが `### Downstream Impact — Context Only` に分類されている
 - **THEN** AIはフル spec 同期を行わず、`specs/<table-id>.md` の Changelog に「Referenced in downstream lineage; no structural change required (SDD: <name>)」のみ追記する
+
+#### Scenario: questions.md を specs/questions.md へsyncする
+- **WHEN** archive を実行し `changes/<name>/questions.md` が存在する
+- **THEN** AIは `.modscape/specs/questions.md` へテーブル単位フラットマージを行い、矛盾・廃止があればコメントを付記する
 
 #### Scenario: design.md が存在しない場合のフォールバック
 - **WHEN** `.modscape/changes/<name>/design.md` が存在しない状態で archive を実行する

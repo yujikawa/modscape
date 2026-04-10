@@ -37,6 +37,8 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 
 この分類は **AI の提案** であり（SHALL）、`design.md` に免責注記を記載し、分類が誤っている場合はユーザーが直接編集するよう案内しなければならない（SHALL）。
 
+スキルは設計中に人間の調査なしに判断できない事項（例：カラム定義不明、ソーステーブルの実在未確認）を検知した場合、`.modscape/changes/<name>/questions.md` に質問を追記しなければならない（SHALL）。
+
 #### Scenario: spec.md のData Sourcesから関連テーブルを抽出して作業用YAMLを生成する
 - **WHEN** `changes/<name>/spec.md` が存在し `/modscape:spec:design <name>` を実行する
 - **THEN** AIはData Sourcesを読み、`modscape extract --with-downstream`で関連テーブルおよびその下流（Downstream Impact）を抽出して `changes/<name>/spec-model.yaml` を生成する
@@ -44,6 +46,10 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 #### Scenario: 本番YAMLを変更しない
 - **WHEN** `/modscape:spec:design <name>` を実行する
 - **THEN** 本番のmaster model.yaml（HR.yaml等）は一切変更されない
+
+#### Scenario: 設計中に不明な事項を questions.md に積む
+- **WHEN** 設計中にAIがカラム定義やソーステーブルの仕様を判断できない
+- **THEN** AIは `questions.md` に該当質問を追記し、仮定で進む場合は `**仮定:**` 行を付ける
 
 #### Scenario: design.md の気づきを反映して再実行する
 - **WHEN** `changes/<name>/design.md` に気づきが追記された状態で `/modscape:spec:design <name>` を再実行する
