@@ -86,8 +86,37 @@ export function readYaml(filePath) {
   return data || {};
 }
 
+const ROOT_KEY_ORDER = ['version', 'imports', 'domains', 'tables', 'lineage', 'relationships', 'annotations', 'layout', 'consumers'];
+const TABLE_KEY_ORDER = ['id', 'conceptual', 'logical', 'physical', 'display', 'columns', 'metadata', 'sampleData'];
+const COLUMN_KEY_ORDER = ['id', 'name', 'type', 'description', 'isPrimaryKey', 'isForeignKey', 'isPartitionKey', 'additivity', 'expression', 'physical'];
+
+function sortKeys(obj, order) {
+  const result = {};
+  for (const key of order) {
+    if (key in obj) result[key] = obj[key];
+  }
+  for (const key of Object.keys(obj)) {
+    if (!(key in result)) result[key] = obj[key];
+  }
+  return result;
+}
+
+function normalizeSchema(data) {
+  const root = sortKeys(data, ROOT_KEY_ORDER);
+  if (Array.isArray(root.tables)) {
+    root.tables = root.tables.map(t => {
+      const table = sortKeys(t, TABLE_KEY_ORDER);
+      if (Array.isArray(table.columns)) {
+        table.columns = table.columns.map(c => sortKeys(c, COLUMN_KEY_ORDER));
+      }
+      return table;
+    });
+  }
+  return root;
+}
+
 export function writeYaml(filePath, data) {
-  fs.writeFileSync(filePath, yaml.dump(data, { lineWidth: -1 }), 'utf8');
+  fs.writeFileSync(filePath, yaml.dump(normalizeSchema(data), { lineWidth: -1 }), 'utf8');
 }
 
 export function findTableById(data, id) {

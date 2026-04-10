@@ -1,24 +1,52 @@
 version: 2.0.0
+imports:
+  - from: ./2-conformed-dims.yaml
+    ids:
+      - dim_dates
+domains:
+  - id: raw_vault
+    name: Raw Vault
+    description: Immutable historical record loaded from source systems
+    members:
+      - hub_customer
+      - hub_product
+      - hub_order
+      - lnk_order_line
+      - sat_customer_profile
+      - sat_product_details
+      - sat_order_header
+    display:
+      color: rgba(234, 179, 8, 0.08)
+  - id: star_schema
+    name: Star Schema
+    description: Conformed dimensional model built from the Raw Vault
+    members:
+      - dim_customers
+      - dim_products
+      - dim_dates
+      - fct_orders
+    display:
+      color: rgba(59, 130, 246, 0.08)
+  - id: mart
+    name: Data Mart
+    description: Aggregated models ready for BI consumption
+    members:
+      - mart_daily_revenue
+      - mart_product_performance
+    display:
+      color: rgba(249, 115, 22, 0.08)
 tables:
   - id: hub_customer
     conceptual:
       name: Customer Hub
       kind: hub
       description: Business key for all customer entities across source systems.
+    logical:
+      name: Customer Hub Table
     physical:
       name: hub_customer
     display:
       icon: 👤
-    sampleData:
-      - - a1b2c3d4
-        - CUST-00042
-        - crm.salesforce
-      - - e5f6g7h8
-        - CUST-00018
-        - crm.salesforce
-      - - i9j0k1l2
-        - CUST-00091
-        - erp.sap
     columns:
       - id: customer_hk
         name: Customer Hash Key
@@ -34,8 +62,16 @@ tables:
       - id: record_source
         name: Record Source
         type: String
-    logical:
-      name: Customer Hub Table
+    sampleData:
+      - - a1b2c3d4
+        - CUST-00042
+        - crm.salesforce
+      - - e5f6g7h8
+        - CUST-00018
+        - crm.salesforce
+      - - i9j0k1l2
+        - CUST-00091
+        - erp.sap
   - id: hub_product
     conceptual:
       name: Product Hub
@@ -45,7 +81,6 @@ tables:
       name: hub_product
     display:
       icon: 📦
-    sampleData: []
     columns:
       - id: product_hk
         name: Product Hash Key
@@ -60,6 +95,7 @@ tables:
       - id: record_source
         name: Record Source
         type: String
+    sampleData: []
   - id: hub_order
     conceptual:
       name: Order Hub
@@ -69,7 +105,6 @@ tables:
       name: hub_order
     display:
       icon: 🧾
-    sampleData: []
     columns:
       - id: order_hk
         name: Order Hash Key
@@ -84,6 +119,7 @@ tables:
       - id: record_source
         name: Record Source
         type: String
+    sampleData: []
   - id: lnk_order_line
     conceptual:
       name: Order Line
@@ -91,7 +127,6 @@ tables:
       description: Connects orders to products (one order can contain multiple products).
     physical:
       name: lnk_order_line
-    sampleData: []
     columns:
       - id: lnk_hk
         name: Link Hash Key
@@ -115,6 +150,7 @@ tables:
       - id: record_source
         name: Record Source
         type: String
+    sampleData: []
   - id: sat_customer_profile
     conceptual:
       name: Customer Profile
@@ -123,7 +159,6 @@ tables:
       name: sat_customer_profile
     display:
       icon: 🛰️
-    sampleData: []
     columns:
       - id: customer_hk
         name: Customer Hash Key
@@ -148,6 +183,7 @@ tables:
       - id: segment
         name: Customer Segment
         type: String
+    sampleData: []
   - id: sat_product_details
     conceptual:
       name: Product Details
@@ -156,7 +192,6 @@ tables:
       name: sat_product_details
     display:
       icon: 🛰️
-    sampleData: []
     columns:
       - id: product_hk
         name: Product Hash Key
@@ -181,6 +216,7 @@ tables:
       - id: unit_cost
         name: Unit Cost
         type: Decimal
+    sampleData: []
   - id: sat_order_header
     conceptual:
       name: Order Header
@@ -189,7 +225,6 @@ tables:
       name: sat_order_header
     display:
       icon: 🛰️
-    sampleData: []
     columns:
       - id: order_hk
         name: Order Hash Key
@@ -217,6 +252,7 @@ tables:
       - id: net_revenue
         name: Net Revenue
         type: Decimal
+    sampleData: []
   - id: dim_customers
     conceptual:
       name: Customers
@@ -231,10 +267,6 @@ tables:
       strategy: table
     display:
       icon: 👤
-    metadata:
-      tags:
-        - WHO
-    sampleData: []
     columns:
       - id: customer_key
         name: Customer Key
@@ -265,6 +297,10 @@ tables:
       - id: valid_to
         name: Valid To
         type: Date
+    metadata:
+      tags:
+        - WHO
+    sampleData: []
   - id: dim_products
     conceptual:
       name: Products
@@ -277,10 +313,6 @@ tables:
       strategy: table
     display:
       icon: 📦
-    metadata:
-      tags:
-        - WHAT
-    sampleData: []
     columns:
       - id: product_key
         name: Product Key
@@ -301,6 +333,10 @@ tables:
       - id: unit_cost
         name: Unit Cost
         type: Decimal
+    metadata:
+      tags:
+        - WHAT
+    sampleData: []
   - id: fct_orders
     conceptual:
       name: Orders
@@ -320,6 +356,39 @@ tables:
         granularity: day
     display:
       icon: 📊
+    columns:
+      - id: order_id
+        name: Order ID
+        type: String
+        isPrimaryKey: true
+      - id: customer_key
+        name: Customer Key
+        type: Int
+        isForeignKey: true
+      - id: product_key
+        name: Product Key
+        type: Int
+        isForeignKey: true
+      - id: date_key
+        name: Date Key
+        type: Int
+        isForeignKey: true
+      - id: order_date
+        name: Order Date
+        type: Date
+        isPartitionKey: true
+      - id: quantity
+        name: Quantity
+        type: Int
+        additivity: fully
+      - id: unit_price
+        name: Unit Price
+        type: Decimal
+        additivity: non
+      - id: net_revenue
+        name: Net Revenue
+        type: Decimal
+        additivity: fully
     metadata:
       sla: 99%
       sql_path: fct_orders.sql
@@ -355,39 +424,6 @@ tables:
         - 1
         - 499
         - 499
-    columns:
-      - id: order_id
-        name: Order ID
-        type: String
-        isPrimaryKey: true
-      - id: customer_key
-        name: Customer Key
-        type: Int
-        isForeignKey: true
-      - id: product_key
-        name: Product Key
-        type: Int
-        isForeignKey: true
-      - id: date_key
-        name: Date Key
-        type: Int
-        isForeignKey: true
-      - id: order_date
-        name: Order Date
-        type: Date
-        isPartitionKey: true
-      - id: quantity
-        name: Quantity
-        type: Int
-        additivity: fully
-      - id: unit_price
-        name: Unit Price
-        type: Decimal
-        additivity: non
-      - id: net_revenue
-        name: Net Revenue
-        type: Decimal
-        additivity: fully
   - id: mart_daily_revenue
     conceptual:
       name: Daily Revenue
@@ -404,11 +440,6 @@ tables:
       strategy: table
     display:
       icon: 📈
-    metadata:
-      tags:
-        - HOW_MUCH
-        - WHEN
-    sampleData: []
     columns:
       - id: date_key
         name: Date Key
@@ -434,6 +465,11 @@ tables:
         name: Units Sold
         type: Int
         additivity: fully
+    metadata:
+      tags:
+        - HOW_MUCH
+        - WHEN
+    sampleData: []
   - id: mart_product_performance
     conceptual:
       name: Product Performance
@@ -448,11 +484,6 @@ tables:
       strategy: table
     display:
       icon: 🏆
-    metadata:
-      tags:
-        - WHAT
-        - HOW_MUCH
-    sampleData: []
     columns:
       - id: month_key
         name: Month Key
@@ -474,6 +505,58 @@ tables:
         name: Revenue Rank
         type: Int
         additivity: non
+    metadata:
+      tags:
+        - WHAT
+        - HOW_MUCH
+    sampleData: []
+lineage:
+  - from: hub_customer
+    to: dim_customers
+    id: lin-hub_customer-dim_customers
+  - from: sat_customer_profile
+    to: dim_customers
+    id: lin-sat_customer_profile-dim_customers
+  - from: hub_product
+    to: dim_products
+    description: You can write description
+    id: lin-hub_product-dim_products
+  - from: sat_product_details
+    to: dim_products
+    id: lin-sat_product_details-dim_products
+  - from: hub_order
+    to: fct_orders
+    id: lin-hub_order-fct_orders
+  - from: lnk_order_line
+    to: fct_orders
+    id: lin-lnk_order_line-fct_orders
+  - from: sat_order_header
+    to: fct_orders
+    id: lin-sat_order_header-fct_orders
+  - from: dim_customers
+    to: fct_orders
+    id: lin-dim_customers-fct_orders
+  - from: dim_products
+    to: fct_orders
+    id: lin-dim_products-fct_orders
+  - from: dim_dates
+    to: fct_orders
+    id: lin-dim_dates-fct_orders
+  - from: fct_orders
+    to: mart_daily_revenue
+    id: lin-fct_orders-mart_daily_revenue
+  - from: fct_orders
+    to: mart_product_performance
+    id: lin-fct_orders-mart_product_performance
+  - from: mart_daily_revenue
+    to: sales_dashboard
+    id: lin-mart_daily_revenue-sales_dashboard
+  - from: mart_daily_revenue
+    to: exec_report
+    id: lin-mart_daily_revenue-exec_report
+  - from: mart_product_performance
+    to: exec_report
+    id: lin-mart_product_performance-exec_report
 relationships:
   - from:
       table: lnk_order_line
@@ -565,99 +648,6 @@ relationships:
         - date_key
     type: many-to-one
     id: rel-fct_orders.date_key-dim_dates.date_key
-lineage:
-  - from: hub_customer
-    to: dim_customers
-    id: lin-hub_customer-dim_customers
-  - from: sat_customer_profile
-    to: dim_customers
-    id: lin-sat_customer_profile-dim_customers
-  - from: hub_product
-    to: dim_products
-    description: You can write description
-    id: lin-hub_product-dim_products
-  - from: sat_product_details
-    to: dim_products
-    id: lin-sat_product_details-dim_products
-  - from: hub_order
-    to: fct_orders
-    id: lin-hub_order-fct_orders
-  - from: lnk_order_line
-    to: fct_orders
-    id: lin-lnk_order_line-fct_orders
-  - from: sat_order_header
-    to: fct_orders
-    id: lin-sat_order_header-fct_orders
-  - from: dim_customers
-    to: fct_orders
-    id: lin-dim_customers-fct_orders
-  - from: dim_products
-    to: fct_orders
-    id: lin-dim_products-fct_orders
-  - from: dim_dates
-    to: fct_orders
-    id: lin-dim_dates-fct_orders
-  - from: fct_orders
-    to: mart_daily_revenue
-    id: lin-fct_orders-mart_daily_revenue
-  - from: fct_orders
-    to: mart_product_performance
-    id: lin-fct_orders-mart_product_performance
-  - from: mart_daily_revenue
-    to: sales_dashboard
-    id: lin-mart_daily_revenue-sales_dashboard
-  - from: mart_daily_revenue
-    to: exec_report
-    id: lin-mart_daily_revenue-exec_report
-  - from: mart_product_performance
-    to: exec_report
-    id: lin-mart_product_performance-exec_report
-domains:
-  - id: raw_vault
-    name: Raw Vault
-    description: Immutable historical record loaded from source systems
-    members:
-      - hub_customer
-      - hub_product
-      - hub_order
-      - lnk_order_line
-      - sat_customer_profile
-      - sat_product_details
-      - sat_order_header
-    display:
-      color: rgba(234, 179, 8, 0.08)
-  - id: star_schema
-    name: Star Schema
-    description: Conformed dimensional model built from the Raw Vault
-    members:
-      - dim_customers
-      - dim_products
-      - dim_dates
-      - fct_orders
-    display:
-      color: rgba(59, 130, 246, 0.08)
-  - id: mart
-    name: Data Mart
-    description: Aggregated models ready for BI consumption
-    members:
-      - mart_daily_revenue
-      - mart_product_performance
-    display:
-      color: rgba(249, 115, 22, 0.08)
-consumers:
-  - id: sales_dashboard
-    name: Sales Dashboard
-    description: Real-time revenue and order metrics for the sales team
-    url: https://bi.example.com/sales
-    display:
-      icon: 📊
-      color: '#f97316'
-  - id: exec_report
-    name: Executive Report
-    description: Weekly summary report delivered to leadership
-    display:
-      icon: 📋
-      color: '#8b5cf6'
 annotations:
   - id: note_vault_to_star
     text: |-
@@ -770,7 +760,17 @@ layout:
   exec_report:
     x: 2410
     'y': 736
-imports:
-  - from: ./2-conformed-dims.yaml
-    ids:
-      - dim_dates
+consumers:
+  - id: sales_dashboard
+    name: Sales Dashboard
+    description: Real-time revenue and order metrics for the sales team
+    url: https://bi.example.com/sales
+    display:
+      icon: 📊
+      color: '#f97316'
+  - id: exec_report
+    name: Executive Report
+    description: Weekly summary report delivered to leadership
+    display:
+      icon: 📋
+      color: '#8b5cf6'
