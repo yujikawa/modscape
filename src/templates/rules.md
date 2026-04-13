@@ -1010,7 +1010,7 @@ modscape spec new <name>   # Scaffold work folder (spec-config.yaml, model.yaml,
 │   ├── modscape-spec.custom.md         # Project-wide custom rules (optional)
 │   └── <name>/                         # Work folder per pipeline (temporary)
 │       ├── spec.md                     # Business requirements
-│       ├── spec-config.yaml            # Master YAML mapping for this spec
+│       ├── spec-config.yaml            # Main YAML mapping for this spec
 │       ├── model.yaml                  # Work-scoped YAML (extracted + new tables)
 │       ├── design.md                   # Design decisions + real-data findings
 │       └── tasks.md                    # Implementation task list

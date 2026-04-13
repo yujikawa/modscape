@@ -1,14 +1,14 @@
-Design the data model based on `spec.md` and update `changes/<name>/spec-model.yaml` (the work-scoped YAML). Does NOT modify the master model.yaml (e.g., HR.yaml) directly. Also generates `design.md` and `tasks.md` in the work folder.
+Design the data model based on `spec.md` and update `changes/<name>/spec-model.yaml` (the work-scoped YAML). Does NOT modify the main model.yaml (e.g., HR.yaml) directly. Also generates `design.md` and `tasks.md` in the work folder.
 
 ## Usage
 
 ```
 /modscape:spec:design <name>
-/modscape:spec:design <name> path/to/master.yaml
+/modscape:spec:design <name> path/to/main.yaml
 ```
 
 `<name>` is the work folder name created by `/modscape:spec:requirements` (e.g., `monthly-sales-summary`).
-`path/to/master.yaml` is the master model file (default: `model.yaml` in the current directory).
+`path/to/main.yaml` is the main model file (default: `model.yaml` in the current directory).
 
 ## Instructions
 
@@ -28,7 +28,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
      > `changes/<name>/spec.md` not found. Run `/modscape:spec:requirements` first to create it.
 
 3. **Check for existing `changes/<name>/spec-model.yaml`** (the work-scoped YAML).
-   - If it **does not exist**: this is a first run — extract relevant tables from the master YAML (step 5).
+   - If it **does not exist**: this is a first run — extract relevant tables from the main YAML (step 5).
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
 4. **Check for existing design.md** at `.modscape/changes/<name>/design.md`.
@@ -37,18 +37,18 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
      - If `### Implementation Notes` only: no model changes needed, proceed to update tasks.md.
    - If not: this is a **first run**.
 
-5. **Resolve master YAMLs** (first run only):
+5. **Resolve main YAMLs** (first run only):
 
    Read `.modscape/changes/<name>/spec-config.yaml`.
-   - If it exists and has `master_yamls` entries → use them.
+   - If it exists and has `main_yamls` entries → use them.
    - If it does not exist:
-     - Check `modscape-spec.custom.md` for a `Master YAMLs` setting → use it and create `spec-config.yaml`.
+     - Check `modscape-spec.custom.md` for a `Main YAMLs` setting → use it and create `spec-config.yaml`.
      - If neither found → stop and tell the user:
-       > Master YAML is unknown. Run `/modscape:spec:requirements` again to set it, or create `changes/<name>/spec-config.yaml` manually.
+       > Main YAML is unknown. Run `/modscape:spec:requirements` again to set it, or create `changes/<name>/spec-config.yaml` manually.
 
-6. **Extract relevant tables from the master YAML(s)** (first run only):
+6. **Extract relevant tables from the main YAML(s)** (first run only):
 
-   Read `.modscape/changes/<name>/spec.md` and identify the tables to modify (Data Sources). Pass all master YAMLs from `spec-config.yaml` as inputs and use `--with-downstream` to automatically collect all downstream tables in one command:
+   Read `.modscape/changes/<name>/spec.md` and identify the tables to modify (Data Sources). Pass all main YAMLs from `spec-config.yaml` as inputs and use `--with-downstream` to automatically collect all downstream tables in one command:
 
    ```bash
    modscape extract <master1>.yaml <master2>.yaml ... \
@@ -63,9 +63,9 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - `--record`: automatically records which tables came from which source YAML in `spec-config.yaml`
 
    When tables are added or removed during design, always update `spec-config.yaml` manually to keep it in sync:
-   - Table added → add its ID to the appropriate `master_yamls[].tables` entry
-   - Table removed → remove its ID from whichever `master_yamls[].tables` entry contains it
-   If the target master YAML is unclear, use the first entry and inform the user.
+   - Table added → add its ID to the appropriate `main_yamls[].tables` entry
+   - Table removed → remove its ID from whichever `main_yamls[].tables` entry contains it
+   If the target main YAML is unclear, use the first entry and inform the user.
 
    If Data Sources are unclear, skip this step — `spec-model.yaml` was already scaffolded as `tables: []` by `modscape spec new`.
 
@@ -79,7 +79,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
-8. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the master YAML**:
+8. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it

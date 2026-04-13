@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1] - 2026-04-13
+
+### Fixed
+
+- **`modscape spec new`** — `spec-model.yaml` now includes `version: "<MODEL_FORMAT_VERSION>"` at the root. Previously the file was generated as `tables: []` with no version field, causing `modscape validate` to reject it as a v1 schema.
+- **`requirements` skill (Claude)** — Fixed incorrect filename `model.yaml` → `spec-model.yaml` in the scaffold description. Gemini and Codex versions were already correct.
+- **`spec-config.yaml` key rename** — `master_yamls` → `main_yamls` throughout all SDD skills (Claude / Gemini / Codex) and CLI implementation (`spec.js`, `extract.js`).
+- **SDD skill terminology** — "Master YAML" / "master model" → "Main YAML" / "main model" across all skill templates (Claude / Gemini / Codex): `requirements`, `design`, `implement`, `archive`.
+- **`tasks.md` skill** — Fixed stale references: `model.yaml` → `spec-model.yaml`, v1 field names (`implementation.materialization` → `physical.strategy`, `appearance.type` → `conceptual.kind`), and corrected output path to `.modscape/changes/<name>/tasks.md`.
+
 ## [3.0.0] - 2026-04-10
 
 ### Breaking Changes

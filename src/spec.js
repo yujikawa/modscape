@@ -34,7 +34,7 @@ export function specNew(name) {
 
   // spec-config.yaml
   const config = {
-    master_yamls: [
+    main_yamls: [
       { path: 'model.yaml', tables: [] },
     ],
   };
