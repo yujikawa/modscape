@@ -211,8 +211,8 @@ console.log('\n== Test: --record maps downstream tables to correct source YAML =
   if (fs.existsSync(cfg)) fs.unlinkSync(cfg);
   run(`extract ${TMP}/primary.yaml ${TMP}/secondary.yaml --tables fct_orders --with-downstream --output ${out} --record ${cfg}`);
   const config = readYaml(cfg);
-  const primaryEntry = config.master_yamls.find(e => e.path.endsWith('primary.yaml'));
-  const secondaryEntry = config.master_yamls.find(e => e.path.endsWith('secondary.yaml'));
+  const primaryEntry = config.main_yamls.find(e => e.path.endsWith('primary.yaml'));
+  const secondaryEntry = config.main_yamls.find(e => e.path.endsWith('secondary.yaml'));
   assert(!!primaryEntry, 'primary.yaml entry exists in spec-config.yaml');
   assert(primaryEntry?.tables.includes('fct_orders'), 'fct_orders recorded under primary.yaml');
   assert(primaryEntry?.tables.includes('mart_monthly'), 'mart_monthly recorded under primary.yaml');
