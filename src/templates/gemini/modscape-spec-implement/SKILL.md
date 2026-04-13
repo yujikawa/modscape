@@ -44,7 +44,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
    **Staging / Core / Mart tasks:**
    - If the table ID for this task is in the **Context Only skip list**: output `⏭️ Skipping \`<id>\` (Context Only)` and move to the next task without generating any code.
-   - Otherwise: read the corresponding table definition from `.modscape/changes/<name>/spec-model.yaml` (the work-scoped YAML, NOT the master model.yaml)
+   - Otherwise: read the corresponding table definition from `.modscape/changes/<name>/spec-model.yaml` (the work-scoped YAML, NOT the main model.yaml)
    - Generate implementation code for the target tool (dbt, SQLMesh, etc.)
    - Follow the dependency order defined in `lineage` — always generate upstream tables first
    - Place generated files in the appropriate location (e.g., `models/staging/`, `models/core/`, `models/mart/`)

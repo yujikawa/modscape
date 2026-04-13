@@ -21,7 +21,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    ```
 
 2. Read `modscape-spec.custom.md` carefully and extract any settings already defined there. Treat defined settings as answers — **do not ask the user about anything already specified in `modscape-spec.custom.md`**. Key settings to look for:
-   - Master YAML path(s) (e.g. `Master YAMLs: models/sales/HR.yaml`)
+   - Main YAML path(s) (e.g. `Main YAMLs: models/sales/HR.yaml`)
    - Target tool (e.g. `Target tool is always dbt`)
    - Any other project-wide defaults
 
@@ -32,7 +32,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - **Data Sources** — existing tables, databases, or external systems that feed this pipeline
    - **Acceptance Criteria** — concrete, testable conditions for "done" (at least 2–3 items)
    - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL` (skip if set in custom.md)
-   - **Master YAML(s)** — path(s) to master model YAML file(s) (skip if set in custom.md; otherwise ask)
+   - **Main YAML(s)** — path(s) to main model YAML file(s) (skip if set in custom.md; otherwise ask)
 
 4. After collecting requirements, propose a work folder name:
    - Derive a short, descriptive kebab-case name from the pipeline title (e.g., `monthly-sales-summary`)
@@ -56,7 +56,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    This creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, and `tasks.md`.
    If the folder already exists, skip this step.
 
-8. Update `spec-config.yaml` with the resolved master YAMLs:
+8. Update `spec-config.yaml` with the resolved main YAMLs:
    ```bash
    # edit .modscape/changes/<name>/spec-config.yaml directly
    ```
@@ -104,7 +104,7 @@ requirements
 ## spec-config.yaml Format
 
 ```yaml
-master_yamls:
+main_yamls:
   - path: models/sales/HR.yaml
     tables: []
   - path: models/finance/Finance.yaml

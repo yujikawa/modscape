@@ -238,7 +238,7 @@ export function extractModels(inputs, options) {
 
   // --record: spec-config.yaml にソース情報を記録
   if (recordPath && extractedIds.length > 0) {
-    let config = { master_yamls: [] };
+    let config = { main_yamls: [] };
 
     if (fs.existsSync(recordPath)) {
       try {
@@ -259,14 +259,14 @@ export function extractModels(inputs, options) {
 
     // Upsert each source file entry in spec-config.yaml
     for (const [sourceFile, ids] of idsBySource) {
-      const entry = config.master_yamls.find(e => e.path === sourceFile);
+      const entry = config.main_yamls.find(e => e.path === sourceFile);
       if (entry) {
         const existing = new Set(entry.tables || []);
         for (const id of ids) existing.add(id);
         entry.tables = [...existing];
       } else {
         // Auto-add unregistered source YAML
-        config.master_yamls.push({ path: sourceFile, tables: ids });
+        config.main_yamls.push({ path: sourceFile, tables: ids });
       }
     }
 

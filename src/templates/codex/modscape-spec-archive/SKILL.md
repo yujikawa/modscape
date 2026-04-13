@@ -1,11 +1,11 @@
 ---
 name: modscape-spec-archive
-description: Merge the work-scoped YAML back into the master model, sync permanent table specs, and move the work folder to archives.
+description: Merge the work-scoped YAML back into the main model, sync permanent table specs, and move the work folder to archives.
 ---
 
 # Spec Archive
 
-Merge the work-scoped YAML back into the master model, then sync permanent table specs in `.modscape/specs/`.
+Merge the work-scoped YAML back into the main model, then sync permanent table specs in `.modscape/specs/`.
 
 ## Instructions
 
@@ -33,26 +33,26 @@ modscape summary <file> --json
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
    - If `design.md` does not exist or has no `## Affected Tables` section: treat all tables in `spec-model.yaml` as Direct Impact (backwards compatible).
 
-### Step 1: Merge work YAML into master YAML(s)
+### Step 1: Merge work YAML into main YAML(s)
 
-3. For each master YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+3. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
    modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
    ```
 
-   If `spec-config.yaml` has only one master YAML, merge the entire work YAML directly:
+   If `spec-config.yaml` has only one main YAML, merge the entire work YAML directly:
    ```bash
    modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
    ```
 
 4. Check the merge output for duplicate table ID warnings.
    If any duplicates were detected, report them to the user:
-   > ⚠ The following tables existed in both the work YAML and the master YAML.
+   > ⚠ The following tables existed in both the work YAML and the main YAML.
    > The spec version was used: `<table-id>`, `<table-id>`
-   > Please verify the master YAML diff looks correct.
+   > Please verify the main YAML diff looks correct.
 
-5. Run validate on each merged master YAML and fix any errors before proceeding:
+5. Run validate on each merged main YAML and fix any errors before proceeding:
    ```bash
    modscape validate <master>.yaml
    ```
@@ -80,7 +80,7 @@ modscape summary <file> --json
      - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
 
 9. **Report the sync result**:
-   > Merged into master YAML ✓
+   > Merged into main YAML ✓
    > Synced specs:
    > - Created: `specs/mart_monthly_sales.md`
    > - Updated: `specs/fct_orders.md`
