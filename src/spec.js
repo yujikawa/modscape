@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 
 const CHANGES_DIR = '.modscape/changes';
 
@@ -45,7 +46,7 @@ export function specNew(name) {
   // spec-model.yaml
   writeIfNotExists(
     path.join(dir, 'spec-model.yaml'),
-    'tables: []\n'
+    `version: "${MODEL_FORMAT_VERSION}"\ntables: []\n`
   );
 
   // design.md
