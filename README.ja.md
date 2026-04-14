@@ -555,9 +555,10 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
     スキルとカスタマイズテンプレートがインストールされ、`.modscape/changes/` と `.modscape/specs/` ディレクトリが作成されます。
 
 2.  **要件定義** — `/modscape:spec:requirements` を実行してパイプラインの仕様を対話的に定義します:
-    - AIが `modscape spec new <name>` で作業フォルダを scaffold（`spec-config.yaml`・`spec-model.yaml`・`design.md`・`tasks.md` を生成）
+    - AIが `modscape spec new <name>` で作業フォルダを scaffold（`spec-config.yaml`・`spec-model.yaml`・`design.md`・`tasks.md`・`questions.md` を生成）
     - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
     - main-model.yamlのパスを `modscape-spec.custom.md` から解決、またはユーザーに確認
+    - 未解決の調査事項は `questions.md` に `Q-NNN` エントリとして記録
     - `.modscape/changes/<name>/spec.md` に出力
 
 3.  **モデル設計** — `/modscape:spec:design <name>` を実行します:
@@ -573,6 +574,7 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
     - `spec-config.yaml` を参照し、テーブルごとに対応するmain-model.yamlにマージ
     - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
     - 上流テーブルにはChangelog追記のみ
+    - `questions.md` のエントリを `.modscape/specs/questions.md` に同期
     - 作業フォルダは自動的に `.modscape/archives/YYYY-MM-DD-<name>/` へ移動
 
 > **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。

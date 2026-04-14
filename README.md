@@ -557,9 +557,10 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    Installs skills and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
-   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`)
+   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`, `questions.md`)
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
    - Resolves main-model.yaml path from `modscape-spec.custom.md` or prompts the user
+   - Unresolved items are recorded as `Q-NNN` entries in `questions.md`
    - Output: `.modscape/changes/<name>/spec.md`
 
 3. **Design the model** — run `/modscape:spec:design <name>`:
@@ -575,6 +576,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
+   - Syncs `questions.md` entries to `.modscape/specs/questions.md`
    - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
