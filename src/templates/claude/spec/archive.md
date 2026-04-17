@@ -38,7 +38,27 @@ modscape summary <file> --json
 
 ### Step 1: Dry-run — show merge preview and confirm
 
-3. Build and display the merge preview **before** executing any merge:
+3. **Check whether a main YAML exists (greenfield detection)**:
+
+   Inspect `spec-config.yaml`:
+   - If `main_yamls` is empty or absent, **or** all referenced files do not exist on disk → this is a **greenfield project**.
+
+   **Greenfield path**: Skip Steps 1 and 2 entirely. Display:
+   ```
+   ## Greenfield Mode
+
+   No main YAML found. spec-model.yaml will become the first model.
+   Save as: model.yaml (default) — or enter a path:
+   ```
+   Wait for user input (press Enter to use `model.yaml`). Copy `spec-model.yaml` to the specified path:
+   ```bash
+   cp .modscape/changes/<name>/spec-model.yaml <output-path>
+   ```
+   Then proceed directly to Step 3 (Sync permanent table specs), treating all tables as Direct Impact.
+
+   **Normal path** (main YAML exists): continue below.
+
+4. Build and display the merge preview **before** executing any merge:
 
    - Read `spec-model.yaml` and compare table IDs against each main YAML listed in `spec-config.yaml`:
      - **Tables to add**: table IDs present in `spec-model.yaml` but not in the main YAML
@@ -63,7 +83,7 @@ modscape summary <file> --json
 
 ### Step 2: Merge work YAML into main YAML(s)
 
-4. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+5. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
    modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
@@ -74,22 +94,22 @@ modscape summary <file> --json
    modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
    ```
 
-5. Check the merge output for duplicate table ID warnings.
+6. Check the merge output for duplicate table ID warnings.
    If any duplicates were detected, report them to the user:
    > ⚠ The following tables existed in both the work YAML and the main YAML.
    > The spec version was used: `<table-id>`, `<table-id>`
    > Please verify the main YAML diff looks correct.
 
-6. Run validate on each merged main YAML and fix any errors before proceeding:
+7. Run validate on each merged main YAML and fix any errors before proceeding:
    ```bash
    modscape validate <master>.yaml
    ```
 
 ### Step 3: Sync permanent table specs
 
-7. Use the **affected tables classification** built in step 2 above.
+8. Use the **affected tables classification** built in step 2 above.
 
-8. **Migrate old flat-file specs (if any)**:
+9. **Migrate old flat-file specs (if any)**:
    For each affected table, check whether `.modscape/specs/<table-id>.md` exists as a plain file (old format).
    If found, move it into the new directory format before proceeding:
    ```bash
@@ -97,7 +117,7 @@ modscape summary <file> --json
    mv .modscape/specs/<table-id>.md .modscape/specs/<table-id>/spec.md
    ```
 
-9. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
+10. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
@@ -110,12 +130,12 @@ modscape summary <file> --json
       - <YYYY-MM-DD>: <brief description of change> (SDD: <name>)
       ```
 
-10. **Changelog only for Downstream Impact — Context Only tables**:
+11. **Changelog only for Downstream Impact — Context Only tables**:
     - Do **not** perform a full spec sync for these tables.
     - Only append a Changelog entry to `.modscape/specs/<table-id>/spec.md` (create the file and directory with minimal content if it does not exist):
       - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
 
-11. **Report the sync result**:
+12. **Report the sync result**:
     > Merged into main YAML ✓
     > Synced specs:
     > - Created: `specs/mart_monthly_sales/spec.md`
@@ -124,7 +144,7 @@ modscape summary <file> --json
 
 ### Step 4: Sync questions per table
 
-12. If `.modscape/changes/<name>/questions.md` exists:
+13. If `.modscape/changes/<name>/questions.md` exists:
 
     For each `### <table-id>` section under `## Table-level` in `changes/<name>/questions.md`:
 
@@ -141,7 +161,7 @@ modscape summary <file> --json
 
 ### Step 5: Update `_context.yaml`
 
-13. Read or create `.modscape/specs/_context.yaml`.
+14. Read or create `.modscape/specs/_context.yaml`.
 
     For each affected table (Direct Impact + Downstream Impact — Implement):
     - Set `tables.<table-id>.last_change: <name>`
@@ -182,13 +202,13 @@ modscape summary <file> --json
 
 ### Step 6: Move to archives
 
-14. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+15. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
     ```bash
     mkdir -p .modscape/archives
     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
     ```
 
-15. **Always output the following summary at the end, without exception:**
+16. **Always output the following summary at the end, without exception:**
 
 ---
 ✅ Archive complete.

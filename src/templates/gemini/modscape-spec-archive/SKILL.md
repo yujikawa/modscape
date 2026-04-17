@@ -42,7 +42,27 @@ modscape summary <file> --json
 
 ### Step 1: Dry-run — show merge preview and confirm
 
-3. Build and display the merge preview **before** executing any merge:
+3. **Check whether a main YAML exists (greenfield detection)**:
+
+   Inspect `spec-config.yaml`:
+   - If `main_yamls` is empty or absent, **or** all referenced files do not exist on disk → this is a **greenfield project**.
+
+   **Greenfield path**: Skip Steps 1 and 2 entirely. Display:
+   ```
+   ## Greenfield Mode
+
+   No main YAML found. spec-model.yaml will become the first model.
+   Save as: model.yaml (default) — or enter a path:
+   ```
+   Wait for user input (press Enter to use `model.yaml`). Copy `spec-model.yaml` to the specified path:
+   ```bash
+   cp .modscape/changes/<name>/spec-model.yaml <output-path>
+   ```
+   Then proceed directly to Step 3, treating all tables as Direct Impact.
+
+   **Normal path** (main YAML exists): continue below.
+
+4. Build and display the merge preview **before** executing any merge:
    - **Tables to add**: IDs in `spec-model.yaml` but not in the main YAML
    - **Tables to update**: IDs in both; list key field changes
    - **No changes**: Context Only tables
@@ -51,7 +71,7 @@ modscape summary <file> --json
 
 ### Step 2: Merge work YAML into main YAML(s)
 
-4. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+5. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
    modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
@@ -62,9 +82,9 @@ modscape summary <file> --json
    modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
    ```
 
-5. Check the merge output for duplicate table ID warnings and report them.
+6. Check the merge output for duplicate table ID warnings and report them.
 
-6. Run validate on each merged main YAML:
+7. Run validate on each merged main YAML:
    ```bash
    modscape validate <master>.yaml
    ```
