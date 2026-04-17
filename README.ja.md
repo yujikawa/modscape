@@ -564,7 +564,7 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 3.  **モデル設計** — `/modscape:spec:design <name>` を実行します:
     - `spec.md` をもとに関連テーブルを自動特定し、`modscape extract` でmain-model.yamlから `changes/<name>/spec-model.yaml` を生成
-    - `specs/questions.md` から Direct Impact テーブルに関連する未解決 `Q-NNN` を `design.md` に参照挿入
+    - `specs/<table-id>/questions.md` から Direct Impact テーブルに関連する未解決 `Q-NNN` を `design.md` に参照挿入
     - `modscape spec search` で過去アーカイブを検索し、関連する過去 SDD を `design.md` に記録
     - どのテーブルが `main-model.yaml` に属するかを `spec-config.yaml` に記録
     - 新規テーブルを `changes/<name>/spec-model.yaml` に追加設計（`main-model.yaml` は触らない）
@@ -578,11 +578,21 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 5.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
     - **dry-run プレビューを先に表示**: 追加・更新（変更カラム）・変更なしのテーブルを ID 単位でサマリー表示し、確認後にマージを実行
     - `spec-config.yaml` を参照し、テーブルごとに対応するmain-model.yamlにマージ
-    - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
+    - 影響テーブルごとに `.modscape/specs/<table-id>/spec.md` を生成・更新（旧 `specs/<table-id>.md` フラットファイルは自動マイグレーション）
     - 上流テーブルにはChangelog追記のみ
-    - `questions.md` のエントリを `.modscape/specs/questions.md` に同期
+    - `questions.md` の `## Table-level` セクションをテーブルごとの `specs/<table-id>/questions.md` に同期。`## Pipeline-level` の質問は `specs/` に昇格させずarchiveフォルダに保持
+    - `specs/_context.yaml` を更新（テーブルごとに `last_change`・`open_questions`・`has_spec` を書き込み、主要な設計判断を `decisions` リストに追記）
     - **アーカイブサマリーに AC カバレッジを表示**（テスト紐付き / 手動検証 / 未カバーの件数）
     - 作業フォルダは自動的に `.modscape/archives/YYYY-MM-DD-<name>/` へ移動
+
+    恒久スペックはテーブル単位のディレクトリ構造で蓄積されます:
+    ```
+    .modscape/specs/
+    ├── _context.yaml              ← SDD 横断メタデータ（ビジュアライザー連携）
+    └── <table-id>/
+        ├── spec.md                ← 業務文脈・設計決定
+        └── questions.md           ← テーブル単位 Q&A 履歴
+    ```
 
 > **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
 
@@ -594,65 +604,68 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 > **カスタマイズ**: `.modscape/changes/modscape-spec.custom.md.example` を `modscape-spec.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
 
-### SDDワークフロー図
+### SDDワークフロー
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant AI as Claude (AI)
-    participant CLI as modscape CLI
-    participant FS as .modscape/
+```
+requirements → design → implement → archive
+                 ↑↓          ↑
+             (再実行)    (amend)
+         → review（任意）↗
+```
 
-    rect rgb(240, 248, 255)
-        Note over User,FS: ① /modscape:spec:requirements
-        User->>AI: 要件を話す（ゴール・ステークホルダー・データソース等）
-        AI->>User: フォルダ名を提案（例: monthly-sales-summary）
-        User->>AI: 承認 or リネーム
-        AI->>FS: changes/<name>/spec.md 作成（AC-001, AC-002... 自動付与）
-    end
+| スキル | コマンド | やること | 主な出力 |
+|--------|---------|---------|---------|
+| 要件定義 | `/modscape:spec:requirements` | ゴール・AC・Q&Aを対話的に収集 | `spec.md` |
+| 設計 | `/modscape:spec:design <name>` | 影響テーブルの特定、モデル・タスクリスト生成 | `design.md`, `tasks.md` |
+| 実装 | `/modscape:spec:implement <name>` | タスクを順に処理・コード生成 | `tasks.md`（更新） |
+| アーカイブ | `/modscape:spec:archive <name>` | 本番マージ・spec永続化 | `specs/<id>/spec.md`, `_context.yaml` |
+| レビュー | `/modscape:spec:review <name>` | 実装前の go/no-go チェック（任意） | — |
+| 修正 | `/modscape:spec:amend <name>` | 実装中の問題を成果物に反映（任意） | — |
+| 検索 | `/modscape:spec:search <keyword>` | 過去アーカイブを横断検索（任意） | — |
+| 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答・設計影響を評価（任意） | — |
 
-    rect rgb(240, 255, 240)
-        Note over User,FS: ② /modscape:spec:design <name>
-        AI->>FS: spec.md・specs/*.md・specs/questions.md を読む
-        AI->>CLI: modscape spec search <table-id>（過去work検索）
-        AI->>CLI: modscape extract main-model.yaml --tables <ids>
-        CLI->>FS: changes/<name>/spec-model.yaml 作成（関連テーブル抽出）
-        AI->>CLI: modscape table add / layout changes/<name>/spec-model.yaml
-        AI->>FS: design.md + tasks.md 作成（Phase 4 に [→ AC-NNN] 付与）
-        AI->>User: Review Checkpoint（未解決Q・仮定・ACカバレッジ）
-    end
+**例: 月次売上サマリーパイプラインを設計する場合**
 
-    rect rgb(245, 245, 255)
-        Note over User,FS: ② /modscape:spec:review <name>（任意・いつでも）
-        AI->>FS: questions.md・design.md・spec.md・tasks.md を読む
-        AI->>User: 未解決Q / 仮定 / ACカバレッジ / 確信度の低いテーブル 一覧
-    end
+```
+You:  /modscape:spec:requirements
+AI:   何を作りますか？
+You:  月次の売上サマリーを作りたい。ソースは fct_orders と dim_customers。
+AI:   受け入れ条件を確認します。AC-001: 月次集計、AC-002: 顧客セグメント別...
+      → changes/monthly-sales-summary/spec.md を生成しました
 
-    rect rgb(255, 253, 240)
-        Note over User,FS: ③ /modscape:spec:implement <name>
-        loop 未完了タスクがある間
-            AI->>FS: changes/<name>/spec-model.yaml を参照
-            AI->>User: コード生成（dbt / SQLMesh 等）
-            AI->>FS: tasks.md チェックボックス更新 [ ]→[x]
-        end
-        opt 実装中に問題が発覚した場合
-            User->>AI: /modscape:spec:amend <name> + 問題を自由記述
-            AI->>FS: spec.md / design.md / tasks.md / questions.md を差分更新
-            AI->>User: Amend サマリー（変更ファイル一覧）
-        end
-    end
+You:  /modscape:spec:design monthly-sales-summary
+AI:   既存の spec と過去アーカイブを確認しました。
+      Direct Impact:   fct_orders（更新）, dim_customers（更新）, mart_monthly_sales（新規）
+      Downstream:      mart_revenue（Context Only）
+      → design.md と tasks.md を生成しました
 
-    rect rgb(255, 240, 245)
-        Note over User,FS: ④ /modscape:spec:archive <name>
-        AI->>User: dry-run プレビュー（追加 / 更新（変更カラム）/ 変更なし）
-        User->>AI: 確認（y/N）
-        AI->>CLI: modscape merge main-model.yaml changes/<name>/spec-model.yaml --patch
-        CLI->>FS: main-model.yaml 更新（in-place upsert）
-        Note over CLI: ⚠ 重複テーブルがあれば警告
-        AI->>FS: specs/<table-id>.md 生成・更新
-        AI->>FS: changes/<name>/ → archives/YYYY-MM-DD-<name>/ 移動
-        AI->>User: アーカイブサマリー（ACカバレッジ: テスト紐付き / 手動検証 / 未カバー）
-    end
+You:  /modscape:spec:implement monthly-sales-summary
+AI:   Task 1/6: mart_monthly_sales の dbt モデルを生成します...
+      ...
+      ✓ 6/6 タスク完了
+
+You:  /modscape:spec:archive monthly-sales-summary
+AI:   dry-run:
+        追加:   mart_monthly_sales
+        更新:   fct_orders（amount カラム追加）, dim_customers（segment カラム追加）
+        参照:   mart_revenue（Changelog のみ）
+      進めますか？
+You:  y
+AI:   マージ完了。以下のファイルを生成・更新しました:
+
+      specs/
+      ├── _context.yaml                       ← last_change, decisions を更新
+      ├── fct_orders/
+      │   ├── spec.md                         ← Business Rules を更新
+      │   └── questions.md                    ← Q-001, Q-002 を同期
+      ├── dim_customers/
+      │   ├── spec.md                         ← Business Rules を更新
+      │   └── questions.md                    ← Q-003 を同期
+      ├── mart_monthly_sales/
+      │   ├── spec.md                         ← 新規生成
+      │   └── questions.md                    ← 新規生成
+      └── mart_revenue/
+          └── spec.md                         ← Changelog エントリを追記
 ```
 
 ## クレジット
