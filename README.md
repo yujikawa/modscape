@@ -581,6 +581,8 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
 
+> **Search past work**: Run `/modscape:spec:search <keyword>` (or `modscape spec search <keyword>`) to search past archives and permanent specs for similar designs and patterns. Use `--limit <n>` to control result count (default: 5). Add `--json` for machine-readable output.
+
 > **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
 ### SDD Workflow Diagram

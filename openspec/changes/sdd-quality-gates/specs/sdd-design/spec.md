@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: spec.md と既存specを読み込んで spec-model.yaml を設計する
 AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs/*.md`（既存の恒久テーブルspec）を読み込み、影響テーブルを自動特定して `changes/<name>/spec-model.yaml`（作業用YAML）を設計・更新しなければならない（SHALL）。本番のmodel.yaml（HR.yaml等）は直接変更してはならない（SHALL NOT）。
@@ -9,8 +9,6 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 - 新規テーブルを `changes/<name>/spec-model.yaml` に追加設計する（mutation CLIの対象は `changes/<name>/spec-model.yaml`）
 - 設計判断と影響テーブルリストを `changes/<name>/design.md` に記録する
 - 設計完了後に `modscape layout changes/<name>/spec-model.yaml` でレイアウトを更新する
-- **[NEW]** Direct Impact テーブルに関連する `specs/questions.md` の未解決質問（`- [ ]`）を検索し、該当する Q-NNN ID を `design.md` の `## Known Open Questions` セクションに参照として挿入する（本文コピーは行わない）
-- **[NEW]** `modscape spec search <keyword> --json` を内部的に実行し、Direct Impact テーブル名をキーワードとして過去 archive を検索する。マッチがあれば `design.md` の `## Related Past Specs` セクションに archive パスとタイトルを記録する
 
 スキルは再実行可能でなければならず（SHALL）、再実行時は以下を行わなければならない（SHALL）:
 - 既存の `changes/<name>/design.md` の気づきセクションを読み込み設計に反映する
@@ -20,16 +18,13 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 
 スキルは `changes/<name>/spec-model.yaml` の `lineage` セクションをトポロジカルソートし、実装フェーズごとに分類した `changes/<name>/tasks.md` を生成しなければならない（SHALL）。
 
-タスクは以下のフェーズ構成で分類しなければならない（SHALL）:
-- Phase 1: Staging（依存なしのテーブル）
-- Phase 2: Core（1段上流のテーブル）
-- Phase 3: Mart / 集計（最下流のテーブル）
-- Phase 4: Tests（各テーブルのキーカラムに対するテスト）
+tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.md` の `## Acceptance Criteria` から AC-NNN ID を読み込み、各テストタスクに対応する AC-NNN を `[→ AC-NNN]` 形式で付記しなければならない（SHALL）。自動テスト生成が困難な AC（数値一致検証等）は `[手動検証]` フラグを付けなければならない（SHALL）。
 
-各タスクには以下を含めなければならない（SHALL）:
-- テーブルID（バッククォートで表記）
-- materialization 種別（`implementation.materialization` または `appearance.type` から推定）
-- 上流依存テーブル（`←` で表記）
+スキルは設計完了後に review サマリーを表示しなければならない（SHALL）。review サマリーには以下を含めなければならない（SHALL）:
+- `questions.md` の未解決質問件数と Q-NNN 一覧
+- `design.md` 内の仮定の件数
+- AC カバレッジ（テスト紐付き / 手動検証 / 未カバーの件数）
+- 下流分類の確信度が低いテーブル一覧
 
 スキルは下流テーブルを以下のように分類しなければならない（SHALL）:
 - **Direct Impact**: `--tables` で指定したテーブル（新規作成または構造変更対象）
@@ -61,10 +56,6 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 - **WHEN** `changes/<name>/spec.md` が存在しない状態で `/modscape:spec:design <name>` を実行する
 - **THEN** AIは「先に `/modscape:spec:requirements` を実行して spec.md を作成してください」と案内する
 
-#### Scenario: 完了後に次スキルへ誘導する
-- **WHEN** `changes/<name>/spec-model.yaml` の更新が完了する
-- **THEN** AIは「実装を始めますか？ `/modscape:spec:implement <name>` を実行してください」というメッセージを表示する
-
 #### Scenario: Downstream Impact の分類を design.md に記録する
 - **WHEN** 下流テーブルが特定される
 - **THEN** AIは各テーブルを Direct / Downstream Impact — Implement / Downstream Impact — Context Only に分類し、免責注記とともに `design.md` の `## Affected Tables` セクションに記録する
@@ -73,14 +64,10 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 - **WHEN** tasks.md を生成する
 - **THEN** Downstream Impact — Context Only に分類されたテーブルのタスクは tasks.md に含めない
 
-#### Scenario: Direct Impact テーブルの既知未解決質問を design.md に参照挿入する
-- **WHEN** `/modscape:spec:design <name>` を実行し、`.modscape/specs/questions.md` に Direct Impact テーブルに関連する未解決質問（`- [ ]`）が存在する
-- **THEN** AIは該当する Q-NNN の ID のみを `design.md` の `## Known Open Questions` セクションに挿入する（質問本文はコピーしない）
+#### Scenario: Phase 4 テストタスクに AC-NNN を紐付ける
+- **WHEN** tasks.md の Phase 4 を生成し、`spec.md` に AC-NNN 形式の Acceptance Criteria が存在する
+- **THEN** 各テストタスクの末尾に対応する `[→ AC-NNN]` を付記し、自動生成できない AC には `[手動検証]` フラグを付ける
 
-#### Scenario: Direct Impact テーブルの既知質問が存在しない場合は挿入しない
-- **WHEN** `/modscape:spec:design <name>` を実行し、`.modscape/specs/questions.md` に Direct Impact テーブルに関連する未解決質問が存在しない
-- **THEN** `design.md` に `## Known Open Questions` セクションは追加されない
-
-#### Scenario: 過去 archive のサジェストを design.md に記録する
-- **WHEN** `/modscape:spec:design <name>` を実行し、Direct Impact テーブル名で `modscape spec search` を実行した結果が 1 件以上ある
-- **THEN** マッチした archive のパスとタイトルを `design.md` の `## Related Past Specs` セクションに記録する
+#### Scenario: design 完了後に review サマリーを表示する
+- **WHEN** `/modscape:spec:design <name>` が完了する
+- **THEN** 未解決質問件数・仮定件数・AC カバレッジ・下流分類確信度の低いテーブルを含む review サマリーが表示され、`/modscape:spec:implement <name>` と `/modscape:spec:review <name>` への次ステップ案内が出力される

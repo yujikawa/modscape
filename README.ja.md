@@ -579,6 +579,8 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 > **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
 
+> **過去のwork検索**: `/modscape:spec:search <keyword>`（または `modscape spec search <keyword>`）を実行すると、過去のアーカイブと永続スペックを横断検索して類似の設計・実装パターンを探せます。`--limit <n>` で結果件数を指定（デフォルト: 5）、`--json` で機械可読な出力を取得できます。
+
 > **カスタマイズ**: `.modscape/changes/modscape-spec.custom.md.example` を `modscape-spec.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
 
 ### SDDワークフロー図

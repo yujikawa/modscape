@@ -79,7 +79,35 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
-8. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
+8. **Surface known open questions** (first run only):
+
+   Check `.modscape/specs/questions.md` for unresolved questions (`- [ ]`) that reference any Direct Impact table ID.
+   - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
+     ```markdown
+     ## Known Open Questions (from specs/questions.md)
+     Direct Impact テーブルに関連する未解決の質問があります。詳細は `.modscape/specs/questions.md` を参照してください。
+     - Q-012, Q-015 → `fct_orders`
+     - Q-019 → `dim_customers`
+     ```
+   - If no matching questions: omit the `## Known Open Questions` section entirely.
+
+9. **Search past archives for related patterns** (first run only):
+
+   For each Direct Impact table ID, run:
+   ```bash
+   modscape spec search <table-id> --json --limit 5
+   ```
+   - If results exist: record them in `design.md` under `## Related Past Specs`:
+     ```markdown
+     ## Related Past Specs
+     以下の過去 spec が関連する可能性があります。詳細は各 archive を参照してください。
+     - `archives/2026-03-15-monthly-sales/` — Monthly Sales Summary Pipeline
+     - `specs/fct_orders.md` — fct_orders
+     ```
+   - If no results: omit the `## Related Past Specs` section entirely.
+   - To incorporate findings from a past spec, run `/modscape:spec:search <keyword>`.
+
+10. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it
@@ -87,7 +115,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - Add `physical` strategy hints where the target tool and table type make them clear
    - On re-run: incorporate `## Findings` from `design.md` before applying changes
 
-9. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
+11. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
    ```bash
    modscape table add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>" --type <type>
    modscape lineage add .modscape/changes/<name>/spec-model.yaml --from <from> --to <to>
@@ -96,22 +124,22 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    ```
    Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
 
-10. After all changes are applied, always run validate and fix any errors before proceeding:
+12. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash
     modscape validate .modscape/changes/<name>/spec-model.yaml
     ```
 
-11. Write `.modscape/changes/<name>/design.md` using the format below.
+13. Write `.modscape/changes/<name>/design.md` using the format below.
     - On first run: create with design decisions and affected tables. Initialize `## Findings` with empty subsections.
     - On re-run: preserve `## Findings` content; update `## Design Decisions` and `## Affected Tables` only.
 
-12. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
+14. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
     - On re-run: preserve completed tasks (`- [x]`); regenerate only pending (`- [ ]`) tasks.
     - **Always generate tasks.md after spec-model.yaml is finalized** — never before.
 
-13. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
+15. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
 
-14. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
+16. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
 
 ```markdown
 - [ ] **Q-NNN** <question text>
@@ -141,6 +169,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ### Downstream Impact — Context Only
 - `<table-id>`: <why no code change is needed — e.g., does not reference changed columns>
+
+## Known Open Questions (from specs/questions.md)
+<!-- Populated automatically by /modscape:spec:design. Only Direct Impact tables. Omit section if none. -->
+- Q-NNN → `<table-id>` — see .modscape/specs/questions.md
+
+## Related Past Specs
+<!-- Populated automatically by /modscape:spec:design via modscape spec search. Omit section if no results. -->
+- `archives/YYYY-MM-DD-<name>/` — <spec title>
 
 ## Findings
 

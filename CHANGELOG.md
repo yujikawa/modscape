@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **`modscape spec search <keyword>`** — New CLI command to search past archives (`.modscape/archives/`) and permanent specs (`.modscape/specs/`) by keyword. Supports `--json` for machine-readable output and `--limit <n>` to control result count (default: 5).
+- **`/modscape:spec:search` skill** — New AI skill (Claude / Gemini / Codex) that runs `modscape spec search --json`, summarizes results, and incorporates selected findings into the current spec or design on explicit user request.
+- **`/modscape:spec:design` — Known Open Questions surfacing** — On first run, the design skill now checks `.modscape/specs/questions.md` for unresolved questions related to Direct Impact tables and inserts their Q-NNN IDs into `design.md` under `## Known Open Questions`.
+- **`/modscape:spec:design` — Related Past Specs suggestion** — On first run, the design skill now runs `modscape spec search` for each Direct Impact table ID and records matching past archives/specs in `design.md` under `## Related Past Specs`.
+
 ## [3.0.1] - 2026-04-13
 
 ### Fixed

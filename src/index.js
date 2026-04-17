@@ -20,6 +20,7 @@ import { runValidate } from './validate.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
 import { answerQuestion, resolveChangeName } from './operations/questions.js';
+import { runSearch } from './search.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -174,6 +175,16 @@ specCommand
   .argument('<name>', 'kebab-case name for the spec (e.g. monthly-sales-summary)')
   .action((name) => {
     specNew(name);
+  });
+
+specCommand
+  .command('search')
+  .description('Search past archives and specs for a keyword')
+  .argument('<keyword>', 'keyword to search for')
+  .option('--json', 'output as JSON')
+  .option('--limit <n>', 'maximum number of results (default: 5)', (v) => parseInt(v, 10), 5)
+  .action((keyword, opts) => {
+    runSearch(keyword, opts);
   });
 
 specCommand

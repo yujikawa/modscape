@@ -79,7 +79,23 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
-9. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
+9. **Surface known open questions** (first run only):
+
+   Check `.modscape/specs/questions.md` for unresolved questions (`- [ ]`) that reference any Direct Impact table ID.
+   - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`.
+   - If no matching questions: omit the `## Known Open Questions` section entirely.
+
+10. **Search past archives for related patterns** (first run only):
+
+   For each Direct Impact table ID, run:
+   ```bash
+   modscape spec search <table-id> --json --limit 5
+   ```
+   - If results exist: record them in `design.md` under `## Related Past Specs`.
+   - If no results: omit the `## Related Past Specs` section entirely.
+   - To incorporate findings from a past spec, run `@modscape-spec-search <keyword>`.
+
+11. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
    - Do **not** create `domains` unless the user explicitly requests it
