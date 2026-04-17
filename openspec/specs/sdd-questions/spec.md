@@ -58,26 +58,16 @@ SDDの任意フェーズで、AIが人間の調査なしに判断できない事
 - **WHEN** ユーザーが質問に直接回答する
 - **THEN** AIは該当質問を `[x]` にして `**A:**` を追記してからフェーズを継続する
 
-### Requirement: modscape spec answer コマンドで質問に回答する
-`modscape spec answer [<name>] <id> "<回答>"` コマンドは `questions.md` の該当IDを `[x]` にして `**A:** <回答>` を追記しなければならない（SHALL）。
+### Requirement: SDDワークフロー全体を通じたQ&A管理機能
+`questions.md` の生成・更新・回答・archive sync を行う。
 
-アクティブなchangeが1つのみの場合、`<name>` は省略できる（SHALL）。複数のアクティブchangeが存在する場合は `<name>` を必須とする（SHALL）。
+質問への回答は CLI コマンドではなく AI スキル `/modscape:spec:answer` を通じて行わなければならない（SHALL）。`modscape spec answer` CLI コマンドは廃止する（SHALL NOT use）。
 
-#### Scenario: IDを指定して回答する
-- **WHEN** `modscape spec answer monthly-sales Q-002 "税抜と確認済み"` を実行する
-- **THEN** `questions.md` の `**Q-002**` の行が `[x]` になり `**A:** 税抜と確認済み` が追記される
+その他の要件（質問の積み方・フォーマット・archive sync）は変更なし。
 
-#### Scenario: アクティブなchangeが1つならchange名を省略できる
-- **WHEN** アクティブなchangeが1つのみの状態で `modscape spec answer Q-002 "税抜と確認済み"` を実行する
-- **THEN** そのchangeの `questions.md` が更新される
-
-#### Scenario: 複数のアクティブchangeがある場合はchange名が必須
-- **WHEN** アクティブなchangeが複数存在する状態で `modscape spec answer Q-002 "..."` を実行する
-- **THEN** エラーになり「`modscape spec answer <name> Q-002 "..."` のようにchange名を指定してください」と案内する
-
-#### Scenario: 存在しないIDを指定した場合
-- **WHEN** `questions.md` に存在しないIDを指定して `modscape spec answer` を実行する
-- **THEN** エラーになり「Q-NNN は questions.md に見つかりません」と案内する
+#### Scenario: questions.md への回答は AI スキルを通じて行う
+- **WHEN** Q-NNN に回答したい
+- **THEN** `/modscape:spec:answer <name> <id>` を実行する（`modscape spec answer` CLI は使用しない）
 
 ### Requirement: archive時に .modscape/specs/questions.md へsyncする
 `/modscape:spec:archive <name>` は `.modscape/changes/<name>/questions.md` の内容を `.modscape/specs/questions.md` へテーブル単位フラットマージでsyncしなければならない（SHALL）。

@@ -19,7 +19,6 @@ import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
-import { answerQuestion, resolveChangeName } from './operations/questions.js';
 import { runSearch } from './search.js';
 
 const require = createRequire(import.meta.url);
@@ -185,23 +184,6 @@ specCommand
   .option('--limit <n>', 'maximum number of results (default: 5)', (v) => parseInt(v, 10), 5)
   .action((keyword, opts) => {
     runSearch(keyword, opts);
-  });
-
-specCommand
-  .command('answer')
-  .description('Answer a question in questions.md by ID')
-  .argument('<id>', 'question ID (e.g. Q-001)')
-  .argument('<answer>', 'answer text')
-  .option('--change <name>', 'change name (required when multiple active changes exist)')
-  .action((id, answer, opts) => {
-    try {
-      const changeName = resolveChangeName(opts.change);
-      answerQuestion(changeName, id, answer);
-      console.log(`  ✅ ${id} answered in .modscape/changes/${changeName}/questions.md`);
-    } catch (e) {
-      console.error(`  ❌ ${e.message}`);
-      process.exit(1);
-    }
   });
 
 program

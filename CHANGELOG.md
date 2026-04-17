@@ -16,6 +16,11 @@ All notable changes to this project will be documented in this file.
 - **`/modscape:spec:design` — Known Open Questions surfacing** — On first run, the design skill now checks `.modscape/specs/questions.md` for unresolved questions related to Direct Impact tables and inserts their Q-NNN IDs into `design.md` under `## Known Open Questions`.
 - **`/modscape:spec:design` — Related Past Specs suggestion** — On first run, the design skill now runs `modscape spec search` for each Direct Impact table ID and records matching past archives/specs in `design.md` under `## Related Past Specs`.
 - **`/modscape:spec:amend` skill** — New AI skill (Claude / Gemini / Codex) for updating SDD artifacts when issues are discovered during implementation. Accepts free-text input (error messages, wrong assumptions, ambiguities) and updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks (`- [x]`) are always preserved. Fix tasks are appended under `## Amend: <YYYY-MM-DD>` sections. Can be called at any point in the workflow, as many times as needed.
+- **`/modscape:spec:answer` skill** — New AI skill (Claude / Gemini / Codex) replacing the `modscape spec answer` CLI command. Displays the specified Q-NNN question, accepts a free-text answer, performs follow-up questioning when the answer is ambiguous or incomplete, records the final clarified answer in `questions.md`, and assesses whether the answer has design or spec impact.
+
+### Removed
+
+- **`modscape spec answer` CLI command** — Removed in favour of the `/modscape:spec:answer` AI skill, which provides interactive follow-up questioning and design-impact assessment that the CLI could not offer.
 
 ## [3.0.1] - 2026-04-13
 
