@@ -76,7 +76,7 @@ export async function initProject(options = {}) {
     await safeWriteFile('.modscape/codegen-rules.md', codegenRulesTemplate);
 
     // 2. Create agent-specific files
-    const specSkillNames = ['requirements', 'design', 'implement', 'archive', 'status'];
+    const specSkillNames = ['requirements', 'design', 'tasks', 'implement', 'archive', 'status', 'amend', 'review', 'search'];
 
     if (agents.includes('gemini')) {
       const modelingTemplate = fs.readFileSync(path.join(__dirname, 'templates/gemini/modscape-modeling/SKILL.md'), 'utf8');
@@ -119,10 +119,10 @@ export async function initProject(options = {}) {
       if (options.sdd) {
         console.log('  Scaffolding SDD skills for Claude Code...');
         const specDir = path.join(__dirname, 'templates/claude/spec');
-        const claudeSpecSkills = ['requirements.md', 'design.md', 'tasks.md', 'implement.md', 'archive.md', 'status.md'];
-        for (const skill of claudeSpecSkills) {
-          const template = fs.readFileSync(path.join(specDir, skill), 'utf8');
-          await safeWriteFile(`.claude/commands/modscape/spec/${skill}`, template);
+        for (const skill of specSkillNames) {
+          const skill_file = skill + '.md';
+          const template = fs.readFileSync(path.join(specDir, skill_file), 'utf8');
+          await safeWriteFile(`.claude/commands/modscape/spec/${skill_file}`, template);
         }
       }
     }
