@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **`/modscape:spec:review` skill** — New AI skill (Claude / Gemini / Codex) that reads `questions.md`, `design.md`, `spec.md`, and `tasks.md` to display a go/no-go review summary: unresolved questions, assumptions, AC coverage (test-covered / manual / uncovered), and low-confidence downstream classifications. Also embedded as a Review Checkpoint at the end of `/modscape:spec:design`.
+- **`/modscape:spec:requirements` — AC-NNN ID assignment** — Acceptance Criteria are now automatically assigned sequential IDs (`AC-001`, `AC-002`, ...) during requirements collection across Claude / Gemini / Codex.
+- **`/modscape:spec:design` — AC ↔ test mapping** — Phase 4 test tasks in `tasks.md` now include `[→ AC-NNN]` annotations linking each test to its corresponding acceptance criteria. ACs that cannot be auto-tested are added as `[手動検証]` lines.
+- **`/modscape:spec:archive` — dry-run merge preview** — Before merging the work YAML into the main model, the archive skill now displays an ID-level summary (tables added / updated with changed fields / unchanged) and requires explicit user confirmation before proceeding.
+- **`/modscape:spec:archive` — AC coverage in archive summary** — The archive completion summary now includes AC coverage: test-covered, manual verification, and uncovered AC counts.
 - **`modscape spec search <keyword>`** — New CLI command to search past archives (`.modscape/archives/`) and permanent specs (`.modscape/specs/`) by keyword. Supports `--json` for machine-readable output and `--limit <n>` to control result count (default: 5).
 - **`/modscape:spec:search` skill** — New AI skill (Claude / Gemini / Codex) that runs `modscape spec search --json`, summarizes results, and incorporates selected findings into the current spec or design on explicit user request.
 - **`/modscape:spec:design` — Known Open Questions surfacing** — On first run, the design skill now checks `.modscape/specs/questions.md` for unresolved questions related to Direct Impact tables and inserts their Q-NNN IDs into `design.md` under `## Known Open Questions`.

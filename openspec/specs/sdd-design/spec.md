@@ -20,6 +20,14 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 
 スキルは `changes/<name>/spec-model.yaml` の `lineage` セクションをトポロジカルソートし、実装フェーズごとに分類した `changes/<name>/tasks.md` を生成しなければならない（SHALL）。
 
+tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.md` の `## Acceptance Criteria` から AC-NNN ID を読み込み、各テストタスクに対応する AC-NNN を `[→ AC-NNN]` 形式で付記しなければならない（SHALL）。自動テスト生成が困難な AC（数値一致検証等）は `[手動検証]` フラグを付けなければならない（SHALL）。
+
+スキルは設計完了後に review サマリーを表示しなければならない（SHALL）。review サマリーには以下を含めなければならない（SHALL）:
+- `questions.md` の未解決質問件数と Q-NNN 一覧
+- `design.md` 内の仮定の件数
+- AC カバレッジ（テスト紐付き / 手動検証 / 未カバーの件数）
+- 下流分類の確信度が低いテーブル一覧
+
 タスクは以下のフェーズ構成で分類しなければならない（SHALL）:
 - Phase 1: Staging（依存なしのテーブル）
 - Phase 2: Core（1段上流のテーブル）
@@ -61,9 +69,13 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 - **WHEN** `changes/<name>/spec.md` が存在しない状態で `/modscape:spec:design <name>` を実行する
 - **THEN** AIは「先に `/modscape:spec:requirements` を実行して spec.md を作成してください」と案内する
 
-#### Scenario: 完了後に次スキルへ誘導する
-- **WHEN** `changes/<name>/spec-model.yaml` の更新が完了する
-- **THEN** AIは「実装を始めますか？ `/modscape:spec:implement <name>` を実行してください」というメッセージを表示する
+#### Scenario: Phase 4 テストタスクに AC-NNN を紐付ける
+- **WHEN** tasks.md の Phase 4 を生成し、`spec.md` に AC-NNN 形式の Acceptance Criteria が存在する
+- **THEN** 各テストタスクの末尾に対応する `[→ AC-NNN]` を付記し、自動生成できない AC には `[手動検証]` フラグを付ける
+
+#### Scenario: design 完了後に review サマリーを表示する
+- **WHEN** `/modscape:spec:design <name>` が完了する
+- **THEN** 未解決質問件数・仮定件数・AC カバレッジ・下流分類確信度の低いテーブルを含む review サマリーが表示され、`/modscape:spec:implement <name>` と `/modscape:spec:review <name>` への次ステップ案内が出力される
 
 #### Scenario: Downstream Impact の分類を design.md に記録する
 - **WHEN** 下流テーブルが特定される

@@ -226,20 +226,49 @@ For each task, include:
 - [ ] `<table_id>` [<materialization>] ← <upstream_1>
 
 ## Phase 4: Tests
-- [ ] `<table_id>` — <column_id>: unique, not_null
-- [ ] `<table_a>` → `<table_b>` FK test
+- [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
+- [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
+- [ ] `<table_id>` — <condition>                    [手動検証]
 ```
+
+**AC Coverage Annotation Rules for Phase 4 tasks:**
+- Read `spec.md`'s `## Acceptance Criteria` for `AC-NNN:` entries before generating Phase 4 tasks.
+- For each test task, append `[→ AC-NNN]` for each AC that this test directly validates.
+  - unique/not_null tests → typically cover ACs about key integrity
+  - FK tests → typically cover ACs about referential integrity or join correctness
+  - Use judgment based on AC text; it's OK to reference multiple ACs per test
+- If an AC cannot be validated by any auto-generated test (e.g. "売上合計がソースと一致", "match source"), add a dedicated line:
+  `- [ ] AC-NNN: <AC text> [手動検証]`
+- If `spec.md` has no `AC-NNN:` entries: omit annotations silently (backwards compatible).
 
 ## Next Step
 
-**Always output the following message at the end, without exception:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of `questions.md`, `design.md`, and `tasks.md`:**
 
 ---
 ✅ Design complete. `tasks.md` generated at `.modscape/changes/<name>/tasks.md`
 
-**Next step:**
+## Review Checkpoint
+
+**Unresolved Questions:** N 件 — Q-NNN, Q-NNN (see questions.md) *(0 件の場合は「なし」と表示)*
+
+**Assumptions:** N 件 *(design.md / questions.md の `**仮定:**` 行をリスト。0 件の場合は「なし」)*
+
+**AC Coverage:** N/M
+- ✅ AC-001: <text>
+- 🔧 AC-002: <text> [手動検証]
+- ❌ AC-003: <text> — uncovered
+*(spec.md に AC-NNN がない場合はこのセクションを省略)*
+
+**Downstream Classification (Low Confidence):** `<table-id>` など *(なければ「なし」)*
+
+⚠️ 問題が残っています。確認してから実装に進んでください。（問題があっても実装に進むことは可能です）
+*(問題がゼロの場合: ✅ No open issues. Ready to implement.)*
+
+**Next steps:**
 ```
-/modscape:spec:implement <name>
+/modscape:spec:implement <name>   # 実装に進む
+/modscape:spec:review <name>      # このサマリーを再表示する
 ```
 
 To preview the model:

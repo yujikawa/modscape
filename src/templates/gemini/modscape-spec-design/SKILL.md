@@ -187,26 +187,30 @@ Build a dependency graph from `lineage` entries in `changes/<name>/spec-model.ya
 - [ ] `<table_id>` [<materialization>] ← <upstream_1>
 
 ## Phase 4: Tests
-- [ ] `<table_id>` — <column_id>: unique, not_null
-- [ ] `<table_a>` → `<table_b>` FK test
+- [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
+- [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
+- [ ] AC-NNN: <AC text>                             [手動検証]
 ```
+
+Append `[→ AC-NNN]` to each test task that validates a corresponding AC from `spec.md`. Add `[手動検証]` lines for ACs that cannot be auto-tested. Omit annotations if `spec.md` has no AC-NNN entries.
 
 ## Next Step
 
-**Always output the following message at the end, without exception:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of the files:**
 
 ---
 ✅ Design complete. `tasks.md` generated at `.modscape/changes/<name>/tasks.md`
 
-**Next step:**
+## Review Checkpoint
+
+**Unresolved Questions:** N 件 — Q-NNN, Q-NNN
+**Assumptions:** N 件
+**AC Coverage:** N/M (✅ covered / 🔧 manual / ❌ uncovered)
+**Downstream Classification (Low Confidence):** `<table-id>` or なし
+
+**Next steps:**
 ```
 @modscape-spec-implement <name>
+@modscape-spec-review <name>
 ```
-
-To preview the model:
-```
-modscape dev .modscape/changes/<name>/spec-model.yaml
-```
-
-If you discover issues during implementation, add them to `## Findings` in `.modscape/changes/<name>/design.md`, then re-run `@modscape-spec-design <name>` to update the design.
 ---

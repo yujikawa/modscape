@@ -36,9 +36,34 @@ modscape summary <file> --json
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
    - If `design.md` does not exist or has no `## Affected Tables` section: treat all tables in `spec-model.yaml` as Direct Impact (backwards compatible).
 
-### Step 1: Merge work YAML into main YAML(s)
+### Step 1: Dry-run — show merge preview and confirm
 
-3. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+3. Build and display the merge preview **before** executing any merge:
+
+   - Read `spec-model.yaml` and compare table IDs against each main YAML listed in `spec-config.yaml`:
+     - **追加するテーブル**: table IDs present in `spec-model.yaml` but not in the main YAML
+     - **更新するテーブル**: table IDs present in both; list key field changes (added/removed columns, updated `physical.strategy`, etc.)
+     - **変更なし**: Downstream Impact — Context Only tables that will be merged but have no structural changes
+
+   Display the preview:
+   ```
+   ## Merge Preview
+
+   追加するテーブル:  fct_new_table, stg_source_x
+   更新するテーブル:  fct_orders（+2 columns: revenue_net, tax_amount）
+   変更なし:          dim_customers（Context Only）
+
+   このまま <master>.yaml にマージしますか？ (y/N)
+   ```
+
+   Wait for user confirmation:
+   - If confirmed (y/yes): proceed to Step 2.
+   - If declined (N/no/anything else): stop and output:
+     > Archive cancelled. No changes were made to the main YAML.
+
+### Step 2: Merge work YAML into main YAML(s)
+
+5. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
    modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
@@ -49,13 +74,13 @@ modscape summary <file> --json
    modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
    ```
 
-4. Check the merge output for duplicate table ID warnings.
+6. Check the merge output for duplicate table ID warnings.
    If any duplicates were detected, report them to the user:
    > ⚠ The following tables existed in both the work YAML and the main YAML.
    > The spec version was used: `<table-id>`, `<table-id>`
    > Please verify the main YAML diff looks correct.
 
-5. Run validate on each merged main YAML and fix any errors before proceeding:
+7. Run validate on each merged main YAML and fix any errors before proceeding:
    ```bash
    modscape validate <master>.yaml
    ```
@@ -125,6 +150,11 @@ modscape summary <file> --json
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">
+
+**AC Coverage:** *(read from `tasks.md` `[→ AC-NNN]` and `[手動検証]` markers; omit if no AC-NNN in spec.md)*
+- ✅ Test covered: AC-001, AC-003 (<n> 件)
+- 🔧 Manual verification: AC-002 (<n> 件) — requires manual check
+- ❌ Uncovered: AC-005 (<n> 件) — closed without verification
 
 🎉 All work for this spec is complete!
 ---

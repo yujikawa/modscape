@@ -40,9 +40,18 @@ modscape summary <file> --json
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
    - If `design.md` does not exist or has no `## Affected Tables` section: treat all tables in `spec-model.yaml` as Direct Impact (backwards compatible).
 
-### Step 1: Merge work YAML into main YAML(s)
+### Step 1: Dry-run — show merge preview and confirm
 
-3. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+3. Build and display the merge preview **before** executing any merge:
+   - **追加するテーブル**: IDs in `spec-model.yaml` but not in the main YAML
+   - **更新するテーブル**: IDs in both; list key field changes
+   - **変更なし**: Context Only tables
+
+   Wait for user confirmation (y/N). If declined: stop with "Archive cancelled."
+
+### Step 2: Merge work YAML into main YAML(s)
+
+4. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
    modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
@@ -129,6 +138,11 @@ modscape summary <file> --json
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">
+
+**AC Coverage:** *(omit if no AC-NNN in spec.md)*
+- ✅ Test covered: AC-001, AC-003 (<n> 件)
+- 🔧 Manual verification: AC-002 (<n> 件)
+- ❌ Uncovered: AC-005 (<n> 件)
 
 🎉 All work for this spec is complete!
 ---
