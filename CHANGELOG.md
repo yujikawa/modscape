@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - **`/modscape:spec:search` skill** — New AI skill (Claude / Gemini / Codex) that runs `modscape spec search --json`, summarizes results, and incorporates selected findings into the current spec or design on explicit user request.
 - **`/modscape:spec:design` — Known Open Questions surfacing** — On first run, the design skill now checks `.modscape/specs/questions.md` for unresolved questions related to Direct Impact tables and inserts their Q-NNN IDs into `design.md` under `## Known Open Questions`.
 - **`/modscape:spec:design` — Related Past Specs suggestion** — On first run, the design skill now runs `modscape spec search` for each Direct Impact table ID and records matching past archives/specs in `design.md` under `## Related Past Specs`.
+- **`/modscape:spec:amend` skill** — New AI skill (Claude / Gemini / Codex) for updating SDD artifacts when issues are discovered during implementation. Accepts free-text input (error messages, wrong assumptions, ambiguities) and updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks (`- [x]`) are always preserved. Fix tasks are appended under `## Amend: <YYYY-MM-DD>` sections. Can be called at any point in the workflow, as many times as needed.
 
 ## [3.0.1] - 2026-04-13
 
