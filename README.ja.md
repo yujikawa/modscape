@@ -557,27 +557,38 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 2.  **要件定義** — `/modscape:spec:requirements` を実行してパイプラインの仕様を対話的に定義します:
     - AIが `modscape spec new <name>` で作業フォルダを scaffold（`spec-config.yaml`・`spec-model.yaml`・`design.md`・`tasks.md`・`questions.md` を生成）
     - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
+    - **受け入れ条件には連番 ID（`AC-001`, `AC-002`, ...）が自動付与されます**（トレーサビリティ確保）
     - main-model.yamlのパスを `modscape-spec.custom.md` から解決、またはユーザーに確認
     - 未解決の調査事項は `questions.md` に `Q-NNN` エントリとして記録
     - `.modscape/changes/<name>/spec.md` に出力
 
 3.  **モデル設計** — `/modscape:spec:design <name>` を実行します:
     - `spec.md` をもとに関連テーブルを自動特定し、`modscape extract` でmain-model.yamlから `changes/<name>/spec-model.yaml` を生成
+    - `specs/questions.md` から Direct Impact テーブルに関連する未解決 `Q-NNN` を `design.md` に参照挿入
+    - `modscape spec search` で過去アーカイブを検索し、関連する過去 SDD を `design.md` に記録
     - どのテーブルが `main-model.yaml` に属するかを `spec-config.yaml` に記録
     - 新規テーブルを `changes/<name>/spec-model.yaml` に追加設計（`main-model.yaml` は触らない）
     - `design.md`（設計判断）と `tasks.md`（実装チェックリスト）を生成
+    - **Phase 4 テストタスクに `[→ AC-NNN]` アノテーションを付与**し、手動検証が必要な AC には `[手動検証]` フラグを付ける
     - **再実行可能**: 気づきを `design.md` の `### Requires Model Change` に追記し、再実行でmodelとtasksを更新
+    - 設計完了後に **Review Checkpoint**（未解決質問・仮定・ACカバレッジ）を出力
 
 4.  **実装** — `/modscape:spec:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します
 
 5.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
+    - **dry-run プレビューを先に表示**: 追加・更新（変更カラム）・変更なしのテーブルを ID 単位でサマリー表示し、確認後にマージを実行
     - `spec-config.yaml` を参照し、テーブルごとに対応するmain-model.yamlにマージ
     - 影響テーブルごとに `.modscape/specs/<table-id>.md` を生成・更新
     - 上流テーブルにはChangelog追記のみ
     - `questions.md` のエントリを `.modscape/specs/questions.md` に同期
+    - **アーカイブサマリーに AC カバレッジを表示**（テスト紐付き / 手動検証 / 未カバーの件数）
     - 作業フォルダは自動的に `.modscape/archives/YYYY-MM-DD-<name>/` へ移動
 
 > **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
+
+> **実装前のレビュー**: `/modscape:spec:review <name>` を実行すると go/no-go サマリーを確認できます — 未解決の質問・仮定・ACカバレッジ・分類確信度の低いテーブルを一覧表示。実装の進行はブロックしません。
+
+> **実装中のトラブル対応**: `/modscape:spec:amend <name>` を実行すると、実装中に発覚した問題（カラム名の誤り・JOIN キーの相違・想定外の NULL など）を SDD 成果物に反映できます。エラーを貼り付けるか問題を自由記述で渡すと、AI が `spec.md`・`design.md`・`tasks.md`・`questions.md` を差分更新します。完了済みタスクは保持されます。
 
 > **過去のwork検索**: `/modscape:spec:search <keyword>`（または `modscape spec search <keyword>`）を実行すると、過去のアーカイブと永続スペックを横断検索して類似の設計・実装パターンを探せます。`--limit <n>` で結果件数を指定（デフォルト: 5）、`--json` で機械可読な出力を取得できます。
 
@@ -597,18 +608,24 @@ sequenceDiagram
         User->>AI: 要件を話す（ゴール・ステークホルダー・データソース等）
         AI->>User: フォルダ名を提案（例: monthly-sales-summary）
         User->>AI: 承認 or リネーム
-        AI->>FS: changes/<name>/spec.md 作成
+        AI->>FS: changes/<name>/spec.md 作成（AC-001, AC-002... 自動付与）
     end
 
     rect rgb(240, 255, 240)
         Note over User,FS: ② /modscape:spec:design <name>
-        AI->>FS: spec.md・specs/*.md を読む
+        AI->>FS: spec.md・specs/*.md・specs/questions.md を読む
+        AI->>CLI: modscape spec search <table-id>（過去work検索）
         AI->>CLI: modscape extract main-model.yaml --tables <ids>
         CLI->>FS: changes/<name>/spec-model.yaml 作成（関連テーブル抽出）
-        AI->>CLI: modscape table add changes/<name>/spec-model.yaml ...
-        CLI->>FS: changes/<name>/spec-model.yaml に新規テーブル追加
-        AI->>CLI: modscape layout changes/<name>/spec-model.yaml
-        AI->>FS: changes/<name>/design.md + tasks.md 作成
+        AI->>CLI: modscape table add / layout changes/<name>/spec-model.yaml
+        AI->>FS: design.md + tasks.md 作成（Phase 4 に [→ AC-NNN] 付与）
+        AI->>User: Review Checkpoint（未解決Q・仮定・ACカバレッジ）
+    end
+
+    rect rgb(245, 245, 255)
+        Note over User,FS: ② /modscape:spec:review <name>（任意・いつでも）
+        AI->>FS: questions.md・design.md・spec.md・tasks.md を読む
+        AI->>User: 未解決Q / 仮定 / ACカバレッジ / 確信度の低いテーブル 一覧
     end
 
     rect rgb(255, 253, 240)
@@ -617,22 +634,24 @@ sequenceDiagram
             AI->>FS: changes/<name>/spec-model.yaml を参照
             AI->>User: コード生成（dbt / SQLMesh 等）
             AI->>FS: tasks.md チェックボックス更新 [ ]→[x]
-            AI->>User: 次のタスクに進みますか？
         end
-        opt 実データで気づきが発生した場合
-            User->>FS: changes/<name>/design.md に Findings 追記
-            User->>AI: /modscape:spec:design <name> 再実行
-            AI->>FS: spec-model.yaml 再設計・tasks.md 差分更新
+        opt 実装中に問題が発覚した場合
+            User->>AI: /modscape:spec:amend <name> + 問題を自由記述
+            AI->>FS: spec.md / design.md / tasks.md / questions.md を差分更新
+            AI->>User: Amend サマリー（変更ファイル一覧）
         end
     end
 
     rect rgb(255, 240, 245)
         Note over User,FS: ④ /modscape:spec:archive <name>
+        AI->>User: dry-run プレビュー（追加 / 更新（変更カラム）/ 変更なし）
+        User->>AI: 確認（y/N）
         AI->>CLI: modscape merge main-model.yaml changes/<name>/spec-model.yaml --patch
         CLI->>FS: main-model.yaml 更新（in-place upsert）
         Note over CLI: ⚠ 重複テーブルがあれば警告
         AI->>FS: specs/<table-id>.md 生成・更新
-        AI->>User: changes/<name>/ を削除しますか？（y=削除 / n=archives/YYYY-MM-DD-<name>/へ移動）
+        AI->>FS: changes/<name>/ → archives/YYYY-MM-DD-<name>/ 移動
+        AI->>User: アーカイブサマリー（ACカバレッジ: テスト紐付き / 手動検証 / 未カバー）
     end
 ```
 

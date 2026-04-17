@@ -559,27 +559,38 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
    - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`, `questions.md`)
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
+   - **Acceptance Criteria are automatically assigned sequential IDs** (`AC-001`, `AC-002`, ...) for traceability
    - Resolves main-model.yaml path from `modscape-spec.custom.md` or prompts the user
    - Unresolved items are recorded as `Q-NNN` entries in `questions.md`
    - Output: `.modscape/changes/<name>/spec.md`
 
 3. **Design the model** — run `/modscape:spec:design <name>`:
    - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
+   - Surfaces unresolved `Q-NNN` questions from `specs/questions.md` related to Direct Impact tables
+   - Searches past archives for related designs via `modscape spec search`
    - Runs `modscape extract` to pull relevant tables from main-model.yaml into `changes/<name>/spec-model.yaml`
    - Records which tables belong to `main-model.yaml` in `spec-config.yaml`
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
+   - **Phase 4 test tasks include `[→ AC-NNN]` annotations** linking each test to its acceptance criterion; ACs that require manual verification are flagged as `[手動検証]`
    - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to update model and tasks
+   - Outputs a **Review Checkpoint** summary (open questions, assumptions, AC coverage) at the end
 
 4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
+   - **Dry-run preview first**: displays tables to add / update (with changed fields) / unchanged, and asks for confirmation before merging
    - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
    - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
    - Upstream tables receive a Changelog entry only
    - Syncs `questions.md` entries to `.modscape/specs/questions.md`
+   - **Archive summary includes AC coverage**: test-covered, manual verification, and uncovered AC counts
    - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
+
+> **Review before implementing**: Run `/modscape:spec:review <name>` after design to get a go/no-go summary — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
+
+> **Fix issues mid-implementation**: Run `/modscape:spec:amend <name>` whenever you discover a problem (wrong column name, broken JOIN key, unexpected NULL, etc.). Paste the error or describe the issue in free text — the AI updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks are always preserved.
 
 > **Search past work**: Run `/modscape:spec:search <keyword>` (or `modscape spec search <keyword>`) to search past archives and permanent specs for similar designs and patterns. Use `--limit <n>` to control result count (default: 5). Add `--json` for machine-readable output.
 
@@ -599,18 +610,24 @@ sequenceDiagram
         User->>AI: Describe requirements (goal, stakeholders, data sources, etc.)
         AI->>User: Propose folder name (e.g. monthly-sales-summary)
         User->>AI: Approve or rename
-        AI->>FS: Create changes/<name>/spec.md
+        AI->>FS: Create changes/<name>/spec.md (AC-001, AC-002... assigned)
     end
 
     rect rgb(240, 255, 240)
         Note over User,FS: ② /modscape:spec:design <name>
-        AI->>FS: Read spec.md and specs/*.md
+        AI->>FS: Read spec.md, specs/*.md, specs/questions.md
+        AI->>CLI: modscape spec search <table-id> (surface past work)
         AI->>CLI: modscape extract main-model.yaml --tables <ids>
         CLI->>FS: Create changes/<name>/spec-model.yaml (extracted tables)
-        AI->>CLI: modscape table add changes/<name>/spec-model.yaml ...
-        CLI->>FS: Add new tables to changes/<name>/spec-model.yaml
-        AI->>CLI: modscape layout changes/<name>/spec-model.yaml
-        AI->>FS: Create changes/<name>/design.md + tasks.md
+        AI->>CLI: modscape table add / layout changes/<name>/spec-model.yaml
+        AI->>FS: Create design.md + tasks.md ([→ AC-NNN] in Phase 4)
+        AI->>User: Review Checkpoint (open Qs, assumptions, AC coverage)
+    end
+
+    rect rgb(245, 245, 255)
+        Note over User,FS: ② /modscape:spec:review <name> (optional, anytime)
+        AI->>FS: Read questions.md, design.md, spec.md, tasks.md
+        AI->>User: Summary — open Qs / assumptions / AC coverage / low-confidence tables
     end
 
     rect rgb(255, 253, 240)
@@ -619,22 +636,24 @@ sequenceDiagram
             AI->>FS: Read changes/<name>/spec-model.yaml
             AI->>User: Generate code (dbt / SQLMesh etc.)
             AI->>FS: Update tasks.md checkbox [ ]→[x]
-            AI->>User: Proceed to next task?
         end
-        opt If real-data findings arise
-            User->>FS: Add Findings to changes/<name>/design.md
-            User->>AI: Re-run /modscape:spec:design <name>
-            AI->>FS: Redesign spec-model.yaml, diff-update tasks.md
+        opt Issue found during implementation
+            User->>AI: /modscape:spec:amend <name> + describe issue
+            AI->>FS: Patch spec.md / design.md / tasks.md / questions.md
+            AI->>User: Amend summary (files changed)
         end
     end
 
     rect rgb(255, 240, 245)
         Note over User,FS: ④ /modscape:spec:archive <name>
+        AI->>User: Dry-run preview (tables to add / update / unchanged)
+        User->>AI: Confirm (y/N)
         AI->>CLI: modscape merge main-model.yaml changes/<name>/spec-model.yaml --patch
         CLI->>FS: Update main-model.yaml (in-place upsert)
         Note over CLI: ⚠ Warn on duplicate table IDs
         AI->>FS: Generate / update specs/<table-id>.md
-        AI->>User: Delete changes/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
+        AI->>FS: Move changes/<name>/ → archives/YYYY-MM-DD-<name>/
+        AI->>User: Archive summary (AC coverage: test-covered / manual / uncovered)
     end
 ```
 
