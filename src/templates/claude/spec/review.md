@@ -33,12 +33,12 @@ Show a review summary of the current spec work folder — open questions, assump
    - For each AC-NNN, check if any Phase 4 task in `tasks.md` contains `[→ AC-NNN]`
    - Classify each AC as:
      - **Test covered**: at least one Phase 4 task references it with `[→ AC-NNN]`
-     - **Manual verification**: no test task, but `[手動検証]` appears near the AC in tasks.md, or the AC text describes a non-automatable condition (e.g. "数値が一致", "match source")
+     - **Manual verification**: no test task, but `[manual verification]` appears near the AC in tasks.md, or the AC text describes a non-automatable condition (e.g. "match source", "row count matches source")
      - **Uncovered**: no reference found in tasks.md at all
    - If `spec.md` or `tasks.md` do not exist, or have no AC-NNN entries: skip this section
 
    **d. Downstream classification confidence**
-   - Scan `design.md` for tables marked with low confidence (text like "分類確度が低い" or "confidence is low")
+   - Scan `design.md` for tables marked with low confidence (text like "confidence is low" or "classification confidence is low")
    - List those table IDs
 
 4. Display the summary:
@@ -51,13 +51,13 @@ Show a review summary of the current spec work folder — open questions, assump
 
    ### Assumptions
    - 2 件
-     - `fct_orders`: NULL rate < 5% と仮定 (unconfirmed)
+     - `fct_orders`: NULL rate assumed < 5% (unconfirmed)
      - ...
 
    ### AC Coverage (4/6)
    - ✅ AC-001: <text> ← Phase 4 test
    - ✅ AC-003: <text> ← Phase 4 test
-   - 🔧 AC-002: <text> [手動検証]
+   - 🔧 AC-002: <text> [manual verification]
    - ❌ AC-004: <text> — no test generated
    - ❌ AC-005: <text> — no test generated
 
@@ -69,7 +69,7 @@ Show a review summary of the current spec work folder — open questions, assump
    - If **all** of the following are true: no unresolved questions AND no assumptions AND all ACs are covered AND no low-confidence downstream tables
      → Display: `✅ No open issues. Ready to implement.`
    - Otherwise:
-     → Display: `⚠️ 上記の問題を確認してから実装に進んでください。問題が残っていても実装を進めることはできます。`
+     → Display: `⚠️ Open issues found above. Please review before implementing. You may still proceed to implementation if needed.`
 
 6. **Always output the following next steps at the end, without exception:**
 

@@ -123,7 +123,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 ```
 
     If there are unresolved questions (`- [ ]`) at the end of design, output:
-    > ⚠ **Q-NNN** 件の未解決の質問があります。`modscape spec answer <id> "<回答>"` で回答するか、このまま実装に進む場合は `/modscape:spec:implement <name>` を実行してください。
+    > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
 
 ## design.md Format
 
@@ -135,7 +135,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Affected Tables
 
-> ⚠️ この Affected Tables 分類は AI の提案です。内容が異なる場合は直接編集してください。
+> ⚠️ This Affected Tables classification is an AI proposal. Edit directly if the classification is incorrect.
 
 ### Direct Impact
 - `<table-id>`: <reason (new / column added / restructured)>
@@ -182,10 +182,10 @@ Build a dependency graph from `lineage` entries in `changes/<name>/spec-model.ya
 ## Phase 4: Tests
 - [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
 - [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
-- [ ] AC-NNN: <AC text>                             [手動検証]
+- [ ] AC-NNN: <AC text>                             [manual verification]
 ```
 
-Append `[→ AC-NNN]` to each test task that validates a corresponding AC from `spec.md`. Add `[手動検証]` lines for ACs that cannot be auto-tested. Omit annotations if `spec.md` has no AC-NNN entries.
+Append `[→ AC-NNN]` to each test task that validates a corresponding AC from `spec.md`. Add `[manual verification]` lines for ACs that cannot be auto-tested. Omit annotations if `spec.md` has no AC-NNN entries.
 
 ## COMMAND: /modscape:spec:design
 
@@ -198,10 +198,10 @@ Usage: `/modscape:spec:design <name> [path/to/main.yaml]`
 
 ## Review Checkpoint
 
-**Unresolved Questions:** N 件 — Q-NNN, Q-NNN
-**Assumptions:** N 件
+**Unresolved Questions:** N — Q-NNN, Q-NNN
+**Assumptions:** N
 **AC Coverage:** N/M (✅ covered / 🔧 manual / ❌ uncovered)
-**Downstream Classification (Low Confidence):** `<table-id>` or なし
+**Downstream Classification (Low Confidence):** `<table-id>` or none
 
 **Next steps:**
 ```

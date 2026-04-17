@@ -85,7 +85,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
      ```markdown
      ## Known Open Questions (from specs/questions.md)
-     Direct Impact テーブルに関連する未解決の質問があります。詳細は `.modscape/specs/questions.md` を参照してください。
+     There are unresolved questions related to Direct Impact tables. See `.modscape/specs/questions.md` for details.
      - Q-012, Q-015 → `fct_orders`
      - Q-019 → `dim_customers`
      ```
@@ -100,7 +100,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - If results exist: record them in `design.md` under `## Related Past Specs`:
      ```markdown
      ## Related Past Specs
-     以下の過去 spec が関連する可能性があります。詳細は各 archive を参照してください。
+     The following past specs may be relevant. See each archive for details.
      - `archives/2026-03-15-monthly-sales/` — Monthly Sales Summary Pipeline
      - `specs/fct_orders.md` — fct_orders
      ```
@@ -147,7 +147,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 ```
 
     If there are unresolved questions (`- [ ]`) at the end of design, output:
-    > ⚠ **Q-NNN** 件の未解決の質問があります。`modscape spec answer <id> "<回答>"` で回答するか、このまま実装に進む場合は `/modscape:spec:implement <name>` を実行してください。
+    > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
 
 ## design.md Format
 
@@ -159,7 +159,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Affected Tables
 
-> ⚠️ この Affected Tables 分類は AI の提案です。内容が異なる場合は直接編集してください。
+> ⚠️ This Affected Tables classification is an AI proposal. Edit directly if the classification is incorrect.
 
 ### Direct Impact
 - `<table-id>`: <reason (new / column added / restructured)>
@@ -228,7 +228,7 @@ For each task, include:
 ## Phase 4: Tests
 - [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
 - [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
-- [ ] `<table_id>` — <condition>                    [手動検証]
+- [ ] `<table_id>` — <condition>                    [manual verification]
 ```
 
 **AC Coverage Annotation Rules for Phase 4 tasks:**
@@ -237,8 +237,8 @@ For each task, include:
   - unique/not_null tests → typically cover ACs about key integrity
   - FK tests → typically cover ACs about referential integrity or join correctness
   - Use judgment based on AC text; it's OK to reference multiple ACs per test
-- If an AC cannot be validated by any auto-generated test (e.g. "売上合計がソースと一致", "match source"), add a dedicated line:
-  `- [ ] AC-NNN: <AC text> [手動検証]`
+- If an AC cannot be validated by any auto-generated test (e.g. "match source", "row count matches"), add a dedicated line:
+  `- [ ] AC-NNN: <AC text> [manual verification]`
 - If `spec.md` has no `AC-NNN:` entries: omit annotations silently (backwards compatible).
 
 ## Next Step
@@ -250,25 +250,25 @@ For each task, include:
 
 ## Review Checkpoint
 
-**Unresolved Questions:** N 件 — Q-NNN, Q-NNN (see questions.md) *(0 件の場合は「なし」と表示)*
+**Unresolved Questions:** N — Q-NNN, Q-NNN (see questions.md) *(show "none" if 0)*
 
-**Assumptions:** N 件 *(design.md / questions.md の `**仮定:**` 行をリスト。0 件の場合は「なし」)*
+**Assumptions:** N *(list `**Assumption:**` lines from design.md / questions.md; show "none" if 0)*
 
 **AC Coverage:** N/M
 - ✅ AC-001: <text>
-- 🔧 AC-002: <text> [手動検証]
+- 🔧 AC-002: <text> [manual verification]
 - ❌ AC-003: <text> — uncovered
-*(spec.md に AC-NNN がない場合はこのセクションを省略)*
+*(omit this section if spec.md has no AC-NNN entries)*
 
-**Downstream Classification (Low Confidence):** `<table-id>` など *(なければ「なし」)*
+**Downstream Classification (Low Confidence):** `<table-id>` *(show "none" if empty)*
 
-⚠️ 問題が残っています。確認してから実装に進んでください。（問題があっても実装に進むことは可能です）
-*(問題がゼロの場合: ✅ No open issues. Ready to implement.)*
+⚠️ Open issues found. Please review before implementing. (You may still proceed to implementation if needed.)
+*(If zero issues: ✅ No open issues. Ready to implement.)*
 
 **Next steps:**
 ```
-/modscape:spec:implement <name>   # 実装に進む
-/modscape:spec:review <name>      # このサマリーを再表示する
+/modscape:spec:implement <name>   # proceed to implementation
+/modscape:spec:review <name>      # re-run this summary
 ```
 
 To preview the model:

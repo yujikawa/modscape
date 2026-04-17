@@ -43,9 +43,9 @@ modscape summary <file> --json
 ### Step 1: Dry-run — show merge preview and confirm
 
 3. Build and display the merge preview **before** executing any merge:
-   - **追加するテーブル**: IDs in `spec-model.yaml` but not in the main YAML
-   - **更新するテーブル**: IDs in both; list key field changes
-   - **変更なし**: Context Only tables
+   - **Tables to add**: IDs in `spec-model.yaml` but not in the main YAML
+   - **Tables to update**: IDs in both; list key field changes
+   - **No changes**: Context Only tables
 
    Wait for user confirmation (y/N). If declined: stop with "Archive cancelled."
 

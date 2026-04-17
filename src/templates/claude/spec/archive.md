@@ -41,19 +41,19 @@ modscape summary <file> --json
 3. Build and display the merge preview **before** executing any merge:
 
    - Read `spec-model.yaml` and compare table IDs against each main YAML listed in `spec-config.yaml`:
-     - **追加するテーブル**: table IDs present in `spec-model.yaml` but not in the main YAML
-     - **更新するテーブル**: table IDs present in both; list key field changes (added/removed columns, updated `physical.strategy`, etc.)
-     - **変更なし**: Downstream Impact — Context Only tables that will be merged but have no structural changes
+     - **Tables to add**: table IDs present in `spec-model.yaml` but not in the main YAML
+     - **Tables to update**: table IDs present in both; list key field changes (added/removed columns, updated `physical.strategy`, etc.)
+     - **No changes**: Downstream Impact — Context Only tables that will be merged but have no structural changes
 
    Display the preview:
    ```
    ## Merge Preview
 
-   追加するテーブル:  fct_new_table, stg_source_x
-   更新するテーブル:  fct_orders（+2 columns: revenue_net, tax_amount）
-   変更なし:          dim_customers（Context Only）
+   Tables to add:    fct_new_table, stg_source_x
+   Tables to update: fct_orders (+2 columns: revenue_net, tax_amount)
+   No changes:       dim_customers (Context Only)
 
-   このまま <master>.yaml にマージしますか？ (y/N)
+   Proceed to merge into <master>.yaml? (y/N)
    ```
 
    Wait for user confirmation:
@@ -151,10 +151,10 @@ modscape summary <file> --json
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">
 
-**AC Coverage:** *(read from `tasks.md` `[→ AC-NNN]` and `[手動検証]` markers; omit if no AC-NNN in spec.md)*
-- ✅ Test covered: AC-001, AC-003 (<n> 件)
-- 🔧 Manual verification: AC-002 (<n> 件) — requires manual check
-- ❌ Uncovered: AC-005 (<n> 件) — closed without verification
+**AC Coverage:** *(read from `tasks.md` `[→ AC-NNN]` and `[manual verification]` markers; omit if no AC-NNN in spec.md)*
+- ✅ Test covered: AC-001, AC-003 (<n> items)
+- 🔧 Manual verification: AC-002 (<n> items) — requires manual check
+- ❌ Uncovered: AC-005 (<n> items) — closed without verification
 
 🎉 All work for this spec is complete!
 ---
