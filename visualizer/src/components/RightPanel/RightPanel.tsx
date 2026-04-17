@@ -11,10 +11,12 @@ import {
   Moon,
   Search,
   Download,
+  BookOpen,
 } from 'lucide-react'
 import SearchTab from './SearchTab'
 import PathFinderTab from './PathFinderTab'
 import NoteSearchTab from './NoteSearchTab'
+import DecisionsTab from './DecisionsTab'
 
 const RightPanel = memo(() => {
   const {
@@ -161,6 +163,14 @@ const RightPanel = memo(() => {
             <Tooltip text="Note Search" />
           </button>
 
+          <button
+            onClick={() => { setActiveRightPanelTab('decisions'); setIsRightPanelOpen(true); }}
+            className={iconClass(activeRightPanelTab === 'decisions' && isRightPanelOpen)}
+          >
+            <BookOpen size={20} />
+            <Tooltip text="Decisions" />
+          </button>
+
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pb-2">
@@ -254,6 +264,7 @@ const RightPanel = memo(() => {
             {activeRightPanelTab === 'search' && 'Search'}
             {activeRightPanelTab === 'path' && 'Path Finder'}
             {activeRightPanelTab === 'notes' && 'Note Search'}
+            {activeRightPanelTab === 'decisions' && 'Decisions'}
           </h2>
         </div>
 
@@ -261,6 +272,7 @@ const RightPanel = memo(() => {
         {activeRightPanelTab === 'search' && <SearchTab />}
         {activeRightPanelTab === 'path' && <PathFinderTab />}
         {activeRightPanelTab === 'notes' && <NoteSearchTab />}
+        {activeRightPanelTab === 'decisions' && <DecisionsTab />}
       </div>
     </div>
   )

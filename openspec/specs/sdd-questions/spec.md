@@ -30,14 +30,20 @@ SDDの任意フェーズで、AIが人間の調査なしに判断できない事
 
 質問にはchange内でシーケンシャルなID（`Q-001`, `Q-002`, ...）を付与しなければならない（SHALL）。
 
+`changes/<name>/questions.md` は以下のセクション構成を持たなければならない（SHALL）：
+- `## Pipeline-level` — テーブルに紐づかないパイプライン全体の質問
+- `## Table-level` — テーブルごとのサブセクション（`### <table-id>`）
+
+archive 時に `## Table-level` の各テーブルセクションは `specs/<table-id>/questions.md` へ同期される（SHALL）。`## Pipeline-level` の質問は `specs/` に昇格されず、archive フォルダに保持される（SHALL）。
+
 ```markdown
 - [ ] **Q-001** <質問内容>
-  **仮定:** <仮定した内容>（未確認）
+  **Assumption:** <仮定した内容>（未確認）
 ```
 
 #### Scenario: 設計中に不明な仕様を発見したとき
 - **WHEN** AIが設計中にカラムのビジネスルールを判断できない場合
-- **THEN** AIは `questions.md` に `Q-NNN` IDを付与した質問を追記する
+- **THEN** AIは `questions.md` の該当テーブルセクションに `Q-NNN` IDを付与した質問を追記する
 
 #### Scenario: 質問IDがchange内でユニークである
 - **WHEN** 複数の質問が追記される
@@ -69,25 +75,26 @@ SDDの任意フェーズで、AIが人間の調査なしに判断できない事
 - **WHEN** Q-NNN に回答したい
 - **THEN** `/modscape:spec:answer <name> <id>` を実行する（`modscape spec answer` CLI は使用しない）
 
-### Requirement: archive時に .modscape/specs/questions.md へsyncする
-`/modscape:spec:archive <name>` は `.modscape/changes/<name>/questions.md` の内容を `.modscape/specs/questions.md` へテーブル単位フラットマージでsyncしなければならない（SHALL）。
+### Requirement: archive時に per-table questions.md へ同期する
+`/modscape:spec:archive <name>` は `.modscape/changes/<name>/questions.md` の `## Table-level` セクションを各テーブルの `specs/<table-id>/questions.md` へ同期しなければならない（SHALL）。`## Pipeline-level` の質問は `specs/` に昇格させず archive フォルダに保持しなければならない（SHALL）。
 
 syncルール：
-- テーブル単位でフラットにマージ（同じテーブルの質問を集約）
-- 既存 `specs/questions.md` との矛盾・廃止があればstrikethrough＋コメントを付記
+- テーブルごとのセクション（`### <table-id>`）を対応する `specs/<table-id>/questions.md` に分割してマージ
+- 既存 `specs/<table-id>/questions.md` との矛盾・廃止があればstrikethrough＋コメントを付記
 - 同一本文の質問は重複追加しない
 - change名は `<!-- <name> -->` コメントとして残す
 
 ```markdown
-### fct_orders
+# Questions: fct_orders
+
 - [x] **Q-002** amount は税込？税抜？ <!-- monthly-sales -->
   **A:** 税抜と確認済み
 - ~~[ ] **Q-005** discount_amount の計算ロジックは？~~ <!-- revenue-by-region にて discount_amount カラム廃止 -->
 ```
 
-#### Scenario: 新規質問が specs/questions.md に追記される
-- **WHEN** archive を実行し `questions.md` に新規質問が存在する
-- **THEN** 該当テーブルセクションに質問が追記され、change名コメントが付く
+#### Scenario: archive 時にテーブル質問が per-table ファイルに同期される
+- **WHEN** archive を実行し `## Table-level` の `### fct_orders` に質問が存在する
+- **THEN** `.modscape/specs/fct_orders/questions.md` に Q&A が同期され、`changes/<name>/questions.md` の pipeline-level 質問は specs/ に書き込まれない
 
 #### Scenario: 矛盾する既存質問にコメントが付く
 - **WHEN** archive時にchange内の設計変更が既存質問と矛盾する（例：カラム廃止）

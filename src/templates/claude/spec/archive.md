@@ -63,7 +63,7 @@ modscape summary <file> --json
 
 ### Step 2: Merge work YAML into main YAML(s)
 
-5. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
+4. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
    modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
@@ -74,27 +74,35 @@ modscape summary <file> --json
    modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
    ```
 
-6. Check the merge output for duplicate table ID warnings.
+5. Check the merge output for duplicate table ID warnings.
    If any duplicates were detected, report them to the user:
    > ⚠ The following tables existed in both the work YAML and the main YAML.
    > The spec version was used: `<table-id>`, `<table-id>`
    > Please verify the main YAML diff looks correct.
 
-7. Run validate on each merged main YAML and fix any errors before proceeding:
+6. Run validate on each merged main YAML and fix any errors before proceeding:
    ```bash
    modscape validate <master>.yaml
    ```
 
-### Step 2: Sync permanent table specs
+### Step 3: Sync permanent table specs
 
-5. Use the **affected tables classification** built in step 2 above.
+7. Use the **affected tables classification** built in step 2 above.
 
-6. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
+8. **Migrate old flat-file specs (if any)**:
+   For each affected table, check whether `.modscape/specs/<table-id>.md` exists as a plain file (old format).
+   If found, move it into the new directory format before proceeding:
+   ```bash
+   mkdir -p .modscape/specs/<table-id>
+   mv .modscape/specs/<table-id>.md .modscape/specs/<table-id>/spec.md
+   ```
+
+9. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
-   a. Check whether `.modscape/specs/<table-id>.md` exists.
-      - If **not**: create a new file using the format below.
+   a. Check whether `.modscape/specs/<table-id>/spec.md` exists.
+      - If **not**: create a new file using the format below (also create the directory).
       - If **exists**: update only the relevant sections (Overview, Business Context, Business Rules, Known Issues); preserve unrelated content.
 
    b. Append a Changelog entry:
@@ -102,51 +110,99 @@ modscape summary <file> --json
       - <YYYY-MM-DD>: <brief description of change> (SDD: <name>)
       ```
 
-7. **Changelog only for Downstream Impact — Context Only tables**:
-   - Do **not** perform a full spec sync for these tables.
-   - Only append a Changelog entry to `.modscape/specs/<table-id>.md` (create the file with minimal content if it does not exist):
-     - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
+10. **Changelog only for Downstream Impact — Context Only tables**:
+    - Do **not** perform a full spec sync for these tables.
+    - Only append a Changelog entry to `.modscape/specs/<table-id>/spec.md` (create the file and directory with minimal content if it does not exist):
+      - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
 
-8. **Report the sync result**:
-   > Merged into main YAML ✓
-   > Synced specs:
-   > - Created: `specs/mart_monthly_sales.md`
-   > - Updated: `specs/fct_orders.md`
-   > - Changelog only: `specs/stg_raw_orders.md`
+11. **Report the sync result**:
+    > Merged into main YAML ✓
+    > Synced specs:
+    > - Created: `specs/mart_monthly_sales/spec.md`
+    > - Updated: `specs/fct_orders/spec.md`
+    > - Changelog only: `specs/stg_raw_orders/spec.md`
 
-### Step 3: Sync questions.md
+### Step 4: Sync questions per table
 
-9. If `.modscape/changes/<name>/questions.md` exists, sync it to `.modscape/specs/questions.md` using flat merge per table:
+12. If `.modscape/changes/<name>/questions.md` exists:
 
-   **Merge rules:**
-   - Read the existing `.modscape/specs/questions.md` (create it if absent with `# Questions\n\n## Pipeline-level\n\n## Table-level\n`)
-   - For each table section in `changes/<name>/questions.md`: find or create the matching `### <table-id>` section in `specs/questions.md`
-   - Append new questions that do not already exist (compare by question text, not ID)
-   - For questions that were answered (`[x]`) in this change, update the corresponding unresolved entry in `specs/questions.md` if one exists
-   - If a previously recorded question in `specs/questions.md` is now invalidated by this change (e.g. the column was removed, the table was restructured), add a strikethrough note:
-     `~~- [ ] **Q-NNN** <original question>~~ <!-- <name>: <reason e.g. column removed> -->`
-   - Append `<!-- <name> -->` as a comment after each newly added question line
-   - Pipeline-level questions are merged into the `## Pipeline-level` section similarly
+    For each `### <table-id>` section under `## Table-level` in `changes/<name>/questions.md`:
 
-### Step 4: Move to archives
+    **Merge rules:**
+    - Read the existing `.modscape/specs/<table-id>/questions.md` (create it if absent with `# Questions: <table-id>\n`)
+    - Append new questions that do not already exist (compare by question text, not ID)
+    - For questions that were answered (`[x]`) in this change, update the corresponding unresolved entry in the per-table file if one exists
+    - If a previously recorded question is now invalidated by this change (e.g. the column was removed), add a strikethrough note:
+      `~~- [ ] **Q-NNN** <original question>~~ <!-- <name>: <reason e.g. column removed> -->`
+    - Append `<!-- <name> -->` as a comment after each newly added question line
 
-10. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+    **Pipeline-level questions (`## Pipeline-level` section) are NOT synced to `specs/`.**
+    They remain in the archive folder only. If any pipeline-level decision is significant enough to preserve, record it in `_context.yaml` under `decisions` (see Step 5).
+
+### Step 5: Update `_context.yaml`
+
+13. Read or create `.modscape/specs/_context.yaml`.
+
+    For each affected table (Direct Impact + Downstream Impact — Implement):
+    - Set `tables.<table-id>.last_change: <name>`
+    - Set `tables.<table-id>.has_spec: true`
+    - Set `tables.<table-id>.open_questions: <count of [ ] entries in specs/<table-id>/questions.md>`
+
+    For any significant pipeline-level decisions from `changes/<name>/questions.md` `## Pipeline-level`:
+    - Append to `decisions` list (only if the question was answered and the decision has cross-table impact):
+      ```yaml
+      - id: D-NNN
+        summary: "<one-line summary of the decision>"
+        date: <YYYY-MM-DD>
+        affects: [<table-id>, ...]
+        change: <name>
+      ```
+
+    Do NOT copy `description`, `kind`, or `tags` from `model.yaml` — those fields are already in the main YAML.
+
+    Example `_context.yaml`:
+    ```yaml
+    tables:
+      fct_orders:
+        last_change: monthly-sales-summary
+        open_questions: 0
+        has_spec: true
+      dim_customers:
+        last_change: customer-segmentation
+        open_questions: 2
+        has_spec: true
+
+    decisions:
+      - id: D-001
+        summary: "amount is tax-exclusive across all fact tables"
+        date: 2026-03-10
+        affects: [fct_orders, mart_revenue]
+        change: monthly-sales-summary
+    ```
+
+### Step 6: Move to archives
+
+14. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
     ```bash
     mkdir -p .modscape/archives
     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
     ```
 
-11. **Always output the following summary at the end, without exception:**
+15. **Always output the following summary at the end, without exception:**
 
 ---
 ✅ Archive complete.
 
 **Synced specs:**
-- Created: `specs/<table-id>.md` ...
-- Updated: `specs/<table-id>.md` ...
-- Changelog only: `specs/<table-id>.md` ...
+- Created: `specs/<table-id>/spec.md` ...
+- Updated: `specs/<table-id>/spec.md` ...
+- Changelog only: `specs/<table-id>/spec.md` ...
 
-**Questions synced:** `specs/questions.md` updated (<n> questions added/updated).
+**Questions synced:**
+- `specs/<table-id>/questions.md` updated (<n> questions added/updated) ...
+- Pipeline-level questions: kept in archive only
+
+**`_context.yaml` updated:** <n> tables
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">
@@ -159,7 +215,7 @@ Tables without specs: <list or "none">
 🎉 All work for this spec is complete!
 ---
 
-## `specs/<table-id>.md` Format
+## `specs/<table-id>/spec.md` Format
 
 ```markdown
 # <table-id>
@@ -179,5 +235,5 @@ Tables without specs: <list or "none">
 - <From design.md ## Findings section, if any>
 
 ## Changelog
-- <YYYY-MM-DD>: 初版 (SDD: <name>)
+- <YYYY-MM-DD>: Initial version (SDD: <name>)
 ```

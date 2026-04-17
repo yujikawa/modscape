@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import yaml from 'js-yaml'
-import type { Schema, Table, Relationship, Domain, Annotation, Consumer } from '../types/schema'
-import { parseYAML, normalizeSchema } from '../lib/parser'
+import type { Schema, Table, Relationship, Domain, Annotation, Consumer, ContextYaml } from '../types/schema'
+import { parseYAML, normalizeSchema, parseContextYaml } from '../lib/parser'
 
 // Debounce timer for syncToYamlInput — avoids yaml.dump on every frame during drag
 let syncTimer: ReturnType<typeof setTimeout> | null = null
@@ -15,6 +15,7 @@ export interface ModelFile {
 
 interface AppState {
   schema: Schema | null;
+  contextData: ContextYaml | null;
   selectedTableId: string | null;
   selectedTableIds: string[];
   selectedEdgeId: string | null;
@@ -50,7 +51,7 @@ interface AppState {
   isTerminalOpen: boolean;
   connectMode: 'lineage' | 'er' | null;
   activeTab: 'yaml' | 'stats';
-  activeRightPanelTab: 'search' | 'path' | 'notes';
+  activeRightPanelTab: 'search' | 'path' | 'notes' | 'decisions';
   focusNodeId: string | null;
   pathFinderResult: { nodeIds: string[], edgeIds: string[] } | null;
   showER: boolean;
@@ -131,7 +132,8 @@ interface AppState {
   setIsTerminalOpen: (isOpen: boolean) => void;
   setConnectMode: (mode: 'lineage' | 'er' | null) => void;
   setActiveTab: (tab: 'yaml' | 'stats') => void;
-  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
+  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes' | 'decisions') => void;
+  setContextData: (data: ContextYaml | null) => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
   setFocusNodeId: (id: string | null) => void;
   toggleTheme: () => void;
@@ -166,6 +168,7 @@ const pushHistory = (get: () => AppState, set: (partial: Partial<AppState>) => v
 export const useStore = create<AppState>()(persist(
   (set, get) => ({
   schema: null,
+  contextData: null,
   selectedTableId: null,
   selectedTableIds: [],
   selectedEdgeId: null,
@@ -284,6 +287,7 @@ export const useStore = create<AppState>()(persist(
   setConnectMode: (mode) => set({ connectMode: mode }),
   setActiveTab: (tab) => set({ activeTab: tab, isSidebarOpen: true }),
   setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab, isRightPanelOpen: true }),
+  setContextData: (data) => set({ contextData: data }),
   setIsAutoSaveEnabled: (enabled) => set({ isAutoSaveEnabled: enabled }),
   setCyInstance: (cy) => set({ cyInstance: cy }),
   setLastUpdateSource: (source) => set({ lastUpdateSource: source }),
@@ -1150,6 +1154,10 @@ export const useStore = create<AppState>()(persist(
       if (injectedData?.models) {
         const model = injectedData.models.find((m: any) => m.slug === slug);
         data = model?.schema;
+        // Load context data from injected static build data
+        if (injectedData.contextData) {
+          set({ contextData: injectedData.contextData })
+        }
       } else {
         const res = await fetch(`/api/model?model=${slug}`);
         if (!res.ok) {
@@ -1158,6 +1166,18 @@ export const useStore = create<AppState>()(persist(
           return;
         }
         data = await res.json();
+        // Load _context.yaml from dev server (optional — silently ignore if absent)
+        try {
+          const ctxRes = await fetch('/api/context')
+          if (ctxRes.ok) {
+            const ctxText = await ctxRes.text()
+            set({ contextData: parseContextYaml(ctxText) })
+          } else {
+            set({ contextData: null })
+          }
+        } catch {
+          set({ contextData: null })
+        }
       }
       const loadedSchema = normalizeSchema(data);
       const loadedYaml = yaml.dump(loadedSchema, { indent: 2, lineWidth: -1, noRefs: true });

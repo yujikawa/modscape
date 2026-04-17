@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: SDD作業完了時に恒久テーブルspecを自動同期する
 AIスキル `/modscape:spec:archive <name>` は `changes/<name>/spec.md`・`changes/<name>/design.md`・`changes/<name>/spec-model.yaml` を解析し、影響テーブルを特定して `.modscape/specs/<table-id>/spec.md` を自動生成または更新しなければならない（SHALL）。また `changes/<name>/spec-model.yaml` を本番の main model.yaml にマージしなければならない（SHALL）。
@@ -30,9 +30,11 @@ dry-run サマリーは以下の情報を ID 単位で表示しなければな�
 - 重要なパイプラインレベル決定事項は `specs/_context.yaml` の `decisions` セクションに要約として追記する
 - 同期完了後、作業フォルダを `.modscape/archives/YYYY-MM-DD-<name>/` に移動する
 
+既存の `specs/<table-id>.md`（旧フラットファイル形式）が存在する場合、`specs/<table-id>/spec.md` に移動してから処理を継続しなければならない（SHALL）。
+
 #### Scenario: マージ前に dry-run サマリーを表示して確認を取る
 - **WHEN** `/modscape:spec:archive <name>` を実行する
-- **THEN** 「追加するテーブル / 更新するテーブル（変更カラム）/ 変更なし」の ID 単位サマリーが表示され、「このまま進めますか？」の確認が求められる
+- **THEN** 「Tables to add / Tables to update（変更カラム）/ No changes」の ID 単位サマリーが表示され、確認が求められる
 
 #### Scenario: ユーザーが確認を拒否した場合にマージをスキップする
 - **WHEN** dry-run サマリー確認で N または拒否を選択する
@@ -40,23 +42,11 @@ dry-run サマリーは以下の情報を ID 単位で表示しなければな�
 
 #### Scenario: 作業用YAMLを本番YAMLにマージする
 - **WHEN** dry-run サマリー確認で承認する
-- **THEN** `modscape merge changes/<name>/spec-model.yaml <master>.yaml --output <master>.yaml --patch` が実行され、spec版が優先してマージされる
-
-#### Scenario: 重複テーブルがある場合に警告する
-- **WHEN** `changes/<name>/spec-model.yaml` に本番YAMLと同じIDのテーブルが存在する状態で archive を実行する
-- **THEN** AIは「⚠ <table-id> は本番YAMLにも存在します。spec版を使用します」と警告を表示し、処理を継続する
+- **THEN** `modscape merge` が実行され、spec版が優先してマージされる
 
 #### Scenario: Direct Impact テーブルの spec をテーブルディレクトリに生成する
 - **WHEN** archive を実行し、テーブルが `### Direct Impact` に分類されている
 - **THEN** `.modscape/specs/<table-id>/spec.md` が生成・更新され、`.modscape/specs/<table-id>/questions.md` も同期される
-
-#### Scenario: Downstream Impact — Implement テーブルの spec をフル同期する
-- **WHEN** archive を実行し、テーブルが `### Downstream Impact — Implement` に分類されている
-- **THEN** AIは `specs/<table-id>/spec.md` の Overview / Business Context / Business Rules / Known Issues を生成・更新し、Changelogに作業名と日付を記録する
-
-#### Scenario: Context Only テーブルは Changelog のみ追記する
-- **WHEN** archive を実行し、テーブルが `### Downstream Impact — Context Only` に分類されている
-- **THEN** AIはフル spec 同期を行わず、`specs/<table-id>/spec.md` の Changelog に「Referenced in downstream lineage; no structural change required (SDD: <name>)」のみ追記する
 
 #### Scenario: テーブル questions が per-table ディレクトリに同期される
 - **WHEN** archive を実行し `changes/<name>/questions.md` の `## Table-level` に `### fct_orders` セクションが存在する
@@ -74,14 +64,10 @@ dry-run サマリーは以下の情報を ID 単位で表示しなければな�
 - **WHEN** archive 時に `specs/fct_orders.md`（旧フラット形式）が存在する
 - **THEN** `specs/fct_orders/spec.md` に移動してから処理を継続する
 
-#### Scenario: design.md が存在しない場合のフォールバック
-- **WHEN** `.modscape/changes/<name>/design.md` が存在しない状態で archive を実行する
-- **THEN** `spec-model.yaml` のすべてのテーブルを Direct Impact として扱い、すべてに対してフル spec 同期を実行する
-
 #### Scenario: archive サマリーに AC カバレッジを含める
 - **WHEN** `/modscape:spec:archive <name>` が完了する
-- **THEN** サマリーに「テスト紐付き AC: N 件 / 手動検証: N 件 / 未カバー: N 件（手動検証が必要）」が表示される
+- **THEN** サマリーに「テスト紐付き AC: N 件 / 手動検証: N 件 / 未カバー: N 件」が表示される
 
 #### Scenario: 同期完了後に作業フォルダをアーカイブする
-- **WHEN** マージとすべての `specs/<table-id>/spec.md` の同期が完了する
-- **THEN** AIは `.modscape/changes/<name>/` を `.modscape/archives/YYYY-MM-DD-<name>/` に移動する
+- **WHEN** マージとすべての同期が完了する
+- **THEN** `.modscape/changes/<name>/` が `.modscape/archives/YYYY-MM-DD-<name>/` に移動される

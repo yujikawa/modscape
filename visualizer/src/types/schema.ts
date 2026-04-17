@@ -156,6 +156,27 @@ export interface LayoutEntry {
   height?: number;
 }
 
+// ── Context YAML (.modscape/specs/_context.yaml) ─────────────────────────────
+
+export interface ContextTableEntry {
+  last_change?: string;
+  open_questions?: number;
+  has_spec?: boolean;
+}
+
+export interface ContextDecision {
+  id: string;
+  summary: string;
+  date?: string;
+  affects?: string[];
+  change?: string;
+}
+
+export interface ContextYaml {
+  tables?: Record<string, ContextTableEntry>;
+  decisions?: ContextDecision[];
+}
+
 // ── Schema (root) ─────────────────────────────────────────────────────────────
 
 export interface Schema {

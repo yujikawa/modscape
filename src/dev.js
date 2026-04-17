@@ -75,6 +75,15 @@ export async function startDevServer(paths) {
     } catch (e) { res.status(500).send(e.message); }
   });
 
+  app.get('/api/context', (req, res) => {
+    const contextPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
+    if (!fs.existsSync(contextPath)) return res.status(404).send('Not found');
+    try {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(fs.readFileSync(contextPath, 'utf8'));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
   app.post('/api/save', (req, res) => {
     const p = getModelPath(req.query.model);
     try {

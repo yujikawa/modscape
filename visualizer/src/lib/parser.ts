@@ -1,5 +1,5 @@
 import yaml from 'js-yaml'
-import type { Schema } from '../types/schema'
+import type { Schema, ContextYaml } from '../types/schema'
 
 const SUPPORTED_VERSION = '2.0.0'
 
@@ -152,5 +152,18 @@ export function parseYAML(input: string): Schema {
     return normalizeSchema(data)
   } catch (e: any) {
     throw new Error(`YAML Parsing Error: ${e.message}`)
+  }
+}
+
+export function parseContextYaml(input: string): ContextYaml {
+  try {
+    const data = yaml.load(input) as any
+    if (!data || typeof data !== 'object') return {}
+    return {
+      tables: data.tables && typeof data.tables === 'object' ? data.tables : undefined,
+      decisions: Array.isArray(data.decisions) ? data.decisions : undefined,
+    }
+  } catch {
+    return {}
   }
 }

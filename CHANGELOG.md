@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - **`/modscape:spec:design` — Related Past Specs suggestion** — On first run, the design skill now runs `modscape spec search` for each Direct Impact table ID and records matching past archives/specs in `design.md` under `## Related Past Specs`.
 - **`/modscape:spec:amend` skill** — New AI skill (Claude / Gemini / Codex) for updating SDD artifacts when issues are discovered during implementation. Accepts free-text input (error messages, wrong assumptions, ambiguities) and updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks (`- [x]`) are always preserved. Fix tasks are appended under `## Amend: <YYYY-MM-DD>` sections. Can be called at any point in the workflow, as many times as needed.
 - **`/modscape:spec:answer` skill** — New AI skill (Claude / Gemini / Codex) replacing the `modscape spec answer` CLI command. Displays the specified Q-NNN question, accepts a free-text answer, performs follow-up questioning when the answer is ambiguous or incomplete, records the final clarified answer in `questions.md`, and assesses whether the answer has design or spec impact.
+- **SDD context layer** — `.modscape/specs/` now uses a per-table directory structure (`specs/<table-id>/spec.md` + `specs/<table-id>/questions.md`). A cross-table `_context.yaml` file tracks SDD-specific metadata: `last_change`, `open_questions`, `has_spec`, and `decisions`. The `archive` skill writes to this structure automatically and migrates old flat `specs/<id>.md` files on first encounter.
+- **Visualizer: SDD context badges** — Table cards now show ❓ (amber) and 📝 (green) badges when `open_questions > 0` or `has_spec: true` respectively, sourced from `_context.yaml`.
+- **Visualizer: Decisions tab** — New "Decisions" tab (📖) in the right panel lists all entries from `_context.yaml.decisions`, showing each decision's ID, date, summary, affected tables, and originating change.
+- **Visualizer: SDD context in detail panel** — The entity detail panel now shows `last_change` and open questions count for tables that have SDD context data.
 
 ### Removed
 

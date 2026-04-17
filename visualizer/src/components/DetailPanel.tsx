@@ -34,7 +34,8 @@ const DetailPanel = memo(() => {
     setError,
     theme,
     isDetailPanelOpen,
-    setIsDetailPanelOpen
+    setIsDetailPanelOpen,
+    contextData
   } = useStore(useShallow((s) => ({
     schema: s.schema,
     getSelectedTable: s.getSelectedTable,
@@ -57,6 +58,7 @@ const DetailPanel = memo(() => {
     theme: s.theme,
     isDetailPanelOpen: s.isDetailPanelOpen,
     setIsDetailPanelOpen: s.setIsDetailPanelOpen,
+    contextData: s.contextData,
     // Trigger re-render when selection changes (needed for getSelected* to return fresh values)
     selectedTableId: s.selectedTableId,
     selectedEdgeId: s.selectedEdgeId,
@@ -1031,6 +1033,25 @@ const DetailPanel = memo(() => {
               </span>
             )}
           </div>
+
+          {/* SDD context info */}
+          {contextData?.tables?.[table!.id] && (() => {
+            const ctx = contextData.tables![table!.id]
+            return (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                {ctx.last_change && (
+                  <span style={{ fontSize: '10px', color: theme === 'dark' ? '#94a3b8' : '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    📝 {ctx.last_change}
+                  </span>
+                )}
+                {(ctx.open_questions ?? 0) > 0 && (
+                  <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    ❓ {ctx.open_questions} open question{(ctx.open_questions ?? 0) !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Imported badge */}
           {table!.isImported && (

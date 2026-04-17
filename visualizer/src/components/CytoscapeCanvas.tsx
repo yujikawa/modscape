@@ -719,6 +719,7 @@ export default function CytoscapeCanvas({
     updateNodePosition,
     updateAnnotation,
     connectMode,
+    contextData,
   } = useStore(
     useShallow((s) => ({
       schema: s.schema,
@@ -736,6 +737,7 @@ export default function CytoscapeCanvas({
       updateNodePosition: s.updateNodePosition,
       updateAnnotation: s.updateAnnotation,
       connectMode: s.connectMode,
+      contextData: s.contextData,
     }))
   )
 
@@ -762,6 +764,7 @@ export default function CytoscapeCanvas({
   const themeRef = useRef<'dark' | 'light'>(theme)
   const hoveredColumnIdRef = useRef<string | null>(null)
   const isCompactModeRef = useRef<boolean>(isCompactMode)
+  const contextDataRef = useRef(contextData)
   const schemaRef = useRef<Schema | null>(null)
   const showAnnotationsRef = useRef<boolean>(showAnnotations)
   // Track structural parts of schema to detect layout-only changes
@@ -858,6 +861,7 @@ export default function CytoscapeCanvas({
               isCompact={isCompactModeRef.current}
               isConnectMode={isConnectMode}
               isPendingSource={isPendingSource}
+              contextEntry={contextDataRef.current?.tables?.[table.id]}
             />
           )
         }
@@ -1415,6 +1419,11 @@ export default function CytoscapeCanvas({
     isCompactModeRef.current = isCompactMode
     updateAllCards()
   }, [isCompactMode, updateAllCards])
+
+  useEffect(() => {
+    contextDataRef.current = contextData
+    updateAllCards()
+  }, [contextData, updateAllCards])
 
   useEffect(() => {
     selectedIdRef.current = selectedTableId
