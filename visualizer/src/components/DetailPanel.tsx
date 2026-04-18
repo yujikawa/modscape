@@ -172,17 +172,19 @@ const DetailPanel = memo(() => {
         return
       }
 
-      // 1–5: switch tabs (only when a table is selected)
-      const tabIds = ['conceptual', 'logical', 'physical', 'sample', 'metadata']
+      // 1–6: switch tabs (only when a table is selected)
+      const table = getSelectedTable()
+      const hasDecisions = (contextData?.decisions ?? []).some(d => d.affects?.includes(table?.id ?? ''))
+      const tabIds = ['conceptual', 'logical', 'physical', 'sample', 'metadata', ...(hasDecisions ? ['decisions'] : [])]
       const idx = parseInt(e.key) - 1
-      if (idx >= 0 && idx < tabIds.length && getSelectedTable()) {
+      if (idx >= 0 && idx < tabIds.length && table) {
         e.preventDefault()
         setActiveTab(tabIds[idx])
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isDetailPanelOpen, setIsDetailPanelOpen, getSelectedTable])
+  }, [isDetailPanelOpen, setIsDetailPanelOpen, getSelectedTable, contextData])
 
   // Sync metadataEntries when the selected table changes
   useEffect(() => {
