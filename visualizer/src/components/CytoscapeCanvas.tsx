@@ -1781,7 +1781,7 @@ export default function CytoscapeCanvas({
         (activeEl as HTMLElement)?.isContentEditable ||
         activeEl?.closest('.cm-editor') ||
         activeEl?.closest('.sidebar-content')
-      if (isTyping || e.repeat) return
+      if (isTyping || e.repeat || e.ctrlKey || e.metaKey) return
 
       const key = e.key.toLowerCase()
       if (key === 'l') {
