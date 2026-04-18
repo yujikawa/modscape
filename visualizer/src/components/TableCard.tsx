@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import type { Table, ContextTableEntry } from '../types/schema'
+import type { Table } from '../types/schema'
 import { TYPE_CONFIG, buildTypeLabel } from '../lib/cytoscapeElements'
 import { LINEAGE_BASE, contrastTextColor } from '../lib/colors'
 
@@ -15,7 +15,6 @@ interface TableCardProps {
   isCompact: boolean
   isConnectMode?: boolean
   isPendingSource?: boolean
-  contextEntry?: ContextTableEntry
 }
 
 const MAX_COLUMNS = 6
@@ -32,7 +31,6 @@ const TableCard = ({
   isCompact,
   isConnectMode = false,
   isPendingSource = false,
-  contextEntry,
 }: TableCardProps) => {
   const typeConfig = table.conceptual?.kind ? TYPE_CONFIG[table.conceptual.kind] : null
   const themeColor = table.display?.color || typeConfig?.color || '#334155'
@@ -99,54 +97,6 @@ const TableCard = ({
         </div>
       )}
 
-      {/* SDD context badges */}
-      {contextEntry && (contextEntry.open_questions ?? 0) > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: contextEntry.has_spec ? '30px' : '8px',
-            padding: '0 5px',
-            height: '14px',
-            backgroundColor: '#f59e0b',
-            color: '#fff',
-            fontSize: '8px',
-            fontWeight: 900,
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2px',
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-          title={`${contextEntry.open_questions} open question(s)`}
-        >
-          ❓{contextEntry.open_questions}
-        </div>
-      )}
-      {contextEntry?.has_spec && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '8px',
-            padding: '0 5px',
-            height: '14px',
-            backgroundColor: '#10b981',
-            color: '#fff',
-            fontSize: '8px',
-            fontWeight: 900,
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-          title="Spec available"
-        >
-          📝
-        </div>
-      )}
 
       {/* Type badge tab */}
       {typeLabel && (

@@ -1,7 +1,7 @@
 import { memo, useState, useCallback, useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, FileChartColumnIncreasing, Copy } from 'lucide-react'
+import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, FileChartColumnIncreasing, Copy, Milestone } from 'lucide-react'
 import type { Table, Column } from '../types/schema'
 import { TYPE_CONFIG } from '../lib/cytoscapeElements'
 import { LINEAGE_BASE, CONSUMER_DEFAULT_COLOR, ANNOTATION_DEFAULT_COLOR } from '../lib/colors'
@@ -868,12 +868,15 @@ const DetailPanel = memo(() => {
   // --- Table Editor Rendering ---
   if (!table) return null;
 
+  const relatedDecisions = (contextData?.decisions ?? []).filter(d => d.affects?.includes(table!.id))
+
   const tabs = [
     { id: 'conceptual', label: 'Conceptual', icon: <TagIcon size={14} />, shortcut: '1' },
     { id: 'logical', label: 'Logical', icon: <Database size={14} />, shortcut: '2' },
     { id: 'physical', label: 'Physical', icon: <Database size={14} />, shortcut: '3' },
     { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '4' },
-    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '5' }
+    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '5' },
+    ...(relatedDecisions.length > 0 ? [{ id: 'decisions', label: 'Decisions', icon: <Milestone size={14} />, shortcut: '6' }] : []),
   ]
 
   const typeConfig = table!.conceptual?.kind ? TYPE_CONFIG[table!.conceptual.kind] : null;
@@ -1035,23 +1038,14 @@ const DetailPanel = memo(() => {
           </div>
 
           {/* SDD context info */}
-          {contextData?.tables?.[table!.id] && (() => {
-            const ctx = contextData.tables![table!.id]
-            return (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                {ctx.last_change && (
-                  <span style={{ fontSize: '10px', color: theme === 'dark' ? '#94a3b8' : '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    📝 {ctx.last_change}
-                  </span>
-                )}
-                {(ctx.open_questions ?? 0) > 0 && (
-                  <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    ❓ {ctx.open_questions} open question{(ctx.open_questions ?? 0) !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-            )
-          })()}
+          {(contextData?.tables?.[table!.id]?.open_questions ?? 0) > 0 && (
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
+              <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                ❓ {contextData!.tables![table!.id].open_questions} open question{contextData!.tables![table!.id].open_questions !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+
 
           {/* Imported badge */}
           {table!.isImported && (
@@ -1874,6 +1868,27 @@ const DetailPanel = memo(() => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'decisions' && (
+          <div className="flex flex-col gap-3 overflow-auto flex-1">
+            {relatedDecisions.map(d => (
+              <div key={d.id} style={{ padding: '10px 12px', borderRadius: '8px', border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'}`, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 800, fontFamily: 'monospace', color: '#60a5fa', backgroundColor: theme === 'dark' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)', padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.04em' }}>
+                    {d.id}
+                  </span>
+                  {d.date && (
+                    <span style={{ fontSize: '10px', color: theme === 'dark' ? '#475569' : '#94a3b8' }}>{d.date}</span>
+                  )}
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: theme === 'dark' ? '#cbd5e1' : '#334155', lineHeight: 1.5 }}>{d.summary}</p>
+                {d.change && (
+                  <p style={{ margin: '4px 0 0', fontSize: '10px', color: theme === 'dark' ? '#475569' : '#94a3b8' }}>via {d.change}</p>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
