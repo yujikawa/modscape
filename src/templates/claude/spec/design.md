@@ -110,6 +110,11 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 10. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to express data flow between tables
+   - Define `relationships` entries for FK joins:
+     - Read `## Table Relationships` in `spec.md` and convert each entry to a `relationship`
+     - Also infer from columns where `isForeignKey: true` — match by column name pattern (e.g., `customer_id` → `dim_customers.customer_id`)
+     - Cover both source-to-source joins and fact ↔ dimension joins
+     - When a FK relationship is ambiguous or the join key is unknown, add a question to `questions.md` instead of silently omitting it
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `physical` strategy hints where the target tool and table type make them clear
@@ -120,10 +125,13 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    ```bash
    modscape table add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>" --type <type>
    modscape lineage add .modscape/changes/<name>/spec-model.yaml --from <from> --to <to>
+   # FK relationship: --from / --to accepts "table.column" or just "table"
+   modscape relationship add .modscape/changes/<name>/spec-model.yaml \
+     --from <table>.<column> --to <table>.<column> --type <one-to-many|many-to-one|one-to-one|many-to-many>
    # domain add: only when explicitly requested by the user
    modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
    ```
-   Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
+   Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`, composite FK with multiple columns).
 
 12. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash

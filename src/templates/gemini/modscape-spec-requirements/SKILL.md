@@ -30,6 +30,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - **Goal** — who is this for and what problem does it solve?
    - **Stakeholders** — owner (team or person) and consumers (downstream users or systems)
    - **Data Sources** — existing tables, databases, or external systems that feed this pipeline
+   - **Table Relationships** — FK joins between source tables (e.g., `orders.customer_id → customers.id`, cardinality). Ask explicitly if not volunteered: "How do these source tables join to each other?"
    - **Acceptance Criteria** — concrete, testable conditions for "done" (at least 2–3 items). Assign a sequential ID (`AC-001`, `AC-002`, ...) to each criterion as you write it into `spec.md`. If the user provides criteria in free-form text, you assign the IDs.
    - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL` (skip if set in custom.md)
    - **Main YAML(s)** — path(s) to main model YAML file(s) (skip if set in custom.md; otherwise ask)
@@ -89,6 +90,10 @@ Question IDs are sequential within the change (`Q-001`, `Q-002`, ...). Do **not*
 ## Data Sources
 - <source 1>
 - <source 2>
+
+## Table Relationships
+- <source_table>.<column> → <other_table>.<column> [<one-to-many|many-to-one|...>]
+- (omit section if no FK relationships are known)
 
 ## Acceptance Criteria
 - [ ] AC-001: <criterion 1>
