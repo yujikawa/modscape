@@ -977,7 +977,7 @@ All commands support `--json` for machine-readable output:
 ## 13. Project Initialization Flags
 
 ```bash
-modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
+modscape init [--gemini] [--codex] [--claude] [--all] [--sdd] [--yes]
 ```
 
 | Flag | Description |

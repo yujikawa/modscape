@@ -41,6 +41,7 @@ program
   .option('-c, --claude', 'Scaffold for Claude Code')
   .option('-a, --all', 'Scaffold for all agents')
   .option('-s, --sdd', 'Add SDD (Spec-Driven Data Engineering) skills')
+  .option('-y, --yes', 'Automatically overwrite existing files without prompting')
   .action((options) => {
     initProject(options);
   });
