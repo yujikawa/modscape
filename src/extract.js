@@ -60,11 +60,13 @@ export function extractModels(inputs, options) {
   const lineageList = [];
   const annotationsList = [];
   const domainsList = [];
+  const consumersList = [];
   const layoutMap = {};
   const seenRelIds = new Set();
   const seenLinIds = new Set();
   const seenAnnIds = new Set();
   const seenDomIds = new Set();
+  const seenConsumerIds = new Set();
 
   if (appendMode && fs.existsSync(outputPath)) {
     try {
@@ -87,6 +89,12 @@ export function extractModels(inputs, options) {
           if (!seenDomIds.has(d.id)) {
             domainsList.push(d);
             seenDomIds.add(d.id);
+          }
+        }
+        for (const c of existing.consumers || []) {
+          if (!seenConsumerIds.has(c.id)) {
+            consumersList.push(c);
+            seenConsumerIds.add(c.id);
           }
         }
         Object.assign(layoutMap, existing.layout || {});
@@ -209,6 +217,14 @@ export function extractModels(inputs, options) {
       }
     }
 
+    // consumers: テーブル参照を持たないため全件抽出（first-wins）
+    for (const consumer of data.consumers || []) {
+      if (!seenConsumerIds.has(consumer.id)) {
+        consumersList.push(consumer);
+        seenConsumerIds.add(consumer.id);
+      }
+    }
+
     // layout: 対象テーブルIDとドメインIDのエントリのみ抽出
     for (const [key, value] of Object.entries(data.layout || {})) {
       if ((effectiveTableIds.includes(key) || seenDomIds.has(key)) && !(key in layoutMap)) {
@@ -232,6 +248,7 @@ export function extractModels(inputs, options) {
   if (lineageList.length) outputModel.lineage = lineageList;
   if (annotationsList.length) outputModel.annotations = annotationsList;
   if (domainsList.length) outputModel.domains = domainsList;
+  if (consumersList.length) outputModel.consumers = consumersList;
   if (Object.keys(layoutMap).length) outputModel.layout = layoutMap;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
