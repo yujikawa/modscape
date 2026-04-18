@@ -35,12 +35,14 @@ export function mergeModels(inputs, options) {
   const mergedLineages = [];
   const mergedAnnotations = [];
   const mergedDomains = [];
+  const mergedConsumers = [];
   const mergedLayout = {};
   const seenTableIds = new Set();
   const seenDomainIds = new Set();
   const seenLineageIds = new Set();
   const seenRelationshipIds = new Set();
   const seenAnnotationIds = new Set();
+  const seenConsumerIds = new Set();
   let mergedVersion = undefined;
 
   for (const filePath of allFiles) {
@@ -109,6 +111,14 @@ export function mergeModels(inputs, options) {
         }
       }
 
+      // consumers: IDありは重複除外（first-wins）
+      for (const consumer of data.consumers || []) {
+        if (!seenConsumerIds.has(consumer.id)) {
+          mergedConsumers.push(consumer);
+          seenConsumerIds.add(consumer.id);
+        }
+      }
+
       // layout: 最初のファイルの値を優先（first-wins）
       for (const [key, value] of Object.entries(data.layout || {})) {
         if (!(key in mergedLayout)) {
@@ -129,6 +139,7 @@ export function mergeModels(inputs, options) {
   if (mergedLineages.length) outputModel.lineage = mergedLineages;
   if (mergedAnnotations.length) outputModel.annotations = mergedAnnotations;
   if (mergedDomains.length) outputModel.domains = mergedDomains;
+  if (mergedConsumers.length) outputModel.consumers = mergedConsumers;
   if (Object.keys(mergedLayout).length) outputModel.layout = mergedLayout;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
@@ -165,6 +176,9 @@ function mergeModelsPatched(allFiles, outputPath) {
 
   const domains = [...(base.domains || [])];
   const domainIndex = new Map(domains.map((d, i) => [d.id, i]));
+
+  const consumers = [...(base.consumers || [])];
+  const consumerIndex = new Map(consumers.map((c, i) => [c.id, i]));
 
   const layout = { ...(base.layout || {}) };
 
@@ -249,6 +263,17 @@ function mergeModelsPatched(allFiles, outputPath) {
       }
     }
 
+    // consumers: update in-place by ID, append if new
+    for (const consumer of patch.consumers || []) {
+      const idx = consumerIndex.get(consumer.id);
+      if (idx !== undefined) {
+        consumers[idx] = consumer;
+      } else {
+        consumerIndex.set(consumer.id, consumers.length);
+        consumers.push(consumer);
+      }
+    }
+
     // layout: patch overrides base (patch-wins for layout entries)
     for (const [key, value] of Object.entries(patch.layout || {})) {
       layout[key] = value;
@@ -266,6 +291,7 @@ function mergeModelsPatched(allFiles, outputPath) {
   if (lineages.length) outputModel.lineage = lineages;
   if (annotations.length) outputModel.annotations = annotations;
   if (domains.length) outputModel.domains = domains;
+  if (consumers.length) outputModel.consumers = consumers;
   if (Object.keys(layout).length) outputModel.layout = layout;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
