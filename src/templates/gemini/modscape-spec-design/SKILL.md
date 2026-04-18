@@ -101,6 +101,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `physical` strategy hints where the target tool and table type make them clear
+   - Do **not** set `display.color` on tables — leave the `display` section unset unless the user explicitly requests a specific color
 
 10. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
     ```bash
