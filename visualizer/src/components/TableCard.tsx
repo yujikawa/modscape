@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { Table, ContextTableEntry } from '../types/schema'
 import { TYPE_CONFIG, buildTypeLabel } from '../lib/cytoscapeElements'
-import { LINEAGE_BASE } from '../lib/colors'
+import { LINEAGE_BASE, contrastTextColor } from '../lib/colors'
 
 interface TableCardProps {
   table: Table
@@ -36,6 +36,7 @@ const TableCard = ({
 }: TableCardProps) => {
   const typeConfig = table.conceptual?.kind ? TYPE_CONFIG[table.conceptual.kind] : null
   const themeColor = table.display?.color || typeConfig?.color || '#334155'
+  const badgeTextColor = contrastTextColor(themeColor)
   const icon = table.display?.icon || typeConfig?.icon || ''
   const typeLabel = buildTypeLabel(table)
   const hasColumns = table.columns && table.columns.length > 0
@@ -157,7 +158,7 @@ const TableCard = ({
             height: '14px',
             padding: '0 6px',
             backgroundColor: themeColor,
-            color: '#ffffff',
+            color: badgeTextColor,
             fontSize: '8px',
             fontWeight: 900,
             borderRadius: '4px 4px 0 0',
