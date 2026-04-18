@@ -88,7 +88,8 @@ interface AppState {
   updateNodeDimensions: (id: string, width: number, height: number) => void;
   saveSchema: (force?: boolean) => Promise<void>;
   refreshModelData: () => Promise<void>;
-  
+  refreshContextData: () => Promise<void>;
+
   // Modeling Actions
   addTable: (x: number, y: number, name?: string) => void;
   addDomain: (x: number, y: number, name?: string) => void;
@@ -441,9 +442,21 @@ export const useStore = create<AppState>()(persist(
       // Update YAML viewer without triggering a redundant write-back to disk
       const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
       set({ yamlInput: yamlString, baselineYaml: yamlString, baselineTimestamp: Date.now(), lastUpdateSource: 'visual' });
+      // Also refresh context data
+      try {
+        const ctxRes = await fetch('/api/context');
+        set({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null });
+      } catch { /* ignore */ }
     } catch (e: any) {
       set({ error: e.message });
     }
+  },
+
+  refreshContextData: async () => {
+    try {
+      const ctxRes = await fetch('/api/context');
+      set({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null });
+    } catch { /* ignore */ }
   },
 
   addTable: (x, y, name) => {

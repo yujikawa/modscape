@@ -161,7 +161,10 @@ export function parseContextYaml(input: string): ContextYaml {
     if (!data || typeof data !== 'object') return {}
     return {
       tables: data.tables && typeof data.tables === 'object' ? data.tables : undefined,
-      decisions: Array.isArray(data.decisions) ? data.decisions : undefined,
+      decisions: Array.isArray(data.decisions) ? data.decisions.map((d: any) => ({
+        ...d,
+        date: d.date instanceof Date ? d.date.toISOString().slice(0, 10) : d.date,
+      })) : undefined,
     }
   } catch {
     return {}

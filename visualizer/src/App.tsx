@@ -37,6 +37,7 @@ function Flow() {
     addAnnotation,
     theme,
     refreshModelData,
+    refreshContextData,
     fetchAvailableFiles,
     isModelLoading,
     isCliMode,
@@ -70,6 +71,7 @@ function Flow() {
     addAnnotation: s.addAnnotation,
     theme: s.theme,
     refreshModelData: s.refreshModelData,
+    refreshContextData: s.refreshContextData,
     fetchAvailableFiles: s.fetchAvailableFiles,
     isModelLoading: s.isModelLoading,
     isCliMode: s.isCliMode,
@@ -135,6 +137,7 @@ function Flow() {
         try {
           const data = JSON.parse(event.data)
           if (data.type === 'update') refreshModelData()
+          else if (data.type === 'context-update') refreshContextData()
           else if (data.type === 'files_changed') fetchAvailableFiles()
         } catch (_) {}
       }
@@ -158,7 +161,7 @@ function Flow() {
       }
       if (reconnectTimeoutRef.current) window.clearTimeout(reconnectTimeoutRef.current)
     }
-  }, [isCliMode, refreshModelData, fetchAvailableFiles])
+  }, [isCliMode, refreshModelData, refreshContextData, fetchAvailableFiles])
 
   // Handle focusNodeId → focus in canvas
   useEffect(() => {
@@ -451,6 +454,7 @@ function App() {
         else fetch('/api/model').then(async res => {
           if (!res.ok) { setError(await res.text()); return }
           setSchema(await res.json())
+          useStore.getState().refreshContextData()
         })
       })
       if ((import.meta as any).hot) {

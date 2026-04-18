@@ -121,17 +121,19 @@ export async function startDevServer(paths) {
   });
 
   // Debounced file watcher (kept in variable so import paths can be added dynamically)
+  const contextYamlPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
   let watchTimeout = null;
-  const watcher = chokidar.watch(inputPaths, {
+  const watcher = chokidar.watch([...inputPaths, contextYamlPath], {
     ignoreInitial: true,
     awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 100 }
   }).on('all', (event, changedPath) => {
     if (!changedPath.endsWith('.yaml') && !changedPath.endsWith('.yml')) return;
-    
+
+    const isContext = changedPath === contextYamlPath;
     if (watchTimeout) clearTimeout(watchTimeout);
     watchTimeout = setTimeout(() => {
       console.log(`  ✨ File ${event}: ${path.relative(process.cwd(), changedPath)}`);
-      broadcast({ type: 'update' });
+      broadcast(isContext ? { type: 'context-update' } : { type: 'update' });
     }, 300);
   });
 }
