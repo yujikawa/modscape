@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { buildLineageGraph, hasLineageCycle } from './model-utils.js';
+import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 
 const collectYamlFiles = (inputPath) => {
   const stat = fs.statSync(inputPath);
@@ -225,7 +226,7 @@ export function extractModels(inputs, options) {
     }
   }
 
-  const outputModel = {};
+  const outputModel = { version: MODEL_FORMAT_VERSION };
   if (tableMap.size) outputModel.tables = [...tableMap.values()];
   if (relationshipsList.length) outputModel.relationships = relationshipsList;
   if (lineageList.length) outputModel.lineage = lineageList;
