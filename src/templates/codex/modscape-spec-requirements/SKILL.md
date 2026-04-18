@@ -68,6 +68,12 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
 11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question to `.modscape/changes/<name>/questions.md` using the format below. If proceeding with an assumption, record it on the `**Assumption:**` line.
 
+   **Relationship questions to check specifically** — for each pair of source tables mentioned, verify:
+   - Is the join key known? If not → add a question: "What key joins `<A>` and `<B>`?"
+   - Is the cardinality known (one-to-many / many-to-one / etc.)? If not → add a question
+   - Is the join type known (LEFT / INNER / etc.)? If not → add a question
+   These are blocking questions for implementation — do not leave them unasked.
+
 ```markdown
 - [ ] **Q-NNN** <question text>
   **Assumption:** <what you assumed to proceed> (unconfirmed)

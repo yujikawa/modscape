@@ -90,8 +90,12 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 11. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
-   - Define `lineage` entries to express data flow between tables
-   - Define `relationships` entries for FK joins:
+   - Define `lineage` entries to answer: **"which tables does this table's query read from?"** — one entry per input→output pair
+   - Define `relationships` entries to answer: **"which two tables share a join key?"** — one entry per FK pair, regardless of data flow direction
+   - These two are independent: a pair of tables may have lineage, a relationship, both, or neither
+     - If table C is built by joining A and B: lineage(A→C) + lineage(B→C); if A and B also share a FK key: relationship(A↔B)
+     - If A and B share a FK but neither builds from the other: relationship only, no lineage
+   - **Relationships are prerequisites for query construction.** Any JOIN between two tables requires a relationship entry defining the key and cardinality — without it, the implementer cannot write the query. If the join key is unknown, add it to `questions.md` immediately rather than leaving the relationship undefined.
      - Read `## Table Relationships` in `spec.md` and convert each entry to a `relationship`
      - Also infer from columns where `isForeignKey: true` — match by column name pattern (e.g., `customer_id` → `dim_customers.customer_id`)
      - Cover both source-to-source joins and fact ↔ dimension joins

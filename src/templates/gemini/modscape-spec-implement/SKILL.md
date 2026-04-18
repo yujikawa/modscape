@@ -24,6 +24,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
    modscape table list <file>
    modscape table get <file> --id <id>
    modscape lineage list <file>
+   modscape relationship list <file>   # join keys and cardinality between tables
    modscape summary <file> --json
    ```
 
@@ -79,16 +80,23 @@ For each column in the target table:
   ```
 - **If `expression` is absent**: derive the expression from `column.physical.name` → `column.name` → column `id` (in that priority order), or add a `-- TODO:` comment if none can be resolved.
 
-### FROM / JOIN clause — `lineage[].join_type`
+### FROM / JOIN clause — `lineage[].join_type` + `relationships`
+
+Before generating any JOIN clause, run:
+```bash
+modscape relationship list .modscape/changes/<name>/spec-model.yaml
+```
+This gives the ON columns and cardinality for every table pair.
 
 For each `lineage` entry where `to` is the current table:
-- **`inner`**: generate `INNER JOIN {{ ref('from_table') }} ON ...`
-- **`left`**: generate `LEFT JOIN {{ ref('from_table') }} ON ...`
-- **`cross`**: generate `CROSS JOIN {{ ref('from_table') }}`
-- **`none`**: reference the table as a CTE only; do not generate a JOIN clause
-- **When omitted**:
-  - If a `relationships` entry exists for the pair → default to `LEFT JOIN` using the relationship columns
-  - Otherwise → treat as `none` (CTE reference)
+1. Look up the `relationships` entry where `from.table` and `to.table` match the lineage pair → use `from.column` / `to.column` as the ON condition
+2. Apply the join type from `lineage[].join_type`:
+   - **`inner`**: `INNER JOIN {{ ref('from_table') }} ON a.col = b.col`
+   - **`left`**: `LEFT JOIN {{ ref('from_table') }} ON a.col = b.col`
+   - **`cross`**: `CROSS JOIN {{ ref('from_table') }}` (no ON clause)
+   - **`none`**: reference as CTE only; do not generate a JOIN clause
+   - **When omitted**: default to `LEFT JOIN` if a relationship exists; otherwise treat as `none`
+3. If no matching `relationship` entry exists for the pair → add `-- TODO: relationship not defined for this join` and record a question in `questions.md`
 
 ### WHERE clause — `physical.filter_key` / `physical.lookback`
 
