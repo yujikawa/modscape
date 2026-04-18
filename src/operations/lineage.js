@@ -6,11 +6,15 @@ export function listLineages(filePath) {
   return data.lineage || [];
 }
 
+function findNodeById(schema, id) {
+  return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || null;
+}
+
 export function addLineage(filePath, { from, to, id, description }) {
   const data = readYaml(filePath);
   const { schema: resolved } = resolveImports(data, path.dirname(path.resolve(filePath)));
-  if (!findTableById(resolved, from)) throw new Error(`Table "${from}" not found`);
-  if (!findTableById(resolved, to)) throw new Error(`Table "${to}" not found`);
+  if (!findNodeById(resolved, from)) throw new Error(`Table or consumer "${from}" not found`);
+  if (!findNodeById(resolved, to)) throw new Error(`Table or consumer "${to}" not found`);
   const entries = data.lineage || [];
   const lineageId = id || `lin-${from}-${to}`;
   if (entries.some(e => e.id === lineageId || (e.from === from && e.to === to))) {
