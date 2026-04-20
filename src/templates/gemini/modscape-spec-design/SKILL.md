@@ -135,12 +135,23 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 14. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
 
-15. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
+15. Review the **entire design conversation** and append entries to `.modscape/changes/<name>/questions.md` for all of the following:
+
+   - **Answered** — questions you asked during design and the user gave a clear answer to → mark `[x]` and append the answer inline
+   - **Assumed** — items you could not confirm and proceeded with an assumption → mark `[ ]` with an `**Assumption:**` line
+   - **Open** — items still unresolved → mark `[ ]` with no assumption
+
+   Use this format. Use the next available ID continuing from any existing questions:
 
 ```markdown
+- [x] **Q-NNN** <question text>
+  **Answer:** <answer the user gave>
+
 - [ ] **Q-NNN** <question text>
   **Assumption:** <what you assumed to proceed> (unconfirmed)
 ```
+
+   Record every question that shaped the design — answered questions are just as important for traceability as open ones.
 
     If there are unresolved questions (`- [ ]`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `@modscape-spec-implement <name>`.

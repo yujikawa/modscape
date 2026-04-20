@@ -81,7 +81,11 @@ Gather business requirements interactively and generate `.modscape/changes/<name
      change: <change-name>      # optional
    ```
 
-11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question entry to `.modscape/specs/_questions.yaml`. If proceeding with an assumption, set `status: assumed` and record it in the `assumption` field.
+11. Review the **entire conversation** and append question entries to `.modscape/specs/_questions.yaml` for all of the following:
+
+   - **Answered** — questions you asked and the user gave a clear answer to → `status: answered`, record the answer in the `answer` field
+   - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
+   - **Open** — items still unresolved at the end of the conversation → `status: open`
 
    **Relationship questions to check specifically** — for each pair of source tables mentioned, verify:
    - Is the join key known? If not → add a question: "What key joins `<A>` and `<B>`?"
@@ -93,14 +97,15 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    ```yaml
    - id: Q-NNN
      question: "<question text>"
-     status: open          # or: assumed
-     assumption: "<what you assumed to proceed>"  # only if status: assumed
-     table: <table-id>     # optional — only if specific to one table
+     answer: "<answer the user gave>"    # only if status: answered
+     status: answered                    # answered | assumed | open
+     assumption: "<what you assumed>"    # only if status: assumed
+     table: <table-id>                   # optional — only if specific to one table
      date: <YYYY-MM-DD>
      change: <name>
    ```
 
-   Do **not** add a question if the user already provided a clear answer during the conversation.
+   Record every question that shaped the spec — answered questions are just as important for traceability as open ones.
 
 ## spec.md Format
 
