@@ -121,6 +121,30 @@ const ContextPanel = memo(() => {
   const panelRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
   const posRef = useRef({ x: 80, y: 80 })
+  const sizeRef = useRef({ width: 360, height: 480 })
+
+  const onResizeStart = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    const startX = e.clientX
+    const startY = e.clientY
+    const origW = sizeRef.current.width
+    const origH = sizeRef.current.height
+    const onMove = (ev: MouseEvent) => {
+      if (!panelRef.current) return
+      sizeRef.current = {
+        width: Math.max(280, Math.min(700, origW + ev.clientX - startX)),
+        height: Math.max(200, Math.min(window.innerHeight * 0.9, origH + ev.clientY - startY)),
+      }
+      panelRef.current.style.width = `${sizeRef.current.width}px`
+      panelRef.current.style.height = `${sizeRef.current.height}px`
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [])
 
   const onDragStart = useCallback((e: React.MouseEvent) => {
     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: posRef.current.x, origY: posRef.current.y }
@@ -166,8 +190,8 @@ const ContextPanel = memo(() => {
         position: 'fixed',
         left: posRef.current.x,
         top: posRef.current.y,
-        width: 360,
-        maxHeight: '75vh',
+        width: sizeRef.current.width,
+        height: sizeRef.current.height,
         zIndex: 200,
         display: 'flex',
         flexDirection: 'column',
@@ -225,7 +249,7 @@ const ContextPanel = memo(() => {
       </div>
 
       {/* Body */}
-      <div style={{ padding: '12px 14px', overflowY: 'auto', flex: 1 }}>
+      <div style={{ padding: '12px 14px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {isEmpty ? (
           <div style={{ textAlign: 'center', padding: '24px 0', color: isDark ? '#475569' : '#94a3b8' }}>
             {query ? (
@@ -275,6 +299,16 @@ const ContextPanel = memo(() => {
           </>
         )}
       </div>
+      {/* Resize handle */}
+      <div
+        onMouseDown={onResizeStart}
+        style={{
+          position: 'absolute', bottom: 0, right: 0,
+          width: 16, height: 16, cursor: 'se-resize',
+          background: `linear-gradient(135deg, transparent 50%, ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'} 50%)`,
+          borderRadius: '0 0 12px 0',
+        }}
+      />
     </div>
   )
 })
