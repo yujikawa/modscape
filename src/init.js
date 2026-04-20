@@ -146,6 +146,14 @@ decisions: []
 questions: []
 `;
       await safeWriteFile('.modscape/specs/_context.yaml', contextYamlTemplate, yes);
+      const glossaryYamlTemplate = `# .modscape/specs/_glossary.yaml
+# Project-wide glossary of business and data terms.
+# Use this to define terms that appear across multiple tables.
+# Per-table knowledge belongs in specs/<table-id>/spec.md and questions.md.
+
+terms: []
+`;
+      await safeWriteFile('.modscape/specs/_glossary.yaml', glossaryYamlTemplate, yes);
       console.log('\n  💡 SDD skills installed.\n');
       if (agents.includes('claude')) console.log('     Claude Code: start with /modscape:spec:requirements');
       if (agents.includes('codex')) console.log('     Codex: start with /modscape:spec:requirements');

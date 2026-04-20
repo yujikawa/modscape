@@ -94,7 +94,14 @@ If ambiguous, ask a targeted follow-up question (one question at a time). Contin
 
 Edit the file directly. Do not rewrite the entire file.
 
-### Step 6 — Assess design impact
+### Step 6 — Update glossary if the answer defines a term
+
+If the answer introduces or clarifies a business/data term definition, update `.modscape/specs/_glossary.yaml`:
+- If the term is not yet registered, append a new entry under `terms:`.
+- If an existing entry's definition changed, update it.
+- If `_glossary.yaml` does not exist, skip silently.
+
+### Step 7 — Assess design impact
 
 After recording the answer, check `.modscape/changes/<name>/design.md` and `.modscape/changes/<name>/spec.md` (if they exist).
 

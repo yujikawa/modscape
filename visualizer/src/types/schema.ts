@@ -179,6 +179,22 @@ export interface ContextYaml {
   questions?: ContextQuestion[];
 }
 
+// ── Glossary YAML (.modscape/specs/_glossary.yaml) ───────────────────────────
+
+export interface GlossaryTerm {
+  id: string;
+  definition: string;
+  label?: string;
+  tables?: string[];
+  columns?: string[];
+  change?: string;
+  date?: string;
+}
+
+export interface GlossaryYaml {
+  terms?: GlossaryTerm[];
+}
+
 // ── Schema (root) ─────────────────────────────────────────────────────────────
 
 export interface Schema {

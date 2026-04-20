@@ -138,10 +138,11 @@ function Flow() {
           if (data.type === 'update') refreshModelData()
           else if (data.type === 'files_changed') fetchAvailableFiles()
           else if (data.type === 'context-update') {
-            Promise.all([fetch('/api/context'), fetch('/api/context/tables')]).then(async ([ctxRes, tableSpecsRes]) => {
-              const { parseContextYaml } = await import('./lib/parser')
+            Promise.all([fetch('/api/context'), fetch('/api/context/tables'), fetch('/api/glossary')]).then(async ([ctxRes, tableSpecsRes, glossaryRes]) => {
+              const { parseContextYaml, parseGlossaryYaml } = await import('./lib/parser')
               useStore.setState({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null })
               useStore.setState({ tableSpecs: tableSpecsRes.ok ? await tableSpecsRes.json() : null })
+              useStore.setState({ glossaryData: glossaryRes.ok ? parseGlossaryYaml(await glossaryRes.text()) : null })
             }).catch(() => {})
           }
         } catch (_) {}

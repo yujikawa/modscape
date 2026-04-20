@@ -84,6 +84,15 @@ export async function startDevServer(paths) {
     } catch (e) { res.status(500).send(e.message); }
   });
 
+  app.get('/api/glossary', (req, res) => {
+    const glossaryPath = path.resolve(process.cwd(), '.modscape/specs/_glossary.yaml');
+    if (!fs.existsSync(glossaryPath)) return res.status(404).send('Not found');
+    try {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(fs.readFileSync(glossaryPath, 'utf8'));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
   app.get('/api/context/tables', (req, res) => {
     const specsDir = path.resolve(process.cwd(), '.modscape/specs');
     if (!fs.existsSync(specsDir)) return res.json({});

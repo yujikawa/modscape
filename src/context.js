@@ -28,6 +28,19 @@ function loadContextYaml(specsDir) {
   }
 }
 
+function loadGlossaryYaml(specsDir) {
+  const glossaryPath = path.join(specsDir, '_glossary.yaml');
+  const raw = readFileIfExists(glossaryPath);
+  if (!raw) return [];
+  try {
+    const parsed = yaml.load(raw);
+    if (!parsed || typeof parsed !== 'object') return [];
+    return Array.isArray(parsed.terms) ? parsed.terms : [];
+  } catch {
+    return [];
+  }
+}
+
 function loadTableSpecs(specsDir) {
   const tables = {};
   if (!fs.existsSync(specsDir)) return tables;
@@ -50,6 +63,18 @@ function loadTableSpecs(specsDir) {
 
 function formatAsMarkdown(context) {
   const lines = ['# Modscape Context\n'];
+
+  if (context.glossary.length > 0) {
+    lines.push('## Glossary\n');
+    for (const t of context.glossary) {
+      lines.push(`### ${t.id}${t.label ? ` (${t.label})` : ''}`);
+      lines.push(`\n${t.definition}`);
+      if (t.tables?.length) lines.push(`\n*Tables: ${t.tables.join(', ')}*`);
+      if (t.columns?.length) lines.push(`*Columns: ${t.columns.join(', ')}*`);
+      if (t.change) lines.push(`*Change: ${t.change}*`);
+      lines.push('');
+    }
+  }
 
   if (context.decisions.length > 0) {
     lines.push('## Decisions\n');
@@ -101,9 +126,10 @@ function formatAsMarkdown(context) {
 
 export function exportContext(specsDir = DEFAULT_SPECS_DIR, format = 'json') {
   const { decisions, questions } = loadContextYaml(specsDir);
+  const glossary = loadGlossaryYaml(specsDir);
   const tables = loadTableSpecs(specsDir);
 
-  const context = { decisions, questions, tables };
+  const context = { decisions, questions, glossary, tables };
 
   if (format === 'md') {
     process.stdout.write(formatAsMarkdown(context) + '\n');

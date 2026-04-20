@@ -2,7 +2,7 @@ import { memo, useRef, useCallback, useState, useMemo } from 'react'
 import { X, ChevronDown, ChevronRight as ChevronRightIcon, Search } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import type { ContextDecision, ContextQuestion } from '../types/schema'
+import type { ContextDecision, ContextQuestion, GlossaryTerm } from '../types/schema'
 
 function Badge({ text, color }: { text: string; color: string }) {
   return (
@@ -64,6 +64,30 @@ function QuestionCard({ q, theme }: { q: ContextQuestion; theme: string }) {
   )
 }
 
+function GlossaryCard({ t, theme }: { t: GlossaryTerm; theme: string }) {
+  const border = theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
+  const bg = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'
+  const text = theme === 'dark' ? '#cbd5e1' : '#334155'
+  const sub = theme === 'dark' ? '#475569' : '#94a3b8'
+  return (
+    <div style={{ padding: '10px 12px', borderRadius: '8px', border: `1px solid ${border}`, backgroundColor: bg, marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px', flexWrap: 'wrap' }}>
+        <Badge text={t.id} color="#7c3aed" />
+        {t.label && <span style={{ fontSize: '11px', fontWeight: 600, color: text }}>{t.label}</span>}
+        {t.change && <span style={{ fontSize: '10px', color: sub }}>via {t.change}</span>}
+      </div>
+      <p style={{ margin: 0, fontSize: '12px', color: text, lineHeight: 1.5 }}>{t.definition}</p>
+      {(t.tables?.length || t.columns?.length) && (
+        <p style={{ margin: '4px 0 0', fontSize: '10px', color: sub }}>
+          {t.tables?.length ? `Tables: ${t.tables.join(', ')}` : ''}
+          {t.tables?.length && t.columns?.length ? ' · ' : ''}
+          {t.columns?.length ? `Columns: ${t.columns.join(', ')}` : ''}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function TableSpecSection({ tableId, spec, questions, theme }: { tableId: string; spec?: string; questions?: string; theme: string }) {
   const [open, setOpen] = useState(false)
   const border = theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
@@ -105,16 +129,18 @@ function TableSpecSection({ tableId, spec, questions, theme }: { tableId: string
 }
 
 const ContextPanel = memo(() => {
-  const { contextData, tableSpecs, isContextPanelOpen, setIsContextPanelOpen, theme } = useStore(
+  const { contextData, tableSpecs, glossaryData, isContextPanelOpen, setIsContextPanelOpen, theme } = useStore(
     useShallow((s) => ({
       contextData: s.contextData,
       tableSpecs: s.tableSpecs,
+      glossaryData: s.glossaryData,
       isContextPanelOpen: s.isContextPanelOpen,
       setIsContextPanelOpen: s.setIsContextPanelOpen,
       theme: s.theme,
     }))
   )
 
+  const [activeTab, setActiveTab] = useState<'decisions' | 'qa' | 'glossary' | 'specs'>('decisions')
   const [query, setQuery] = useState('')
   const q = query.toLowerCase()
 
@@ -179,7 +205,15 @@ const ContextPanel = memo(() => {
     (tableSpecs ? Object.entries(tableSpecs) : []).filter(([tableId, entry]) =>
       !q || tableId.toLowerCase().includes(q) || (entry.spec ?? '').toLowerCase().includes(q) || (entry.questions ?? '').toLowerCase().includes(q)
     ), [tableSpecs, q])
-  const isEmpty = decisions.length === 0 && questions.length === 0 && tableSpecEntries.length === 0
+  const glossaryTerms = useMemo(() =>
+    (glossaryData?.terms ?? []).filter(t =>
+      !q || t.id.toLowerCase().includes(q) || (t.label ?? '').toLowerCase().includes(q) || t.definition.toLowerCase().includes(q)
+    ), [glossaryData, q])
+  const isEmpty =
+    (activeTab === 'decisions' && decisions.length === 0) ||
+    (activeTab === 'qa'        && questions.length === 0) ||
+    (activeTab === 'glossary'  && glossaryTerms.length === 0) ||
+    (activeTab === 'specs'     && tableSpecEntries.length === 0)
 
   if (!isContextPanelOpen) return null
 
@@ -229,6 +263,35 @@ const ContextPanel = memo(() => {
         </div>
       </div>
 
+      {/* Tabs */}
+      {(() => {
+        const tabs = [
+          { id: 'decisions', label: 'Decisions', count: decisions.length },
+          { id: 'qa',        label: 'Q&A',       count: questions.length },
+          { id: 'glossary',  label: 'Glossary',  count: glossaryTerms.length },
+          { id: 'specs',     label: 'Specs',     count: tableSpecEntries.length },
+        ] as const
+        return (
+          <div style={{ display: 'flex', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`, flexShrink: 0 }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); setQuery('') }}
+                style={{
+                  flex: 1, padding: '7px 4px', fontSize: '10px', fontWeight: 700,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
+                  color: activeTab === tab.id ? '#3b82f6' : (isDark ? '#475569' : '#94a3b8'),
+                  transition: 'color 0.15s',
+                }}
+              >
+                {tab.label}{tab.count > 0 ? ` (${tab.count})` : ''}
+              </button>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* Search */}
       <div style={{ padding: '8px 12px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 8px', borderRadius: '6px', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}` }}>
@@ -252,50 +315,19 @@ const ContextPanel = memo(() => {
       <div style={{ padding: '12px 14px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {isEmpty ? (
           <div style={{ textAlign: 'center', padding: '24px 0', color: isDark ? '#475569' : '#94a3b8' }}>
-            {query ? (
-              <p style={{ margin: 0, fontSize: '12px' }}>No results for "{query}"</p>
-            ) : (
-              <>
-                <p style={{ margin: 0, fontSize: '12px' }}>No context recorded yet.</p>
-                <p style={{ margin: '4px 0 0', fontSize: '11px' }}>Run SDD workflows to populate</p>
-                <code style={{ fontSize: '10px', opacity: 0.7 }}>.modscape/specs/_context.yaml</code>
-              </>
-            )}
+            {query
+              ? <p style={{ margin: 0, fontSize: '12px' }}>No results for "{query}"</p>
+              : <p style={{ margin: 0, fontSize: '12px' }}>No entries yet.</p>
+            }
           </div>
         ) : (
           <>
-            {decisions.length > 0 && (
-              <>
-                <p style={{ margin: '0 0 8px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: isDark ? '#475569' : '#94a3b8' }}>
-                  Decisions ({decisions.length})
-                </p>
-                {decisions.map(d => <DecisionCard key={d.id} d={d} theme={theme} />)}
-              </>
-            )}
-            {questions.length > 0 && (
-              <>
-                <p style={{ margin: `${decisions.length > 0 ? '12px' : '0'} 0 8px`, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: isDark ? '#475569' : '#94a3b8' }}>
-                  Q&A ({questions.length})
-                </p>
-                {questions.map(q => <QuestionCard key={q.id} q={q} theme={theme} />)}
-              </>
-            )}
-            {tableSpecEntries.length > 0 && (
-              <>
-                <p style={{ margin: `${decisions.length > 0 || questions.length > 0 ? '12px' : '0'} 0 8px`, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: isDark ? '#475569' : '#94a3b8' }}>
-                  Table Specs ({tableSpecEntries.length})
-                </p>
-                {tableSpecEntries.map(([tableId, entry]) => (
-                  <TableSpecSection
-                    key={tableId}
-                    tableId={tableId}
-                    spec={entry.spec}
-                    questions={entry.questions}
-                    theme={theme}
-                  />
-                ))}
-              </>
-            )}
+            {activeTab === 'decisions' && decisions.map(d => <DecisionCard key={d.id} d={d} theme={theme} />)}
+            {activeTab === 'qa'        && questions.map(q => <QuestionCard key={q.id} q={q} theme={theme} />)}
+            {activeTab === 'glossary'  && glossaryTerms.map(t => <GlossaryCard key={t.id} t={t} theme={theme} />)}
+            {activeTab === 'specs'     && tableSpecEntries.map(([tableId, entry]) => (
+              <TableSpecSection key={tableId} tableId={tableId} spec={entry.spec} questions={entry.questions} theme={theme} />
+            ))}
           </>
         )}
       </div>

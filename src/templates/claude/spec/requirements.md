@@ -60,6 +60,21 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
 10. Set `Status: requirements` in the spec file.
 
+10.5. Review the conversation for any business or data terms that were introduced or defined. For each such term:
+   - Check `.modscape/specs/_glossary.yaml` (if it exists).
+   - If the term is not yet registered, append an entry under `terms:`.
+   - If an existing entry's definition was clarified or corrected, update it.
+   - If `_glossary.yaml` does not exist, skip silently.
+
+   ```yaml
+   - id: <kebab-case-id>        # required
+     definition: "<definition>" # required
+     label: "<日本語名>"         # optional
+     tables: [table_a, table_b] # optional
+     columns: [table_a.col]     # optional
+     change: <change-name>      # optional
+   ```
+
 11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question to `.modscape/changes/<name>/questions.md` using the format below. If proceeding with an assumption, record it on the `**Assumption:**` line.
 
    **Relationship questions to check specifically** — for each pair of source tables mentioned, verify:

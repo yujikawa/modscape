@@ -1,5 +1,5 @@
 import yaml from 'js-yaml'
-import type { Schema, ContextYaml } from '../types/schema'
+import type { Schema, ContextYaml, GlossaryYaml } from '../types/schema'
 
 const SUPPORTED_VERSION = '2.0.0'
 
@@ -167,6 +167,21 @@ export function parseContextYaml(input: string): ContextYaml {
       questions: Array.isArray(data.questions) ? data.questions.map((q: any) => ({
         ...q,
         date: q.date instanceof Date ? q.date.toISOString().slice(0, 10) : q.date,
+      })) : undefined,
+    }
+  } catch {
+    return {}
+  }
+}
+
+export function parseGlossaryYaml(input: string): GlossaryYaml {
+  try {
+    const data = yaml.load(input) as any
+    if (!data || typeof data !== 'object') return {}
+    return {
+      terms: Array.isArray(data.terms) ? data.terms.map((t: any) => ({
+        ...t,
+        date: t.date instanceof Date ? t.date.toISOString().slice(0, 10) : t.date,
       })) : undefined,
     }
   } catch {
