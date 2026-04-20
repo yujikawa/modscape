@@ -134,8 +134,18 @@ export async function initProject(options = {}) {
     if (options.sdd) {
       const customExample = fs.readFileSync(path.join(__dirname, 'templates/claude/spec/modscape-spec.custom.md.example'), 'utf8');
       await safeWriteFile('.modscape/changes/modscape-spec.custom.md.example', customExample, yes);
-      // Create specs/ directory placeholder
+      // Create specs/ directory with _context.yaml template
       await safeWriteFile('.modscape/specs/.gitkeep', '', yes);
+      const contextYamlTemplate = `# .modscape/specs/_context.yaml
+# Cross-project tacit knowledge from SDD interactions.
+# Do NOT store schema info here — that belongs in model.yaml.
+# Per-table knowledge belongs in specs/<table-id>/spec.md and questions.md.
+
+decisions: []
+
+questions: []
+`;
+      await safeWriteFile('.modscape/specs/_context.yaml', contextYamlTemplate, yes);
       console.log('\n  💡 SDD skills installed.\n');
       if (agents.includes('claude')) console.log('     Claude Code: start with /modscape:spec:requirements');
       if (agents.includes('codex')) console.log('     Codex: start with /modscape:spec:requirements');
