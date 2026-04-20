@@ -4,6 +4,17 @@ import yaml from 'js-yaml';
 import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 
 const CHANGES_DIR = '.modscape/changes';
+const SPECS_DIR = '.modscape/specs';
+const CONTEXT_YAML_PATH = path.join(SPECS_DIR, '_context.yaml');
+const CONTEXT_YAML_TEMPLATE = `# .modscape/specs/_context.yaml
+# Cross-project tacit knowledge from SDD interactions.
+# Do NOT store schema info here — that belongs in model.yaml.
+# Per-table knowledge belongs in specs/<table-id>/spec.md and questions.md.
+
+decisions: []
+
+questions: []
+`;
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -66,6 +77,13 @@ export function specNew(name) {
     path.join(dir, 'questions.md'),
     `# Questions: ${name}\n\n## Pipeline-level\n\n## Table-level\n`
   );
+
+  // _context.yaml — create empty template if not present
+  ensureDir(SPECS_DIR);
+  if (!fs.existsSync(CONTEXT_YAML_PATH)) {
+    fs.writeFileSync(CONTEXT_YAML_PATH, CONTEXT_YAML_TEMPLATE, 'utf8');
+    console.log(`  ✅ ${CONTEXT_YAML_PATH}`);
+  }
 
   console.log(`\n  ✅ Scaffold complete: ${dir}/`);
   console.log(`\n  Next: run /modscape:spec:requirements to fill in spec.md\n`);

@@ -84,6 +84,27 @@ export async function startDevServer(paths) {
     } catch (e) { res.status(500).send(e.message); }
   });
 
+  app.get('/api/context/tables', (req, res) => {
+    const specsDir = path.resolve(process.cwd(), '.modscape/specs');
+    if (!fs.existsSync(specsDir)) return res.json({});
+    try {
+      const result = {};
+      const entries = fs.readdirSync(specsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith('_')) continue;
+        const tableId = entry.name;
+        const tableDir = path.join(specsDir, tableId);
+        const specPath = path.join(tableDir, 'spec.md');
+        const questionsPath = path.join(tableDir, 'questions.md');
+        const spec = fs.existsSync(specPath) ? fs.readFileSync(specPath, 'utf8') : undefined;
+        const questions = fs.existsSync(questionsPath) ? fs.readFileSync(questionsPath, 'utf8') : undefined;
+        if (spec || questions) result[tableId] = { spec, questions };
+      }
+      res.json(result);
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+
   app.post('/api/save', (req, res) => {
     const p = getModelPath(req.query.model);
     try {

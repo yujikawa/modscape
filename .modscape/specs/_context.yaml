@@ -1,71 +1,19 @@
-tables:
-  hub_customer:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  hub_product:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  hub_order:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  lnk_order_line:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  sat_customer_profile:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 1
-  sat_product_details:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  sat_order_header:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  dim_customers:
-    last_change: customer-segmentation
-    has_spec: true
-    open_questions: 1
-  dim_products:
-    last_change: retail-analytics-initial
-    has_spec: true
-    open_questions: 0
-  fct_orders:
-    last_change: revenue-pipeline-v2
-    has_spec: true
-    open_questions: 0
-  mart_daily_revenue:
-    last_change: revenue-pipeline-v2
-    has_spec: true
-    open_questions: 0
-  mart_product_performance:
-    last_change: product-ranking
-    has_spec: false
-    open_questions: 2
-
 decisions:
   - id: D-001
     summary: "Data Vault → Star Schema の変換はdbt で行い、Raw Vault への直接クエリは禁止"
     date: 2026-01-15
-    affects: [hub_customer, hub_product, hub_order, lnk_order_line, sat_customer_profile, sat_product_details, sat_order_header]
     change: retail-analytics-initial
   - id: D-002
     summary: "fct_orders の粒度は order_id × product_key（注文明細単位）。注文ヘッダー集計は mart 層で行う"
     date: 2026-01-15
-    affects: [fct_orders, mart_daily_revenue]
     change: retail-analytics-initial
   - id: D-003
     summary: "net_revenue は discount_amount 控除後の税抜き金額。税込みの gross_revenue は mart 層のみで保持"
     date: 2026-02-10
-    affects: [fct_orders, sat_order_header, mart_daily_revenue]
     change: revenue-pipeline-v2
   - id: D-004
     summary: "dim_customers の SCD Type2 における current_flag は is_current カラムで管理。valid_to が NULL の場合が現在レコード"
     date: 2026-03-05
-    affects: [dim_customers, fct_orders]
     change: customer-segmentation
+
+questions: []

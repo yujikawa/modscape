@@ -3,6 +3,7 @@ import { useStore } from './store/useStore'
 import { useShallow } from 'zustand/react/shallow'
 import CytoscapeCanvas from './components/CytoscapeCanvas'
 import DetailPanel from './components/DetailPanel'
+import ContextPanel from './components/ContextPanel'
 import Sidebar from './components/Sidebar/Sidebar'
 import RightPanel from './components/RightPanel/RightPanel'
 import TerminalBar from './components/TerminalBar'
@@ -37,7 +38,6 @@ function Flow() {
     addAnnotation,
     theme,
     refreshModelData,
-    refreshContextData,
     fetchAvailableFiles,
     isModelLoading,
     isCliMode,
@@ -71,7 +71,6 @@ function Flow() {
     addAnnotation: s.addAnnotation,
     theme: s.theme,
     refreshModelData: s.refreshModelData,
-    refreshContextData: s.refreshContextData,
     fetchAvailableFiles: s.fetchAvailableFiles,
     isModelLoading: s.isModelLoading,
     isCliMode: s.isCliMode,
@@ -137,8 +136,14 @@ function Flow() {
         try {
           const data = JSON.parse(event.data)
           if (data.type === 'update') refreshModelData()
-          else if (data.type === 'context-update') refreshContextData()
           else if (data.type === 'files_changed') fetchAvailableFiles()
+          else if (data.type === 'context-update') {
+            Promise.all([fetch('/api/context'), fetch('/api/context/tables')]).then(async ([ctxRes, tableSpecsRes]) => {
+              const { parseContextYaml } = await import('./lib/parser')
+              useStore.setState({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null })
+              useStore.setState({ tableSpecs: tableSpecsRes.ok ? await tableSpecsRes.json() : null })
+            }).catch(() => {})
+          }
         } catch (_) {}
       }
       ws.onclose = () => {
@@ -161,7 +166,7 @@ function Flow() {
       }
       if (reconnectTimeoutRef.current) window.clearTimeout(reconnectTimeoutRef.current)
     }
-  }, [isCliMode, refreshModelData, refreshContextData, fetchAvailableFiles])
+  }, [isCliMode, refreshModelData, fetchAvailableFiles])
 
   // Handle focusNodeId → focus in canvas
   useEffect(() => {
@@ -449,12 +454,11 @@ function App() {
     if (isCliMode) {
       fetchAvailableFiles().then(() => {
         const params = new URLSearchParams(window.location.search)
-        const modelSlug = params.get('model')
+        const modelSlug = params.get('model') || useStore.getState().availableFiles[0]?.slug
         if (modelSlug) setCurrentModel(modelSlug)
         else fetch('/api/model').then(async res => {
           if (!res.ok) { setError(await res.text()); return }
           setSchema(await res.json())
-          useStore.getState().refreshContextData()
         })
       })
       if ((import.meta as any).hot) {
@@ -489,6 +493,7 @@ function App() {
       <Sidebar />
       <Flow />
       <RightPanel />
+      <ContextPanel />
     </div>
   )
 }

@@ -16,7 +16,6 @@ import {
 import SearchTab from './SearchTab'
 import PathFinderTab from './PathFinderTab'
 import NoteSearchTab from './NoteSearchTab'
-import DecisionsTab from './DecisionsTab'
 
 const RightPanel = memo(() => {
   const {
@@ -24,6 +23,8 @@ const RightPanel = memo(() => {
     setIsRightPanelOpen,
     activeRightPanelTab,
     setActiveRightPanelTab,
+    isContextPanelOpen,
+    setIsContextPanelOpen,
     theme,
     toggleTheme,
     cyInstance,
@@ -32,6 +33,8 @@ const RightPanel = memo(() => {
     setIsRightPanelOpen: s.setIsRightPanelOpen,
     activeRightPanelTab: s.activeRightPanelTab,
     setActiveRightPanelTab: s.setActiveRightPanelTab,
+    isContextPanelOpen: s.isContextPanelOpen,
+    setIsContextPanelOpen: s.setIsContextPanelOpen,
     theme: s.theme,
     toggleTheme: s.toggleTheme,
     cyInstance: s.cyInstance,
@@ -163,17 +166,20 @@ const RightPanel = memo(() => {
             <Tooltip text="Note Search" />
           </button>
 
-          <button
-            onClick={() => { setActiveRightPanelTab('decisions'); setIsRightPanelOpen(true); }}
-            className={iconClass(activeRightPanelTab === 'decisions' && isRightPanelOpen)}
-          >
-            <BookOpen size={20} />
-            <Tooltip text="Decisions" />
-          </button>
-
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pb-2">
+          {/* Context panel toggle */}
+          <div className="relative">
+            <button
+              onClick={() => setIsContextPanelOpen(!isContextPanelOpen)}
+              className={iconClass(isContextPanelOpen)}
+            >
+              <BookOpen size={20} />
+              <Tooltip text="Context" />
+            </button>
+          </div>
+
           {/* Export as Image button */}
           <div className="relative" ref={exportPopupRef}>
             <button
@@ -264,7 +270,6 @@ const RightPanel = memo(() => {
             {activeRightPanelTab === 'search' && 'Search'}
             {activeRightPanelTab === 'path' && 'Path Finder'}
             {activeRightPanelTab === 'notes' && 'Note Search'}
-            {activeRightPanelTab === 'decisions' && 'Decisions'}
           </h2>
         </div>
 
@@ -272,7 +277,6 @@ const RightPanel = memo(() => {
         {activeRightPanelTab === 'search' && <SearchTab />}
         {activeRightPanelTab === 'path' && <PathFinderTab />}
         {activeRightPanelTab === 'notes' && <NoteSearchTab />}
-        {activeRightPanelTab === 'decisions' && <DecisionsTab />}
       </div>
     </div>
   )

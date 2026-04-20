@@ -22,9 +22,14 @@ All notable changes to this project will be documented in this file.
 - **Visualizer: Decisions tab** — New "Decisions" tab (📖) in the right panel lists all entries from `_context.yaml.decisions`, showing each decision's ID, date, summary, affected tables, and originating change.
 - **Visualizer: SDD context in detail panel** — The entity detail panel now shows `last_change` and open questions count for tables that have SDD context data.
 
+- **`modscape context export` CLI command** — Exports all tacit knowledge from `.modscape/specs/` (decisions, Q&A, per-table spec.md and questions.md) as a single JSON or Markdown document. Useful as context input for AI agents or for reading in the knowledge page. Options: `--format json|md`, `[specs-dir]`.
+- **Knowledge page (`context.html`)** — New standalone HTML page built alongside `index.html` (graph view) by `modscape build` and served at `/context.html` by `modscape dev`. Displays project-level decisions and Q&A from `_context.yaml`, plus per-table spec.md and questions.md content. Separate from graph view to keep both focused.
+- **`_context.yaml` schema redesign** — `tables.*` metadata fields (`last_change`, `has_spec`, `open_questions`) removed. `_context.yaml` now stores only cross-project tacit knowledge: `decisions` (with optional `rationale` field) and `questions` (Q&A pairs with `answer` field). `spec new` auto-creates an empty template if the file does not yet exist.
+
 ### Removed
 
 - **`modscape spec answer` CLI command** — Removed in favour of the `/modscape:spec:answer` AI skill, which provides interactive follow-up questioning and design-impact assessment that the CLI could not offer.
+- **Visualizer: Decisions tab and SDD context badges** — Removed from graph view (DecisionsTab, Decisions tab in DetailPanel, ❓ badge). These are now available in the dedicated knowledge page (`context.html`).
 
 ## [3.0.1] - 2026-04-13
 

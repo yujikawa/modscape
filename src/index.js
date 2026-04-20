@@ -20,6 +20,7 @@ import { runValidate } from './validate.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
 import { runSearch } from './search.js';
+import { exportContext } from './context.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -185,6 +186,19 @@ specCommand
   .option('--limit <n>', 'maximum number of results (default: 5)', (v) => parseInt(v, 10), 5)
   .action((keyword, opts) => {
     runSearch(keyword, opts);
+  });
+
+const contextCommand = program
+  .command('context')
+  .description('Commands for working with SDD context knowledge');
+
+contextCommand
+  .command('export')
+  .description('Export all tacit knowledge (decisions, Q&A, per-table specs) as JSON or Markdown')
+  .argument('[specs-dir]', 'path to .modscape/specs directory', '.modscape/specs')
+  .option('--format <fmt>', 'output format: json or md', 'json')
+  .action((specsDir, opts) => {
+    exportContext(specsDir, opts.format);
   });
 
 program

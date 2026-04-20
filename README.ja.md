@@ -432,6 +432,26 @@ modscape layout model.yaml
 modscape layout model.yaml -o model-with-layout.yaml
 ```
 
+### コンテキストエクスポート
+
+`.modscape/specs/` 配下の暗黙知（decisions・Q&A・テーブル別spec）を一括してJSON/Markdownで出力します。AIエージェントへのコンテキスト入力やknowledge pageでの閲覧に使用できます。
+
+```bash
+# JSON出力（デフォルト） — AI SDKへのインプット向け
+modscape context export
+
+# Markdown出力 — LLMプロンプト埋め込み向け
+modscape context export --format md
+
+# カスタムspecsディレクトリを指定
+modscape context export ./path/to/specs --format json
+```
+
+出力内容:
+- `.modscape/specs/_context.yaml`（プロジェクト横断のdecisionsとQ&A）
+- `.modscape/specs/<table-id>/spec.md`（テーブル別ビジネスコンテキスト）
+- `.modscape/specs/<table-id>/questions.md`（テーブル別Q&A履歴）
+
 ### バリデーション
 
 model.yamlの構造的なエラー（参照切れ、座標の誤配置、ID重複など）を検出します。

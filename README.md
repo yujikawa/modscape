@@ -434,6 +434,26 @@ modscape layout model.yaml
 modscape layout model.yaml -o model-with-layout.yaml
 ```
 
+### Context Export
+
+Export all tacit knowledge from `.modscape/specs/` — decisions, Q&A, and per-table specs — as a single JSON or Markdown document. Useful as context input for AI agents (SDD workflows) or for reading in the knowledge page.
+
+```bash
+# JSON output (default) — structured, for AI SDK input
+modscape context export
+
+# Markdown output — for LLM prompt embedding
+modscape context export --format md
+
+# Custom specs directory
+modscape context export ./path/to/specs --format json
+```
+
+The output aggregates:
+- `.modscape/specs/_context.yaml` (project-level decisions and Q&A)
+- `.modscape/specs/<table-id>/spec.md` (per-table business context)
+- `.modscape/specs/<table-id>/questions.md` (per-table Q&A history)
+
 ### Validate
 
 Check a model.yaml file for structural errors (missing references, coordinate placement, duplicate IDs, etc.).

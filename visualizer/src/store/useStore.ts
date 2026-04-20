@@ -13,9 +13,13 @@ export interface ModelFile {
   path: string;
 }
 
+export interface TableSpecEntry { spec?: string; questions?: string; }
+
 interface AppState {
   schema: Schema | null;
   contextData: ContextYaml | null;
+  tableSpecs: Record<string, TableSpecEntry> | null;
+  isContextPanelOpen: boolean;
   selectedTableId: string | null;
   selectedTableIds: string[];
   selectedEdgeId: string | null;
@@ -88,7 +92,6 @@ interface AppState {
   updateNodeDimensions: (id: string, width: number, height: number) => void;
   saveSchema: (force?: boolean) => Promise<void>;
   refreshModelData: () => Promise<void>;
-  refreshContextData: () => Promise<void>;
 
   // Modeling Actions
   addTable: (x: number, y: number, name?: string) => void;
@@ -133,8 +136,8 @@ interface AppState {
   setIsTerminalOpen: (isOpen: boolean) => void;
   setConnectMode: (mode: 'lineage' | 'er' | null) => void;
   setActiveTab: (tab: 'yaml' | 'stats') => void;
-  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes' | 'decisions') => void;
-  setContextData: (data: ContextYaml | null) => void;
+  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
+  setIsContextPanelOpen: (open: boolean) => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
   setFocusNodeId: (id: string | null) => void;
   toggleTheme: () => void;
@@ -170,6 +173,8 @@ export const useStore = create<AppState>()(persist(
   (set, get) => ({
   schema: null,
   contextData: null,
+  tableSpecs: null,
+  isContextPanelOpen: false,
   selectedTableId: null,
   selectedTableIds: [],
   selectedEdgeId: null,
@@ -288,7 +293,7 @@ export const useStore = create<AppState>()(persist(
   setConnectMode: (mode) => set({ connectMode: mode }),
   setActiveTab: (tab) => set({ activeTab: tab, isSidebarOpen: true }),
   setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab, isRightPanelOpen: true }),
-  setContextData: (data) => set({ contextData: data }),
+  setIsContextPanelOpen: (open) => set({ isContextPanelOpen: open }),
   setIsAutoSaveEnabled: (enabled) => set({ isAutoSaveEnabled: enabled }),
   setCyInstance: (cy) => set({ cyInstance: cy }),
   setLastUpdateSource: (source) => set({ lastUpdateSource: source }),
@@ -442,21 +447,9 @@ export const useStore = create<AppState>()(persist(
       // Update YAML viewer without triggering a redundant write-back to disk
       const yamlString = yaml.dump(newSchema, { indent: 2, lineWidth: -1, noRefs: true });
       set({ yamlInput: yamlString, baselineYaml: yamlString, baselineTimestamp: Date.now(), lastUpdateSource: 'visual' });
-      // Also refresh context data
-      try {
-        const ctxRes = await fetch('/api/context');
-        set({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null });
-      } catch { /* ignore */ }
     } catch (e: any) {
       set({ error: e.message });
     }
-  },
-
-  refreshContextData: async () => {
-    try {
-      const ctxRes = await fetch('/api/context');
-      set({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null });
-    } catch { /* ignore */ }
   },
 
   addTable: (x, y, name) => {
@@ -1167,10 +1160,8 @@ export const useStore = create<AppState>()(persist(
       if (injectedData?.models) {
         const model = injectedData.models.find((m: any) => m.slug === slug);
         data = model?.schema;
-        // Load context data from injected static build data
-        if (injectedData.contextData) {
-          set({ contextData: injectedData.contextData })
-        }
+        if (injectedData.contextData) set({ contextData: injectedData.contextData });
+        if (injectedData.tableSpecs) set({ tableSpecs: injectedData.tableSpecs });
       } else {
         const res = await fetch(`/api/model?model=${slug}`);
         if (!res.ok) {
@@ -1179,18 +1170,14 @@ export const useStore = create<AppState>()(persist(
           return;
         }
         data = await res.json();
-        // Load _context.yaml from dev server (optional — silently ignore if absent)
         try {
-          const ctxRes = await fetch('/api/context')
-          if (ctxRes.ok) {
-            const ctxText = await ctxRes.text()
-            set({ contextData: parseContextYaml(ctxText) })
-          } else {
-            set({ contextData: null })
-          }
-        } catch {
-          set({ contextData: null })
-        }
+          const [ctxRes, tableSpecsRes] = await Promise.all([
+            fetch('/api/context'),
+            fetch('/api/context/tables'),
+          ]);
+          set({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null });
+          set({ tableSpecs: tableSpecsRes.ok ? await tableSpecsRes.json() : null });
+        } catch { set({ contextData: null, tableSpecs: null }); }
       }
       const loadedSchema = normalizeSchema(data);
       const loadedYaml = yaml.dump(loadedSchema, { indent: 2, lineWidth: -1, noRefs: true });

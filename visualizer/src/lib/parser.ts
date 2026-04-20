@@ -160,10 +160,13 @@ export function parseContextYaml(input: string): ContextYaml {
     const data = yaml.load(input) as any
     if (!data || typeof data !== 'object') return {}
     return {
-      tables: data.tables && typeof data.tables === 'object' ? data.tables : undefined,
       decisions: Array.isArray(data.decisions) ? data.decisions.map((d: any) => ({
         ...d,
         date: d.date instanceof Date ? d.date.toISOString().slice(0, 10) : d.date,
+      })) : undefined,
+      questions: Array.isArray(data.questions) ? data.questions.map((q: any) => ({
+        ...q,
+        date: q.date instanceof Date ? q.date.toISOString().slice(0, 10) : q.date,
       })) : undefined,
     }
   } catch {

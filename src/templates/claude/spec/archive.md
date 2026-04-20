@@ -163,40 +163,45 @@ modscape summary <file> --json
 
 14. Read or create `.modscape/specs/_context.yaml`.
 
-    For each affected table (Direct Impact + Downstream Impact — Implement):
-    - Set `tables.<table-id>.last_change: <name>`
-    - Set `tables.<table-id>.has_spec: true`
-    - Set `tables.<table-id>.open_questions: <count of [ ] entries in specs/<table-id>/questions.md>`
+    `_context.yaml` stores only **cross-project tacit knowledge** — decisions and Q&A that span multiple tables or the whole project. Do NOT write per-table metadata (`tables.*`) here; that belongs in `specs/<table-id>/spec.md`.
 
-    For any significant pipeline-level decisions from `changes/<name>/questions.md` `## Pipeline-level`:
-    - Append to `decisions` list (only if the question was answered and the decision has cross-table impact):
+    **Decisions**: For any significant pipeline-level decisions from `changes/<name>/questions.md` `## Pipeline-level` that have cross-project impact:
+    - Append to `decisions` list (only if answered and significant beyond a single table):
       ```yaml
       - id: D-NNN
         summary: "<one-line summary of the decision>"
+        rationale: "<why this decision was made>"  # optional but recommended
         date: <YYYY-MM-DD>
-        affects: [<table-id>, ...]
         change: <name>
       ```
 
-    Do NOT copy `description`, `kind`, or `tags` from `model.yaml` — those fields are already in the main YAML.
+    **Questions**: For any pipeline-level Q&A from `changes/<name>/questions.md` that are worth preserving as project-level context:
+    - Append to `questions` list:
+      ```yaml
+      - id: Q-NNN
+        question: "<the question>"
+        answer: "<the answer>"  # omit if unanswered
+        date: <YYYY-MM-DD>
+        change: <name>
+      ```
+
+    Do NOT copy `description`, `kind`, `tags`, or any schema fields from `model.yaml`.
+    Do NOT write `tables.*`, `affects`, `has_spec`, `last_change`, or `open_questions` fields.
 
     Example `_context.yaml`:
     ```yaml
-    tables:
-      fct_orders:
-        last_change: monthly-sales-summary
-        open_questions: 0
-        has_spec: true
-      dim_customers:
-        last_change: customer-segmentation
-        open_questions: 2
-        has_spec: true
-
     decisions:
       - id: D-001
         summary: "amount is tax-exclusive across all fact tables"
+        rationale: "Finance team requirement — gross amount only at mart layer"
         date: 2026-03-10
-        affects: [fct_orders, mart_revenue]
+        change: monthly-sales-summary
+
+    questions:
+      - id: Q-001
+        question: "Should raw vault be queryable directly from BI tools?"
+        answer: "No. All queries must go through dbt-built marts. Governance requirement."
+        date: 2026-03-10
         change: monthly-sales-summary
     ```
 
@@ -222,7 +227,7 @@ modscape summary <file> --json
 - `specs/<table-id>/questions.md` updated (<n> questions added/updated) ...
 - Pipeline-level questions: kept in archive only
 
-**`_context.yaml` updated:** <n> tables
+**`_context.yaml` updated:** <n> decisions / <n> questions added
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">
