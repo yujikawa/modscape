@@ -47,8 +47,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    ```bash
    modscape spec new <name>
    ```
-   This creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`, and `questions.md`.
-   If `.modscape/specs/_context.yaml` does not yet exist, it also creates an empty template there.
+   This creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, and `tasks.md`.
    If the folder already exists, skip this step.
 
 8. Update `spec-config.yaml` with the resolved main YAMLs:
@@ -75,7 +74,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
      change: <change-name>      # optional
    ```
 
-11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question to `.modscape/changes/<name>/questions.md` using the format below. If proceeding with an assumption, record it on the `**Assumption:**` line.
+11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question entry to `.modscape/specs/_questions.yaml`. If proceeding with an assumption, set `status: assumed` and record it in the `assumption` field.
 
    **Relationship questions to check specifically** — for each pair of source tables mentioned, verify:
    - Is the join key known? If not → add a question: "What key joins `<A>` and `<B>`?"
@@ -83,12 +82,18 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - Is the join type known (LEFT / INNER / etc.)? If not → add a question
    These are blocking questions for implementation — do not leave them unasked.
 
-```markdown
-- [ ] **Q-NNN** <question text>
-  **Assumption:** <what you assumed to proceed> (unconfirmed)
-```
+   Use this format. Determine the next ID by reading the current max ID in `_questions.yaml`:
+   ```yaml
+   - id: Q-NNN
+     question: "<question text>"
+     status: open          # or: assumed
+     assumption: "<what you assumed to proceed>"  # only if status: assumed
+     table: <table-id>     # optional — only if specific to one table
+     date: <YYYY-MM-DD>
+     change: <name>
+   ```
 
-Question IDs are sequential within the change (`Q-001`, `Q-002`, ...). Do **not** add a question if the user already provided a clear answer during the conversation.
+   Do **not** add a question if the user already provided a clear answer during the conversation.
 
 ## spec.md Format
 

@@ -11,26 +11,29 @@
   - `rationale` (任意): なぜその判断をしたか
   - `date` (任意): YYYY-MM-DD
   - `change` (任意): 生まれたchange名
-- `questions`: SDD会話で生まれたQ&A
-  - `id` (必須): Q-NNN形式
-  - `question` (必須): 問いの内容
-  - `answer` (任意): 回答。存在すれば回答済み、なければ未回答
-  - `date` (任意): YYYY-MM-DD
-  - `change` (任意): 生まれたchange名
 
-廃止フィールド: `tables.*`（last_change, has_spec, open_questions）、`decisions[].affects`
+廃止フィールド: `tables.*`（last_change, has_spec, open_questions）、`decisions[].affects`、`questions`セクション（Q&Aは`_questions.yaml`で一元管理）
 
 #### Scenario: decisionsのみのファイルが有効
 - **WHEN** `_context.yaml`が`decisions`セクションのみを持つ
 - **THEN** パース・表示が正常に動作する
 
-#### Scenario: questionsに回答済みと未回答が混在する
-- **WHEN** `questions`リストに`answer`フィールドを持つ項目と持たない項目が混在する
-- **THEN** 両方とも正常にパースされ、answerの有無で回答状態が判別できる
-
 #### Scenario: 空のファイル（テンプレート）が有効
-- **WHEN** `_context.yaml`が`decisions: []`と`questions: []`のみを含む
+- **WHEN** `_context.yaml`が`decisions: []`のみを含む
 - **THEN** パースエラーにならず空の状態として扱われる
+
+---
+
+### Requirement: _context.yaml は decisions のみを保持する
+`_context.yaml` の `questions` セクションを削除し、`decisions` セクションのみを保持する構造に変更する。Q&A は `_questions.yaml` で一元管理する。
+
+#### Scenario: _context.yaml に questions セクションが存在しない
+- **WHEN** `_context.yaml` を読み込む
+- **THEN** `questions` フィールドは存在せず、`decisions` のみが返される
+
+#### Scenario: decisions の読み込みは従来通り機能する
+- **WHEN** `_context.yaml` を parseContextYaml でパースする
+- **THEN** decisions 配列が正しく返される
 
 ---
 
@@ -43,11 +46,10 @@
 # .modscape/specs/_context.yaml
 # Cross-project tacit knowledge from SDD interactions.
 # Do NOT store schema info here — that belongs in model.yaml.
-# Per-table knowledge belongs in specs/<table-id>/spec.md and questions.md.
+# Per-table knowledge belongs in specs/<table-id>/spec.md.
+# Q&A is managed in _questions.yaml.
 
 decisions: []
-
-questions: []
 ```
 
 #### Scenario: 初回spec new実行時に_context.yamlが生成される

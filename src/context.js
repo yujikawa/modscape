@@ -15,16 +15,28 @@ function readFileIfExists(filePath) {
 function loadContextYaml(specsDir) {
   const contextPath = path.join(specsDir, '_context.yaml');
   const raw = readFileIfExists(contextPath);
-  if (!raw) return { decisions: [], questions: [] };
+  if (!raw) return { decisions: [] };
   try {
     const parsed = yaml.load(raw);
-    if (!parsed || typeof parsed !== 'object') return { decisions: [], questions: [] };
+    if (!parsed || typeof parsed !== 'object') return { decisions: [] };
     return {
       decisions: Array.isArray(parsed.decisions) ? parsed.decisions : [],
-      questions: Array.isArray(parsed.questions) ? parsed.questions : [],
     };
   } catch {
-    return { decisions: [], questions: [] };
+    return { decisions: [] };
+  }
+}
+
+function loadQuestionsYaml(specsDir) {
+  const questionsPath = path.join(specsDir, '_questions.yaml');
+  const raw = readFileIfExists(questionsPath);
+  if (!raw) return [];
+  try {
+    const parsed = yaml.load(raw);
+    if (!parsed || typeof parsed !== 'object') return [];
+    return Array.isArray(parsed.questions) ? parsed.questions : [];
+  } catch {
+    return [];
   }
 }
 
@@ -88,11 +100,16 @@ function formatAsMarkdown(context) {
   }
 
   if (context.questions.length > 0) {
-    lines.push('## Questions & Answers\n');
+    lines.push('## Q&A\n');
     for (const q of context.questions) {
+      const status = q.status ?? (q.answer ? 'answered' : 'open');
       lines.push(`### ${q.id}: ${q.question}`);
+      lines.push(`\n*Status: ${status}*`);
+      if (q.table) lines.push(`*Table: ${q.table}*`);
       if (q.answer) {
         lines.push(`\n**Answer:** ${q.answer}`);
+      } else if (q.assumption) {
+        lines.push(`\n**Assumption:** ${q.assumption}`);
       } else {
         lines.push('\n*Unanswered*');
       }
@@ -125,7 +142,8 @@ function formatAsMarkdown(context) {
 }
 
 export function exportContext(specsDir = DEFAULT_SPECS_DIR, format = 'json') {
-  const { decisions, questions } = loadContextYaml(specsDir);
+  const { decisions } = loadContextYaml(specsDir);
+  const questions = loadQuestionsYaml(specsDir);
   const glossary = loadGlossaryYaml(specsDir);
   const tables = loadTableSpecs(specsDir);
 

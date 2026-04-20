@@ -116,7 +116,19 @@ export async function build(paths, _visualizerPath, outputDir) {
     }
   }
 
-  const injectionData = { isMultiFile: modelsData.length > 1, models: modelsData, contextData: contextYaml, tableSpecs, glossaryData: glossaryYaml };
+  // Load _questions.yaml for injection
+  let questionsYaml = null;
+  const questionsPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
+  if (fs.existsSync(questionsPath)) {
+    try {
+      const raw = yaml.load(fs.readFileSync(questionsPath, 'utf8'));
+      if (raw && typeof raw === 'object') questionsYaml = raw;
+    } catch (e) {
+      console.warn(`  ⚠️ Warning: Failed to load _questions.yaml: ${e.message}`);
+    }
+  }
+
+  const injectionData = { isMultiFile: modelsData.length > 1, models: modelsData, contextData: contextYaml, tableSpecs, glossaryData: glossaryYaml, questionsData: questionsYaml };
   html = html.replace(
     '</head>',
     `<script>window.__MODSCAPE_DATA__ = ${JSON.stringify(injectionData)}; window.MODSCAPE_CLI_MODE = false;</script></head>`

@@ -27,23 +27,23 @@ If `<name>` is not provided:
 - If none exist → stop and tell the user:
   > No active changes found under `.modscape/changes/`. Run `@modscape-spec-requirements` to start a new spec.
 
-Verify that `.modscape/changes/<name>/questions.md` exists.
+Verify that `.modscape/specs/_questions.yaml` exists.
 If not → stop and tell the user:
-> `questions.md` not found for change `<name>`. Run `@modscape-spec-requirements <name>` first.
+> `_questions.yaml` not found. Run `@modscape-spec-requirements <name>` first to generate questions.
 
 ### Step 2 — Resolve the question ID
 
 If `<id>` is not provided:
-- Read `.modscape/changes/<name>/questions.md`
-- List all entries where the checkbox is `[ ]` (unanswered or unresolved assumption)
+- Read `.modscape/specs/_questions.yaml`
+- List all entries where `status` is `open` or `assumed`, filtered to those with `change: <name>` (or show all open if no change filter matches)
 - Display them and ask the user which one to answer
 
-If `<id>` is provided but not found in `questions.md` → stop and tell the user:
-> `<id>` not found in `questions.md` for change `<name>`.
+If `<id>` is provided but not found in `_questions.yaml` → stop and tell the user:
+> `<id>` not found in `_questions.yaml`.
 
 ### Step 3 — Display the question
 
-Show the full question entry from `questions.md`:
+Show the full question entry from `_questions.yaml`:
 
 ```
 ## Answering <id> — <change name>
@@ -72,27 +72,35 @@ Receive the user's free-text reply. Evaluate it against these criteria:
 
 If ambiguous, ask a targeted follow-up question (one question at a time). Continue until the answer is clear or the user says it is unresolvable.
 
-### Step 5 — Write to `questions.md`
+### Step 5 — Write to `_questions.yaml`
+
+Edit `.modscape/specs/_questions.yaml` directly. Do not rewrite the entire file.
 
 **If a clear answer was obtained:**
-- Change `- [ ]` to `- [x]` on the question line
-- If an existing `**Assumption:**` line is present, remove it
-- Insert `  **A:** <final clarified answer>` after the question line (before the next entry)
+- Set `answer: "<final clarified answer>"`
+- Set `status: answered`
+- Remove `assumption` field if present
 
-```markdown
-- [x] **Q-001** <question text>
-  **A:** <final clarified answer>
+```yaml
+- id: Q-001
+  question: "<question text>"
+  answer: "<final clarified answer>"
+  status: answered
+  ...
 ```
 
 **If unresolvable (proceed with assumption):**
-- Leave `- [ ]` as-is
-- Update (or insert) the `**Assumption:**` line to reflect what will be assumed:
-  ```markdown
-  - [ ] **Q-001** <question text>
-    **Assumption:** <what will be assumed to proceed> (unconfirmed — to be revisited)
-  ```
+- Set `status: assumed`
+- Set `assumption: "<what will be assumed to proceed>"`
+- Leave `answer` absent
 
-Edit the file directly. Do not rewrite the entire file.
+```yaml
+- id: Q-001
+  question: "<question text>"
+  assumption: "<what will be assumed to proceed>"
+  status: assumed
+  ...
+```
 
 ### Step 6 — Update glossary if the answer defines a term
 
@@ -119,7 +127,7 @@ Determine impact category:
 ## Answer Recorded — <id>
 
 **Answer:** <the recorded answer>
-**questions.md:** <id> marked [x]  (or: kept [ ] — assumption updated)
+**_questions.yaml:** <id> status → answered  (or: assumed — assumption updated)
 
 **Design impact:** <assessment>
 

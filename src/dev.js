@@ -93,6 +93,15 @@ export async function startDevServer(paths) {
     } catch (e) { res.status(500).send(e.message); }
   });
 
+  app.get('/api/questions', (req, res) => {
+    const questionsPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
+    if (!fs.existsSync(questionsPath)) return res.status(404).send('Not found');
+    try {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(fs.readFileSync(questionsPath, 'utf8'));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
   app.get('/api/context/tables', (req, res) => {
     const specsDir = path.resolve(process.cwd(), '.modscape/specs');
     if (!fs.existsSync(specsDir)) return res.json({});
@@ -152,14 +161,15 @@ export async function startDevServer(paths) {
 
   // Debounced file watcher (kept in variable so import paths can be added dynamically)
   const contextYamlPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
+  const questionsYamlPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
   let watchTimeout = null;
-  const watcher = chokidar.watch([...inputPaths, contextYamlPath], {
+  const watcher = chokidar.watch([...inputPaths, contextYamlPath, questionsYamlPath], {
     ignoreInitial: true,
     awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 100 }
   }).on('all', (event, changedPath) => {
     if (!changedPath.endsWith('.yaml') && !changedPath.endsWith('.yml')) return;
 
-    const isContext = changedPath === contextYamlPath;
+    const isContext = changedPath === contextYamlPath || changedPath === questionsYamlPath;
     if (watchTimeout) clearTimeout(watchTimeout);
     watchTimeout = setTimeout(() => {
       console.log(`  ✨ File ${event}: ${path.relative(process.cwd(), changedPath)}`);

@@ -166,17 +166,27 @@ export interface ContextDecision {
   change?: string;
 }
 
-export interface ContextQuestion {
+export interface ContextYaml {
+  decisions?: ContextDecision[];
+}
+
+// ── Questions YAML (.modscape/specs/_questions.yaml) ─────────────────────────
+
+export type QuestionStatus = 'answered' | 'open' | 'assumed';
+
+export interface QuestionEntry {
   id: string;
   question: string;
+  status: QuestionStatus;
   answer?: string;
+  assumption?: string;
+  table?: string;
   date?: string;
   change?: string;
 }
 
-export interface ContextYaml {
-  decisions?: ContextDecision[];
-  questions?: ContextQuestion[];
+export interface QuestionsYaml {
+  questions?: QuestionEntry[];
 }
 
 // ── Glossary YAML (.modscape/specs/_glossary.yaml) ───────────────────────────

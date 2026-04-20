@@ -142,31 +142,34 @@ modscape summary <file> --json
     > - Updated: `specs/fct_orders/spec.md`
     > - Changelog only: `specs/stg_raw_orders/spec.md`
 
-### Step 4: Sync questions per table
+### Step 4: Merge questions into _questions.yaml
 
-13. If `.modscape/changes/<name>/questions.md` exists:
+13. If `.modscape/changes/<name>/questions.md` exists (legacy format from older SDD runs):
 
-    For each `### <table-id>` section under `## Table-level` in `changes/<name>/questions.md`:
+    Read `.modscape/changes/<name>/questions.md` and `.modscape/specs/_questions.yaml`.
+    Determine the current maximum ID in `_questions.yaml` (e.g. Q-005), then assign new sequential IDs starting from Q-006.
 
-    **Merge rules:**
-    - Read the existing `.modscape/specs/<table-id>/questions.md` (create it if absent with `# Questions: <table-id>\n`)
-    - Append new questions that do not already exist (compare by question text, not ID)
-    - For questions that were answered (`[x]`) in this change, update the corresponding unresolved entry in the per-table file if one exists
-    - If a previously recorded question is now invalidated by this change (e.g. the column was removed), add a strikethrough note:
-      `~~- [ ] **Q-NNN** <original question>~~ <!-- <name>: <reason e.g. column removed> -->`
-    - Append `<!-- <name> -->` as a comment after each newly added question line
+    **For each entry in `questions.md`:**
+    - Parse: question text, answer (if `[x]`), assumption (if `**Assumption:**` line present)
+    - Determine `status`: `answered` if answered, `assumed` if only assumption present, `open` otherwise
+    - Infer `table` from the section header if the questions.md has per-table sections; leave absent for pipeline-level questions
+    - Append to `_questions.yaml` with `change: <name>` and `date: <YYYY-MM-DD>`
 
-    **Pipeline-level questions (`## Pipeline-level` section) are NOT synced to `specs/`.**
-    They remain in the archive folder only. If any pipeline-level decision is significant enough to preserve, record it in `_context.yaml` under `decisions` (see Step 5).
+    After merging all entries, delete `.modscape/changes/<name>/questions.md`:
+    ```bash
+    rm .modscape/changes/<name>/questions.md
+    ```
+
+    **If `questions.md` does not exist:** skip this step entirely.
 
 ### Step 5: Update `_context.yaml`
 
 14. Read or create `.modscape/specs/_context.yaml`.
 
-    `_context.yaml` stores only **cross-project tacit knowledge** — decisions and Q&A that span multiple tables or the whole project. Do NOT write per-table metadata (`tables.*`) here; that belongs in `specs/<table-id>/spec.md`.
+    `_context.yaml` stores only **cross-project architectural decisions** — NOT Q&A (those are in `_questions.yaml`).
 
-    **Decisions**: For any significant pipeline-level decisions from `changes/<name>/questions.md` `## Pipeline-level` that have cross-project impact:
-    - Append to `decisions` list (only if answered and significant beyond a single table):
+    **Decisions**: For any significant cross-project decisions surfaced during this change:
+    - Append to `decisions` list (only if significant beyond a single table):
       ```yaml
       - id: D-NNN
         summary: "<one-line summary of the decision>"
@@ -175,18 +178,7 @@ modscape summary <file> --json
         change: <name>
       ```
 
-    **Questions**: For any pipeline-level Q&A from `changes/<name>/questions.md` that are worth preserving as project-level context:
-    - Append to `questions` list:
-      ```yaml
-      - id: Q-NNN
-        question: "<the question>"
-        answer: "<the answer>"  # omit if unanswered
-        date: <YYYY-MM-DD>
-        change: <name>
-      ```
-
-    Do NOT copy `description`, `kind`, `tags`, or any schema fields from `model.yaml`.
-    Do NOT write `tables.*`, `affects`, `has_spec`, `last_change`, or `open_questions` fields.
+    Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.
 
     Example `_context.yaml`:
     ```yaml
@@ -194,13 +186,6 @@ modscape summary <file> --json
       - id: D-001
         summary: "amount is tax-exclusive across all fact tables"
         rationale: "Finance team requirement — gross amount only at mart layer"
-        date: 2026-03-10
-        change: monthly-sales-summary
-
-    questions:
-      - id: Q-001
-        question: "Should raw vault be queryable directly from BI tools?"
-        answer: "No. All queries must go through dbt-built marts. Governance requirement."
         date: 2026-03-10
         change: monthly-sales-summary
     ```
@@ -223,11 +208,10 @@ modscape summary <file> --json
 - Updated: `specs/<table-id>/spec.md` ...
 - Changelog only: `specs/<table-id>/spec.md` ...
 
-**Questions synced:**
-- `specs/<table-id>/questions.md` updated (<n> questions added/updated) ...
-- Pipeline-level questions: kept in archive only
+**Questions merged:**
+- `_questions.yaml`: <n> entries added from `questions.md` (or: no questions.md found)
 
-**`_context.yaml` updated:** <n> decisions / <n> questions added
+**`_context.yaml` updated:** <n> decisions added
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">

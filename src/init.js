@@ -137,15 +137,20 @@ export async function initProject(options = {}) {
       // Create specs/ directory with _context.yaml template
       await safeWriteFile('.modscape/specs/.gitkeep', '', yes);
       const contextYamlTemplate = `# .modscape/specs/_context.yaml
-# Cross-project tacit knowledge from SDD interactions.
+# Cross-project architectural decisions from SDD interactions.
 # Do NOT store schema info here — that belongs in model.yaml.
-# Per-table knowledge belongs in specs/<table-id>/spec.md and questions.md.
+# Q&A is stored in _questions.yaml.
 
 decisions: []
+`;
+      await safeWriteFile('.modscape/specs/_context.yaml', contextYamlTemplate, yes);
+      const questionsYamlTemplate = `# .modscape/specs/_questions.yaml
+# All Q&A from SDD interactions. Use the 'table' field for table-specific questions.
+# status: open | answered | assumed
 
 questions: []
 `;
-      await safeWriteFile('.modscape/specs/_context.yaml', contextYamlTemplate, yes);
+      await safeWriteFile('.modscape/specs/_questions.yaml', questionsYamlTemplate, yes);
       const glossaryYamlTemplate = `# .modscape/specs/_glossary.yaml
 # Project-wide glossary of business and data terms.
 # Use this to define terms that appear across multiple tables.

@@ -117,41 +117,40 @@ modscape summary <file> --json
    - Only append a Changelog entry to `.modscape/specs/<table-id>/spec.md` (create file and directory with minimal content if absent):
      - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
 
-### Step 4: Sync questions per table
+### Step 4: Merge questions into _questions.yaml
 
-10. If `.modscape/changes/<name>/questions.md` exists:
+10. If `.modscape/changes/<name>/questions.md` exists (legacy format from older SDD runs):
 
-    For each `### <table-id>` section under `## Table-level` in `changes/<name>/questions.md`:
+    Read `.modscape/changes/<name>/questions.md` and `.modscape/specs/_questions.yaml`.
+    Determine the current maximum ID in `_questions.yaml`, then assign new sequential IDs.
 
-    - Read the existing `.modscape/specs/<table-id>/questions.md` (create if absent with `# Questions: <table-id>\n`)
-    - Append new questions that do not already exist (compare by question text, not ID)
-    - Update answered (`[x]`) questions in the per-table file if unresolved entries exist
-    - Mark invalidated questions with strikethrough: `~~- [ ] **Q-NNN** ...~~ <!-- <name>: <reason> -->`
-    - Append `<!-- <name> -->` comment after each newly added question line
+    For each entry in `questions.md`:
+    - Parse: question text, answer (if `[x]`), assumption (if `**Assumption:**` line present)
+    - Determine `status`: `answered` if answered, `assumed` if only assumption present, `open` otherwise
+    - Infer `table` from section headers if the file has per-table sections
+    - Append to `_questions.yaml` with `change: <name>` and `date: <YYYY-MM-DD>`
 
-    **`## Pipeline-level` questions are NOT synced to `specs/`.** They remain in the archive folder only.
-    Significant pipeline-level decisions may be recorded in `_context.yaml` under `decisions`.
+    After merging, delete `.modscape/changes/<name>/questions.md`.
+
+    **If `questions.md` does not exist:** skip this step entirely.
 
 ### Step 5: Update `_context.yaml`
 
 11. Read or create `.modscape/specs/_context.yaml`.
 
-    For each affected table (Direct Impact + Downstream Impact — Implement):
-    - Set `tables.<table-id>.last_change: <name>`
-    - Set `tables.<table-id>.has_spec: true`
-    - Set `tables.<table-id>.open_questions: <count of [ ] entries in specs/<table-id>/questions.md>`
+    `_context.yaml` stores only **cross-project architectural decisions** — NOT Q&A (those are in `_questions.yaml`).
 
-    For significant pipeline-level decisions (answered questions with cross-table impact):
+    For significant cross-project decisions surfaced during this change:
     - Append to `decisions` list:
       ```yaml
       - id: D-NNN
         summary: "<one-line summary>"
+        rationale: "<why this decision was made>"  # optional
         date: <YYYY-MM-DD>
-        affects: [<table-id>, ...]
         change: <name>
       ```
 
-    Do NOT copy `description`, `kind`, or `tags` from `model.yaml`.
+    Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.
 
 ### Step 6: Move to archives
 
@@ -171,11 +170,10 @@ modscape summary <file> --json
 - Updated: `specs/<table-id>/spec.md` ...
 - Changelog only: `specs/<table-id>/spec.md` ...
 
-**Questions synced:**
-- `specs/<table-id>/questions.md` updated (<n> questions added/updated) ...
-- Pipeline-level questions: kept in archive only
+**Questions merged:**
+- `_questions.yaml`: <n> entries added from `questions.md` (or: no questions.md found)
 
-**`_context.yaml` updated:** <n> tables
+**`_context.yaml` updated:** <n> decisions added
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">

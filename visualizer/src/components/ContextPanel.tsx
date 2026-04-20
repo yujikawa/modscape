@@ -2,7 +2,7 @@ import { memo, useRef, useCallback, useState, useMemo } from 'react'
 import { X, ChevronDown, ChevronRight as ChevronRightIcon, Search } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import type { ContextDecision, ContextQuestion, GlossaryTerm } from '../types/schema'
+import type { ContextDecision, GlossaryTerm, QuestionEntry } from '../types/schema'
 
 function Badge({ text, color }: { text: string; color: string }) {
   return (
@@ -36,21 +36,30 @@ function DecisionCard({ d, theme }: { d: ContextDecision; theme: string }) {
   )
 }
 
-function QuestionCard({ q, theme }: { q: ContextQuestion; theme: string }) {
-  const answered = !!q.answer
-  const border = answered
-    ? (theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)')
-    : (theme === 'dark' ? 'rgba(234,179,8,0.25)' : 'rgba(234,179,8,0.3)')
-  const bg = answered
-    ? (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')
-    : (theme === 'dark' ? 'rgba(234,179,8,0.05)' : '#fffbeb')
+const STATUS_CONFIG = {
+  answered: { color: '#059669', label: 'Answered' },
+  open:     { color: '#d97706', label: 'Open' },
+  assumed:  { color: '#7c3aed', label: 'Assumed' },
+}
+
+function QuestionCard({ q, theme }: { q: QuestionEntry; theme: string }) {
+  const status = q.status ?? (q.answer ? 'answered' : 'open')
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.open
+  const isOpen = status === 'open' || status === 'assumed'
+  const border = isOpen
+    ? (theme === 'dark' ? `rgba(${status === 'assumed' ? '124,58,237' : '234,179,8'},0.25)` : `rgba(${status === 'assumed' ? '124,58,237' : '234,179,8'},0.3)`)
+    : (theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)')
+  const bg = isOpen
+    ? (theme === 'dark' ? `rgba(${status === 'assumed' ? '124,58,237' : '234,179,8'},0.05)` : (status === 'assumed' ? '#f5f3ff' : '#fffbeb'))
+    : (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')
   const text = theme === 'dark' ? '#cbd5e1' : '#334155'
   const sub = theme === 'dark' ? '#475569' : '#94a3b8'
   return (
     <div style={{ padding: '10px 12px', borderRadius: '8px', border: `1px solid ${border}`, backgroundColor: bg, marginBottom: '8px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px', flexWrap: 'wrap' }}>
-        <Badge text={q.id} color={answered ? '#059669' : '#d97706'} />
-        {!answered && <span style={{ fontSize: '10px', color: '#d97706', fontWeight: 600 }}>Unanswered</span>}
+        <Badge text={q.id} color={cfg.color} />
+        {isOpen && <span style={{ fontSize: '10px', color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>}
+        {q.table && <Badge text={q.table} color="#0ea5e9" />}
         {q.date && <span style={{ fontSize: '10px', color: sub }}>{q.date}</span>}
         {q.change && <span style={{ fontSize: '10px', color: sub }}>via {q.change}</span>}
       </div>
@@ -58,6 +67,11 @@ function QuestionCard({ q, theme }: { q: ContextQuestion; theme: string }) {
       {q.answer && (
         <p style={{ margin: '6px 0 0', padding: '6px 8px', fontSize: '11px', color: text, lineHeight: 1.5, backgroundColor: theme === 'dark' ? 'rgba(5,150,105,0.1)' : 'rgba(5,150,105,0.06)', borderLeft: '2px solid #059669', borderRadius: '0 4px 4px 0' }}>
           {q.answer}
+        </p>
+      )}
+      {!q.answer && q.assumption && (
+        <p style={{ margin: '6px 0 0', padding: '6px 8px', fontSize: '11px', color: text, lineHeight: 1.5, backgroundColor: theme === 'dark' ? 'rgba(124,58,237,0.1)' : 'rgba(124,58,237,0.06)', borderLeft: '2px solid #7c3aed', borderRadius: '0 4px 4px 0', fontStyle: 'italic' }}>
+          Assumption: {q.assumption}
         </p>
       )}
     </div>
@@ -129,11 +143,12 @@ function TableSpecSection({ tableId, spec, questions, theme }: { tableId: string
 }
 
 const ContextPanel = memo(() => {
-  const { contextData, tableSpecs, glossaryData, isContextPanelOpen, setIsContextPanelOpen, theme } = useStore(
+  const { contextData, tableSpecs, glossaryData, questionsData, isContextPanelOpen, setIsContextPanelOpen, theme } = useStore(
     useShallow((s) => ({
       contextData: s.contextData,
       tableSpecs: s.tableSpecs,
       glossaryData: s.glossaryData,
+      questionsData: s.questionsData,
       isContextPanelOpen: s.isContextPanelOpen,
       setIsContextPanelOpen: s.setIsContextPanelOpen,
       theme: s.theme,
@@ -198,9 +213,9 @@ const ContextPanel = memo(() => {
       !q || d.id.toLowerCase().includes(q) || d.summary.toLowerCase().includes(q) || (d.rationale ?? '').toLowerCase().includes(q)
     ), [contextData, q])
   const questions = useMemo(() =>
-    (contextData?.questions ?? []).filter(qe =>
-      !q || qe.id.toLowerCase().includes(q) || qe.question.toLowerCase().includes(q) || (qe.answer ?? '').toLowerCase().includes(q)
-    ), [contextData, q])
+    (questionsData?.questions ?? []).filter(qe =>
+      !q || qe.id.toLowerCase().includes(q) || qe.question.toLowerCase().includes(q) || (qe.answer ?? '').toLowerCase().includes(q) || (qe.table ?? '').toLowerCase().includes(q)
+    ), [questionsData, q])
   const tableSpecEntries = useMemo(() =>
     (tableSpecs ? Object.entries(tableSpecs) : []).filter(([tableId, entry]) =>
       !q || tableId.toLowerCase().includes(q) || (entry.spec ?? '').toLowerCase().includes(q) || (entry.questions ?? '').toLowerCase().includes(q)

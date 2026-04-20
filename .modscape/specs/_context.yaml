@@ -15,5 +15,3 @@ decisions:
     summary: "dim_customers の SCD Type2 における current_flag は is_current カラムで管理。valid_to が NULL の場合が現在レコード"
     date: 2026-03-05
     change: customer-segmentation
-
-questions: []

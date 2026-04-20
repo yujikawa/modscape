@@ -1,5 +1,5 @@
 import yaml from 'js-yaml'
-import type { Schema, ContextYaml, GlossaryYaml } from '../types/schema'
+import type { Schema, ContextYaml, GlossaryYaml, QuestionsYaml } from '../types/schema'
 
 const SUPPORTED_VERSION = '2.0.0'
 
@@ -164,9 +164,21 @@ export function parseContextYaml(input: string): ContextYaml {
         ...d,
         date: d.date instanceof Date ? d.date.toISOString().slice(0, 10) : d.date,
       })) : undefined,
+    }
+  } catch {
+    return {}
+  }
+}
+
+export function parseQuestionsYaml(input: string): QuestionsYaml {
+  try {
+    const data = yaml.load(input) as any
+    if (!data || typeof data !== 'object') return {}
+    return {
       questions: Array.isArray(data.questions) ? data.questions.map((q: any) => ({
         ...q,
         date: q.date instanceof Date ? q.date.toISOString().slice(0, 10) : q.date,
+        status: q.status ?? (q.answer ? 'answered' : 'open'),
       })) : undefined,
     }
   } catch {
