@@ -118,7 +118,7 @@ const CanvasViewToolbar = () => {
 
         <button
           onClick={() => setShowER(!showER)}
-          className={btnClass(showER, 'text-slate-300')}
+          className={btnClass(showER, 'text-emerald-400')}
         >
           <div className="relative">
             <Network size={16} />
@@ -140,7 +140,7 @@ const CanvasViewToolbar = () => {
 
         <button
           onClick={() => setIsCompactMode(!isCompactMode)}
-          className={btnClass(!isCompactMode, 'text-slate-300')}
+          className={btnClass(!isCompactMode, 'text-pink-500')}
         >
           <div className="relative">
             <AlignJustify size={16} />

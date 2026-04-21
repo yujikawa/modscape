@@ -813,6 +813,8 @@ modscape table list model.yaml --orphan --json           # tables with no domain
 modscape domain list model.yaml --json
 modscape relationship list model.yaml --json
 modscape lineage list model.yaml --json
+modscape lineage list model.yaml --from <tableId> --recursive --json  # downstream impact check
+modscape lineage list model.yaml --from <tableId> --recursive --depth <n> --json  # limit depth
 modscape annotation list model.yaml --json
 modscape consumer list model.yaml --json
 modscape column list model.yaml --table <tableId> --json
@@ -998,6 +1000,7 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd] [--yes]
 | `/modscape:spec:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
 | `/modscape:spec:status <name>`       | Show current phase, task progress, and next recommended command |
 | `/modscape:spec:search <keyword>`    | Search past archives and specs for a keyword; incorporate relevant findings on explicit request |
+| `/modscape:spec:validate <name>`     | Cross-artifact consistency check — spec ↔ design ↔ model ↔ tasks; reports mismatches by category |
 
 ```bash
 modscape spec new <name>                    # Scaffold work folder (spec-config.yaml, model.yaml, design.md, tasks.md)

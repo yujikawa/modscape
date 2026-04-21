@@ -162,6 +162,25 @@ modscape summary <file> --json
 
     **If `questions.md` does not exist:** skip this step entirely.
 
+### Step 4.5: Merge glossary into _glossary.yaml
+
+13.5. If `.modscape/changes/<name>/glossary.md` exists:
+
+    Read `.modscape/changes/<name>/glossary.md` and `.modscape/specs/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
+
+    **For each term entry in `glossary.md`:**
+    - Parse: `id`, `definition`, and optional fields (`label`, `tables`, `columns`)
+    - Check if the `id` already exists in `_glossary.yaml`:
+      - **Not registered** → append a new entry under `terms:` with `change: <name>`
+      - **Already registered** → update `change` field only; do NOT overwrite `definition` (preserve manual edits)
+
+    After merging all entries, delete `glossary.md`:
+    ```bash
+    rm .modscape/changes/<name>/glossary.md
+    ```
+
+    **If `glossary.md` does not exist:** skip this step entirely.
+
 ### Step 5: Update `_context.yaml`
 
 14. Read or create `.modscape/specs/_context.yaml`.

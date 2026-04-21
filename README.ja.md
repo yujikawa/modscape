@@ -516,7 +516,7 @@ modscape relationship remove <file> --id <id>
 ### リネージコマンド
 
 ```bash
-modscape lineage list <file>
+modscape lineage list <file> [--from <table-id>] [--recursive] [--depth <n>] [--json]
 modscape lineage get <file> --id <id>
 modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]
@@ -618,6 +618,8 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 > **実装前のレビュー**: `/modscape:spec:review <name>` を実行すると go/no-go サマリーを確認できます — 未解決の質問・仮定・ACカバレッジ・分類確信度の低いテーブルを一覧表示。実装の進行はブロックしません。
 
+> **整合性チェック**: `/modscape:spec:validate <name>` を実行すると全アーティファクト横断の整合性チェックを行えます — spec.md ↔ design.md、design.md ↔ spec-model.yaml、design.md ↔ tasks.md、questions.md ↔ design.md の矛盾・抜け・ズレをカテゴリ別に報告します。
+
 > **実装中のトラブル対応**: `/modscape:spec:amend <name>` を実行すると、実装中に発覚した問題（カラム名の誤り・JOIN キーの相違・想定外の NULL など）を SDD 成果物に反映できます。エラーを貼り付けるか問題を自由記述で渡すと、AI が `spec.md`・`design.md`・`tasks.md`・`questions.md` を差分更新します。完了済みタスクは保持されます。
 
 > **過去のwork検索**: `/modscape:spec:search <keyword>`（または `modscape spec search <keyword>`）を実行すると、過去のアーカイブと永続スペックを横断検索して類似の設計・実装パターンを探せます。`--limit <n>` で結果件数を指定（デフォルト: 5）、`--json` で機械可読な出力を取得できます。
@@ -640,6 +642,7 @@ requirements → design → implement → archive
 | 実装 | `/modscape:spec:implement <name>` | タスクを順に処理・コード生成 | `tasks.md`（更新） |
 | アーカイブ | `/modscape:spec:archive <name>` | 本番マージ・spec永続化 | `specs/<id>/spec.md`, `_context.yaml` |
 | レビュー | `/modscape:spec:review <name>` | 実装前の go/no-go チェック（任意） | — |
+| バリデート | `/modscape:spec:validate <name>` | 全アーティファクト横断の整合性チェック（任意） | — |
 | 修正 | `/modscape:spec:amend <name>` | 実装中の問題を成果物に反映（任意） | — |
 | 検索 | `/modscape:spec:search <keyword>` | 過去アーカイブを横断検索（任意） | — |
 | 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答・設計影響を評価（任意） | — |

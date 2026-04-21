@@ -4,7 +4,7 @@ import { outputError, outputWarn, outputOk } from './model-utils.js';
 import { listTables, getTable, addTable, updateTable, removeTable } from './operations/table.js';
 import { listColumns, addColumn, updateColumn, removeColumn } from './operations/column.js';
 import { listRelationships, addRelationship, updateRelationship, removeRelationship } from './operations/relationship.js';
-import { listLineages, addLineage, updateLineage, removeLineage } from './operations/lineage.js';
+import { listLineages, listDownstreamLineages, addLineage, updateLineage, removeLineage } from './operations/lineage.js';
 import { listDomains, getDomain, addDomain, updateDomain, removeDomain, addDomainMember, removeDomainMember } from './operations/domain.js';
 import { listAnnotations, addAnnotation, updateAnnotation, removeAnnotation } from './operations/annotation.js';
 import { summarizeModel } from './operations/summarize.js';
@@ -301,17 +301,30 @@ export function lineageCommand() {
   cmd
     .command('list <file>')
     .description('List all lineage entries')
+    .option('--from <tableId>', 'filter by upstream table ID')
+    .option('--recursive', 'recursively collect all downstream entries (requires --from)')
+    .option('--depth <n>', 'maximum recursion depth (requires --recursive)', (v) => parseInt(v, 10))
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       run(opts.json, () => {
-        const entries = listLineages(file);
+        const all = listLineages(file);
+        let entries;
+        if (opts.from) {
+          entries = listDownstreamLineages(all, opts.from, {
+            recursive: !!opts.recursive,
+            depth: opts.depth ?? Infinity,
+          });
+        } else {
+          entries = all;
+        }
         if (opts.json) {
           console.log(JSON.stringify(entries));
         } else {
           if (entries.length === 0) console.log('  (no lineage)');
           else entries.forEach(e => {
             const desc = e.description ? `  # ${e.description}` : '';
-            console.log(`  ${e.from} --> ${e.to}${desc}`);
+            const depth = e.depth !== undefined ? `  (depth: ${e.depth})` : '';
+            console.log(`  ${e.from} --> ${e.to}${desc}${depth}`);
           });
         }
       });
