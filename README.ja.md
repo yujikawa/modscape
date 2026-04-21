@@ -516,7 +516,7 @@ modscape relationship remove <file> --id <id>
 ### リネージコマンド
 
 ```bash
-modscape lineage list <file>
+modscape lineage list <file> [--from <table-id>] [--recursive] [--depth <n>] [--json]
 modscape lineage get <file> --id <id>
 modscape lineage add <file> --from <table-id> --to <table-id> [--id <id>] [--description <text>]
 modscape lineage update <file> --from <table-id> --to <table-id> [--description <text>]

@@ -813,6 +813,8 @@ modscape table list model.yaml --orphan --json           # tables with no domain
 modscape domain list model.yaml --json
 modscape relationship list model.yaml --json
 modscape lineage list model.yaml --json
+modscape lineage list model.yaml --from <tableId> --recursive --json  # downstream impact check
+modscape lineage list model.yaml --from <tableId> --recursive --depth <n> --json  # limit depth
 modscape annotation list model.yaml --json
 modscape consumer list model.yaml --json
 modscape column list model.yaml --table <tableId> --json

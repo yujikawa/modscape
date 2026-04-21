@@ -6,6 +6,27 @@ export function listLineages(filePath) {
   return data.lineage || [];
 }
 
+export function listDownstreamLineages(entries, fromId, { recursive = false, depth = Infinity } = {}) {
+  const direct = entries.filter(e => e.from === fromId);
+  if (!recursive) return direct;
+
+  const result = [];
+  const visited = new Set();
+  const queue = direct.map(e => ({ entry: e, d: 1 }));
+
+  while (queue.length > 0) {
+    const { entry, d } = queue.shift();
+    const key = `${entry.from}-->${entry.to}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+    result.push({ ...entry, depth: d });
+    if (d < depth) {
+      entries.filter(e => e.from === entry.to).forEach(e => queue.push({ entry: e, d: d + 1 }));
+    }
+  }
+  return result;
+}
+
 function findNodeById(schema, id) {
   return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || null;
 }
