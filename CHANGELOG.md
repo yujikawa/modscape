@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2026-04-21
+
+### Added
+
+- **`/modscape:spec:review` skill** — New AI skill (Claude / Gemini / Codex) that reads `questions.md`, `design.md`, `spec.md`, and `tasks.md` to display a go/no-go review summary: unresolved questions, assumptions, AC coverage (test-covered / manual / uncovered), and low-confidence downstream classifications. Also embedded as a Review Checkpoint at the end of `/modscape:spec:design`.
+- **`/modscape:spec:requirements` — AC-NNN ID assignment** — Acceptance Criteria are now automatically assigned sequential IDs (`AC-001`, `AC-002`, ...) during requirements collection across Claude / Gemini / Codex.
+- **`/modscape:spec:design` — AC ↔ test mapping** — Phase 4 test tasks in `tasks.md` now include `[→ AC-NNN]` annotations linking each test to its corresponding acceptance criteria. ACs that cannot be auto-tested are added as `[手動検証]` lines.
+- **`/modscape:spec:archive` — dry-run merge preview** — Before merging the work YAML into the main model, the archive skill now displays an ID-level summary (tables added / updated with changed fields / unchanged) and requires explicit user confirmation before proceeding.
+- **`/modscape:spec:archive` — AC coverage in archive summary** — The archive completion summary now includes AC coverage: test-covered, manual verification, and uncovered AC counts.
+- **`modscape spec search <keyword>`** — New CLI command to search past archives (`.modscape/archives/`) and permanent specs (`.modscape/specs/`) by keyword. Supports `--json` for machine-readable output and `--limit <n>` to control result count (default: 5).
+- **`/modscape:spec:search` skill** — New AI skill (Claude / Gemini / Codex) that runs `modscape spec search --json`, summarizes results, and incorporates selected findings into the current spec or design on explicit user request.
+- **`/modscape:spec:design` — Known Open Questions surfacing** — On first run, the design skill now checks `.modscape/specs/questions.md` for unresolved questions related to Direct Impact tables and inserts their Q-NNN IDs into `design.md` under `## Known Open Questions`.
+- **`/modscape:spec:design` — Related Past Specs suggestion** — On first run, the design skill now runs `modscape spec search` for each Direct Impact table ID and records matching past archives/specs in `design.md` under `## Related Past Specs`.
+- **`/modscape:spec:amend` skill** — New AI skill (Claude / Gemini / Codex) for updating SDD artifacts when issues are discovered during implementation. Accepts free-text input (error messages, wrong assumptions, ambiguities) and updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks (`- [x]`) are always preserved. Fix tasks are appended under `## Amend: <YYYY-MM-DD>` sections. Can be called at any point in the workflow, as many times as needed.
+- **`/modscape:spec:answer` skill** — New AI skill (Claude / Gemini / Codex) replacing the `modscape spec answer` CLI command. Displays the specified Q-NNN question, accepts a free-text answer, performs follow-up questioning when the answer is ambiguous or incomplete, records the final clarified answer in `questions.md`, and assesses whether the answer has design or spec impact.
+- **SDD context layer** — `.modscape/specs/` now uses a per-table directory structure (`specs/<table-id>/spec.md` + `specs/<table-id>/questions.md`). A cross-table `_context.yaml` file tracks SDD-specific metadata: `last_change`, `open_questions`, `has_spec`, and `decisions`. The `archive` skill writes to this structure automatically and migrates old flat `specs/<id>.md` files on first encounter.
+- **Visualizer: SDD context badges** — Table cards now show ❓ (amber) and 📝 (green) badges when `open_questions > 0` or `has_spec: true` respectively, sourced from `_context.yaml`.
+- **Visualizer: Decisions tab** — New "Decisions" tab (📖) in the right panel lists all entries from `_context.yaml.decisions`, showing each decision's ID, date, summary, affected tables, and originating change.
+- **Visualizer: SDD context in detail panel** — The entity detail panel now shows `last_change` and open questions count for tables that have SDD context data.
+
+- **`modscape context export` CLI command** — Exports all tacit knowledge from `.modscape/specs/` (decisions, Q&A, per-table spec.md and questions.md) as a single JSON or Markdown document. Useful as context input for AI agents or for reading in the knowledge page. Options: `--format json|md`, `[specs-dir]`.
+- **Knowledge page (`context.html`)** — New standalone HTML page built alongside `index.html` (graph view) by `modscape build` and served at `/context.html` by `modscape dev`. Displays project-level decisions and Q&A from `_context.yaml`, plus per-table spec.md and questions.md content. Separate from graph view to keep both focused.
+- **`_context.yaml` schema redesign** — `tables.*` metadata fields (`last_change`, `has_spec`, `open_questions`) removed. `_context.yaml` now stores only cross-project tacit knowledge: `decisions` (with optional `rationale` field) and `questions` (Q&A pairs with `answer` field). `spec new` auto-creates an empty template if the file does not yet exist.
+
+### Removed
+
+- **`modscape spec answer` CLI command** — Removed in favour of the `/modscape:spec:answer` AI skill, which provides interactive follow-up questioning and design-impact assessment that the CLI could not offer.
+- **Visualizer: Decisions tab and SDD context badges** — Removed from graph view (DecisionsTab, Decisions tab in DetailPanel, ❓ badge). These are now available in the dedicated knowledge page (`context.html`).
+
 ## [3.0.1] - 2026-04-13
 
 ### Fixed

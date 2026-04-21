@@ -156,6 +156,55 @@ export interface LayoutEntry {
   height?: number;
 }
 
+// ── Context YAML (.modscape/specs/_context.yaml) ─────────────────────────────
+
+export interface ContextDecision {
+  id: string;
+  summary: string;
+  rationale?: string;
+  date?: string;
+  change?: string;
+}
+
+export interface ContextYaml {
+  decisions?: ContextDecision[];
+}
+
+// ── Questions YAML (.modscape/specs/_questions.yaml) ─────────────────────────
+
+export type QuestionStatus = 'answered' | 'open' | 'assumed';
+
+export interface QuestionEntry {
+  id: string;
+  question: string;
+  status: QuestionStatus;
+  answer?: string;
+  assumption?: string;
+  table?: string;
+  date?: string;
+  change?: string;
+}
+
+export interface QuestionsYaml {
+  questions?: QuestionEntry[];
+}
+
+// ── Glossary YAML (.modscape/specs/_glossary.yaml) ───────────────────────────
+
+export interface GlossaryTerm {
+  id: string;
+  definition: string;
+  label?: string;
+  tables?: string[];
+  columns?: string[];
+  change?: string;
+  date?: string;
+}
+
+export interface GlossaryYaml {
+  terms?: GlossaryTerm[];
+}
+
 // ── Schema (root) ─────────────────────────────────────────────────────────────
 
 export interface Schema {

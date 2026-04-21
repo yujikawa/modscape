@@ -977,7 +977,7 @@ All commands support `--json` for machine-readable output:
 ## 13. Project Initialization Flags
 
 ```bash
-modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
+modscape init [--gemini] [--codex] [--claude] [--all] [--sdd] [--yes]
 ```
 
 | Flag | Description |
@@ -997,9 +997,13 @@ modscape init [--gemini] [--codex] [--claude] [--all] [--sdd]
 | `/modscape:spec:implement <name>`    | Implement tasks one by one, generating dbt / SQLMesh code |
 | `/modscape:spec:archive <name>`      | Sync permanent table specs to `.modscape/specs/<table-id>.md` |
 | `/modscape:spec:status <name>`       | Show current phase, task progress, and next recommended command |
+| `/modscape:spec:search <keyword>`    | Search past archives and specs for a keyword; incorporate relevant findings on explicit request |
 
 ```bash
-modscape spec new <name>   # Scaffold work folder (spec-config.yaml, model.yaml, design.md, tasks.md)
+modscape spec new <name>                    # Scaffold work folder (spec-config.yaml, model.yaml, design.md, tasks.md)
+modscape spec search <keyword>              # Search past archives and specs
+modscape spec search <keyword> --json       # Machine-readable JSON output
+modscape spec search <keyword> --limit <n>  # Limit results (default: 5)
 ```
 
 ### SDD Directory Structure

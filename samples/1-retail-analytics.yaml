@@ -1,40 +1,4 @@
 version: 2.0.0
-imports:
-  - from: ./2-conformed-dims.yaml
-    ids:
-      - dim_dates
-domains:
-  - id: raw_vault
-    name: Raw Vault
-    description: Immutable historical record loaded from source systems
-    members:
-      - hub_customer
-      - hub_product
-      - hub_order
-      - lnk_order_line
-      - sat_customer_profile
-      - sat_product_details
-      - sat_order_header
-    display:
-      color: rgba(234, 179, 8, 0.08)
-  - id: star_schema
-    name: Star Schema
-    description: Conformed dimensional model built from the Raw Vault
-    members:
-      - dim_customers
-      - dim_products
-      - dim_dates
-      - fct_orders
-    display:
-      color: rgba(59, 130, 246, 0.08)
-  - id: mart
-    name: Data Mart
-    description: Aggregated models ready for BI consumption
-    members:
-      - mart_daily_revenue
-      - mart_product_performance
-    display:
-      color: rgba(249, 115, 22, 0.08)
 tables:
   - id: hub_customer
     conceptual:
@@ -510,53 +474,6 @@ tables:
         - WHAT
         - HOW_MUCH
     sampleData: []
-lineage:
-  - from: hub_customer
-    to: dim_customers
-    id: lin-hub_customer-dim_customers
-  - from: sat_customer_profile
-    to: dim_customers
-    id: lin-sat_customer_profile-dim_customers
-  - from: hub_product
-    to: dim_products
-    description: You can write description
-    id: lin-hub_product-dim_products
-  - from: sat_product_details
-    to: dim_products
-    id: lin-sat_product_details-dim_products
-  - from: hub_order
-    to: fct_orders
-    id: lin-hub_order-fct_orders
-  - from: lnk_order_line
-    to: fct_orders
-    id: lin-lnk_order_line-fct_orders
-  - from: sat_order_header
-    to: fct_orders
-    id: lin-sat_order_header-fct_orders
-  - from: dim_customers
-    to: fct_orders
-    id: lin-dim_customers-fct_orders
-  - from: dim_products
-    to: fct_orders
-    id: lin-dim_products-fct_orders
-  - from: dim_dates
-    to: fct_orders
-    id: lin-dim_dates-fct_orders
-  - from: fct_orders
-    to: mart_daily_revenue
-    id: lin-fct_orders-mart_daily_revenue
-  - from: fct_orders
-    to: mart_product_performance
-    id: lin-fct_orders-mart_product_performance
-  - from: mart_daily_revenue
-    to: sales_dashboard
-    id: lin-mart_daily_revenue-sales_dashboard
-  - from: mart_daily_revenue
-    to: exec_report
-    id: lin-mart_daily_revenue-exec_report
-  - from: mart_product_performance
-    to: exec_report
-    id: lin-mart_product_performance-exec_report
 relationships:
   - from:
       table: lnk_order_line
@@ -648,6 +565,99 @@ relationships:
         - date_key
     type: many-to-one
     id: rel-fct_orders.date_key-dim_dates.date_key
+lineage:
+  - from: hub_customer
+    to: dim_customers
+    id: lin-hub_customer-dim_customers
+  - from: sat_customer_profile
+    to: dim_customers
+    id: lin-sat_customer_profile-dim_customers
+  - from: hub_product
+    to: dim_products
+    description: You can write description
+    id: lin-hub_product-dim_products
+  - from: sat_product_details
+    to: dim_products
+    id: lin-sat_product_details-dim_products
+  - from: hub_order
+    to: fct_orders
+    id: lin-hub_order-fct_orders
+  - from: lnk_order_line
+    to: fct_orders
+    id: lin-lnk_order_line-fct_orders
+  - from: sat_order_header
+    to: fct_orders
+    id: lin-sat_order_header-fct_orders
+  - from: dim_customers
+    to: fct_orders
+    id: lin-dim_customers-fct_orders
+  - from: dim_products
+    to: fct_orders
+    id: lin-dim_products-fct_orders
+  - from: dim_dates
+    to: fct_orders
+    id: lin-dim_dates-fct_orders
+  - from: fct_orders
+    to: mart_daily_revenue
+    id: lin-fct_orders-mart_daily_revenue
+  - from: fct_orders
+    to: mart_product_performance
+    id: lin-fct_orders-mart_product_performance
+  - from: mart_daily_revenue
+    to: sales_dashboard
+    id: lin-mart_daily_revenue-sales_dashboard
+  - from: mart_daily_revenue
+    to: exec_report
+    id: lin-mart_daily_revenue-exec_report
+  - from: mart_product_performance
+    to: exec_report
+    id: lin-mart_product_performance-exec_report
+domains:
+  - id: raw_vault
+    name: Raw Vault
+    description: Immutable historical record loaded from source systems
+    members:
+      - hub_customer
+      - hub_product
+      - hub_order
+      - lnk_order_line
+      - sat_customer_profile
+      - sat_product_details
+      - sat_order_header
+    display:
+      color: rgba(234, 179, 8, 0.08)
+  - id: star_schema
+    name: Star Schema
+    description: Conformed dimensional model built from the Raw Vault
+    members:
+      - dim_customers
+      - dim_products
+      - dim_dates
+      - fct_orders
+    display:
+      color: rgba(59, 130, 246, 0.08)
+  - id: mart
+    name: Data Mart
+    description: Aggregated models ready for BI consumption
+    members:
+      - mart_daily_revenue
+      - mart_product_performance
+    display:
+      color: rgba(249, 115, 22, 0.08)
+consumers:
+  - id: sales_dashboard
+    name: Sales Dashboard
+    description: Real-time revenue and order metrics for the sales team
+    url: https://bi.example.com/sales
+    display:
+      icon: 📊
+      color: '#f97316'
+  - id: exec_report
+    name: Executive Report
+    description: Weekly summary report delivered to leadership
+    display:
+      icon: 📋
+      color: '#8b5cf6'
 annotations:
   - id: note_vault_to_star
     text: |-
@@ -760,17 +770,7 @@ layout:
   exec_report:
     x: 2410
     'y': 736
-consumers:
-  - id: sales_dashboard
-    name: Sales Dashboard
-    description: Real-time revenue and order metrics for the sales team
-    url: https://bi.example.com/sales
-    display:
-      icon: 📊
-      color: '#f97316'
-  - id: exec_report
-    name: Executive Report
-    description: Weekly summary report delivered to leadership
-    display:
-      icon: 📋
-      color: '#8b5cf6'
+imports:
+  - from: ./2-conformed-dims.yaml
+    ids:
+      - dim_dates

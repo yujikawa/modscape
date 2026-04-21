@@ -79,47 +79,99 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
-8. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
+8. **Surface known open questions** (first run only):
+
+   Check `.modscape/specs/questions.md` for unresolved questions (`- [ ]`) that reference any Direct Impact table ID.
+   - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
+     ```markdown
+     ## Known Open Questions (from specs/questions.md)
+     There are unresolved questions related to Direct Impact tables. See `.modscape/specs/questions.md` for details.
+     - Q-012, Q-015 → `fct_orders`
+     - Q-019 → `dim_customers`
+     ```
+   - If no matching questions: omit the `## Known Open Questions` section entirely.
+
+9. **Search past archives for related patterns** (first run only):
+
+   For each Direct Impact table ID, run:
+   ```bash
+   modscape spec search <table-id> --json --limit 5
+   ```
+   - If results exist: record them in `design.md` under `## Related Past Specs`:
+     ```markdown
+     ## Related Past Specs
+     The following past specs may be relevant. See each archive for details.
+     - `archives/2026-03-15-monthly-sales/` — Monthly Sales Summary Pipeline
+     - `specs/fct_orders.md` — fct_orders
+     ```
+   - If no results: omit the `## Related Past Specs` section entirely.
+   - To incorporate findings from a past spec, run `/modscape:spec:search <keyword>`.
+
+10. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
-   - Define `lineage` entries to express data flow between tables
+   - Define `lineage` entries to answer: **"which tables does this table's query read from?"** — one entry per input→output pair
+   - Define `relationships` entries to answer: **"which two tables share a join key?"** — one entry per FK pair, regardless of data flow direction
+   - These two are independent: a pair of tables may have lineage, a relationship, both, or neither
+     - If table C is built by joining A and B: lineage(A→C) + lineage(B→C); if A and B also share a FK key: relationship(A↔B)
+     - If A and B share a FK but neither builds from the other: relationship only, no lineage
+   - **Relationships are prerequisites for query construction.** Any JOIN between two tables requires a relationship entry defining the key and cardinality — without it, the implementer cannot write the query. If the join key is unknown, add it to `questions.md` immediately rather than leaving the relationship undefined.
+     - Read `## Table Relationships` in `spec.md` and convert each entry to a `relationship`
+     - Also infer from columns where `isForeignKey: true` — match by column name pattern (e.g., `customer_id` → `dim_customers.customer_id`)
+     - Cover both source-to-source joins and fact ↔ dimension joins
+     - When a FK relationship is ambiguous or the join key is unknown, add a question to `questions.md` instead of silently omitting it
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `physical` strategy hints where the target tool and table type make them clear
+   - Do **not** set `display.color` on tables — leave the `display` section unset unless the user explicitly requests a specific color
    - On re-run: incorporate `## Findings` from `design.md` before applying changes
 
-9. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
+11. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
    ```bash
    modscape table add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>" --type <type>
    modscape lineage add .modscape/changes/<name>/spec-model.yaml --from <from> --to <to>
+   # FK relationship: --from / --to accepts "table.column" or just "table"
+   modscape relationship add .modscape/changes/<name>/spec-model.yaml \
+     --from <table>.<column> --to <table>.<column> --type <one-to-many|many-to-one|one-to-one|many-to-many>
    # domain add: only when explicitly requested by the user
    modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
    ```
-   Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
+   Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`, composite FK with multiple columns).
 
-10. After all changes are applied, always run validate and fix any errors before proceeding:
+12. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash
     modscape validate .modscape/changes/<name>/spec-model.yaml
     ```
 
-11. Write `.modscape/changes/<name>/design.md` using the format below.
+13. Write `.modscape/changes/<name>/design.md` using the format below.
     - On first run: create with design decisions and affected tables. Initialize `## Findings` with empty subsections.
     - On re-run: preserve `## Findings` content; update `## Design Decisions` and `## Affected Tables` only.
 
-12. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
+14. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
     - On re-run: preserve completed tasks (`- [x]`); regenerate only pending (`- [ ]`) tasks.
     - **Always generate tasks.md after spec-model.yaml is finalized** — never before.
 
-13. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
+15. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
 
-14. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
+16. Review the **entire design conversation** and append entries to `.modscape/changes/<name>/questions.md` for all of the following:
+
+   - **Answered** — questions you asked during design and the user gave a clear answer to → mark `[x]` and append the answer inline
+   - **Assumed** — items you could not confirm and proceeded with an assumption → mark `[ ]` with an `**Assumption:**` line
+   - **Open** — items still unresolved → mark `[ ]` with no assumption
+
+   Use this format. Use the next available ID continuing from any existing questions:
 
 ```markdown
+- [x] **Q-NNN** <question text>
+  **Answer:** <answer the user gave>
+
 - [ ] **Q-NNN** <question text>
   **Assumption:** <what you assumed to proceed> (unconfirmed)
 ```
 
-    If there are unresolved questions (`- [ ]`) at the end of design, output:
-    > ⚠ **Q-NNN** 件の未解決の質問があります。`modscape spec answer <id> "<回答>"` で回答するか、このまま実装に進む場合は `/modscape:spec:implement <name>` を実行してください。
+   Record every question that shaped the design — answered questions are just as important for traceability as open ones.
+
+   If there are unresolved questions (`- [ ]`) at the end of design, output:
+    > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
 
 ## design.md Format
 
@@ -131,7 +183,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Affected Tables
 
-> ⚠️ この Affected Tables 分類は AI の提案です。内容が異なる場合は直接編集してください。
+> ⚠️ This Affected Tables classification is an AI proposal. Edit directly if the classification is incorrect.
 
 ### Direct Impact
 - `<table-id>`: <reason (new / column added / restructured)>
@@ -141,6 +193,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ### Downstream Impact — Context Only
 - `<table-id>`: <why no code change is needed — e.g., does not reference changed columns>
+
+## Known Open Questions (from specs/questions.md)
+<!-- Populated automatically by /modscape:spec:design. Only Direct Impact tables. Omit section if none. -->
+- Q-NNN → `<table-id>` — see .modscape/specs/questions.md
+
+## Related Past Specs
+<!-- Populated automatically by /modscape:spec:design via modscape spec search. Omit section if no results. -->
+- `archives/YYYY-MM-DD-<name>/` — <spec title>
 
 ## Findings
 
@@ -190,20 +250,49 @@ For each task, include:
 - [ ] `<table_id>` [<materialization>] ← <upstream_1>
 
 ## Phase 4: Tests
-- [ ] `<table_id>` — <column_id>: unique, not_null
-- [ ] `<table_a>` → `<table_b>` FK test
+- [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
+- [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
+- [ ] `<table_id>` — <condition>                    [manual verification]
 ```
+
+**AC Coverage Annotation Rules for Phase 4 tasks:**
+- Read `spec.md`'s `## Acceptance Criteria` for `AC-NNN:` entries before generating Phase 4 tasks.
+- For each test task, append `[→ AC-NNN]` for each AC that this test directly validates.
+  - unique/not_null tests → typically cover ACs about key integrity
+  - FK tests → typically cover ACs about referential integrity or join correctness
+  - Use judgment based on AC text; it's OK to reference multiple ACs per test
+- If an AC cannot be validated by any auto-generated test (e.g. "match source", "row count matches"), add a dedicated line:
+  `- [ ] AC-NNN: <AC text> [manual verification]`
+- If `spec.md` has no `AC-NNN:` entries: omit annotations silently (backwards compatible).
 
 ## Next Step
 
-**Always output the following message at the end, without exception:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of `questions.md`, `design.md`, and `tasks.md`:**
 
 ---
 ✅ Design complete. `tasks.md` generated at `.modscape/changes/<name>/tasks.md`
 
-**Next step:**
+## Review Checkpoint
+
+**Unresolved Questions:** N — Q-NNN, Q-NNN (see questions.md) *(show "none" if 0)*
+
+**Assumptions:** N *(list `**Assumption:**` lines from design.md / questions.md; show "none" if 0)*
+
+**AC Coverage:** N/M
+- ✅ AC-001: <text>
+- 🔧 AC-002: <text> [manual verification]
+- ❌ AC-003: <text> — uncovered
+*(omit this section if spec.md has no AC-NNN entries)*
+
+**Downstream Classification (Low Confidence):** `<table-id>` *(show "none" if empty)*
+
+⚠️ Open issues found. Please review before implementing. (You may still proceed to implementation if needed.)
+*(If zero issues: ✅ No open issues. Ready to implement.)*
+
+**Next steps:**
 ```
-/modscape:spec:implement <name>
+/modscape:spec:implement <name>   # proceed to implementation
+/modscape:spec:review <name>      # re-run this summary
 ```
 
 To preview the model:

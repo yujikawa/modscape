@@ -10,6 +10,8 @@ AIスキル `/modscape:spec:requirements` は、ユーザーとの対話を通�
 - 受け入れ条件（Acceptance Criteria）
 - ターゲットツール（dbt / SQLMesh / Spark SQL / plain SQL）
 
+スキルは受け入れ条件を生成する際、各条件に連番 ID（`AC-001`, `AC-002`, ...）を付与しなければならない（SHALL）。ユーザーが自由記述で条件を述べた場合も、スキルが ID を付与して整形しなければならない（SHALL）。
+
 スキルは要件収集後に作業フォルダ名（kebab-case）を提案し、ユーザーの承認またはリネームを受けてから `changes/<name>/` フォルダを作成しなければならない（SHALL）。
 
 スキルは `.modscape/changes/modscape-spec.custom.md` が存在する場合、そのルールを優先して適用しなければならない（SHALL）。
@@ -31,6 +33,10 @@ AIスキル `/modscape:spec:requirements` は、ユーザーとの対話を通�
 #### Scenario: 要件収集中に不明な事項を questions.md に積む
 - **WHEN** 対話中にAIがユーザーから回答を得られなかった事項がある
 - **THEN** AIは `questions.md` に該当質問を追記し、仮定で進む場合は `**仮定:**` 行を付ける
+
+#### Scenario: 受け入れ条件に AC-NNN ID を付与して生成する
+- **WHEN** ユーザーが受け入れ条件を述べる
+- **THEN** スキルは各条件に `AC-001:`, `AC-002:` ... の形式で連番 ID を付与して `spec.md` の `## Acceptance Criteria` セクションに記録する
 
 #### Scenario: 完了後に次スキルへ誘導する
 - **WHEN** spec.md の生成が完了する

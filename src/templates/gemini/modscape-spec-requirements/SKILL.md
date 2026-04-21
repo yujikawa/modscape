@@ -30,7 +30,8 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - **Goal** — who is this for and what problem does it solve?
    - **Stakeholders** — owner (team or person) and consumers (downstream users or systems)
    - **Data Sources** — existing tables, databases, or external systems that feed this pipeline
-   - **Acceptance Criteria** — concrete, testable conditions for "done" (at least 2–3 items)
+   - **Table Relationships** — FK joins between source tables (e.g., `orders.customer_id → customers.id`, cardinality). Ask explicitly if not volunteered: "How do these source tables join to each other?"
+   - **Acceptance Criteria** — concrete, testable conditions for "done" (at least 2–3 items). Assign a sequential ID (`AC-001`, `AC-002`, ...) to each criterion as you write it into `spec.md`. If the user provides criteria in free-form text, you assign the IDs.
    - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL` (skip if set in custom.md)
    - **Main YAML(s)** — path(s) to main model YAML file(s) (skip if set in custom.md; otherwise ask)
 
@@ -65,14 +66,46 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
 10. Set `Status: requirements` in the spec file.
 
-11. Review the conversation for any items you could not confirm with the user (e.g. unknown data owners, undefined SLAs, ambiguous business rules). For each such item, append a question to `.modscape/changes/<name>/questions.md` using the format below. If proceeding with an assumption, record it on the `**Assumption:**` line.
+10.5. Review the conversation for any business or data terms that were introduced or defined. For each such term:
+   - Check `.modscape/specs/_glossary.yaml` (if it exists).
+   - If the term is not yet registered, append an entry under `terms:`.
+   - If an existing entry's definition was clarified or corrected, update it.
+   - If `_glossary.yaml` does not exist, skip silently.
 
-```markdown
-- [ ] **Q-NNN** <question text>
-  **Assumption:** <what you assumed to proceed> (unconfirmed)
-```
+   ```yaml
+   - id: <kebab-case-id>        # required
+     definition: "<definition>" # required
+     label: "<日本語名>"         # optional
+     tables: [table_a, table_b] # optional
+     columns: [table_a.col]     # optional
+     change: <change-name>      # optional
+   ```
 
-Question IDs are sequential within the change (`Q-001`, `Q-002`, ...). Do **not** add a question if the user already provided a clear answer during the conversation.
+11. Review the **entire conversation** and append question entries to `.modscape/specs/_questions.yaml` for all of the following:
+
+   - **Answered** — questions you asked and the user gave a clear answer to → `status: answered`, record the answer in the `answer` field
+   - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
+   - **Open** — items still unresolved at the end of the conversation → `status: open`
+
+   **Relationship questions to check specifically** — for each pair of source tables mentioned, verify:
+   - Is the join key known? If not → add a question: "What key joins `<A>` and `<B>`?"
+   - Is the cardinality known (one-to-many / many-to-one / etc.)? If not → add a question
+   - Is the join type known (LEFT / INNER / etc.)? If not → add a question
+   These are blocking questions for implementation — do not leave them unasked.
+
+   Use this format. Determine the next ID by reading the current max ID in `_questions.yaml`:
+   ```yaml
+   - id: Q-NNN
+     question: "<question text>"
+     answer: "<answer the user gave>"    # only if status: answered
+     status: answered                    # answered | assumed | open
+     assumption: "<what you assumed>"    # only if status: assumed
+     table: <table-id>                   # optional — only if specific to one table
+     date: <YYYY-MM-DD>
+     change: <name>
+   ```
+
+   Record every question that shaped the spec — answered questions are just as important for traceability as open ones.
 
 ## spec.md Format
 
@@ -90,9 +123,13 @@ Question IDs are sequential within the change (`Q-001`, `Q-002`, ...). Do **not*
 - <source 1>
 - <source 2>
 
+## Table Relationships
+- <source_table>.<column> → <other_table>.<column> [<one-to-many|many-to-one|...>]
+- (omit section if no FK relationships are known)
+
 ## Acceptance Criteria
-- [ ] <criterion 1>
-- [ ] <criterion 2>
+- [ ] AC-001: <criterion 1>
+- [ ] AC-002: <criterion 2>
 
 ## Target Tool
 <dbt | SQLMesh | Spark SQL | plain SQL>

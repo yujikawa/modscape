@@ -19,7 +19,8 @@ import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
-import { answerQuestion, resolveChangeName } from './operations/questions.js';
+import { runSearch } from './search.js';
+import { exportContext } from './context.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -41,6 +42,7 @@ program
   .option('-c, --claude', 'Scaffold for Claude Code')
   .option('-a, --all', 'Scaffold for all agents')
   .option('-s, --sdd', 'Add SDD (Spec-Driven Data Engineering) skills')
+  .option('-y, --yes', 'Automatically overwrite existing files without prompting')
   .action((options) => {
     initProject(options);
   });
@@ -177,20 +179,26 @@ specCommand
   });
 
 specCommand
-  .command('answer')
-  .description('Answer a question in questions.md by ID')
-  .argument('<id>', 'question ID (e.g. Q-001)')
-  .argument('<answer>', 'answer text')
-  .option('--change <name>', 'change name (required when multiple active changes exist)')
-  .action((id, answer, opts) => {
-    try {
-      const changeName = resolveChangeName(opts.change);
-      answerQuestion(changeName, id, answer);
-      console.log(`  ✅ ${id} answered in .modscape/changes/${changeName}/questions.md`);
-    } catch (e) {
-      console.error(`  ❌ ${e.message}`);
-      process.exit(1);
-    }
+  .command('search')
+  .description('Search past archives and specs for a keyword')
+  .argument('<keyword>', 'keyword to search for')
+  .option('--json', 'output as JSON')
+  .option('--limit <n>', 'maximum number of results (default: 5)', (v) => parseInt(v, 10), 5)
+  .action((keyword, opts) => {
+    runSearch(keyword, opts);
+  });
+
+const contextCommand = program
+  .command('context')
+  .description('Commands for working with SDD context knowledge');
+
+contextCommand
+  .command('export')
+  .description('Export all tacit knowledge (decisions, Q&A, per-table specs) as JSON or Markdown')
+  .argument('[specs-dir]', 'path to .modscape/specs directory', '.modscape/specs')
+  .option('--format <fmt>', 'output format: json or md', 'json')
+  .action((specsDir, opts) => {
+    exportContext(specsDir, opts.format);
   });
 
 program

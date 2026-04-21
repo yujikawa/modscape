@@ -34,7 +34,7 @@ const DetailPanel = memo(() => {
     setError,
     theme,
     isDetailPanelOpen,
-    setIsDetailPanelOpen
+    setIsDetailPanelOpen,
   } = useStore(useShallow((s) => ({
     schema: s.schema,
     getSelectedTable: s.getSelectedTable,
@@ -170,10 +170,11 @@ const DetailPanel = memo(() => {
         return
       }
 
-      // 1–5: switch tabs (only when a table is selected)
+      // 1–6: switch tabs (only when a table is selected)
+      const table = getSelectedTable()
       const tabIds = ['conceptual', 'logical', 'physical', 'sample', 'metadata']
       const idx = parseInt(e.key) - 1
-      if (idx >= 0 && idx < tabIds.length && getSelectedTable()) {
+      if (idx >= 0 && idx < tabIds.length && table) {
         e.preventDefault()
         setActiveTab(tabIds[idx])
       }
@@ -871,7 +872,7 @@ const DetailPanel = memo(() => {
     { id: 'logical', label: 'Logical', icon: <Database size={14} />, shortcut: '2' },
     { id: 'physical', label: 'Physical', icon: <Database size={14} />, shortcut: '3' },
     { id: 'sample', label: 'Sample Data', icon: <TableIcon size={14} />, shortcut: '4' },
-    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '5' }
+    { id: 'metadata', label: 'Metadata', icon: <FileChartColumnIncreasing size={14} />, shortcut: '5' },
   ]
 
   const typeConfig = table!.conceptual?.kind ? TYPE_CONFIG[table!.conceptual.kind] : null;
@@ -1855,6 +1856,7 @@ const DetailPanel = memo(() => {
             )}
           </div>
         )}
+
       </div>
       <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
     </div>

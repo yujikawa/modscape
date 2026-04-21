@@ -72,21 +72,50 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    This classification is an **AI proposal**. Write the disclaimer in `design.md` (see format below) and instruct the user to edit it directly if the classification is wrong.
 
-9. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
+9. **Surface known open questions** (first run only):
+
+   Check `.modscape/specs/questions.md` for unresolved questions (`- [ ]`) that reference any Direct Impact table ID.
+   - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`.
+   - If no matching questions: omit the `## Known Open Questions` section entirely.
+
+10. **Search past archives for related patterns** (first run only):
+
+   For each Direct Impact table ID, run:
+   ```bash
+   modscape spec search <table-id> --json --limit 5
+   ```
+   - If results exist: record them in `design.md` under `## Related Past Specs`.
+   - If no results: omit the `## Related Past Specs` section entirely.
+   - To incorporate findings from a past spec, run `/modscape:spec:search <keyword>`.
+
+11. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
-   - Define `lineage` entries to express data flow between tables
+   - Define `lineage` entries to answer: **"which tables does this table's query read from?"** — one entry per input→output pair
+   - Define `relationships` entries to answer: **"which two tables share a join key?"** — one entry per FK pair, regardless of data flow direction
+   - These two are independent: a pair of tables may have lineage, a relationship, both, or neither
+     - If table C is built by joining A and B: lineage(A→C) + lineage(B→C); if A and B also share a FK key: relationship(A↔B)
+     - If A and B share a FK but neither builds from the other: relationship only, no lineage
+   - **Relationships are prerequisites for query construction.** Any JOIN between two tables requires a relationship entry defining the key and cardinality — without it, the implementer cannot write the query. If the join key is unknown, add it to `questions.md` immediately rather than leaving the relationship undefined.
+     - Read `## Table Relationships` in `spec.md` and convert each entry to a `relationship`
+     - Also infer from columns where `isForeignKey: true` — match by column name pattern (e.g., `customer_id` → `dim_customers.customer_id`)
+     - Cover both source-to-source joins and fact ↔ dimension joins
+     - When a FK relationship is ambiguous or the join key is unknown, add a question to `questions.md` instead of silently omitting it
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `physical` strategy hints where the target tool and table type make them clear
+   - Do **not** set `display.color` on tables — leave the `display` section unset unless the user explicitly requests a specific color
 
 10. Apply changes using mutation CLI commands targeting `changes/<name>/spec-model.yaml`:
     ```bash
     modscape table add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>" --type <type>
     modscape lineage add .modscape/changes/<name>/spec-model.yaml --from <from> --to <to>
+    # FK relationship: --from / --to accepts "table.column" or just "table"
+    modscape relationship add .modscape/changes/<name>/spec-model.yaml \
+      --from <table>.<column> --to <table>.<column> --type <one-to-many|many-to-one|one-to-one|many-to-many>
     # domain add: only when explicitly requested by the user
     modscape domain add .modscape/changes/<name>/spec-model.yaml --id <id> --name "<name>"
     ```
-    Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`).
+    Edit YAML directly only for complex nested fields (`physical`, `logical.scd`, `columns`, `sampleData`, composite FK with multiple columns).
 
 11. After all changes are applied, always run validate and fix any errors before proceeding:
     ```bash
@@ -99,15 +128,26 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 14. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
 
-15. Review design decisions and model changes for any items that require human investigation (e.g. column definitions unknown, source table existence unconfirmed, business logic unclear). For each such item, append a question to `.modscape/changes/<name>/questions.md`. Use the next available ID continuing from any existing questions.
+15. Review the **entire design conversation** and append entries to `.modscape/changes/<name>/questions.md` for all of the following:
+
+   - **Answered** — questions you asked during design and the user gave a clear answer to → mark `[x]` and append the answer inline
+   - **Assumed** — items you could not confirm and proceeded with an assumption → mark `[ ]` with an `**Assumption:**` line
+   - **Open** — items still unresolved → mark `[ ]` with no assumption
+
+   Use this format. Use the next available ID continuing from any existing questions:
 
 ```markdown
+- [x] **Q-NNN** <question text>
+  **Answer:** <answer the user gave>
+
 - [ ] **Q-NNN** <question text>
   **Assumption:** <what you assumed to proceed> (unconfirmed)
 ```
 
+   Record every question that shaped the design — answered questions are just as important for traceability as open ones.
+
     If there are unresolved questions (`- [ ]`) at the end of design, output:
-    > ⚠ **Q-NNN** 件の未解決の質問があります。`modscape spec answer <id> "<回答>"` で回答するか、このまま実装に進む場合は `/modscape:spec:implement <name>` を実行してください。
+    > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
 
 ## design.md Format
 
@@ -119,7 +159,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Affected Tables
 
-> ⚠️ この Affected Tables 分類は AI の提案です。内容が異なる場合は直接編集してください。
+> ⚠️ This Affected Tables classification is an AI proposal. Edit directly if the classification is incorrect.
 
 ### Direct Impact
 - `<table-id>`: <reason (new / column added / restructured)>
@@ -164,28 +204,33 @@ Build a dependency graph from `lineage` entries in `changes/<name>/spec-model.ya
 - [ ] `<table_id>` [<materialization>] ← <upstream_1>
 
 ## Phase 4: Tests
-- [ ] `<table_id>` — <column_id>: unique, not_null
-- [ ] `<table_a>` → `<table_b>` FK test
+- [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
+- [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
+- [ ] AC-NNN: <AC text>                             [manual verification]
 ```
+
+Append `[→ AC-NNN]` to each test task that validates a corresponding AC from `spec.md`. Add `[manual verification]` lines for ACs that cannot be auto-tested. Omit annotations if `spec.md` has no AC-NNN entries.
 
 ## COMMAND: /modscape:spec:design
 
 Usage: `/modscape:spec:design <name> [path/to/main.yaml]`
 
-**Always output the following message at the end, without exception:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of the files:**
 
 ---
 ✅ Design complete. `tasks.md` generated at `.modscape/changes/<name>/tasks.md`
 
-**Next step:**
+## Review Checkpoint
+
+**Unresolved Questions:** N — Q-NNN, Q-NNN
+**Assumptions:** N
+**AC Coverage:** N/M (✅ covered / 🔧 manual / ❌ uncovered)
+**Downstream Classification (Low Confidence):** `<table-id>` or none
+
+**Next steps:**
 ```
 /modscape:spec:implement <name>
+/modscape:spec:review <name>
 ```
-
-To preview the model:
-```
-modscape dev .modscape/changes/<name>/spec-model.yaml
-```
-
-If you discover issues during implementation, add them to `## Findings` in `.modscape/changes/<name>/design.md`, then re-run `/modscape:spec:design <name>` to update the design.
+---
 ---

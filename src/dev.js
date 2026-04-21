@@ -75,6 +75,54 @@ export async function startDevServer(paths) {
     } catch (e) { res.status(500).send(e.message); }
   });
 
+  app.get('/api/context', (req, res) => {
+    const contextPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
+    if (!fs.existsSync(contextPath)) return res.status(404).send('Not found');
+    try {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(fs.readFileSync(contextPath, 'utf8'));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+  app.get('/api/glossary', (req, res) => {
+    const glossaryPath = path.resolve(process.cwd(), '.modscape/specs/_glossary.yaml');
+    if (!fs.existsSync(glossaryPath)) return res.status(404).send('Not found');
+    try {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(fs.readFileSync(glossaryPath, 'utf8'));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+  app.get('/api/questions', (req, res) => {
+    const questionsPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
+    if (!fs.existsSync(questionsPath)) return res.status(404).send('Not found');
+    try {
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(fs.readFileSync(questionsPath, 'utf8'));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+  app.get('/api/context/tables', (req, res) => {
+    const specsDir = path.resolve(process.cwd(), '.modscape/specs');
+    if (!fs.existsSync(specsDir)) return res.json({});
+    try {
+      const result = {};
+      const entries = fs.readdirSync(specsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith('_')) continue;
+        const tableId = entry.name;
+        const tableDir = path.join(specsDir, tableId);
+        const specPath = path.join(tableDir, 'spec.md');
+        const questionsPath = path.join(tableDir, 'questions.md');
+        const spec = fs.existsSync(specPath) ? fs.readFileSync(specPath, 'utf8') : undefined;
+        const questions = fs.existsSync(questionsPath) ? fs.readFileSync(questionsPath, 'utf8') : undefined;
+        if (spec || questions) result[tableId] = { spec, questions };
+      }
+      res.json(result);
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+
   app.post('/api/save', (req, res) => {
     const p = getModelPath(req.query.model);
     try {
@@ -112,17 +160,20 @@ export async function startDevServer(paths) {
   });
 
   // Debounced file watcher (kept in variable so import paths can be added dynamically)
+  const contextYamlPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
+  const questionsYamlPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
   let watchTimeout = null;
-  const watcher = chokidar.watch(inputPaths, {
+  const watcher = chokidar.watch([...inputPaths, contextYamlPath, questionsYamlPath], {
     ignoreInitial: true,
     awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 100 }
   }).on('all', (event, changedPath) => {
     if (!changedPath.endsWith('.yaml') && !changedPath.endsWith('.yml')) return;
-    
+
+    const isContext = changedPath === contextYamlPath || changedPath === questionsYamlPath;
     if (watchTimeout) clearTimeout(watchTimeout);
     watchTimeout = setTimeout(() => {
       console.log(`  ✨ File ${event}: ${path.relative(process.cwd(), changedPath)}`);
-      broadcast({ type: 'update' });
+      broadcast(isContext ? { type: 'context-update' } : { type: 'update' });
     }, 300);
   });
 }

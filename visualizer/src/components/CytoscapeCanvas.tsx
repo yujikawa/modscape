@@ -762,6 +762,7 @@ export default function CytoscapeCanvas({
   const themeRef = useRef<'dark' | 'light'>(theme)
   const hoveredColumnIdRef = useRef<string | null>(null)
   const isCompactModeRef = useRef<boolean>(isCompactMode)
+
   const schemaRef = useRef<Schema | null>(null)
   const showAnnotationsRef = useRef<boolean>(showAnnotations)
   // Track structural parts of schema to detect layout-only changes
@@ -1780,7 +1781,7 @@ export default function CytoscapeCanvas({
         (activeEl as HTMLElement)?.isContentEditable ||
         activeEl?.closest('.cm-editor') ||
         activeEl?.closest('.sidebar-content')
-      if (isTyping || e.repeat) return
+      if (isTyping || e.repeat || e.ctrlKey || e.metaKey) return
 
       const key = e.key.toLowerCase()
       if (key === 'l') {

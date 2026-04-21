@@ -1,0 +1,30 @@
+terms:
+  - id: net-revenue
+    label: "純売上"
+    definition: "discount_amount控除後・税抜きの売上金額。返品分は含まない。"
+    tables: [fct_orders, mart_daily_revenue]
+    columns: [fct_orders.net_revenue]
+    change: revenue-pipeline-v2
+    date: "2026-02-10"
+
+  - id: customer
+    label: "顧客"
+    definition: "ECサイトに会員登録済みの個人・法人。ゲストユーザーは含まない。退会済みでもレコードは保持される。"
+    tables: [dim_customers, fct_orders]
+    columns: [dim_customers.customer_id, fct_orders.customer_id]
+    change: customer-segmentation
+    date: "2026-03-05"
+
+  - id: current-record
+    label: "現在レコード"
+    definition: "SCD Type2 において is_current = true かつ valid_to が NULL のレコード。通常クエリではこのレコードのみを参照する。"
+    tables: [dim_customers]
+    change: customer-segmentation
+    date: "2026-03-05"
+
+  - id: order-line
+    label: "注文明細"
+    definition: "1注文の中で商品ごとに分かれた行。fct_orders の粒度はこの注文明細単位。同一注文でも商品が異なれば別行になる。"
+    tables: [fct_orders]
+    change: retail-analytics-initial
+    date: "2026-01-15"

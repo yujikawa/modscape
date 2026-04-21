@@ -1,5 +1,5 @@
 import yaml from 'js-yaml'
-import type { Schema } from '../types/schema'
+import type { Schema, ContextYaml, GlossaryYaml, QuestionsYaml } from '../types/schema'
 
 const SUPPORTED_VERSION = '2.0.0'
 
@@ -152,5 +152,51 @@ export function parseYAML(input: string): Schema {
     return normalizeSchema(data)
   } catch (e: any) {
     throw new Error(`YAML Parsing Error: ${e.message}`)
+  }
+}
+
+export function parseContextYaml(input: string): ContextYaml {
+  try {
+    const data = yaml.load(input) as any
+    if (!data || typeof data !== 'object') return {}
+    return {
+      decisions: Array.isArray(data.decisions) ? data.decisions.map((d: any) => ({
+        ...d,
+        date: d.date instanceof Date ? d.date.toISOString().slice(0, 10) : d.date,
+      })) : undefined,
+    }
+  } catch {
+    return {}
+  }
+}
+
+export function parseQuestionsYaml(input: string): QuestionsYaml {
+  try {
+    const data = yaml.load(input) as any
+    if (!data || typeof data !== 'object') return {}
+    return {
+      questions: Array.isArray(data.questions) ? data.questions.map((q: any) => ({
+        ...q,
+        date: q.date instanceof Date ? q.date.toISOString().slice(0, 10) : q.date,
+        status: q.status ?? (q.answer ? 'answered' : 'open'),
+      })) : undefined,
+    }
+  } catch {
+    return {}
+  }
+}
+
+export function parseGlossaryYaml(input: string): GlossaryYaml {
+  try {
+    const data = yaml.load(input) as any
+    if (!data || typeof data !== 'object') return {}
+    return {
+      terms: Array.isArray(data.terms) ? data.terms.map((t: any) => ({
+        ...t,
+        date: t.date instanceof Date ? t.date.toISOString().slice(0, 10) : t.date,
+      })) : undefined,
+    }
+  } catch {
+    return {}
   }
 }

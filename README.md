@@ -434,6 +434,26 @@ modscape layout model.yaml
 modscape layout model.yaml -o model-with-layout.yaml
 ```
 
+### Context Export
+
+Export all tacit knowledge from `.modscape/specs/` — decisions, Q&A, and per-table specs — as a single JSON or Markdown document. Useful as context input for AI agents (SDD workflows) or for reading in the knowledge page.
+
+```bash
+# JSON output (default) — structured, for AI SDK input
+modscape context export
+
+# Markdown output — for LLM prompt embedding
+modscape context export --format md
+
+# Custom specs directory
+modscape context export ./path/to/specs --format json
+```
+
+The output aggregates:
+- `.modscape/specs/_context.yaml` (project-level decisions and Q&A)
+- `.modscape/specs/<table-id>/spec.md` (per-table business context)
+- `.modscape/specs/<table-id>/questions.md` (per-table Q&A history)
+
 ### Validate
 
 Check a model.yaml file for structural errors (missing references, coordinate placement, duplicate IDs, etc.).
@@ -557,81 +577,117 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    Installs skills and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
 2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
-   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`)
+   - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`, `questions.md`)
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
+   - **Acceptance Criteria are automatically assigned sequential IDs** (`AC-001`, `AC-002`, ...) for traceability
    - Resolves main-model.yaml path from `modscape-spec.custom.md` or prompts the user
+   - Unresolved items are recorded as `Q-NNN` entries in `questions.md`
    - Output: `.modscape/changes/<name>/spec.md`
 
 3. **Design the model** — run `/modscape:spec:design <name>`:
-   - Reads `spec.md` and existing `specs/*.md` to auto-identify affected tables
+   - Reads `spec.md` and existing `specs/<table-id>/spec.md` to auto-identify affected tables
+   - Surfaces unresolved `Q-NNN` questions from `specs/<table-id>/questions.md` related to Direct Impact tables
+   - Searches past archives for related designs via `modscape spec search`
    - Runs `modscape extract` to pull relevant tables from main-model.yaml into `changes/<name>/spec-model.yaml`
    - Records which tables belong to `main-model.yaml` in `spec-config.yaml`
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
+   - **Phase 4 test tasks include `[→ AC-NNN]` annotations** linking each test to its acceptance criterion; ACs that require manual verification are flagged as `[手動検証]`
    - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to update model and tasks
+   - Outputs a **Review Checkpoint** summary (open questions, assumptions, AC coverage) at the end
 
 4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
+   - **Dry-run preview first**: displays tables to add / update (with changed fields) / unchanged, and asks for confirmation before merging
    - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
-   - Generates / updates `.modscape/specs/<table-id>.md` for each affected table
+   - Generates / updates `.modscape/specs/<table-id>/spec.md` for each affected table (old `specs/<table-id>.md` flat files are migrated automatically)
    - Upstream tables receive a Changelog entry only
+   - Syncs `questions.md` `## Table-level` entries to per-table `.modscape/specs/<table-id>/questions.md`; `## Pipeline-level` entries stay in the archive folder
+   - Updates `specs/_context.yaml` with `last_change`, `open_questions`, `has_spec` per table, and appends key decisions to the `decisions` list
+   - **Archive summary includes AC coverage**: test-covered, manual verification, and uncovered AC counts
    - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
+
+   Permanent specs are stored in a per-table directory structure:
+   ```
+   .modscape/specs/
+   ├── _context.yaml              ← cross-table SDD metadata (visualizer context layer)
+   └── <table-id>/
+       ├── spec.md                ← business context & design decisions
+       └── questions.md           ← Q&A history for this table
+   ```
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
 
+> **Review before implementing**: Run `/modscape:spec:review <name>` after design to get a go/no-go summary — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
+
+> **Fix issues mid-implementation**: Run `/modscape:spec:amend <name>` whenever you discover a problem (wrong column name, broken JOIN key, unexpected NULL, etc.). Paste the error or describe the issue in free text — the AI updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks are always preserved.
+
+> **Search past work**: Run `/modscape:spec:search <keyword>` (or `modscape spec search <keyword>`) to search past archives and permanent specs for similar designs and patterns. Use `--limit <n>` to control result count (default: 5). Add `--json` for machine-readable output.
+
 > **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
-### SDD Workflow Diagram
+### SDD Workflow
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant AI as Claude (AI)
-    participant CLI as modscape CLI
-    participant FS as .modscape/
+```
+requirements → design → implement → archive
+                 ↑↓          ↑
+             (re-run)    (amend)
+         → review (optional) ↗
+```
 
-    rect rgb(240, 248, 255)
-        Note over User,FS: ① /modscape:spec:requirements
-        User->>AI: Describe requirements (goal, stakeholders, data sources, etc.)
-        AI->>User: Propose folder name (e.g. monthly-sales-summary)
-        User->>AI: Approve or rename
-        AI->>FS: Create changes/<name>/spec.md
-    end
+| Skill | Command | What it does | Main output |
+|-------|---------|-------------|-------------|
+| Requirements | `/modscape:spec:requirements` | Collect goal, stakeholders, ACs, Q&As interactively | `spec.md` |
+| Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list | `design.md`, `tasks.md` |
+| Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code | `tasks.md` (updated) |
+| Archive | `/modscape:spec:archive <name>` | Merge to main model, persist permanent specs | `specs/<id>/spec.md`, `_context.yaml` |
+| Review | `/modscape:spec:review <name>` | Go/no-go check before implementing (optional) | — |
+| Amend | `/modscape:spec:amend <name>` | Patch artifacts when issues are found mid-implementation (optional) | — |
+| Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
+| Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question and assess design impact (optional) | — |
 
-    rect rgb(240, 255, 240)
-        Note over User,FS: ② /modscape:spec:design <name>
-        AI->>FS: Read spec.md and specs/*.md
-        AI->>CLI: modscape extract main-model.yaml --tables <ids>
-        CLI->>FS: Create changes/<name>/spec-model.yaml (extracted tables)
-        AI->>CLI: modscape table add changes/<name>/spec-model.yaml ...
-        CLI->>FS: Add new tables to changes/<name>/spec-model.yaml
-        AI->>CLI: modscape layout changes/<name>/spec-model.yaml
-        AI->>FS: Create changes/<name>/design.md + tasks.md
-    end
+**Example: designing a monthly sales summary pipeline**
 
-    rect rgb(255, 253, 240)
-        Note over User,FS: ③ /modscape:spec:implement <name>
-        loop While incomplete tasks remain
-            AI->>FS: Read changes/<name>/spec-model.yaml
-            AI->>User: Generate code (dbt / SQLMesh etc.)
-            AI->>FS: Update tasks.md checkbox [ ]→[x]
-            AI->>User: Proceed to next task?
-        end
-        opt If real-data findings arise
-            User->>FS: Add Findings to changes/<name>/design.md
-            User->>AI: Re-run /modscape:spec:design <name>
-            AI->>FS: Redesign spec-model.yaml, diff-update tasks.md
-        end
-    end
+```
+You:  /modscape:spec:requirements
+AI:   What are you building?
+You:  A monthly sales summary. Sources: fct_orders and dim_customers.
+AI:   Capturing acceptance criteria: AC-001: monthly aggregation, AC-002: customer segment breakdown...
+      → changes/monthly-sales-summary/spec.md created
 
-    rect rgb(255, 240, 245)
-        Note over User,FS: ④ /modscape:spec:archive <name>
-        AI->>CLI: modscape merge main-model.yaml changes/<name>/spec-model.yaml --patch
-        CLI->>FS: Update main-model.yaml (in-place upsert)
-        Note over CLI: ⚠ Warn on duplicate table IDs
-        AI->>FS: Generate / update specs/<table-id>.md
-        AI->>User: Delete changes/<name>/? (y=delete / n=move to archives/YYYY-MM-DD-<name>/)
-    end
+You:  /modscape:spec:design monthly-sales-summary
+AI:   Reviewed existing specs and past archives.
+      Direct Impact:  fct_orders (update), dim_customers (update), mart_monthly_sales (new)
+      Downstream:     mart_revenue (Context Only)
+      → design.md and tasks.md created
+
+You:  /modscape:spec:implement monthly-sales-summary
+AI:   Task 1/6: generating dbt model for mart_monthly_sales...
+      ...
+      ✓ 6/6 tasks complete
+
+You:  /modscape:spec:archive monthly-sales-summary
+AI:   Dry-run:
+        Add:      mart_monthly_sales
+        Update:   fct_orders (column: amount), dim_customers (column: segment)
+        Ref only: mart_revenue (Changelog only)
+      Proceed?
+You:  y
+AI:   Merge complete. Files generated / updated:
+
+      specs/
+      ├── _context.yaml                       ← last_change, decisions updated
+      ├── fct_orders/
+      │   ├── spec.md                         ← Business Rules updated
+      │   └── questions.md                    ← Q-001, Q-002 synced
+      ├── dim_customers/
+      │   ├── spec.md                         ← Business Rules updated
+      │   └── questions.md                    ← Q-003 synced
+      ├── mart_monthly_sales/
+      │   ├── spec.md                         ← created
+      │   └── questions.md                    ← created
+      └── mart_revenue/
+          └── spec.md                         ← Changelog entry added
 ```
 
 ## Credits
