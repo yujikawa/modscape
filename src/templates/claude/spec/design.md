@@ -15,7 +15,9 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 1. Read `.modscape/rules.md` to understand the YAML schema and modeling rules.
    If `.modscape/changes/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
 
-   **When reading model information, always use modscape CLI commands or MCP tools — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
+   **Reading rules — follow strictly, no exceptions:**
+   - **Model data** (tables, columns, lineage, relationships, domains): ALWAYS use modscape CLI or MCP tools. Never use `grep`, direct file reads, or scripts/code (Python, shell, etc.).
+   - **Spec artifacts** (`spec.md`, `design.md`, `_context.yaml`, `_questions.yaml`, etc.): read directly with file read tools — these are not covered by CLI.
    ```bash
    modscape table list <file>
    modscape table get <file> --id <id>
@@ -111,6 +113,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to answer: **"which tables does this table's query read from?"** — one entry per input→output pair
    - Define `relationships` entries to answer: **"which two tables share a join key?"** — one entry per FK pair, regardless of data flow direction
+   - **❌ DO NOT use `lineage` to represent FK joins between tables. `lineage` is for ETL/build data flow only. FK joins MUST be expressed as `relationship` entries.**
    - These two are independent: a pair of tables may have lineage, a relationship, both, or neither
      - If table C is built by joining A and B: lineage(A→C) + lineage(B→C); if A and B also share a FK key: relationship(A↔B)
      - If A and B share a FK but neither builds from the other: relationship only, no lineage
@@ -172,6 +175,28 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    If there are unresolved questions (`- [ ]`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
+
+17. Review the design conversation for any project-specific or in-house business terms that were introduced or defined. Append qualifying terms to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist).
+
+   Target terms (record these):
+   - Project-specific / in-house terms and abbreviations
+   - Common words that carry a specific meaning in this project's context
+
+   Skip these (do NOT record):
+   - General SQL terms (JOIN, GROUP BY, NULL, etc.)
+   - Standard data modeling concepts (fact, dimension, hub, satellite, etc.)
+   - Self-evident column names (created_at, id, etc.)
+
+   ```markdown
+   ## <change-name>
+
+   - **<term-id>**: <definition>
+     - label: <日本語名> (optional)
+     - tables: <table_a>, <table_b> (optional)
+     - columns: <table_a.col> (optional)
+   ```
+
+   If no qualifying terms were found, skip silently.
 
 ## design.md Format
 

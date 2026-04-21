@@ -66,20 +66,29 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
 10. Set `Status: requirements` in the spec file.
 
-10.5. Review the conversation for any business or data terms that were introduced or defined. For each such term:
-   - Check `.modscape/specs/_glossary.yaml` (if it exists).
-   - If the term is not yet registered, append an entry under `terms:`.
-   - If an existing entry's definition was clarified or corrected, update it.
-   - If `_glossary.yaml` does not exist, skip silently.
+10.5. Review the conversation for any business or data terms that were introduced or defined.
 
-   ```yaml
-   - id: <kebab-case-id>        # required
-     definition: "<definition>" # required
-     label: "<日本語名>"         # optional
-     tables: [table_a, table_b] # optional
-     columns: [table_a.col]     # optional
-     change: <change-name>      # optional
+   Target terms (record these):
+   - Project-specific / in-house terms and abbreviations
+   - Common words that carry a specific meaning in this project's context
+
+   Skip these (do NOT record):
+   - General SQL terms (JOIN, GROUP BY, NULL, etc.)
+   - Standard data modeling concepts (fact, dimension, hub, satellite, etc.)
+   - Self-evident column names (created_at, id, etc.)
+
+   For each qualifying term, append to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist). Do NOT write to `_glossary.yaml` directly.
+
+   ```markdown
+   ## <change-name>
+
+   - **<term-id>**: <definition>
+     - label: <日本語名> (optional)
+     - tables: <table_a>, <table_b> (optional)
+     - columns: <table_a.col> (optional)
    ```
+
+   If no qualifying terms were found, skip silently.
 
 11. Review the **entire conversation** and append question entries to `.modscape/specs/_questions.yaml` for all of the following:
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.1] - 2026-04-21
+
+### Fixed
+
+- **SDD: work-scoped `glossary.md`** — `requirements` and `design` skills now record project-specific business terms to `.modscape/changes/<name>/glossary.md` (instead of writing directly to `_glossary.yaml`). The `archive` skill merges `glossary.md` into `_glossary.yaml` at archive time, mirroring the existing `questions.md` pattern. Applies to Claude / Gemini / Codex skills.
+- **SDD `design` skill — model inspection rule** — Clarified that model data (tables, columns, lineage, relationships, domains) MUST be read via modscape CLI or MCP tools with no exceptions; spec artifacts (`spec.md`, `design.md`, `_context.yaml`, etc.) should be read directly with file read tools. Writing scripts or code (Python, shell, etc.) to inspect the model is now explicitly prohibited. Applies to Claude / Gemini / Codex skills.
+- **SDD `design` skill — lineage vs relationship rule** — Added explicit prohibition: `lineage` MUST NOT be used to represent FK joins between tables. FK joins MUST be expressed as `relationship` entries. Applies to Claude / Gemini / Codex skills.
+
 ## [3.1.0] - 2026-04-21
 
 ### Added
