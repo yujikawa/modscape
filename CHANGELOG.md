@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **`/modscape:spec:validate` skill** — New AI skill (Claude / Gemini / Codex) that checks cross-artifact consistency across all SDD documents in a work folder. Reports mismatches, gaps, and drift in four categories: A) spec.md ↔ design.md (table coverage, Requires Model Change tracking), B) design.md ↔ spec-model.yaml (Direct Impact table existence, model table classification), C) design.md ↔ tasks.md (Direct Impact task coverage), D) questions.md ↔ design.md (unresolved Q&A recorded as assumptions). Complements `/modscape:spec:review` (go/no-go) by focusing on structural consistency rather than readiness.
+
 - **SDD: work-scoped `glossary.md`** — `requirements` and `design` skills now record project-specific business terms to `.modscape/changes/<name>/glossary.md` (instead of writing directly to `_glossary.yaml`). The `archive` skill merges `glossary.md` into `_glossary.yaml` at archive time, mirroring the existing `questions.md` pattern. Applies to Claude / Gemini / Codex skills.
 - **SDD `design` skill — model inspection rule** — Clarified that model data (tables, columns, lineage, relationships, domains) MUST be read via modscape CLI or MCP tools with no exceptions; spec artifacts (`spec.md`, `design.md`, `_context.yaml`, etc.) should be read directly with file read tools. Writing scripts or code (Python, shell, etc.) to inspect the model is now explicitly prohibited. Applies to Claude / Gemini / Codex skills.
 - **SDD `design` skill — lineage vs relationship rule** — Added explicit prohibition: `lineage` MUST NOT be used to represent FK joins between tables. FK joins MUST be expressed as `relationship` entries. Applies to Claude / Gemini / Codex skills.
