@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.3] - 2026-04-22
+
+### Added
+
+- **`rules.custom.md.example` template** — `modscape init --sdd` now generates `.modscape/rules.custom.md.example` alongside `modscape-spec.custom.md.example`. Rename to `rules.custom.md` to activate. Contains commented-out sections for naming conventions, allowed table types, domain topology, required columns, SCD policy, and tags policy.
+
+### Changed
+
+- **`modscape-spec.custom.md` moved to `.modscape/` root** — Previously placed under `.modscape/changes/`, it now lives at `.modscape/modscape-spec.custom.md`, alongside `rules.md` and `rules.custom.md`. All SDD skill templates (Claude / Gemini / Codex) and `init.js` updated accordingly.
+- **`modscape-spec.custom.md.example` template moved** — Source template relocated from `src/templates/claude/spec/` to `src/templates/` (alongside `rules.md`), reflecting its shared, agent-agnostic nature.
+- **SDD `archive` skill — convention extraction step** — Added Step 5.5 to the archive workflow (Claude / Gemini / Codex). After updating `_context.yaml` and before moving to archives, the skill reviews `design.md` and `spec.md` for any project-wide conventions established during the change and offers to append them to `rules.custom.md` (data model rules) or `modscape-spec.custom.md` (SDD workflow rules). Decision axis: rules that are tool-agnostic go to `rules.custom.md`; rules specific to the implementation tool or workflow go to `modscape-spec.custom.md`. Archive summary now reports conventions recorded.
+
 ## [3.1.2] - 2026-04-22
 
 ### Fixed
