@@ -132,8 +132,10 @@ export async function initProject(options = {}) {
     }
 
     if (options.sdd) {
-      const customExample = fs.readFileSync(path.join(__dirname, 'templates/claude/spec/modscape-spec.custom.md.example'), 'utf8');
-      await safeWriteFile('.modscape/changes/modscape-spec.custom.md.example', customExample, yes);
+      const customExample = fs.readFileSync(path.join(__dirname, 'templates/modscape-spec.custom.md.example'), 'utf8');
+      await safeWriteFile('.modscape/modscape-spec.custom.md.example', customExample, yes);
+      const rulesCustomExample = fs.readFileSync(path.join(__dirname, 'templates/rules.custom.md.example'), 'utf8');
+      await safeWriteFile('.modscape/rules.custom.md.example', rulesCustomExample, yes);
       // Create specs/ directory with _context.yaml template
       await safeWriteFile('.modscape/specs/.gitkeep', '', yes);
       const contextYamlTemplate = `# .modscape/specs/_context.yaml

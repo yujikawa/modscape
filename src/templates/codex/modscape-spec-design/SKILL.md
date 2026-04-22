@@ -10,7 +10,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 ## Instructions
 
 1. Read `.modscape/rules.md` to understand the YAML schema and modeling rules.
-   If `.modscape/changes/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
+   If `.modscape/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
 
    **Reading rules — follow strictly, no exceptions:**
    - **Model data** (tables, columns, lineage, relationships, domains): ALWAYS use modscape CLI or MCP tools. Never use `grep`, direct file reads, or scripts/code (Python, shell, etc.).
