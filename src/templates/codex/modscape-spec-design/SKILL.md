@@ -1,11 +1,11 @@
 ---
 name: modscape-spec-design
-description: Design the data model based on spec.md and update changes/<name>/spec-model.yaml. Generates design.md and tasks.md.
+description: Design the data model based on spec.md and update changes/<name>/spec-model.yaml. Can be run repeatedly to iterate on the design.
 ---
 
 # Spec Design
 
-Design the data model based on `spec.md` and update `changes/<name>/spec-model.yaml` (the work-scoped YAML). Does NOT modify the main model.yaml directly. Also generates `design.md` and `tasks.md` in the work folder.
+Design the data model based on `spec.md` and update `changes/<name>/spec-model.yaml` (the work-scoped YAML). Does NOT modify the main model.yaml directly. Can be run repeatedly to iterate on the design until the user is satisfied.
 
 ## Instructions
 
@@ -31,10 +31,17 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
 4. **Check for existing design.md** at `.modscape/changes/<name>/design.md`.
-   - If it exists: this is a **re-run**. Read it fully and check the `## Findings` section.
-     - If `### Requires Model Change` has entries: **process these first before anything else** — apply the model changes to `changes/<name>/spec-model.yaml` using mutation CLI commands, then run `modscape validate`. Only after model changes are applied, proceed to update tasks.md.
-     - If `### Implementation Notes` only: no model changes needed, proceed to update tasks.md.
-   - If not: this is a **first run**.
+   - If it **does not exist**: this is a **first run** — proceed to step 5.
+   - If it **exists**: this is a **continuation**. Resume the design session:
+     1. If `### Requires Model Change` in `## Findings` has entries: **process these first** — apply the model changes to `changes/<name>/spec-model.yaml` using mutation CLI commands, then run `modscape validate`. Clear processed entries from `### Requires Model Change` after applying.
+     2. Show the current state:
+        ```bash
+        modscape summary .modscape/changes/<name>/spec-model.yaml --json
+        ```
+        Display a brief summary: table count, table IDs, and any unresolved questions from `questions.md`.
+     3. Ask the user what they want to continue with:
+        > Design is in progress (N tables: `<id1>`, `<id2>`, ...). What would you like to add or change? When satisfied with the design, run `/modscape:spec:tasks <name>` to generate implementation tasks.
+     4. Wait for user input, then proceed to step 12 to apply requested changes. Skip steps 5–11 (first-run only steps).
 
 5. **Resolve main YAMLs** (first run only):
 
@@ -135,9 +142,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 15. Write `.modscape/changes/<name>/design.md` using the format below.
 
-16. Generate `.modscape/changes/<name>/tasks.md` using the task generation rules below.
-
-17. Update `Status` in `.modscape/changes/<name>/spec.md` from `requirements` to `design`.
+16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
 
 18. Review the **entire design conversation** and append entries to `.modscape/changes/<name>/questions.md` for all of the following:
 
@@ -212,58 +217,34 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 <Observations that do NOT require model changes — for reference only>
 ```
 
-## Task Generation Rules
-
-Build a dependency graph from `lineage` entries in `changes/<name>/spec-model.yaml`, then topologically sort.
-
-- **Phase 1 — Staging**: tables with no upstream dependencies
-- **Phase 2 — Core**: tables that depend only on Phase 1 tables
-- **Phase 3 — Mart**: tables furthest downstream
-- **Phase 4 — Tests**: one test task per table with a primary key or foreign key column
-
-### tasks.md Format
-
-```markdown
-# Pipeline Tasks
-> Generated from: changes/<name>/spec-model.yaml
-
-## Phase 1: Staging
-- [ ] `<table_id>` [<materialization>]
-
-## Phase 2: Core
-- [ ] `<table_id>` [<materialization>] ← <upstream_1>, <upstream_2>
-
-## Phase 3: Mart
-- [ ] `<table_id>` [<materialization>] ← <upstream_1>
-
-## Phase 4: Tests
-- [ ] `<table_id>` — <column_id>: unique, not_null  [→ AC-001, AC-003]
-- [ ] `<table_a>` → `<table_b>` FK test             [→ AC-002]
-- [ ] AC-NNN: <AC text>                             [manual verification]
-```
-
-Append `[→ AC-NNN]` to each test task that validates a corresponding AC from `spec.md`. Add `[manual verification]` lines for ACs that cannot be auto-tested. Omit annotations if `spec.md` has no AC-NNN entries.
-
 ## COMMAND: /modscape:spec:design
 
 Usage: `/modscape:spec:design <name> [path/to/main.yaml]`
 
-**Always output the following at the end, without exception. Build the review summary from the actual state of the files:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of `questions.md` and `design.md`:**
 
 ---
-✅ Design complete. `tasks.md` generated at `.modscape/changes/<name>/tasks.md`
+✅ Design updated. `spec-model.yaml` and `design.md` are current.
 
 ## Review Checkpoint
 
-**Unresolved Questions:** N — Q-NNN, Q-NNN
-**Assumptions:** N
-**AC Coverage:** N/M (✅ covered / 🔧 manual / ❌ uncovered)
+**Unresolved Questions:** N — Q-NNN, Q-NNN *(show "none" if 0)*
+**Assumptions:** N *(show "none" if 0)*
 **Downstream Classification (Low Confidence):** `<table-id>` or none
+
+⚠️ Open issues found. Please review before continuing. *(If zero issues: ✅ No open issues.)*
 
 **Next steps:**
 ```
-/modscape:spec:implement <name>
-/modscape:spec:review <name>
+/modscape:spec:design <name>     # continue iterating on the design
+/modscape:spec:tasks <name>      # satisfied with the design? generate implementation tasks
+/modscape:spec:review <name>     # review design status
 ```
----
+
+To preview the model:
+```
+modscape dev .modscape/changes/<name>/spec-model.yaml
+```
+
+If you discover issues, add them to `## Findings` in `design.md` and re-run `/modscape:spec:design <name>`.
 ---
