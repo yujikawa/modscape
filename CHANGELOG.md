@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **`/modscape:spec:help` skill** — New AI skill (Claude / Gemini / Codex) that displays the SDD workflow overview or answers a specific question. Run with no arguments to see the full workflow diagram, command descriptions, file structure, and common Q&A. Run with a topic or question (e.g. `/modscape:spec:help design`, `/modscape:spec:help requirements vs design`) for a focused answer.
 - **`rules.custom.md.example` template** — `modscape init --sdd` now generates `.modscape/rules.custom.md.example` alongside `modscape-spec.custom.md.example`. Rename to `rules.custom.md` to activate. Contains commented-out sections for naming conventions, allowed table types, domain topology, required columns, SCD policy, and tags policy.
 
 ### Changed
