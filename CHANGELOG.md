@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.2] - 2026-04-22
+
+### Fixed
+
+- **`modscape init --sdd` — `validate` skill not copied** — Fixed an issue where the `/modscape:spec:validate` command file was not copied when running `modscape init --sdd`. Added `validate` to the `specSkillNames` list so it is now correctly scaffolded for all agents (Claude Code / Gemini / Codex).
+
 ## [3.1.1] - 2026-04-21
 
 ### Fixed
