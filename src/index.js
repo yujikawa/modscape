@@ -15,7 +15,6 @@ import { createRequire } from 'module';
 import { mergeModels } from './merge.js';
 import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
-import { startMcpServer } from './mcp.js';
 import { runValidate } from './validate.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
@@ -188,12 +187,5 @@ specCommand
     runSearch(keyword, opts);
   });
 
-
-program
-  .command('mcp')
-  .description('Start the Modscape MCP server (stdio transport)')
-  .action(() => {
-    startMcpServer();
-  });
 
 program.parse();

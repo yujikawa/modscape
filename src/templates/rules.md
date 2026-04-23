@@ -949,7 +949,7 @@ Checks performed:
 
 ### 12-6. Reading Model Information
 
-When investigating or querying a YAML model, always prefer modscape CLI commands or MCP tools over `grep` / `cat` / direct file reads:
+When investigating or querying a YAML model, always prefer modscape CLI commands over `grep` / `cat` / direct file reads:
 
 ```bash
 modscape table list <file>               # List all tables
@@ -960,8 +960,6 @@ modscape domain list <file>              # List all domains
 modscape summary <file>                  # Overview of the entire model
 modscape summary <file> --json           # Machine-readable summary
 ```
-
-If the modscape MCP server is active, prefer `mcp__modscape__*` tools (e.g. `mcp__modscape__list_tables`, `mcp__modscape__get_table`) for zero-overhead reads.
 
 Fall back to `grep` or direct file reads only when the information genuinely cannot be obtained from the above commands.
 

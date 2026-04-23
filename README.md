@@ -450,18 +450,6 @@ modscape validate model.yaml
 modscape validate model.yaml --json
 ```
 
-### MCP Server (Claude Code)
-
-Start the Modscape MCP server for use with Claude Code and other MCP clients. Once registered, AI agents can operate on model.yaml via structured tool calls instead of constructing CLI commands.
-
-```bash
-# Register once per project
-claude mcp add modscape -- modscape mcp
-
-# The server starts automatically when Claude Code launches
-modscape mcp
-```
-
 ---
 
 ## Atomic Model Mutation Commands

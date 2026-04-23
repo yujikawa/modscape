@@ -5,7 +5,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 1. If `.modscape/modscape-spec.custom.md` exists, read it **in addition** to these instructions.
    Rules in `modscape-spec.custom.md` take **priority** when they conflict.
 
-   **When reading model information (tables, lineage, etc.), always use modscape CLI commands or MCP tools — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
+   **When reading model information (tables, lineage, etc.), always use modscape CLI commands — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
    ```bash
    modscape table list <file>
    modscape table get <file> --id <id>
