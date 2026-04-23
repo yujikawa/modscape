@@ -8,8 +8,9 @@
 #
 # SDD Directory Structure:
 #   .modscape/
+#   ├── modscape-spec.custom.md         This file (project-wide SDD custom rules)
+#   ├── rules.custom.md                 Data model conventions (optional)
 #   ├── changes/
-#   │   ├── modscape-spec.custom.md     This file (project-wide custom rules)
 #   │   └── <name>/                     Work folder per pipeline (temporary)
 #   │       ├── spec.md                 Business requirements
 #   │       ├── spec-config.yaml        Main YAML mapping for this spec

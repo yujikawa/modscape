@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.3] - 2026-04-23
+
+### Added
+
+- **`/modscape:spec:explain` skill** — New AI skill (Claude / Gemini / Codex) for spec handoff and onboarding. Given a work folder name, it reads `spec.md`, `design.md`, and `tasks.md` and outputs a structured briefing: background and purpose (from the Why section), what changes are being made, key design decisions with chosen approaches, non-goals, and the list of remaining tasks with their full text grouped by phase. Complements `/modscape:spec:status` (which shows file/task counts) by explaining the *content* rather than just the progress.
+
+- **`/modscape:spec:help` skill** — New AI skill (Claude / Gemini / Codex) that displays the SDD workflow overview or answers a specific question. Run with no arguments to see the full workflow diagram, command descriptions, file structure, and common Q&A. Run with a topic or question (e.g. `/modscape:spec:help design`, `/modscape:spec:help requirements vs design`) for a focused answer.
+- **`rules.custom.md.example` template** — `modscape init --sdd` now generates `.modscape/rules.custom.md.example` alongside `modscape-spec.custom.md.example`. Rename to `rules.custom.md` to activate. Contains commented-out sections for naming conventions, allowed table types, domain topology, required columns, SCD policy, and tags policy.
+
+### Changed
+
+- **SDD `design` skill — iterative design mode** — `/modscape:spec:design` can now be run repeatedly to iterate on the design. On re-run it shows the current state (table count, table IDs, unresolved questions) and asks what to add or change, rather than automatically regenerating `tasks.md`. When the design is finalized, run `/modscape:spec:tasks <name>` explicitly. Applies to Claude / Gemini / Codex skills.
+- **SDD `design` skill — `tasks.md` generation removed** — Task generation has been moved out of `design` and into the dedicated `/modscape:spec:tasks` skill. `design` now only produces `spec-model.yaml` and `design.md`. Applies to Claude / Gemini / Codex skills.
+- **`modscape-spec.custom.md` moved to `.modscape/` root** — Previously placed under `.modscape/changes/`, it now lives at `.modscape/modscape-spec.custom.md`, alongside `rules.md` and `rules.custom.md`. All SDD skill templates (Claude / Gemini / Codex) and `init.js` updated accordingly.
+- **`modscape-spec.custom.md.example` template moved** — Source template relocated from `src/templates/claude/spec/` to `src/templates/` (alongside `rules.md`), reflecting its shared, agent-agnostic nature.
+- **SDD `archive` skill — convention extraction step** — Added Step 5.5 to the archive workflow (Claude / Gemini / Codex). After updating `_context.yaml` and before moving to archives, the skill reviews `design.md` and `spec.md` for any project-wide conventions established during the change and offers to append them to `rules.custom.md` (data model rules) or `modscape-spec.custom.md` (SDD workflow rules). Decision axis: rules that are tool-agnostic go to `rules.custom.md`; rules specific to the implementation tool or workflow go to `modscape-spec.custom.md`. Archive summary now reports conventions recorded.
+
 ## [3.1.2] - 2026-04-22
 
 ### Fixed

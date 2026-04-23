@@ -171,6 +171,37 @@ If `.modscape/changes/<name>/glossary.md` exists:
 
     Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.
 
+### Step 5.5: Extract and record project conventions
+
+Review `design.md`, `spec.md`, and the decisions recorded in `_context.yaml` during this change for any **project-wide conventions** that were established or confirmed.
+
+**Decision axis — which file to update:**
+- `rules.custom.md`: rules about the **data model** (YAML shape, naming of table/column IDs, required columns, allowed table kinds, domain structure, SCD policy). These rules apply regardless of the implementation tool.
+- `modscape-spec.custom.md`: rules about the **SDD workflow and code generation** (target tool, output directories, tasks.md format additions, code style, main YAML paths). These rules are tool- or process-specific.
+
+**Quick test:** "Would this rule need to change if we switched implementation tools (e.g., dbt → SQLMesh)?"
+- Yes → `modscape-spec.custom.md`
+- No → `rules.custom.md`
+
+If any conventions are found, present them to the user:
+
+> The following conventions may have been established in this change:
+>
+> **Data model rules** (candidate for `rules.custom.md`):
+> - \<candidate\>
+>
+> **Workflow / code generation rules** (candidate for `modscape-spec.custom.md`):
+> - \<candidate\>
+>
+> Add any of these to the project convention files? (y/N)
+
+If confirmed:
+- Create the target file if it does not exist.
+- Append the new rules under an appropriate section heading.
+- Avoid duplicating rules already present in the file.
+
+If no conventions are found, or the user declines: skip this step silently.
+
 ### Step 6: Move to archives
 
 12. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
@@ -193,6 +224,10 @@ If `.modscape/changes/<name>/glossary.md` exists:
 - `_questions.yaml`: <n> entries added from `questions.md` (or: no questions.md found)
 
 **`_context.yaml` updated:** <n> decisions added
+
+**Conventions recorded:**
+- `rules.custom.md`: <n> rules added (or: none)
+- `modscape-spec.custom.md`: <n> rules added (or: none)
 
 **Spec coverage:** <n>/<total> tables have permanent specs.
 Tables without specs: <list or "none">
