@@ -2,6 +2,59 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 
+const DEFAULT_SPECS_DIR = '.modscape/specs';
+
+function readFileIfExists(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function loadContext(specsDir = DEFAULT_SPECS_DIR) {
+  const contextPath = path.join(specsDir, '_context.yaml');
+  const questionsPath = path.join(specsDir, '_questions.yaml');
+  const glossaryPath = path.join(specsDir, '_glossary.yaml');
+
+  const parseYaml = (filePath, fallback) => {
+    const raw = readFileIfExists(filePath);
+    if (!raw) return fallback;
+    try {
+      const parsed = yaml.load(raw);
+      return (parsed && typeof parsed === 'object') ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const contextData = parseYaml(contextPath, {});
+  const questionsData = parseYaml(questionsPath, {});
+  const glossaryData = parseYaml(glossaryPath, {});
+
+  const tables = {};
+  if (fs.existsSync(specsDir)) {
+    for (const entry of fs.readdirSync(specsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const tableDir = path.join(specsDir, entry.name);
+      const spec = readFileIfExists(path.join(tableDir, 'spec.md'));
+      const questions = readFileIfExists(path.join(tableDir, 'questions.md'));
+      if (spec !== null || questions !== null) {
+        tables[entry.name] = {};
+        if (spec !== null) tables[entry.name].spec = spec;
+        if (questions !== null) tables[entry.name].questions = questions;
+      }
+    }
+  }
+
+  return {
+    decisions: Array.isArray(contextData.decisions) ? contextData.decisions : [],
+    questions: Array.isArray(questionsData.questions) ? questionsData.questions : [],
+    glossary: Array.isArray(glossaryData.terms) ? glossaryData.terms : [],
+    tables,
+  };
+}
+
 /**
  * Normalizes the schema data to ensure it's in a consistent format.
  * Similar to visualizer/src/lib/parser.ts but for the CLI side.
@@ -136,9 +189,53 @@ function generateNotesSection(schema) {
 }
 
 /**
+ * Generates Glossary, Decisions, Q&A sections from context.
+ */
+function generateContextSections(context) {
+  let md = '';
+
+  if (context.glossary.length > 0) {
+    md += '## Glossary\n\n';
+    for (const t of context.glossary) {
+      md += `### ${t.id}${t.label ? ` (${t.label})` : ''}\n\n`;
+      md += `${t.definition}\n\n`;
+      if (t.tables?.length) md += `*Tables: ${t.tables.join(', ')}*\n\n`;
+      if (t.columns?.length) md += `*Columns: ${t.columns.join(', ')}*\n\n`;
+    }
+  }
+
+  if (context.decisions.length > 0) {
+    md += '## Decisions\n\n';
+    for (const d of context.decisions) {
+      md += `### ${d.id}: ${d.summary}\n\n`;
+      if (d.rationale) md += `> ${d.rationale}\n\n`;
+      if (d.date) md += `*Date: ${d.date}*\n\n`;
+    }
+  }
+
+  if (context.questions.length > 0) {
+    md += '## Q&A\n\n';
+    for (const q of context.questions) {
+      const status = q.status ?? (q.answer ? 'answered' : 'open');
+      md += `### ${q.id}: ${q.question}\n\n`;
+      md += `*Status: ${status}*`;
+      if (q.table) md += ` · *Table: ${q.table}*`;
+      md += '\n\n';
+      if (q.answer) {
+        md += `**Answer:** ${q.answer}\n\n`;
+      } else if (q.assumption) {
+        md += `**Assumption:** ${q.assumption}\n\n`;
+      }
+    }
+  }
+
+  return md;
+}
+
+/**
  * Generates the full Markdown document.
  */
-export function generateMarkdown(schema, modelName) {
+export function generateMarkdown(schema, modelName, context = null) {
   let md = `# ${modelName} Data Model Definition\n\n`;
 
   // Mermaid ER Diagram
@@ -276,12 +373,27 @@ export function generateMarkdown(schema, modelName) {
       }
       md += '\n';
     }
+
+    // Table Spec (from context)
+    if (context?.tables?.[table.id]?.spec) {
+      md += '#### Spec\n\n';
+      md += context.tables[table.id].spec.trim() + '\n\n';
+    }
+    if (context?.tables?.[table.id]?.questions) {
+      md += '#### Questions\n\n';
+      md += context.tables[table.id].questions.trim() + '\n\n';
+    }
   });
 
   // Sticky Notes Section
   const notesSection = generateNotesSection(schema);
   if (notesSection) {
     md += notesSection;
+  }
+
+  // Context sections (Glossary, Decisions, Q&A)
+  if (context) {
+    md += generateContextSections(context);
   }
 
   return md;
@@ -309,7 +421,8 @@ export async function exportModel(paths, options) {
         const data = yaml.load(content);
         const schema = normalizeSchema(data);
         const modelName = path.parse(file).name.charAt(0).toUpperCase() + path.parse(file).name.slice(1).replace(/[-_]/g, ' ');
-        const markdown = generateMarkdown(schema, modelName);
+        const context = options.withContext ? loadContext(options.withContext === true ? '.modscape/specs' : options.withContext) : null;
+        const markdown = generateMarkdown(schema, modelName, context);
 
         if (options.output) {
           // If output is specified, we either append or use it as a directory/base

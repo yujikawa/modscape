@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.4] - 2026-04-23
+
+### Added
+
+- **`modscape export --with-context`** — The `export` command now accepts a `--with-context [specs-dir]` flag that merges SDD context (glossary, decisions, Q&A, and per-table specs) into the exported Markdown document. Context is sourced from `.modscape/specs/` by default or a custom directory if specified. Per-table specs are embedded inline within each table's section; glossary, decisions, and Q&A are appended at the end.
+
+### Removed
+
+- **`modscape context export` command** — Removed in favour of `modscape export --with-context`. The standalone `context export` command (which output context-only JSON or Markdown) was redundant: AI agents consume Markdown directly, making the JSON format unnecessary, and the integrated `--with-context` flag covers the combined output use case more cleanly.
+
 ## [3.1.3] - 2026-04-23
 
 ### Added
