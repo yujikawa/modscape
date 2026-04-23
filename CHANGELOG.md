@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.5] - 2026-04-23
+
+### Removed
+
+- **MCP server** — Removed the `modscape mcp` command and the entire MCP server implementation (`src/mcp.js`). The `@modelcontextprotocol/sdk` and `zod` dependencies have been dropped from `package.json`. All references to MCP tools have been removed from `README.md`, `README.ja.md`, `src/templates/rules.md`, and all SDD skill templates (Claude / Gemini / Codex). The `.gemini/settings.json` MCP server registration has also been cleared.
+
 ## [3.1.4] - 2026-04-23
 
 ### Added

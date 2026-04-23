@@ -117,9 +117,6 @@ export async function initProject(options = {}) {
       await safeWriteFile('.claude/commands/modscape/modeling.md', modelingTemplate, yes);
       const codegenTemplate = fs.readFileSync(path.join(__dirname, 'templates/claude/codegen.md'), 'utf8');
       await safeWriteFile('.claude/commands/modscape/codegen.md', codegenTemplate, yes);
-      console.log('\n  💡 To use the MCP server with Claude Code, run:');
-      console.log('     claude mcp add modscape -- modscape mcp\n');
-
       if (options.sdd) {
         console.log('  Scaffolding SDD skills for Claude Code...');
         const specDir = path.join(__dirname, 'templates/claude/spec');
