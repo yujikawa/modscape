@@ -2,9 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.1.3] - 2026-04-22
+## [3.1.3] - 2026-04-23
 
 ### Added
+
+- **`/modscape:spec:explain` skill** — New AI skill (Claude / Gemini / Codex) for spec handoff and onboarding. Given a work folder name, it reads `spec.md`, `design.md`, and `tasks.md` and outputs a structured briefing: background and purpose (from the Why section), what changes are being made, key design decisions with chosen approaches, non-goals, and the list of remaining tasks with their full text grouped by phase. Complements `/modscape:spec:status` (which shows file/task counts) by explaining the *content* rather than just the progress.
 
 - **`/modscape:spec:help` skill** — New AI skill (Claude / Gemini / Codex) that displays the SDD workflow overview or answers a specific question. Run with no arguments to see the full workflow diagram, command descriptions, file structure, and common Q&A. Run with a topic or question (e.g. `/modscape:spec:help design`, `/modscape:spec:help requirements vs design`) for a focused answer.
 - **`rules.custom.md.example` template** — `modscape init --sdd` now generates `.modscape/rules.custom.md.example` alongside `modscape-spec.custom.md.example`. Rename to `rules.custom.md` to activate. Contains commented-out sections for naming conventions, allowed table types, domain topology, required columns, SCD policy, and tags policy.

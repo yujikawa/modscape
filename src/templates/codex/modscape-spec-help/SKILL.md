@@ -10,7 +10,7 @@ Display the SDD workflow overview, or answer a specific question about the workf
 ## Instructions
 
 1. If an argument is provided:
-   - If the topic is a **command name** (`requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `review`, `search`, `answer`, `validate`):
+   - If the topic is a **command name** (`requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `review`, `search`, `answer`, `validate`, `explain`):
      Read `.codex/skills/modscape-spec-<topic>/SKILL.md` and provide a user-friendly summary: what it does, what it produces, and when to use it. Do not dump the raw file — summarize for a human reader.
    - If the topic is a **question or concept** (e.g. `requirements vs design`, `files`, `resume`):
      Answer it using the reference content below.
@@ -53,6 +53,7 @@ For details on any command, run `/modscape:spec:help <command>`.
 | `/modscape:spec:answer <name>` | Answer a recorded Q-NNN question |
 | `/modscape:spec:search <keyword>` | Search past archives and permanent specs |
 | `/modscape:spec:validate <name>` | Check cross-artifact consistency |
+| `/modscape:spec:explain <name>` | Explain spec content for handoff or onboarding |
 | `/modscape:spec:help [topic]` | This help |
 
 ---
