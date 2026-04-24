@@ -597,6 +597,8 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 > **過去のwork検索**: `/modscape:spec:search <keyword>`（または `modscape spec search <keyword>`）を実行すると、過去のアーカイブと永続スペックを横断検索して類似の設計・実装パターンを探せます。`--limit <n>` で結果件数を指定（デフォルト: 5）、`--json` で機械可読な出力を取得できます。
 
+> **既存PJへの導入**: `/modscape:spec:generate [files...]` を実行すると、既存の model.yaml・SQL・Python ファイルから全テーブルの `specs/<table-id>/spec.md` を一括生成できます。通常の SDD フローを開始する前に実行するベースライン整備コマンドです。既存の spec.md は上書きされません。引数を省略すると対話形式でファイルを指定できます。
+
 > **カスタマイズ**: `.modscape/changes/modscape-spec.custom.md.example` を `modscape-spec.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
 
 ### SDDワークフロー
@@ -610,6 +612,7 @@ requirements → design → implement → archive
 
 | スキル | コマンド | やること | 主な出力 |
 |--------|---------|---------|---------|
+| 一括生成 | `/modscape:spec:generate [files...]` | 既存の model.yaml・SQL・Python ファイルから `specs/<table-id>/spec.md` を一括生成 — 既存 PJ の SDD 導入時に使用 | `specs/<id>/spec.md` |
 | 要件定義 | `/modscape:spec:requirements` | ゴール・AC・Q&Aを対話的に収集 | `spec.md` |
 | 設計 | `/modscape:spec:design <name>` | 影響テーブルの特定、モデル・タスクリスト生成 | `design.md`, `tasks.md` |
 | 実装 | `/modscape:spec:implement <name>` | タスクを順に処理・コード生成 | `tasks.md`（更新） |

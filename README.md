@@ -599,6 +599,8 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Search past work**: Run `/modscape:spec:search <keyword>` (or `modscape spec search <keyword>`) to search past archives and permanent specs for similar designs and patterns. Use `--limit <n>` to control result count (default: 5). Add `--json` for machine-readable output.
 
+> **Onboarding an existing project**: Run `/modscape:spec:generate [files...]` to bulk-create `specs/<table-id>/spec.md` from existing model.yaml, SQL files, or Python models — before starting the regular SDD flow. Existing spec files are never overwritten. Omit arguments to specify files interactively.
+
 > **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
 ### SDD Workflow
@@ -612,6 +614,7 @@ requirements → design → implement → archive
 
 | Skill | Command | What it does | Main output |
 |-------|---------|-------------|-------------|
+| Generate | `/modscape:spec:generate [files...]` | Bootstrap `specs/<table-id>/spec.md` for all tables from existing model.yaml, SQL, or Python files | `specs/<id>/spec.md` |
 | Requirements | `/modscape:spec:requirements` | Collect goal, stakeholders, ACs, Q&As interactively | `spec.md` |
 | Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list | `design.md`, `tasks.md` |
 | Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code | `tasks.md` (updated) |
