@@ -49,6 +49,7 @@ For details on any command, run `/modscape:spec:help <command>`.
 
 | Command | Purpose |
 |---------|---------|
+| `/modscape:spec:generate [files...]` | Generate `specs/<table-id>/spec.md` for existing tables from model.yaml, SQL, or Python files — use this to bootstrap specs for an existing project |
 | `/modscape:spec:status <name>` | Show current progress of a work folder |
 | `/modscape:spec:review <name>` | Go/no-go review: unresolved questions, AC coverage |
 | `/modscape:spec:amend <name>` | Update artifacts when issues are found mid-implementation |

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.6] - 2026-04-23
+
+### Added
+
+- **`/modscape:spec:generate` skill** — New AI skill (Claude / Gemini / Codex) for bootstrapping permanent table specs from existing implementation artifacts. Accepts model.yaml, SQL files (DDL / dbt models), and Python files (SQLAlchemy / PySpark / pandas) as input — either as arguments or collected interactively. For each discovered table, generates `.modscape/specs/<table-id>/spec.md` using the physical table name as the ID. Existing spec files are never overwritten. Optionally updates (or creates) `model.yaml` from the same input. Outputs a summary of generated, skipped, and conflicting tables. Use this to establish a spec baseline before starting the regular SDD flow (`/modscape:spec:requirements` → `/modscape:spec:design`).
+
 ## [3.1.5] - 2026-04-23
 
 ### Removed
