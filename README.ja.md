@@ -622,6 +622,7 @@ requirements → design → implement → archive
 | 修正 | `/modscape:spec:amend <name>` | 実装中の問題を成果物に反映（任意） | — |
 | 検索 | `/modscape:spec:search <keyword>` | 過去アーカイブを横断検索（任意） | — |
 | 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答・設計影響を評価（任意） | — |
+| メモ | `/modscape:spec:note [table-id]` | 会話・Slack・会議で得た知識を `specs/<table-id>/spec.md` に追記 — アクティブなワークフロー不要（任意） | — |
 
 **例: 月次売上サマリーパイプラインを設計する場合**
 

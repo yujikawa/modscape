@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.7] - 2026-04-25
+
+### Added
+
+- **`/modscape:spec:note` skill** — New AI skill (Claude / Gemini / Codex) for capturing free-form knowledge — from conversations, Slack messages, or meetings — and appending it to `specs/<table-id>/spec.md`. Accepts an optional table ID argument; without it, the AI infers the target table(s) from the input text. Always shows a confirmation preview before writing. Maps the content to the appropriate section (`Business Rules`, `Known Issues / Caveats`, `Business Context`, or `Overview`). Runs outside the SDD implementation workflow — no active change required. If the target spec does not exist, exits with a hint to run `/modscape:spec:generate` first.
+
+### Changed
+
+- **`/modscape:spec:help` skill** — Reorganized the command reference. "Other Commands" is now split into two groups: **Workflow Support** (commands that require an active `changes/<name>/` folder: `status`, `review`, `amend`, `answer`, `validate`, `explain`) and **Standalone** (commands that work anytime without a workflow context: `generate`, `note`, `search`, `help`). Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.1.6] - 2026-04-23
 
 ### Added
