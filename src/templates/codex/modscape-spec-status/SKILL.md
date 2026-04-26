@@ -1,6 +1,6 @@
 ---
 name: modscape-spec-status
-description: Show the current status of a spec work folder — phase, file checklist, task progress, and next recommended command.
+description: Show the current status of a spec work folder — phase, file checklist, task progress, and next recommended command. Optionally show a detailed view for handoff or onboarding.
 ---
 
 # Spec Status
@@ -74,7 +74,7 @@ modscape summary <file> --json
 
 ## COMMAND: /modscape:spec:status
 
-Usage: `/modscape:spec:status <name>`
+Usage: `/modscape:spec:status <name>` or `/modscape:spec:status <name> detail`
 
 ## Next command by phase
 
@@ -84,3 +84,56 @@ Usage: `/modscape:spec:status <name>`
 | `implement` | `/modscape:spec:implement <name>` |
 | `ready to archive` | `/modscape:spec:archive <name>` |
 | Unresolved model changes | `/modscape:spec:design <name>` |
+
+---
+
+## `detail` subcommand
+
+When invoked as `/modscape:spec:status <name> detail`, run the standard status check first, then append the following detail section.
+
+### Detail instructions
+
+Read the following files if they exist:
+
+**From `spec.md`:**
+- Extract the **Why** section (background / motivation) — summarize in 2–3 sentences
+- Extract the **What Changes** section — list as bullets
+
+**From `design.md`:**
+- Extract the **Decisions** section — list each decision title and chosen approach in one line
+- Extract the **Non-Goals** section — list as bullets
+
+**From `tasks.md`:**
+- List all remaining `- [ ]` tasks with their full text, grouped by Phase section
+
+### Detail output block
+
+Append the following after the standard status block:
+
+---
+📖 Detail: `<name>`
+
+## Overview
+<2–3 sentences from spec.md's Why section. If spec.md does not exist, write "No spec.md yet.">
+
+## What Changes
+<Bullet list from spec.md's What Changes section. Omit if not available.>
+
+## Key Decisions
+<One line per decision from design.md's Decisions section: "**Decision title**: chosen approach". Write "No design decisions recorded yet." if design.md does not exist or has no Decisions section.>
+
+## Non-Goals
+<Bullet list from design.md's Non-Goals. Omit if not present.>
+
+## Remaining Tasks
+<List all `- [ ]` lines from tasks.md, grouped under their Phase headings. Write "All tasks complete." if none remain.>
+
+## Handoff Notes
+**Next step:**
+```
+<the appropriate next command based on current phase>
+```
+<If any `- [ ]` tasks remain, add: "Pick up from the first remaining task above.">
+<If design.md has entries under `## Findings > ### Requires Model Change`, add:>
+⚠️  Unresolved model changes in `design.md → Findings → Requires Model Change`. Run `/modscape:spec:design <name>` before implementing.
+---
