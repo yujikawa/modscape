@@ -587,11 +587,9 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
         └── questions.md           ← テーブル単位 Q&A 履歴
     ```
 
-> **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。
+> **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。引き継ぎや onboarding 用の詳細表示は `detail` を追加: `/modscape:spec:status <name> detail`。
 
-> **実装前のレビュー**: `/modscape:spec:review <name>` を実行すると go/no-go サマリーを確認できます — 未解決の質問・仮定・ACカバレッジ・分類確信度の低いテーブルを一覧表示。実装の進行はブロックしません。
-
-> **整合性チェック**: `/modscape:spec:validate <name>` を実行すると全アーティファクト横断の整合性チェックを行えます — spec.md ↔ design.md、design.md ↔ spec-model.yaml、design.md ↔ tasks.md、questions.md ↔ design.md の矛盾・抜け・ズレをカテゴリ別に報告します。
+> **実装前の品質チェック**: `/modscape:spec:check <name>` を実行すると、全アーティファクト横断の整合性チェック（spec ↔ design ↔ model ↔ tasks）と go/no-go 判断（未解決の質問・仮定・AC カバレッジ・分類確信度）を一度に確認できます。実装の進行はブロックしません。
 
 > **実装中のトラブル対応**: `/modscape:spec:amend <name>` を実行すると、実装中に発覚した問題（カラム名の誤り・JOIN キーの相違・想定外の NULL など）を SDD 成果物に反映できます。エラーを貼り付けるか問題を自由記述で渡すと、AI が `spec.md`・`design.md`・`tasks.md`・`questions.md` を差分更新します。完了済みタスクは保持されます。
 
@@ -607,7 +605,7 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 requirements → design → implement → archive
                  ↑↓          ↑
              (再実行)    (amend)
-         → review（任意）↗
+         → check（任意）↗
 ```
 
 | スキル | コマンド | やること | 主な出力 |
@@ -617,8 +615,7 @@ requirements → design → implement → archive
 | 設計 | `/modscape:spec:design <name>` | 影響テーブルの特定、モデル・タスクリスト生成 | `design.md`, `tasks.md` |
 | 実装 | `/modscape:spec:implement <name>` | タスクを順に処理・コード生成 | `tasks.md`（更新） |
 | アーカイブ | `/modscape:spec:archive <name>` | 本番マージ・spec永続化 | `specs/<id>/spec.md`, `_context.yaml` |
-| レビュー | `/modscape:spec:review <name>` | 実装前の go/no-go チェック（任意） | — |
-| バリデート | `/modscape:spec:validate <name>` | 全アーティファクト横断の整合性チェック（任意） | — |
+| チェック | `/modscape:spec:check <name>` | 実装前の品質チェック：整合性 + go/no-go 判断（任意） | — |
 | 修正 | `/modscape:spec:amend <name>` | 実装中の問題を成果物に反映（任意） | — |
 | 検索 | `/modscape:spec:search <keyword>` | 過去アーカイブを横断検索（任意） | — |
 | 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答・設計影響を評価（任意） | — |

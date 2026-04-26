@@ -589,11 +589,9 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
        └── questions.md           ← Q&A history for this table
    ```
 
-> **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command.
+> **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command. Add `detail` for a narrative view suitable for handoff: `/modscape:spec:status <name> detail`.
 
-> **Review before implementing**: Run `/modscape:spec:review <name>` after design to get a go/no-go summary — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
-
-> **Validate consistency**: Run `/modscape:spec:validate <name>` to check cross-artifact consistency — spec.md ↔ design.md, design.md ↔ spec-model.yaml, design.md ↔ tasks.md, and questions.md ↔ design.md. Reports mismatches, gaps, and drift by category.
+> **Pre-implement quality check**: Run `/modscape:spec:check <name>` before implementing. Part 1 checks cross-artifact consistency (spec ↔ design ↔ model ↔ tasks); Part 2 evaluates go/no-go readiness — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
 
 > **Fix issues mid-implementation**: Run `/modscape:spec:amend <name>` whenever you discover a problem (wrong column name, broken JOIN key, unexpected NULL, etc.). Paste the error or describe the issue in free text — the AI updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks are always preserved.
 
@@ -609,7 +607,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 requirements → design → implement → archive
                  ↑↓          ↑
              (re-run)    (amend)
-         → review (optional) ↗
+         → check (optional) ↗
 ```
 
 | Skill | Command | What it does | Main output |
@@ -619,8 +617,7 @@ requirements → design → implement → archive
 | Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list | `design.md`, `tasks.md` |
 | Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code | `tasks.md` (updated) |
 | Archive | `/modscape:spec:archive <name>` | Merge to main model, persist permanent specs | `specs/<id>/spec.md`, `_context.yaml` |
-| Review | `/modscape:spec:review <name>` | Go/no-go check before implementing (optional) | — |
-| Validate | `/modscape:spec:validate <name>` | Cross-artifact consistency check — spec ↔ design ↔ model ↔ tasks (optional) | — |
+| Check | `/modscape:spec:check <name>` | Pre-implement quality check: consistency + go/no-go readiness (optional) | — |
 | Amend | `/modscape:spec:amend <name>` | Patch artifacts when issues are found mid-implementation (optional) | — |
 | Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
 | Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question and assess design impact (optional) | — |

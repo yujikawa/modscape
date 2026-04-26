@@ -8,9 +8,21 @@ All notable changes to this project will be documented in this file.
 
 - **`/modscape:spec:note` skill** — New AI skill (Claude / Gemini / Codex) for capturing free-form knowledge — from conversations, Slack messages, or meetings — and appending it to `specs/<table-id>/spec.md`. Accepts an optional table ID argument; without it, the AI infers the target table(s) from the input text. Always shows a confirmation preview before writing. Maps the content to the appropriate section (`Business Rules`, `Known Issues / Caveats`, `Business Context`, or `Overview`). Runs outside the SDD implementation workflow — no active change required. If the target spec does not exist, exits with a hint to run `/modscape:spec:generate` first.
 
+- **`/modscape:spec:check` skill** — New AI skill (Claude / Gemini / Codex) that combines the former `review` and `validate` commands into a single pre-implementation quality check. Part 1 (Consistency) runs cross-artifact checks across `spec.md`, `design.md`, `tasks.md`, `spec-model.yaml`, and `questions.md` — flagging missing table classifications, untracked model changes, Direct Impact tables with no tasks, and unresolved questions without recorded assumptions. Part 2 (Readiness) evaluates go/no-go criteria: unresolved questions, assumptions, AC coverage, and downstream classification confidence. Outputs a combined report with an overall status: ✅ ready, ⚠️ proceed with caution, or 🚫 blocking issues.
+
 ### Changed
 
-- **`/modscape:spec:help` skill** — Reorganized the command reference. "Other Commands" is now split into two groups: **Workflow Support** (commands that require an active `changes/<name>/` folder: `status`, `review`, `amend`, `answer`, `validate`, `explain`) and **Standalone** (commands that work anytime without a workflow context: `generate`, `note`, `search`, `help`). Updated for all three AI platforms (Claude / Gemini / Codex).
+- **`/modscape:spec:status` skill** — Added a `detail` subcommand (`/modscape:spec:status <name> detail`). Running with `detail` outputs the standard status dashboard followed by a narrative section covering: Overview (Why/purpose from `spec.md`), What Changes, Key Decisions (from `design.md`), Non-Goals, and Remaining Tasks grouped by phase. Replaces the standalone `explain` skill for handoff and onboarding use cases. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`/modscape:spec:help` skill** — Updated the Workflow Support command table to reflect the merged skill set: replaced `review`, `validate`, and `explain` entries with `check` and `status <name> detail`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+### Removed
+
+- **`/modscape:spec:review` skill** — Removed. Go/no-go readiness checks (unresolved questions, assumptions, AC coverage, downstream classification confidence) are now part of `/modscape:spec:check` (Part 2: Readiness).
+
+- **`/modscape:spec:validate` skill** — Removed. Cross-artifact consistency checks are now part of `/modscape:spec:check` (Part 1: Consistency).
+
+- **`/modscape:spec:explain` skill** — Removed. Handoff and onboarding output is now available via `/modscape:spec:status <name> detail`.
 
 ## [3.1.6] - 2026-04-23
 

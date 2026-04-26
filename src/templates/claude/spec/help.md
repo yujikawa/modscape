@@ -12,7 +12,7 @@ Display the SDD workflow overview, or answer a specific question about the workf
 ## Instructions
 
 1. If an argument is provided:
-   - If the topic is a **command name** (`requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `review`, `search`, `answer`, `validate`, `explain`, `generate`, `note`):
+   - If the topic is a **command name** (`requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `check`, `search`, `answer`, `generate`, `note`):
      Read `.claude/commands/modscape/spec/<topic>.md` and provide a user-friendly summary: what it does, what it produces, and when to use it. Do not dump the raw file — summarize for a human reader.
    - If the topic is a **question or concept** (e.g. `requirements vs design`, `files`, `resume`):
      Answer it using the reference content below.
@@ -52,11 +52,10 @@ These commands assist during an active SDD workflow. They require a `changes/<na
 | Command | Purpose |
 |---------|---------|
 | `/modscape:spec:status <name>` | Show current progress of a work folder |
-| `/modscape:spec:review <name>` | Go/no-go review: unresolved questions, AC coverage |
+| `/modscape:spec:status <name> detail` | Detailed view for handoff or onboarding |
+| `/modscape:spec:check <name>` | Pre-implement quality check: consistency + go/no-go readiness |
 | `/modscape:spec:amend <name>` | Update artifacts when issues are found mid-implementation |
 | `/modscape:spec:answer <name>` | Answer a recorded Q-NNN question |
-| `/modscape:spec:validate <name>` | Check cross-artifact consistency |
-| `/modscape:spec:explain <name>` | Explain spec content for handoff or onboarding |
 
 ## Standalone Commands
 
