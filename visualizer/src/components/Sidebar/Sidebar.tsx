@@ -86,9 +86,12 @@ const Sidebar = memo(() => {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab Content — StatsTab stays mounted to preserve state across tab switches */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden mt-4">
-          {safeTab === 'stats' ? <StatsTab /> : <EditorTab />}
+          <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${safeTab !== 'stats' ? 'hidden' : ''}`}>
+            <StatsTab />
+          </div>
+          {safeTab === 'yaml' && <EditorTab />}
         </div>
 
         {/* Footer */}
@@ -96,7 +99,7 @@ const Sidebar = memo(() => {
           theme === 'dark' ? 'border-slate-800 bg-slate-950/20' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <p className="text-[10px] text-slate-500 font-medium px-1">
-            Modscape v3.1.5
+            Modscape v3.2.0
           </p>
         </div>
       </div>

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2026-04-26
+
+### Added
+
+- **`modscape coverage` CLI command** — New command that outputs model statistics (table count, relationship count, lineage edge count, isolated tables) and documentation coverage (table description rate, column type rate, overall score) for any model YAML file. Accepts `--min-coverage <N>` to exit 1 when overall coverage falls below the threshold (CI/CD gate), and `--json` for machine-readable output. Works on both main model files and SDD spec-model files.
+
+- **Documentation Coverage section in Model Stats tab** — New section in the right panel's Model Stats tab. Triggered by a manual "Calculate Coverage" button to avoid any impact on graph rendering performance. Displays overall coverage score with color coding (green ≥ 70%, amber ≥ 40%, red < 40%), per-category breakdown (tables/columns), and a list of low-coverage tables sorted by score. Clicking a table row focuses the canvas on that table. Results are reset when the schema changes.
+
+- **Coverage Policy support in SDD skills** — When `.modscape/modscape-spec.custom.md` contains a `## Coverage Policy` section with a minimum threshold (e.g., `Minimum documentation coverage: 70%`), the `/modscape:spec:check` skill now shows a Documentation Coverage section in Part 2: Readiness, and the `/modscape:spec:archive` skill runs a coverage gate before merging — prompting for confirmation if the threshold is not met. Coverage checks are completely skipped when no policy is configured (zero impact on existing projects). Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **Coverage Policy section in `modscape-spec.custom.md.example`** — The example custom rules template now includes a commented-out `## Coverage Policy` section showing how to enable per-project coverage enforcement.
+
 ## [3.1.7] - 2026-04-25
 
 ### Added

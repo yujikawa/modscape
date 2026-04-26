@@ -93,6 +93,13 @@ D-1. Unresolved questions recorded as assumptions
 - Scan `design.md` for tables marked with low confidence
 - List those table IDs
 
+**Documentation Coverage** (only when `modscape-spec.custom.md` has a `## Coverage Policy` section with a minimum threshold)
+- Read `.modscape/modscape-spec.custom.md` and extract the minimum coverage value from `## Coverage Policy` (pattern: `Minimum documentation coverage: <N>%`)
+- If found, run: `modscape coverage .modscape/changes/<name>/spec-model.yaml`
+- Parse the output and display per-table coverage
+- Flag tables below the threshold with ⚠️
+- If `modscape-spec.custom.md` does not exist or has no Coverage Policy: skip this section entirely
+
 ---
 
 3. Display the combined report:

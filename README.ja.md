@@ -448,6 +448,20 @@ modscape validate model.yaml
 modscape validate model.yaml --json
 ```
 
+### カバレッジ
+
+YAMLモデルファイルのモデル統計とドキュメント充足率を表示します。メインモデルおよびSDD作業用YAMLの両方に適用できます。
+
+```bash
+modscape coverage model.yaml
+
+# 総合カバレッジが閾値を下回る場合 exit 1（CI/CDゲートとして利用可能）
+modscape coverage model.yaml --min-coverage 70
+
+# 機械可読出力
+modscape coverage model.yaml --json
+```
+
 ---
 
 ## アトミックモデル操作コマンド

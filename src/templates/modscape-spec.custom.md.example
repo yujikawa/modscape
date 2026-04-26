@@ -78,3 +78,12 @@
 # - Fact: fct_<event>
 # - Dimension: dim_<entity>
 # - Mart: mart_<domain>_<metric>
+
+## Coverage Policy
+
+# Minimum documentation coverage threshold (0-100).
+# When set, /modscape:spec:check shows a coverage warning for tables below this threshold,
+# and /modscape:spec:archive prompts for confirmation before merging if coverage is below it.
+# Remove or comment out this section to disable coverage checks entirely.
+#
+# - Minimum documentation coverage: 70%

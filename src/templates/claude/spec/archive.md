@@ -105,6 +105,20 @@ modscape summary <file> --json
    modscape validate <master>.yaml
    ```
 
+7.5. **Coverage gate** (only when `modscape-spec.custom.md` has a `## Coverage Policy` section):
+   - Read `.modscape/modscape-spec.custom.md` and extract the minimum coverage value (pattern: `Minimum documentation coverage: <N>%`)
+   - If found, run:
+     ```bash
+     modscape coverage .modscape/changes/<name>/spec-model.yaml
+     ```
+   - If overall coverage is below the threshold, display:
+     > ⚠ Coverage: <actual>% < <threshold>% (threshold). Proceed anyway? (y/N)
+   - Wait for user input:
+     - If `y`: record the warning and continue to Step 3
+     - If `N` (or anything else): display `Archive cancelled.` and stop — do NOT modify main YAML
+   - If coverage meets the threshold: display `Coverage OK: <actual>% >= <threshold>%` and continue
+   - If `modscape-spec.custom.md` does not exist or has no Coverage Policy: skip this step entirely
+
 ### Step 3: Sync permanent table specs
 
 8. Use the **affected tables classification** built in step 2 above.

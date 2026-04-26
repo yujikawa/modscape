@@ -450,6 +450,20 @@ modscape validate model.yaml
 modscape validate model.yaml --json
 ```
 
+### Coverage
+
+Show model statistics and documentation coverage for a YAML model file. Works on any model YAML (main model or SDD spec-model).
+
+```bash
+modscape coverage model.yaml
+
+# Exit 1 if overall coverage is below threshold (useful in CI/CD)
+modscape coverage model.yaml --min-coverage 70
+
+# Machine-readable output
+modscape coverage model.yaml --json
+```
+
 ---
 
 ## Atomic Model Mutation Commands

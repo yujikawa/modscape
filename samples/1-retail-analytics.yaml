@@ -119,6 +119,7 @@ tables:
     conceptual:
       name: Customer Profile
       kind: satellite
+      description: Customer profile
     physical:
       name: sat_customer_profile
     display:
@@ -152,6 +153,7 @@ tables:
     conceptual:
       name: Product Details
       kind: satellite
+      description: Product table
     physical:
       name: sat_product_details
     display:
@@ -185,6 +187,7 @@ tables:
     conceptual:
       name: Order Header
       kind: satellite
+      description: 'Order '
     physical:
       name: sat_order_header
     display:
