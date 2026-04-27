@@ -16,6 +16,7 @@ import { mergeModels } from './merge.js';
 import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
 import { runValidate } from './validate.js';
+import { runCoverage } from './coverage.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
 import { runSearch } from './search.js';
@@ -163,6 +164,17 @@ program
   .option('--json', 'output as JSON')
   .action((file, opts) => {
     runValidate(file, opts);
+  });
+
+program
+  .command('coverage')
+  .description('Show model stats and documentation coverage for a YAML model file')
+  .argument('<file>', 'path to the YAML model file')
+  .option('--min-coverage <n>', 'exit 1 if overall coverage is below this threshold (%)', (v) => parseInt(v, 10))
+  .option('--json', 'output as JSON')
+  .action((file, opts) => {
+    const code = runCoverage(file, { minCoverage: opts.minCoverage, json: opts.json });
+    if (code !== 0) process.exit(code);
   });
 
 const specCommand = program

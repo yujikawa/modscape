@@ -88,6 +88,13 @@ D-1. Unresolved questions recorded as assumptions
 - Scan `design.md` for tables marked with low confidence (text like "confidence is low" or "classification confidence is low")
 - List those table IDs
 
+**Documentation Coverage** (only when `modscape-spec.custom.md` has a `## Coverage Policy` section with a minimum threshold)
+- Read `.modscape/modscape-spec.custom.md` and extract the minimum coverage value from `## Coverage Policy` (pattern: `Minimum documentation coverage: <N>%`)
+- If found, run: `modscape coverage .modscape/changes/<name>/spec-model.yaml`
+- Parse the output and display per-table coverage
+- Flag tables below the threshold with ⚠️
+- If `modscape-spec.custom.md` does not exist or has no Coverage Policy: skip this section entirely
+
 ---
 
 3. Display the combined report:
@@ -135,6 +142,11 @@ D-1. Unresolved questions recorded as assumptions
 
 #### Downstream Classification (Low Confidence)
 - `dim_customer`: lineage only — Context Only (low confidence)
+
+#### Documentation Coverage
+⚠️  fct_orders: table 0%, columns 40% (below 70% threshold)
+✅  dim_customers: table 100%, columns 85%
+⏭ skipped — no Coverage Policy set in modscape-spec.custom.md
 ```
 
 4. Evaluate overall status:

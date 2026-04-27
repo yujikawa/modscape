@@ -947,6 +947,26 @@ Checks performed:
 - Broken references in `relationships`, `lineage`, `domains.members`, and `layout`
 - Orphaned `layout` entries (keys not found in tables or domains)
 
+### 12-5b. Coverage Check
+
+Check documentation coverage of a model YAML file (works on any model YAML including SDD spec-model):
+
+```bash
+modscape coverage model.yaml                    # Human-readable output
+modscape coverage model.yaml --min-coverage 70  # Exit 1 if below threshold
+modscape coverage model.yaml --json             # Machine-readable output
+```
+
+Coverage metrics:
+- **Table coverage**: % of tables with `conceptual.description` defined
+- **Column coverage**: % of columns with `type` defined
+- **Overall**: average of both
+
+During SDD workflow, run on the spec-model before archiving:
+```bash
+modscape coverage .modscape/changes/<name>/spec-model.yaml
+```
+
 ### 12-6. Reading Model Information
 
 When investigating or querying a YAML model, always prefer modscape CLI commands over `grep` / `cat` / direct file reads:

@@ -39,9 +39,18 @@ test.describe.serial('Modscape Main E2E Suite', () => {
     // Default tab should be YAML viewer
     await expect(page.locator('.cm-editor')).toBeVisible();
 
-    // Switch to Stats tab
+    // Switch to Stats tab — initially shows Calculate Stats button (no auto-calculation)
     await page.getByRole('button', { name: 'Stats' }).click();
+    const calcBtn = page.getByRole('button', { name: /Calculate Stats/i });
+    await calcBtn.scrollIntoViewIfNeeded();
+    await expect(calcBtn).toBeVisible();
+
+    // Click to calculate and verify Overview + Recalculate appear
+    await calcBtn.click();
     await expect(page.locator('text=Overview')).toBeVisible();
+    const recalculateBtn = page.getByRole('button', { name: /Recalculate/i });
+    await recalculateBtn.scrollIntoViewIfNeeded();
+    await expect(recalculateBtn).toBeVisible();
 
     // Switch back to YAML tab
     await page.getByRole('button', { name: 'YAML' }).click();

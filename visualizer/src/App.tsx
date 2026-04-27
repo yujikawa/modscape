@@ -362,7 +362,6 @@ function Flow() {
   return (
     <div className="flex-1 relative h-full flex flex-col overflow-hidden">
       <div className="flex-1 relative overflow-hidden">
-        <SelectionToolbar />
         <TerminalBar />
         <CanvasViewToolbar />
 
@@ -431,6 +430,7 @@ function Flow() {
             onAutoLayout={handleAutoLayout}
           />
         )}
+        <SelectionToolbar />
         <DetailPanel />
       </div>
     </div>
