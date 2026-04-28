@@ -160,6 +160,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
     modscape validate .modscape/changes/<name>/spec-model.yaml
     ```
 
+14.5. **Check `spec.md` Acceptance Criteria for consistency** (run after every `spec-model.yaml` change):
+
+   Read `.modscape/changes/<name>/spec.md` and extract all `AC-NNN:` entries. For each changed table or column, check whether any AC references it and whether the change contradicts the AC.
+
+   - **Contradiction found**: Fix `spec.md` inline — update the relevant AC to reflect the actual state. Do NOT renumber AC IDs. Note the change in the ripple-effect report as `spec.md: ✅ 更新済み`.
+   - **No contradiction**: Note in the ripple-effect report as `spec.md: ✅ 影響なし`.
+   - **spec.md does not exist**: Skip silently.
+
 15. Write `.modscape/changes/<name>/design.md` using the format below.
     - On first run: create with design decisions and affected tables. Initialize `## Findings` with empty subsections.
     - On re-run: preserve `## Findings` content; update `## Design Decisions` and `## Affected Tables` only.
@@ -259,6 +267,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ---
 ✅ Design updated. `spec-model.yaml` and `design.md` are current.
+
+## 波及確認レポート
+
+| ファイル | 状態 | 内容 |
+|---|---|---|
+| spec.md | ✅ 影響なし / ✅ 更新済み | <変更した AC の番号と内容、または「影響なし」> |
+| design.md | ✅ 更新済み | <更新内容の概要> |
+| spec-model.yaml | ✅ 更新済み | <変更テーブル・変更内容の概要> |
 
 ## Review Checkpoint
 

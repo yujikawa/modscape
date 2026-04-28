@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.1] - 2026-04-28
+
+### Changed
+
+- **`/modscape:spec:amend` skill** — Extended to also update `spec-model.yaml` when a finding involves a column-level change (type, constraint, name, description). Findings are now classified as either **軽微な修正**（列レベルの変更）or **設計変更**（テーブル追加・削除・lineage 変更）. Lightweight fixes are applied inline via mutation CLI + `modscape validate`; structural changes prompt for confirmation and guide the user to re-run `/modscape:spec:design`. All runs now output a **波及確認レポート** (ripple-effect report) summarising the state of all three core artifacts (`spec.md` / `design.md` / `spec-model.yaml`) after each change. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`/modscape:spec:design` skill** — Added a consistency check step (step 14.5) that runs after every `spec-model.yaml` change: reads `spec.md` Acceptance Criteria, identifies any contradiction with the updated model, and fixes `spec.md` inline if needed. Also added a **波及確認レポート** to the mandatory Next Step output block, showing the state of all three core artifacts. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`/modscape:spec:implement` skill** — Rewrote the "If You Discover Issues During Implementation" section to support **inline finding handling** without requiring a command switch. When a user reports a problem in plain conversation during an implementation session, the skill classifies it as lightweight or structural, applies lightweight fixes immediately to all three core artifacts (`spec-model.yaml` → `spec.md` → `design.md` Findings), outputs a **波及確認レポート（インライン修正）**, and continues implementation — or records the finding in `design.md` and pauses for `/modscape:spec:design` re-run if the fix requires structural changes. Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.2.0] - 2026-04-28
 
 ### Added
