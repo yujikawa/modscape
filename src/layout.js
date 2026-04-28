@@ -96,8 +96,13 @@ export function applyLayout(inputPath, options = {}) {
   const newLayout = {};
   const PAD = 48;
   const TABLE_W = 280;
-  const TABLE_H = 240;
-  const GAP = 80;
+  const GAP = 40;
+
+  const estimateTableHeight = (tableId) => {
+    const table = schema.tables.find(t => t.id === tableId);
+    const colCount = table?.columns?.length ?? 0;
+    return 44 + colCount * 36;
+  };
 
   // Process Domains (Grid packing)
   if (domains.length > 0) {
@@ -111,19 +116,32 @@ export function applyLayout(inputPath, options = {}) {
       const cols = Math.min(3, Math.ceil(Math.sqrt(members.length)));
       const rowCount = Math.ceil(members.length / cols);
 
+      const rowH = Array.from({ length: rowCount }, (_, row) => {
+        let max = 0;
+        for (let c = 0; c < cols; c++) {
+          const m = members[row * cols + c];
+          if (m) max = Math.max(max, estimateTableHeight(m));
+        }
+        return max;
+      });
+
       const gridW = cols * (TABLE_W + GAP) - GAP;
-      const gridH = rowCount * (TABLE_H + GAP) - GAP;
+      const gridH = rowH.reduce((s, h) => s + h + GAP, 0) - GAP;
 
       const cx = members.reduce((s, mid) => s + g.node(mid).x, 0) / members.length;
       const cy = members.reduce((s, mid) => s + g.node(mid).y, 0) / members.length;
       const originX = cx - gridW / 2;
       const originY = cy - gridH / 2;
 
+      let rowStartY = 0;
       members.forEach((mid, idx) => {
         const col = idx % cols;
         const row = Math.floor(idx / cols);
+        if (col === 0 && row > 0) {
+          rowStartY += rowH[row - 1] + GAP;
+        }
         const xOff = col * (TABLE_W + GAP) + TABLE_W / 2;
-        const yOff = row * (TABLE_H + GAP) + TABLE_H / 2;
+        const yOff = rowStartY + rowH[row] / 2;
         newLayout[mid] = {
           x: Math.round(originX + xOff),
           y: Math.round(originY + yOff),
@@ -182,13 +200,15 @@ export function applyLayout(inputPath, options = {}) {
   if (standaloneIsolated.length > 0) {
     const ISOLATED_COLS = Math.min(4, Math.ceil(Math.sqrt(standaloneIsolated.length)));
     const gridStartX = allPlaced.length > 0 ? Math.round(minX) : 0;
-    const gridStartY = allPlaced.length > 0 ? Math.round(maxY + TABLE_H + GAP * 3) : 0;
+    const maxH = standaloneIsolated.reduce((m, t) => Math.max(m, estimateTableHeight(t.id)), 0);
+    const gridStartY = allPlaced.length > 0 ? Math.round(maxY + maxH + GAP * 3) : 0;
     standaloneIsolated.forEach((t, idx) => {
       const col = idx % ISOLATED_COLS;
       const row = Math.floor(idx / ISOLATED_COLS);
+      const h = estimateTableHeight(t.id);
       newLayout[t.id] = {
         x: Math.round(gridStartX + col * (TABLE_W + GAP) + TABLE_W / 2),
-        y: Math.round(gridStartY + row * (TABLE_H + GAP) + TABLE_H / 2),
+        y: Math.round(gridStartY + row * (maxH + GAP) + h / 2),
       };
     });
   }

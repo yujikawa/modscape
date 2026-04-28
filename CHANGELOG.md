@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
 
 - **`/modscape:spec:implement` skill** — Rewrote the "If You Discover Issues During Implementation" section to support **inline finding handling** without requiring a command switch. When a user reports a problem in plain conversation during an implementation session, the skill classifies it as lightweight or structural, applies lightweight fixes immediately to all three core artifacts (`spec-model.yaml` → `spec.md` → `design.md` Findings), outputs a **波及確認レポート（インライン修正）**, and continues implementation — or records the finding in `design.md` and pauses for `/modscape:spec:design` re-run if the fix requires structural changes. Updated for all three AI platforms (Claude / Gemini / Codex).
 
+- **`modscape layout` CLI command** — Fixed a discrepancy between CLI and UI layout results. `GAP` was corrected from 80 to 40 to match the visualizer. Table height is now estimated from column count (`44 + columns × 36px`) instead of a fixed 240px, and domain grid rows use per-row variable heights — matching the UI's DOM-measured approach. Isolated standalone tables also use the estimated height for their grid anchor.
+
+- **`conceptual.kind` free-form input** — The Kind field in the Detail Panel now accepts any free-form string in addition to the preset options (fact / dimension / mart / table / hub / link / satellite). A datalist dropdown still surfaces the standard choices, but custom values such as `ephemeral`, `seed`, or `snapshot` can be typed in directly. Updated `rules.md` to document this behavior.
+
 ## [3.2.0] - 2026-04-28
 
 ### Added

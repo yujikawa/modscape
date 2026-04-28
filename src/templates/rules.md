@@ -69,6 +69,8 @@ conceptual:
 
 **`conceptual.kind` values:**
 
+`kind` accepts any free-form string. The following values have well-known semantics; use them when they fit, or supply a custom value (e.g. `ephemeral`, `seed`, `snapshot`) when they do not.
+
 | kind | Use when... |
 |------|-------------|
 | `fact` | Events, transactions, measurements. Has measures (numbers) and FK columns. |
