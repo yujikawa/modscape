@@ -117,21 +117,54 @@ When `logical.scd.type: type2` but `business_key`/`valid_from`/`valid_to` are ab
 
 ## If You Discover Issues During Implementation
 
-If running the pipeline reveals unexpected results (wrong grain, high NULL rate, upstream data issues, etc.):
+When the user reports a problem during the implementation session — whether via a command or **in plain conversation** ("this column was wrong", "the type is different") — treat it as a finding and handle it inline without requiring a command switch.
 
-1. Add the finding to `.modscape/changes/<name>/design.md` under the `## Findings` section
-2. Re-run `/modscape:spec:design <name>` to update the design and regenerate pending tasks
-3. Resume implementation with the updated task list
+**判断基準 — 軽微な修正 vs 設計変更:**
+- **軽微な修正**: 列の型・制約・名前・説明の変更、AC の文言修正、JOIN キーの修正。`spec-model.yaml` の構造（テーブル数・lineage・relationships）は変わらない。
+- **設計変更**: テーブルの追加・削除、lineage の変更、grain の変更、`spec-model.yaml` の構造に影響する変更。
 
-**When notifying the user of a discovered issue, always output:**
+### 軽微な修正の場合（コマンド不要・実装継続）
+
+1. **`spec-model.yaml` を即時修正** — mutation CLI で変更し validate を実行する:
+   ```bash
+   modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>
+   modscape validate .modscape/changes/<name>/spec-model.yaml
+   ```
+2. **`spec.md` の AC を確認** — 変更に矛盾する AC があれば即時修正する。Do NOT renumber AC IDs.
+3. **`design.md` の Findings に記録** — `## Findings > ### Implementation Notes` に追記する:
+   ```
+   - `<table-id>`: <発見内容と修正内容> (amended <YYYY-MM-DD>)
+   ```
+4. **波及確認レポートを出力**する（フォーマットは下記）。
+5. **実装を継続する** — 次のタスクへ進む。
+
+### 設計変更の場合（実装中断・design 再実行）
+
+1. **`design.md` の `## Findings > ### Requires Model Change` に記録**する:
+   ```
+   - `<table-id>`: <発見内容と必要な変更>
+   ```
+2. **実装を中断**し、ユーザーに通知する。
+3. **`spec-model.yaml` は変更しない** — 設計変更は design 再実行後に適用する。
+
+**発見時の出力フォーマット:**
 
 ---
-⚠️ Issue found during implementation: <issue description>
+⚠️ 実装中に発見しました: <issue description>
 
-**Next step:**
-1. Add the following to `### Requires Model Change` in `.modscape/changes/<name>/design.md`:
-   `- <table-id>: <issue and proposed fix>`
-2. Then re-run:
+**分類:** 軽微な修正 / 設計変更
+
+## 波及確認レポート（インライン修正）
+
+| ファイル | 状態 | 内容 |
+|---|---|---|
+| spec.md | ✅ 影響なし / ✅ 更新済み | <変更した AC または「影響なし」> |
+| design.md | ✅ 更新済み | <Findings に追記した内容> |
+| spec-model.yaml | ✅ 更新済み / ⏸ 保留（設計変更のため design 再実行が必要） | <変更内容または保留理由> |
+
+*(軽微な修正の場合)* → 実装を継続します。
+
+*(設計変更の場合)* → 実装を中断します。次のステップ:
 ```
 /modscape:spec:design <name>
 ```

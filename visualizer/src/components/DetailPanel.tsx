@@ -1112,25 +1112,27 @@ const DetailPanel = memo(() => {
 
         {/* Quick Access Metadata Selectors */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-          <select
+          <input
+            list="kind-options"
             value={table!.conceptual?.kind || ''}
             onChange={(e) => handleUpdateTable({ conceptual: { ...table!.conceptual, kind: (e.target.value || undefined) as any } })}
-            className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors ${
+            placeholder="Kind"
+            className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors w-28 ${
               theme === 'dark'
                 ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                 : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
             }`}
             title="Table Kind"
-          >
-            <option value="">- Kind -</option>
-            <option value="fact">Fact</option>
-            <option value="dimension">Dimension</option>
-            <option value="mart">Mart</option>
-            <option value="table">Table</option>
-            <option value="hub">Hub</option>
-            <option value="link">Link</option>
-            <option value="satellite">Satellite</option>
-          </select>
+          />
+          <datalist id="kind-options">
+            <option value="fact" />
+            <option value="dimension" />
+            <option value="mart" />
+            <option value="table" />
+            <option value="hub" />
+            <option value="link" />
+            <option value="satellite" />
+          </datalist>
 
           <select
             value={table!.logical?.scd?.type || ''}
