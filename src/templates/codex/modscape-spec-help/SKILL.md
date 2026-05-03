@@ -10,7 +10,7 @@ Display the SDD workflow overview, or answer a specific question about the workf
 ## Instructions
 
 1. If an argument is provided:
-   - If the topic is a **command name** (`requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `check`, `search`, `answer`, `generate`, `note`):
+   - If the topic is a **command name** (`requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `check`, `search`, `answer`, `generate`, `note`, `save`):
      Read `.codex/skills/modscape-spec-<topic>/SKILL.md` and provide a user-friendly summary: what it does, what it produces, and when to use it. Do not dump the raw file — summarize for a human reader.
    - If the topic is a **question or concept** (e.g. `requirements vs design`, `files`, `resume`):
      Answer it using the reference content below.
@@ -54,6 +54,7 @@ These commands assist during an active SDD workflow. They require a `changes/<na
 | `/modscape:spec:check <name>` | Pre-implement quality check: consistency + go/no-go readiness |
 | `/modscape:spec:amend <name>` | Update artifacts when issues are found mid-implementation |
 | `/modscape:spec:answer <name>` | Answer a recorded Q-NNN question |
+| `/modscape:spec:save <name>` | Save session state (decisions, open questions, next action) to `session.md` for later resumption |
 
 ## Standalone Commands
 

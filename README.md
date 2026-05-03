@@ -655,6 +655,8 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command. Add `detail` for a narrative view suitable for handoff: `/modscape:spec:status <name> detail`.
 
+> **Save your session**: Run `/modscape:spec:save <name>` before ending a work session during requirements, design, or amend. The saved state (decisions made, open questions, next action) is shown the next time you run `/modscape:spec:status <name>`.
+
 > **Pre-implement quality check**: Run `/modscape:spec:check <name>` before implementing. Part 1 checks cross-artifact consistency (spec ↔ design ↔ model ↔ tasks); Part 2 evaluates go/no-go readiness — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
 
 > **Fix issues mid-implementation**: Run `/modscape:spec:amend <name>` whenever you discover a problem (wrong column name, broken JOIN key, unexpected NULL, etc.). Paste the error or describe the issue in free text — the AI updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks are always preserved.
@@ -686,6 +688,7 @@ requirements → design → implement → archive
 | Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
 | Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question and assess design impact (optional) | — |
 | Note | `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to `specs/<table-id>/spec.md` — no active workflow required (optional) | — |
+| Save | `/modscape:spec:save <name>` | Save the current session state (decisions, open questions, next action) to `session.md` for later resumption (optional) | `session.md` |
 
 **Example: designing a monthly sales summary pipeline**
 

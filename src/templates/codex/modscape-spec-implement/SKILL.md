@@ -191,4 +191,6 @@ Usage: `/modscape:spec:implement <name> [path/to/model.yaml]`
 ✅ Task complete: `<task description>`
 
 <n> tasks remaining. Ready to continue?
+
+🔖 To pause and resume later, run `/modscape:spec:save <name>`.
 ---

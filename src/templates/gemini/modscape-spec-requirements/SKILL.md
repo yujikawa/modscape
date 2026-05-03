@@ -174,4 +174,6 @@ main_yamls:
 ```
 @modscape-spec-design <name>
 ```
+
+🔖 To pause and resume later, run `@modscape-spec-save <name>`.
 ---

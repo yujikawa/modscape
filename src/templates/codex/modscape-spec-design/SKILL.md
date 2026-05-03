@@ -263,4 +263,6 @@ modscape dev .modscape/changes/<name>/spec-model.yaml
 ```
 
 If you discover issues, add them to `## Findings` in `design.md` and re-run `/modscape:spec:design <name>`.
+
+🔖 To pause and resume later, run `/modscape:spec:save <name>`.
 ---

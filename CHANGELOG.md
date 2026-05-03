@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
 
 - **`modscape prune` CLI command** — New command that detects orphaned entries in a model YAML file. Defaults to dry-run (lists candidates without modifying the file); pass `--write` to actually remove them. Detects: relationships referencing non-existent tables, lineage entries referencing non-existent tables, layout keys for non-existent tables or domains, and `domains[].members` entries for non-existent tables. Pass `--include-isolated` to also surface tables that appear in no relationship or lineage edge. Fully resolves `imports:` before checking, so cross-file references are not falsely flagged. Supports `--json` for machine-readable output.
 
+- **`/modscape:spec:save` skill** — New AI skill (Claude / Gemini / Codex) for saving the current session state before ending a work session. Reviews the conversation and writes `.modscape/changes/<name>/session.md` with four sections: 決定済み事項 (decided items), 未解決事項 (open issues), 次のアクション (next action), and メモ (free-form notes). The saved state is displayed the next time `/modscape:spec:status <name>` is run, providing continuity across interrupted design and requirements sessions.
+
+- **`/modscape:spec:status` skill — session continuity and priority-based next action** — Extended to show the previous session's state when `session.md` exists (decisions, open issues, next action from last session). Also added priority-based next-action logic: the recommended command is now determined by a fixed priority order (model changes pending → unresolved questions → missing spec/design/tasks → incomplete tasks → archive) rather than phase alone. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **Save hints in SDD skills** — `requirements`, `design`, `implement`, and `amend` skills now include a `🔖 To pause and resume later, run \`/modscape:spec:save <name>\`.` hint at the end of their output blocks, making the save command discoverable during interactive sessions. Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.2.1] - 2026-04-28
 
 ### Changed

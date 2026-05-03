@@ -121,4 +121,6 @@ After the command, describe the issue, error, or change in free text. For exampl
    - Continue implementing: `/modscape:spec:implement <name>`
    - Re-check open issues: `/modscape:spec:review <name>`
    - If design change flagged: `/modscape:spec:design <name>`
+
+   🔖 To pause and resume later, run `/modscape:spec:save <name>`.
    ---
