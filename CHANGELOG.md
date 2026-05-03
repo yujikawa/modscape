@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2026-05-03
+
+### Added
+
+- **`modscape lint` CLI command** — New command that checks documentation quality and modeling best-practice compliance of a model YAML file. Rules are configured in `.modscape/lint-rules.yaml` using ESLint-style severity levels (`error` / `warn` / `off`) with per-rule options such as `target` (tables / columns / all) and `kinds` (filter by `conceptual.kind`). Built-in rules: `require-description`, `require-primary-key`, `require-physical-name`, `require-column-type`, `require-tags`, `no-orphan-references`, and `incremental-requires-merge-key`. Runs with a default rule set (all rules at `warn`) when no configuration file is present. Supports `--rules <path>` for a custom rules file and `--json` for CI/CD integration (exits 1 on any error).
+
+- **`modscape prune` CLI command** — New command that detects orphaned entries in a model YAML file. Defaults to dry-run (lists candidates without modifying the file); pass `--write` to actually remove them. Detects: relationships referencing non-existent tables, lineage entries referencing non-existent tables, layout keys for non-existent tables or domains, and `domains[].members` entries for non-existent tables. Pass `--include-isolated` to also surface tables that appear in no relationship or lineage edge. Fully resolves `imports:` before checking, so cross-file references are not falsely flagged. Supports `--json` for machine-readable output.
+
 ## [3.2.1] - 2026-04-28
 
 ### Changed

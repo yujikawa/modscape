@@ -17,6 +17,8 @@ import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
 import { runValidate } from './validate.js';
 import { runCoverage } from './coverage.js';
+import { runLint } from './lint.js';
+import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
 import { runSearch } from './search.js';
@@ -175,6 +177,27 @@ program
   .action((file, opts) => {
     const code = runCoverage(file, { minCoverage: opts.minCoverage, json: opts.json });
     if (code !== 0) process.exit(code);
+  });
+
+program
+  .command('lint')
+  .description('Check documentation quality and modeling best-practice compliance')
+  .argument('<file>', 'path to the YAML model file')
+  .option('--rules <path>', 'path to lint-rules.yaml (default: .modscape/lint-rules.yaml)')
+  .option('--json', 'output as JSON')
+  .action((file, opts) => {
+    runLint(file, { rules: opts.rules, json: opts.json });
+  });
+
+program
+  .command('prune')
+  .description('Detect and optionally remove orphaned entries from a YAML model file')
+  .argument('<file>', 'path to the YAML model file')
+  .option('--write', 'actually remove orphaned entries (default: dry-run)')
+  .option('--include-isolated', 'also detect tables with no relationship or lineage connections')
+  .option('--json', 'output as JSON')
+  .action((file, opts) => {
+    runPrune(file, { write: opts.write, includeIsolated: opts.includeIsolated, json: opts.json });
   });
 
 const specCommand = program

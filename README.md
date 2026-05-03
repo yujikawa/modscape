@@ -464,6 +464,56 @@ modscape coverage model.yaml --min-coverage 70
 modscape coverage model.yaml --json
 ```
 
+### Lint
+
+Check documentation quality and modeling best-practice compliance. Rules are configured in `.modscape/lint-rules.yaml` (ESLint-style `error` / `warn` / `off`). Runs with a default rule set when no config file is present.
+
+```bash
+modscape lint model.yaml
+
+# Use a custom rules file
+modscape lint model.yaml --rules .modscape/lint-rules.yaml
+
+# Machine-readable output for CI/CD (exits 1 on any error)
+modscape lint model.yaml --json
+```
+
+Rules are defined using actual model.yaml field paths under a `require:` section. Default fields checked (all at `warn`): `conceptual.description`, `physical.name`, `conceptual.tags`, `columns[].type`, `columns[].isPrimaryKey`.
+
+Example `.modscape/lint-rules.yaml`:
+
+```yaml
+require:
+  conceptual.description: error
+  physical.name:
+    severity: warn
+    kinds: [fact, mart, dimension]   # filter by conceptual.kind
+  conceptual.tags:
+    severity: warn
+    kinds: [fact, mart]
+  columns[].type: warn
+  columns[].isPrimaryKey: error
+```
+
+### Prune
+
+Detect and optionally remove orphaned entries (dangling references, stale layout keys, etc.). Defaults to **dry-run** — pass `--write` to actually modify the file.
+
+```bash
+modscape prune model.yaml
+
+# Actually remove orphaned entries
+modscape prune model.yaml --write
+
+# Also surface tables with no relationship or lineage connections
+modscape prune model.yaml --include-isolated
+
+# Machine-readable output
+modscape prune model.yaml --json
+```
+
+Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, and `domains[].members` entries for non-existent tables.
+
 ---
 
 ## Atomic Model Mutation Commands

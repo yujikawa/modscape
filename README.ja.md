@@ -462,6 +462,56 @@ modscape coverage model.yaml --min-coverage 70
 modscape coverage model.yaml --json
 ```
 
+### リント
+
+ドキュメント品質・モデリングベストプラクティスへの準拠を検査します。`.modscape/lint-rules.yaml` でルールをESLintスタイル（`error` / `warn` / `off`）で設定できます。設定ファイルがない場合はデフォルトルールセットで動作します。
+
+```bash
+modscape lint model.yaml
+
+# カスタムルールファイルを指定
+modscape lint model.yaml --rules .modscape/lint-rules.yaml
+
+# CI/CD向け機械可読出力（errorが1件以上あれば exit 1）
+modscape lint model.yaml --json
+```
+
+ルールは `require:` セクションに model.yaml の実際のフィールドパスで記述します。デフォルト（設定ファイルなし時）は全フィールドを `warn` で検査: `conceptual.description`、`physical.name`、`conceptual.tags`、`columns[].type`、`columns[].isPrimaryKey`。
+
+`.modscape/lint-rules.yaml` の例:
+
+```yaml
+require:
+  conceptual.description: error
+  physical.name:
+    severity: warn
+    kinds: [fact, mart, dimension]   # conceptual.kind でフィルター
+  conceptual.tags:
+    severity: warn
+    kinds: [fact, mart]
+  columns[].type: warn
+  columns[].isPrimaryKey: error
+```
+
+### プルーン
+
+孤立エントリ（参照切れのrelationship/lineage・不要なlayoutキー等）を検出し、オプションで削除します。デフォルトは**dry-run**で、`--write` を指定したときのみファイルを書き換えます。
+
+```bash
+modscape prune model.yaml
+
+# 実際に孤立エントリを削除する
+modscape prune model.yaml --write
+
+# relationshipにもlineageにも登場しない孤立テーブルも表示する
+modscape prune model.yaml --include-isolated
+
+# 機械可読出力
+modscape prune model.yaml --json
+```
+
+検出対象: 存在しないテーブルを参照するrelationship / lineage、存在しないIDのlayoutエントリ、`domains[].members` に含まれる存在しないテーブルID。
+
 ---
 
 ## アトミックモデル操作コマンド
