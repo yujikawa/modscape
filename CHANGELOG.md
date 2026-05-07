@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.1] - 2026-05-07
+
+### Added
+
+- **`## Spec Directory` support in `modscape-spec.custom.md`** — The permanent spec storage directory used by `/modscape:spec:archive` is now configurable. Add a `## Spec Directory` section with `Spec directory: <path>` to `.modscape/modscape-spec.custom.md` to override the default `.modscape/specs` location. All archive operations (spec sync, `_questions.yaml`, `_glossary.yaml`, `_context.yaml`) respect the custom path. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+### Changed
+
+- **`modscape-spec.custom.md.example`** — Updated to reflect current SDD workflow: renamed `model.yaml` → `spec-model.yaml`, corrected spec path to `specs/<table-id>/spec.md` (directory format), added `/modscape:spec:tasks` to the workflow description, and added the new `## Spec Directory` section.
+
 ## [3.3.0] - 2026-05-03
 
 ### Added

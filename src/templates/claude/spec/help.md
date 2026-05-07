@@ -76,6 +76,10 @@ These commands work independently — no active workflow or work folder required
 ```
 .modscape/
 ├── modscape-spec.custom.md     # SDD workflow conventions (optional)
+│                               #   ## Spec Directory
+│                               #   Spec directory: docs/specs   ← override default spec location
+│                               #   ## Coverage Policy
+│                               #   Minimum documentation coverage: 80%
 ├── rules.custom.md             # Data model conventions (optional)
 ├── changes/
 │   └── <name>/                 # Work folder (one per pipeline)
@@ -86,7 +90,7 @@ These commands work independently — no active workflow or work folder required
 │       └── tasks.md            # Implementation task list
 ├── archives/
 │   └── YYYY-MM-DD-<name>/      # Completed work folders
-└── specs/
+└── specs/                      # Default spec location (overridable)
     ├── <table-id>/spec.md      # Permanent business spec per table
     ├── _questions.yaml         # Q&A history
     ├── _glossary.yaml          # Business term definitions
@@ -113,9 +117,11 @@ Only when you are satisfied with the design. `tasks` reads the finalized `spec-m
 `spec-model.yaml` is a work-scoped copy that only contains tables relevant to the current pipeline. `model.yaml` (or your project's main YAML) is the full model. `archive` merges the work copy back into the main model when you are done.
 
 **Q: Where do my decisions and Q&A go after archiving?**
-- Table specs → `.modscape/specs/<table-id>/spec.md`
-- Q&A → `.modscape/specs/_questions.yaml`
-- Business terms → `.modscape/specs/_glossary.yaml`
-- Architectural decisions → `.modscape/specs/_context.yaml`
+- Table specs → `<SPEC_DIR>/<table-id>/spec.md` (default: `.modscape/specs/<table-id>/spec.md`)
+- Q&A → `<SPEC_DIR>/_questions.yaml`
+- Business terms → `<SPEC_DIR>/_glossary.yaml`
+- Architectural decisions → `<SPEC_DIR>/_context.yaml`
 - Modeling conventions → `.modscape/rules.custom.md`
 - Workflow conventions → `.modscape/modscape-spec.custom.md`
+
+`SPEC_DIR` defaults to `.modscape/specs`. Override it by adding `## Spec Directory` / `Spec directory: <path>` to `.modscape/modscape-spec.custom.md`.
