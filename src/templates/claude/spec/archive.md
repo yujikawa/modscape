@@ -1,4 +1,4 @@
-Merge the work-scoped YAML back into the main model, then sync permanent table specs in `.modscape/specs/`.
+Merge the work-scoped YAML back into the main model, then sync permanent table specs in the spec directory (default: `.modscape/specs`, configurable via `modscape-spec.custom.md`).
 
 ## Usage
 
@@ -35,6 +35,12 @@ modscape summary <file> --json
    - **Downstream Impact — Implement** tables: listed under `### Downstream Impact — Implement`
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
    - If `design.md` does not exist or has no `## Affected Tables` section: treat all tables in `spec-model.yaml` as Direct Impact (backwards compatible).
+
+2.5. **Resolve spec directory (`SPEC_DIR`)**:
+   - If `.modscape/modscape-spec.custom.md` exists and has a `## Spec Directory` section:
+     - Extract the value (pattern: `Spec directory: <path>`)
+     - Set `SPEC_DIR = <path>` (use this path for all spec file operations in Steps 3–5)
+   - Otherwise: `SPEC_DIR = .modscape/specs`
 
 ### Step 1: Dry-run — show merge preview and confirm
 
@@ -124,18 +130,18 @@ modscape summary <file> --json
 8. Use the **affected tables classification** built in step 2 above.
 
 9. **Migrate old flat-file specs (if any)**:
-   For each affected table, check whether `.modscape/specs/<table-id>.md` exists as a plain file (old format).
+   For each affected table, check whether `<SPEC_DIR>/<table-id>.md` exists as a plain file (old format).
    If found, move it into the new directory format before proceeding:
    ```bash
-   mkdir -p .modscape/specs/<table-id>
-   mv .modscape/specs/<table-id>.md .modscape/specs/<table-id>/spec.md
+   mkdir -p <SPEC_DIR>/<table-id>
+   mv <SPEC_DIR>/<table-id>.md <SPEC_DIR>/<table-id>/spec.md
    ```
 
 10. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
-   a. Check whether `.modscape/specs/<table-id>/spec.md` exists.
+   a. Check whether `<SPEC_DIR>/<table-id>/spec.md` exists.
       - If **not**: create a new file using the format below (also create the directory).
       - If **exists**: update only the relevant sections (Overview, Business Context, Business Rules, Known Issues); preserve unrelated content.
 
@@ -146,7 +152,7 @@ modscape summary <file> --json
 
 11. **Changelog only for Downstream Impact — Context Only tables**:
     - Do **not** perform a full spec sync for these tables.
-    - Only append a Changelog entry to `.modscape/specs/<table-id>/spec.md` (create the file and directory with minimal content if it does not exist):
+    - Only append a Changelog entry to `<SPEC_DIR>/<table-id>/spec.md` (create the file and directory with minimal content if it does not exist):
       - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
 
 12. **Report the sync result**:
@@ -160,7 +166,7 @@ modscape summary <file> --json
 
 13. If `.modscape/changes/<name>/questions.md` exists (legacy format from older SDD runs):
 
-    Read `.modscape/changes/<name>/questions.md` and `.modscape/specs/_questions.yaml`.
+    Read `.modscape/changes/<name>/questions.md` and `<SPEC_DIR>/_questions.yaml`.
     Determine the current maximum ID in `_questions.yaml` (e.g. Q-005), then assign new sequential IDs starting from Q-006.
 
     **For each entry in `questions.md`:**
@@ -180,7 +186,7 @@ modscape summary <file> --json
 
 13.5. If `.modscape/changes/<name>/glossary.md` exists:
 
-    Read `.modscape/changes/<name>/glossary.md` and `.modscape/specs/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
+    Read `.modscape/changes/<name>/glossary.md` and `<SPEC_DIR>/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
 
     **For each term entry in `glossary.md`:**
     - Parse: `id`, `definition`, and optional fields (`label`, `tables`, `columns`)
@@ -197,7 +203,7 @@ modscape summary <file> --json
 
 ### Step 5: Update `_context.yaml`
 
-14. Read or create `.modscape/specs/_context.yaml`.
+14. Read or create `<SPEC_DIR>/_context.yaml`.
 
     `_context.yaml` stores only **cross-project architectural decisions** — NOT Q&A (those are in `_questions.yaml`).
 
