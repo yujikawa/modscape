@@ -462,6 +462,56 @@ modscape coverage model.yaml --min-coverage 70
 modscape coverage model.yaml --json
 ```
 
+### リント
+
+ドキュメント品質・モデリングベストプラクティスへの準拠を検査します。`.modscape/lint-rules.yaml` でルールをESLintスタイル（`error` / `warn` / `off`）で設定できます。設定ファイルがない場合はデフォルトルールセットで動作します。
+
+```bash
+modscape lint model.yaml
+
+# カスタムルールファイルを指定
+modscape lint model.yaml --rules .modscape/lint-rules.yaml
+
+# CI/CD向け機械可読出力（errorが1件以上あれば exit 1）
+modscape lint model.yaml --json
+```
+
+ルールは `require:` セクションに model.yaml の実際のフィールドパスで記述します。デフォルト（設定ファイルなし時）は全フィールドを `warn` で検査: `conceptual.description`、`physical.name`、`conceptual.tags`、`columns[].type`、`columns[].isPrimaryKey`。
+
+`.modscape/lint-rules.yaml` の例:
+
+```yaml
+require:
+  conceptual.description: error
+  physical.name:
+    severity: warn
+    kinds: [fact, mart, dimension]   # conceptual.kind でフィルター
+  conceptual.tags:
+    severity: warn
+    kinds: [fact, mart]
+  columns[].type: warn
+  columns[].isPrimaryKey: error
+```
+
+### プルーン
+
+孤立エントリ（参照切れのrelationship/lineage・不要なlayoutキー等）を検出し、オプションで削除します。デフォルトは**dry-run**で、`--write` を指定したときのみファイルを書き換えます。
+
+```bash
+modscape prune model.yaml
+
+# 実際に孤立エントリを削除する
+modscape prune model.yaml --write
+
+# relationshipにもlineageにも登場しない孤立テーブルも表示する
+modscape prune model.yaml --include-isolated
+
+# 機械可読出力
+modscape prune model.yaml --json
+```
+
+検出対象: 存在しないテーブルを参照するrelationship / lineage、存在しないIDのlayoutエントリ、`domains[].members` に含まれる存在しないテーブルID。
+
 ---
 
 ## アトミックモデル操作コマンド
@@ -603,6 +653,8 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 > **Tip**: `/modscape:spec:status <name>` をいつでも実行すると、現在のフェーズ・タスク進捗・次のコマンドを確認できます。引き継ぎや onboarding 用の詳細表示は `detail` を追加: `/modscape:spec:status <name> detail`。
 
+> **セッション保存**: 要件定義・設計・修正の途中で作業を中断する場合は `/modscape:spec:save <name>` を実行してください。決定事項・未解決事項・次のアクションが `session.md` に保存され、次回 `/modscape:spec:status <name>` を実行したときに表示されます。
+
 > **実装前の品質チェック**: `/modscape:spec:check <name>` を実行すると、全アーティファクト横断の整合性チェック（spec ↔ design ↔ model ↔ tasks）と go/no-go 判断（未解決の質問・仮定・AC カバレッジ・分類確信度）を一度に確認できます。実装の進行はブロックしません。
 
 > **実装中のトラブル対応**: `/modscape:spec:amend <name>` を実行すると、実装中に発覚した問題（カラム名の誤り・JOIN キーの相違・想定外の NULL など）を SDD 成果物に反映できます。エラーを貼り付けるか問題を自由記述で渡すと、AI が `spec.md`・`design.md`・`tasks.md`・`questions.md` を差分更新します。完了済みタスクは保持されます。
@@ -634,6 +686,7 @@ requirements → design → implement → archive
 | 検索 | `/modscape:spec:search <keyword>` | 過去アーカイブを横断検索（任意） | — |
 | 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答・設計影響を評価（任意） | — |
 | メモ | `/modscape:spec:note [table-id]` | 会話・Slack・会議で得た知識を `specs/<table-id>/spec.md` に追記 — アクティブなワークフロー不要（任意） | — |
+| セッション保存 | `/modscape:spec:save <name>` | 現在のセッション状態（決定事項・未解決事項・次のアクション）を `session.md` に保存して後で再開できるようにする（任意） | `session.md` |
 
 **例: 月次売上サマリーパイプラインを設計する場合**
 

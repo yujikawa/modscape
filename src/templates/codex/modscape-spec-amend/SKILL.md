@@ -115,6 +115,8 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    - Continue implementing: `/modscape:spec:implement <name>`
    - Re-check open issues: `/modscape:spec:review <name>`
    - If design change flagged: `/modscape:spec:design <name>`
+
+   🔖 To pause and resume later, run `/modscape:spec:save <name>`.
    ---
 
 ## COMMAND: /modscape:spec:amend

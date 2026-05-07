@@ -969,6 +969,47 @@ During SDD workflow, run on the spec-model before archiving:
 modscape coverage .modscape/changes/<name>/spec-model.yaml
 ```
 
+### 12-5c. Lint
+
+Check documentation quality and modeling best-practice compliance:
+
+```bash
+modscape lint model.yaml                            # Human-readable output
+modscape lint model.yaml --rules .modscape/lint-rules.yaml  # Custom rules file
+modscape lint model.yaml --json                     # Machine-readable output (exits 1 on any error)
+```
+
+Configure rules in `.modscape/lint-rules.yaml` using actual model.yaml field paths under a `require:` section:
+
+```yaml
+require:
+  conceptual.description: error
+  physical.name:
+    severity: warn
+    kinds: [fact, mart, dimension]   # filter by conceptual.kind
+  conceptual.tags:
+    severity: warn
+    kinds: [fact, mart]
+  columns[].type: warn
+  columns[].isPrimaryKey: error
+```
+
+Omitting the config file runs with all default fields at `warn`.
+
+### 12-5d. Prune
+
+Detect and optionally remove orphaned entries (dangling references, stale layout keys, etc.):
+
+```bash
+modscape prune model.yaml                    # Dry-run: list orphaned entries
+modscape prune model.yaml --write            # Actually remove them
+modscape prune model.yaml --include-isolated # Also detect isolated tables
+modscape prune model.yaml --json             # Machine-readable output
+```
+
+Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, `domains[].members` entries for non-existent tables.
+Default is **dry-run** — always verify the list before adding `--write`.
+
 ### 12-6. Reading Model Information
 
 When investigating or querying a YAML model, always prefer modscape CLI commands over `grep` / `cat` / direct file reads:

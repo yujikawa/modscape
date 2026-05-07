@@ -464,6 +464,56 @@ modscape coverage model.yaml --min-coverage 70
 modscape coverage model.yaml --json
 ```
 
+### Lint
+
+Check documentation quality and modeling best-practice compliance. Rules are configured in `.modscape/lint-rules.yaml` (ESLint-style `error` / `warn` / `off`). Runs with a default rule set when no config file is present.
+
+```bash
+modscape lint model.yaml
+
+# Use a custom rules file
+modscape lint model.yaml --rules .modscape/lint-rules.yaml
+
+# Machine-readable output for CI/CD (exits 1 on any error)
+modscape lint model.yaml --json
+```
+
+Rules are defined using actual model.yaml field paths under a `require:` section. Default fields checked (all at `warn`): `conceptual.description`, `physical.name`, `conceptual.tags`, `columns[].type`, `columns[].isPrimaryKey`.
+
+Example `.modscape/lint-rules.yaml`:
+
+```yaml
+require:
+  conceptual.description: error
+  physical.name:
+    severity: warn
+    kinds: [fact, mart, dimension]   # filter by conceptual.kind
+  conceptual.tags:
+    severity: warn
+    kinds: [fact, mart]
+  columns[].type: warn
+  columns[].isPrimaryKey: error
+```
+
+### Prune
+
+Detect and optionally remove orphaned entries (dangling references, stale layout keys, etc.). Defaults to **dry-run** — pass `--write` to actually modify the file.
+
+```bash
+modscape prune model.yaml
+
+# Actually remove orphaned entries
+modscape prune model.yaml --write
+
+# Also surface tables with no relationship or lineage connections
+modscape prune model.yaml --include-isolated
+
+# Machine-readable output
+modscape prune model.yaml --json
+```
+
+Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, and `domains[].members` entries for non-existent tables.
+
 ---
 
 ## Atomic Model Mutation Commands
@@ -605,6 +655,8 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command. Add `detail` for a narrative view suitable for handoff: `/modscape:spec:status <name> detail`.
 
+> **Save your session**: Run `/modscape:spec:save <name>` before ending a work session during requirements, design, or amend. The saved state (decisions made, open questions, next action) is shown the next time you run `/modscape:spec:status <name>`.
+
 > **Pre-implement quality check**: Run `/modscape:spec:check <name>` before implementing. Part 1 checks cross-artifact consistency (spec ↔ design ↔ model ↔ tasks); Part 2 evaluates go/no-go readiness — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
 
 > **Fix issues mid-implementation**: Run `/modscape:spec:amend <name>` whenever you discover a problem (wrong column name, broken JOIN key, unexpected NULL, etc.). Paste the error or describe the issue in free text — the AI updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks are always preserved.
@@ -636,6 +688,7 @@ requirements → design → implement → archive
 | Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
 | Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question and assess design impact (optional) | — |
 | Note | `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to `specs/<table-id>/spec.md` — no active workflow required (optional) | — |
+| Save | `/modscape:spec:save <name>` | Save the current session state (decisions, open questions, next action) to `session.md` for later resumption (optional) | `session.md` |
 
 **Example: designing a monthly sales summary pipeline**
 

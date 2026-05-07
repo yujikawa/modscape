@@ -7,6 +7,13 @@ description: Show the current status of a spec work folder — phase, file check
 
 Show the current status of a spec work folder.
 
+## Usage
+
+```
+/modscape:spec:status <name>
+/modscape:spec:status <name> detail
+```
+
 ## Instructions
 
 **When reading model information, always use modscape CLI commands — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
@@ -42,7 +49,19 @@ modscape summary <file> --json
 5. If `design.md` exists, check `## Findings > ### Requires Model Change`:
    - If it has entries: flag as ⚠️ model changes pending
 
-6. **Always output the following status block:**
+6. Check for `session.md`:
+   - If `.modscape/changes/<name>/session.md` exists, read it and extract the date, 決定済み事項, 未解決事項, 次のアクション sections.
+
+7. Determine the **next action** using the following priority rules (use the first that applies):
+   - `design.md` has entries under `## Findings > ### Requires Model Change` → `/modscape:spec:amend <name>`
+   - `questions.md` has unresolved entries (`- [ ]`) → `/modscape:spec:answer <name>` (include count)
+   - No `spec.md` → `/modscape:spec:requirements`
+   - No `design.md` → `/modscape:spec:design <name>`
+   - No `tasks.md` → `/modscape:spec:tasks <name>`
+   - Incomplete tasks remain → `/modscape:spec:implement <name>`
+   - All tasks complete → `/modscape:spec:check <name>` (then `/modscape:spec:archive <name>`)
+
+8. **Always output the following status block:**
 
 ---
 📋 Spec: `<name>`
@@ -62,34 +81,39 @@ modscape summary <file> --json
   <✓ or ○> Phase 3: Mart      (<done>/<total>)
   <✓ or ○> Phase 4: Tests     (<done>/<total>)
 
+<If session.md exists, append:>
+📝 **前回のセッション** (<date from session.md>)
+  決定済み: <bullet list from 決定済み事項, or "(なし)">
+  未解決:   <bullet list from 未解決事項, or "(なし)">
+  次のアクション: <one line from 次のアクション>
+
 <If Requires Model Change entries exist:>
 ⚠️  Unresolved model changes in `design.md → ## Findings → Requires Model Change`
-    Re-run `/modscape:spec:design <name>` to apply them first.
 
-**Next step:**
+👉 **次にやること:**
 ```
-<the appropriate next command based on current phase>
+<next action command from priority rules above>
 ```
+<If unresolved questions exist, append: "  ⚠️ 未回答の質問が <n> 件あります — 実装前に `/modscape:spec:answer <name>` を推奨">
 ---
-
-## COMMAND: /modscape:spec:status
-
-Usage: `/modscape:spec:status <name>` or `/modscape:spec:status <name> detail`
 
 ## Next command by phase
 
-| Phase | Next command |
-|---|---|
-| `requirements` | `/modscape:spec:design <name>` |
-| `implement` | `/modscape:spec:implement <name>` |
-| `ready to archive` | `/modscape:spec:archive <name>` |
-| Unresolved model changes | `/modscape:spec:design <name>` |
+| Priority | Condition | Next command |
+|---|---|---|
+| 1 | Findings (Requires Model Change) | `/modscape:spec:amend <name>` |
+| 2 | Unresolved questions in questions.md | `/modscape:spec:answer <name>` |
+| 3 | No spec.md | `/modscape:spec:requirements` |
+| 4 | No design.md | `/modscape:spec:design <name>` |
+| 5 | No tasks.md | `/modscape:spec:tasks <name>` |
+| 6 | Incomplete tasks | `/modscape:spec:implement <name>` |
+| 7 | All tasks complete | `/modscape:spec:check <name>` → `/modscape:spec:archive <name>` |
 
 ---
 
 ## `detail` subcommand
 
-When invoked as `/modscape:spec:status <name> detail`, run the standard status check first, then append the following detail section.
+When invoked as `/modscape:spec:status <name> detail`, run the standard status check first (steps 1–6 above), then append the following detail section.
 
 ### Detail instructions
 
@@ -137,3 +161,5 @@ Append the following after the standard status block:
 <If design.md has entries under `## Findings > ### Requires Model Change`, add:>
 ⚠️  Unresolved model changes in `design.md → Findings → Requires Model Change`. Run `/modscape:spec:design <name>` before implementing.
 ---
+
+## COMMAND: /modscape:spec:status

@@ -191,5 +191,7 @@ When the user reports a problem during the implementation session — whether vi
 ✅ Task complete: `<task description>`
 
 <n> tasks remaining. Ready to continue?
+
+🔖 To pause and resume later, run `/modscape:spec:save <name>`.
 ---
 > Run `modscape dev spec-model.yaml` to review the final model in the visualizer.

@@ -80,7 +80,7 @@ export async function initProject(options = {}) {
     await safeWriteFile('.modscape/codegen-rules.md', codegenRulesTemplate, yes);
 
     // 2. Create agent-specific files
-    const specSkillNames = ['generate', 'requirements', 'design', 'tasks', 'implement', 'archive', 'status', 'amend', 'search', 'answer', 'check', 'note', 'help'];
+    const specSkillNames = ['generate', 'requirements', 'design', 'tasks', 'implement', 'archive', 'status', 'amend', 'search', 'answer', 'check', 'note', 'save', 'help'];
 
     if (agents.includes('gemini')) {
       const modelingTemplate = fs.readFileSync(path.join(__dirname, 'templates/gemini/modscape-modeling/SKILL.md'), 'utf8');
