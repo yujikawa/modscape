@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.2] - 2026-05-08
+
+### Added
+
+- **`modscape update` CLI command** — New command that updates all installed skill/rule files to the latest bundled version without re-running the full `init` flow. Auto-detects which agents (Claude / Gemini / Codex) and whether SDD skills are installed based on existing directories, then overwrites template-managed files (`rules.md`, `codegen-rules.md`, and all skill command files) in one step. User data in `.modscape/specs/` is never touched. Replaces the previous workflow of re-running `modscape init` after upgrading.
+
+- **`/modscape:codegen` skill — SDD context integration** — The codegen skill now reads SDD context from `.modscape/specs/` when it exists, before generating any code. Specifically: `_context.yaml` (architecture decisions), `_glossary.yaml` (business term definitions), `_questions.yaml` (Q&A — answered/assumed questions reduce TODO comments; open questions become `-- TODO:` stubs), and `<table-id>/spec.md` for each table being generated (business rules, grain, dependencies). This allows the agent to generate more accurate code and significantly reduce speculative TODO comments for projects using the SDD workflow. Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.3.1] - 2026-05-07
 
 ### Added
