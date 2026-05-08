@@ -64,7 +64,7 @@ npm install -g modscape
     ```
     `.modscape/rules.md`（YAMLスキーマのルール）と `.modscape/codegen-rules.md`（実装コード生成のルール）、および各エージェント用のコマンドファイルが生成されます。
 
-    > **ルールの更新**: Modscape をアップグレードした後は、`modscape init` を再実行することで `.modscape/rules.md` と `.modscape/codegen-rules.md` を最新版に上書きできます。
+    > **スキルの更新**: Modscape をアップグレードした後は、`modscape update` を実行するとインストール済みのすべてのスキル・ルールファイルを最新版に同期できます。`init` の再実行と異なり、インストール済みエージェントを自動検出し、プロンプトなしで実行でき、`.modscape/specs/` 内のユーザーデータには一切触れません。
 
 2.  **起動**: ビジュアライザーを起動します。
     ```bash

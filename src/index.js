@@ -22,6 +22,7 @@ import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
 import { specNew } from './spec.js';
 import { runSearch } from './search.js';
+import { updateProject } from './update.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -34,6 +35,13 @@ program
   .name('modscape')
   .description('Modscape: A YAML-driven data modeling visualizer CLI')
   .version(pkg.version);
+
+program
+  .command('update')
+  .description('Update installed skill files to the latest bundled version')
+  .action(() => {
+    updateProject();
+  });
 
 program
   .command('init')

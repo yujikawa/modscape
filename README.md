@@ -65,7 +65,7 @@ Leverage AI coding assistants (**Gemini CLI, Claude Code, or Codex**) to build y
     ```
     This creates `.modscape/rules.md` (YAML schema rules) and `.modscape/codegen-rules.md` (code generation rules), plus agent-specific command files.
 
-    > **Updating rules**: After upgrading Modscape, re-run `modscape init` to overwrite `.modscape/rules.md` and `.modscape/codegen-rules.md` with the latest bundled version.
+    > **Updating skills**: After upgrading Modscape, run `modscape update` to sync all installed skill/rule files to the latest bundled version. Unlike re-running `init`, `update` auto-detects installed agents, requires no prompts, and never touches your data in `.modscape/specs/`.
 
 2.  **Start Dev**: Launch the visualizer.
     ```bash
