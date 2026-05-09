@@ -27,7 +27,7 @@ After the command, describe the issue, error, or change in free text. For exampl
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/tasks.md`
-   - `.modscape/changes/<name>/questions.md` (if it exists)
+   - `.modscape/specs/_questions.yaml` (filter by `change: <name>`)
    - `.modscape/changes/<name>/spec-model.yaml` (if it exists)
 
 4. Analyze the user's input and classify the finding:
@@ -41,7 +41,7 @@ After the command, describe the issue, error, or change in free text. For exampl
    | Error message, column name mismatch, wrong data type | `spec.md` (fix related AC) + `spec-model.yaml` (fix column) + `tasks.md` (add fix task) |
    | Wrong JOIN key, broken design assumption, schema difference | `design.md` (fix the relevant section) + `tasks.md` (add fix task) |
    | Model structural change (table add/remove, lineage change, grain change) | User confirmation required → `design.md` Findings + `/modscape:spec:design` re-run guidance |
-   | Unresolved question, "needs checking", ambiguity | `questions.md` (add new Q-NNN) |
+   | Unresolved question, "needs checking", ambiguity | `_questions.yaml` (add new Q-NNN) |
    | Multiple concerns in one input | All applicable files |
 
 5. **Update `spec.md`** (or `spec.html`) if the issue affects Acceptance Criteria:
@@ -84,14 +84,21 @@ After the command, describe the issue, error, or change in free text. For exampl
      ```
    - If multiple amend runs occur on the same date, append to the existing `## Amend: <YYYY-MM-DD>` section.
 
-9. **Update `questions.md`** if an unresolved question arises:
-   - Read the existing file and check the highest Q-NNN number to avoid duplication
+9. **Update `_questions.yaml`** if an unresolved question arises:
+   - Read `.modscape/specs/_questions.yaml` and find the current max Q-NNN to avoid duplication
    - Check whether the question already exists (compare by text; skip if duplicate)
-   - Append the new question under the appropriate table section:
-     ```markdown
-     - [ ] **Q-NNN** <question text> <!-- amend -->
-       **Assumption:** <what you will assume to proceed> (unconfirmed)
+   - Append a new entry:
+     ```yaml
+     - id: Q-NNN
+       question: "<question text>"
+       status: open         # or: assumed
+       assumption: "<what you will assume to proceed>"   # only if status: assumed
+       table: <table-id>    # optional
+       date: <YYYY-MM-DD>
+       change: <name>
      ```
+
+   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): also re-render `.modscape/changes/<name>/questions.html` from `_questions.yaml` filtered by `change: <name>`, using `.modscape/spec-templates/questions-template.html`.
 
 10. **Display a change summary with ripple-effect report**:
 

@@ -98,8 +98,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 10. **Surface known open questions** (first run only):
 
-   Check `.modscape/specs/questions.md` for unresolved questions (`- [ ]`) that reference any Direct Impact table ID.
-   - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`.
+   Check `.modscape/specs/_questions.yaml` for entries with `status: open` or `status: assumed` that reference any Direct Impact table ID (via the `table` field or question text).
+   - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
+     ```markdown
+     ## Known Open Questions (from specs/_questions.yaml)
+     There are unresolved questions related to Direct Impact tables. See `.modscape/specs/_questions.yaml` for details.
+     - Q-012, Q-015 → `fct_orders`
+     - Q-019 → `dim_customers`
+     ```
    - If no matching questions: omit the `## Known Open Questions` section entirely.
 
 11. **Search past archives for related patterns** (first run only):
@@ -120,11 +126,11 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - These two are independent: a pair of tables may have lineage, a relationship, both, or neither
      - If table C is built by joining A and B: lineage(A→C) + lineage(B→C); if A and B also share a FK key: relationship(A↔B)
      - If A and B share a FK but neither builds from the other: relationship only, no lineage
-   - **Relationships are prerequisites for query construction.** Any JOIN between two tables requires a relationship entry defining the key and cardinality — without it, the implementer cannot write the query. If the join key is unknown, add it to `questions.md` immediately rather than leaving the relationship undefined.
+   - **Relationships are prerequisites for query construction.** Any JOIN between two tables requires a relationship entry defining the key and cardinality — without it, the implementer cannot write the query. If the join key is unknown, add it to `_questions.yaml` immediately rather than leaving the relationship undefined.
      - Read `## Table Relationships` in `spec.md` and convert each entry to a `relationship`
      - Also infer from columns where `isForeignKey: true` — match by column name pattern (e.g., `customer_id` → `dim_customers.customer_id`)
      - Cover both source-to-source joins and fact ↔ dimension joins
-     - When a FK relationship is ambiguous or the join key is unknown, add a question to `questions.md` instead of silently omitting it
+     - When a FK relationship is ambiguous or the join key is unknown, add a question to `_questions.yaml` instead of silently omitting it
    - Do **not** create `domains` unless the user explicitly requests it
    - Add `conceptual.description` and BEAM* tags to each table where relevant
    - Add `physical` strategy hints where the target tool and table type make them clear
@@ -159,25 +165,30 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
 
-18. Review the **entire design conversation** and append entries to `.modscape/changes/<name>/questions.md` for all of the following:
+18. Review the **entire design conversation** and append question entries to `.modscape/specs/_questions.yaml` for all of the following:
 
-   - **Answered** — questions you asked during design and the user gave a clear answer to → mark `[x]` and append the answer inline
-   - **Assumed** — items you could not confirm and proceeded with an assumption → mark `[ ]` with an `**Assumption:**` line
-   - **Open** — items still unresolved → mark `[ ]` with no assumption
+   - **Answered** — questions you asked during design and the user gave a clear answer to → `status: answered`, record the answer in the `answer` field
+   - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
+   - **Open** — items still unresolved → `status: open`
 
-   Use this format. Use the next available ID continuing from any existing questions:
+   Determine the next ID by reading the current max ID in `_questions.yaml`. Use this format:
 
-```markdown
-- [x] **Q-NNN** <question text>
-  **Answer:** <answer the user gave>
-
-- [ ] **Q-NNN** <question text>
-  **Assumption:** <what you assumed to proceed> (unconfirmed)
-```
+   ```yaml
+   - id: Q-NNN
+     question: "<question text>"
+     answer: "<answer the user gave>"    # only if status: answered
+     status: answered                    # answered | assumed | open
+     assumption: "<what you assumed>"    # only if status: assumed
+     table: <table-id>                   # optional — only if specific to one table
+     date: <YYYY-MM-DD>
+     change: <name>
+   ```
 
    Record every question that shaped the design — answered questions are just as important for traceability as open ones.
 
-    If there are unresolved questions (`- [ ]`) at the end of design, output:
+   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): after writing to `_questions.yaml`, filter all entries where `change: <name>`, render them using `.modscape/spec-templates/questions-template.html` as the structural template, and write to `.modscape/changes/<name>/questions.html`.
+
+   If there are unresolved questions (`status: open` or `status: assumed`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `@modscape-spec-implement <name>`.
 
 19. Review the design conversation for any project-specific or in-house business terms that were introduced or defined. Append qualifying terms to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist).
@@ -223,6 +234,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 ### Downstream Impact — Context Only
 - `<table-id>`: <why no code change is needed — e.g., does not reference changed columns>
 
+## Known Open Questions (from specs/_questions.yaml)
+<!-- Populated automatically by @modscape-spec-design. Only Direct Impact tables. Omit section if none. -->
+- Q-NNN → `<table-id>` — see .modscape/specs/_questions.yaml
+
+## Related Past Specs
+<!-- Populated automatically by @modscape-spec-design via modscape spec search. Omit section if no results. -->
+- `archives/YYYY-MM-DD-<name>/` — <spec title>
+
 ## Findings
 
 ### Requires Model Change
@@ -234,7 +253,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Next Step
 
-**Always output the following at the end, without exception. Build the review summary from the actual state of `questions.md` and `design.md`:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of `_questions.yaml` (filtered by `change: <name>`) and `design.md`:**
 
 ---
 ✅ Design updated. `spec-model.yaml` and `design.md` are current.
@@ -249,9 +268,11 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Review Checkpoint
 
-**Unresolved Questions:** N — Q-NNN, Q-NNN *(show "none" if 0)*
-**Assumptions:** N *(show "none" if 0)*
-**Downstream Classification (Low Confidence):** `<table-id>` or none
+**Unresolved Questions:** N — Q-NNN, Q-NNN (see `_questions.yaml`) *(show "none" if 0)*
+
+**Assumptions:** N *(list `status: assumed` entries from `_questions.yaml` for this change; show "none" if 0)*
+
+**Downstream Classification (Low Confidence):** `<table-id>` *(show "none" if empty)*
 
 ⚠️ Open issues found. Please review before continuing. *(If zero issues: ✅ No open issues.)*
 

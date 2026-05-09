@@ -24,13 +24,19 @@ modscape summary <file> --json
    - If not: stop and tell the user:
      > `changes/<name>/spec-model.yaml` not found. Run `/modscape:spec:design <name>` first.
 
-2. Read the following files:
+1.5. **Detect output format** — read `.modscape/modscape-spec.config.yaml` and check the `output_format` key:
+   - `output_format: html` → all change artifact file references use `.html` extension (`spec.html`, `design.html`, `tasks.html`). All subsequent references to `spec.md` / `design.md` / `tasks.md` in these instructions mean their `.html` counterparts.
+   - Default (absent or key unset) → use `.md` as documented below.
+
+   Note: permanent per-table specs (`<SPEC_DIR>/<table-id>/spec.md`) are **always Markdown** regardless of output format — they are not change artifacts.
+
+2. Read the following files (use `.html` extension if `output_format: html`):
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/spec-config.yaml`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/spec-model.yaml`
 
-   From `design.md`, build the **affected tables classification**:
+   From `design.md` (or `design.html`), build the **affected tables classification**:
    - **Direct Impact** tables: listed under `### Direct Impact`
    - **Downstream Impact — Implement** tables: listed under `### Downstream Impact — Implement`
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
@@ -231,7 +237,7 @@ modscape summary <file> --json
 
 ### Step 5.5: Extract and record project conventions
 
-Review `design.md`, `spec.md`, and the decisions recorded in `_context.yaml` during this change for any **project-wide conventions** that were established or confirmed.
+Review `design.md` (or `design.html`), `spec.md` (or `spec.html`), and the decisions recorded in `_context.yaml` during this change for any **project-wide conventions** that were established or confirmed.
 
 **Decision axis — which file to update:**
 - `rules.custom.md`: rules about the **data model** (YAML shape, naming of table/column IDs, required columns, allowed table kinds, domain structure, SCD policy). These rules apply regardless of the implementation tool.

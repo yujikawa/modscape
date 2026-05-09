@@ -116,6 +116,8 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
    Record every question that shaped the spec — answered questions are just as important for traceability as open ones.
 
+   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): after writing to `_questions.yaml`, filter all entries where `change: <name>`, render them using `.modscape/spec-templates/questions-template.html` as the structural template, and write to `.modscape/changes/<name>/questions.html`.
+
 ## spec.md Format
 
 ```markdown
@@ -164,7 +166,7 @@ Usage: `/modscape:spec:requirements`
 **Always output the following message at the end, without exception:**
 
 ---
-✅ `spec.md` created at `.modscape/changes/<name>/spec.md`
+✅ `spec.md` (or `spec.html`) created at `.modscape/changes/<name>/spec.md` (or `spec.html`)
 
 **Next step:**
 ```

@@ -19,27 +19,31 @@ modscape summary <file> --json
    - If not: tell the user:
      > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
 
+1.5. **Detect output format** — read `.modscape/modscape-spec.config.yaml` and check the `output_format` key:
+   - `output_format: html` → check for `.html` extensions (`spec.html`, `design.html`, `tasks.html`). All subsequent references to `spec.md` / `design.md` / `tasks.md` mean their `.html` counterparts.
+   - Default → use `.md` as documented below.
+
 2. Check which files exist in `.modscape/changes/<name>/`:
-   - `spec.md`
+   - `spec.md` (or `spec.html`)
    - `spec-config.yaml`
    - `spec-model.yaml`
-   - `design.md`
-   - `tasks.md`
+   - `design.md` (or `design.html`)
+   - `tasks.md` (or `tasks.html`)
 
 3. Determine the current phase based on what exists and task progress:
    - No `spec.md` → `not started`
    - `spec.md` only → `requirements`
    - `spec-model.yaml` + `design.md` + `tasks.md` exist → check tasks
-     - Any `- [ ]` remaining → `implement`
-     - All `- [x]` → `ready to archive`
+     - Any `- [ ]` remaining (or `<li class="task-item incomplete">` in HTML) → `implement`
+     - All complete → `ready to archive`
 
-4. If `tasks.md` exists, count tasks:
-   - Total tasks: count all `- [ ]` and `- [x]` lines
-   - Completed: count `- [x]` lines
+4. If `tasks.md` (or `tasks.html`) exists, count tasks:
+   - Total tasks: count all `- [ ]` and `- [x]` lines (or task items in HTML)
+   - Completed: count `- [x]` lines (or checked items in HTML)
    - Remaining: count `- [ ]` lines
    - Break down by Phase section
 
-5. If `design.md` exists, check `## Findings > ### Requires Model Change`:
+5. If `design.md` (or `design.html`) exists, check `## Findings > ### Requires Model Change`:
    - If it has entries: flag as ⚠️ model changes pending
 
 6. Check for `session.md`:
@@ -47,10 +51,10 @@ modscape summary <file> --json
 
 7. Determine the **next action** using the following priority rules (use the first that applies):
    - `design.md` has entries under `## Findings > ### Requires Model Change` → `/modscape:spec:amend <name>`
-   - `questions.md` has unresolved entries (`- [ ]`) → `/modscape:spec:answer <name>` (include count)
-   - No `spec.md` → `/modscape:spec:requirements`
-   - No `design.md` → `/modscape:spec:design <name>`
-   - No `tasks.md` → `/modscape:spec:tasks <name>`
+   - `_questions.yaml` has entries with `status: open` or `status: assumed` for `change: <name>` → `/modscape:spec:answer <name>` (include count)
+   - No `spec.md` (or `spec.html`) → `/modscape:spec:requirements`
+   - No `design.md` (or `design.html`) → `/modscape:spec:design <name>`
+   - No `tasks.md` (or `tasks.html`) → `/modscape:spec:tasks <name>`
    - Incomplete tasks remain → `/modscape:spec:implement <name>`
    - All tasks complete → `/modscape:spec:check <name>` (then `/modscape:spec:archive <name>`)
 
@@ -62,11 +66,11 @@ modscape summary <file> --json
 **Phase:** <requirements | design | implement | ready to archive>
 
 **Files:**
-  <✓ or ✗> spec.md
+  <✓ or ✗> spec.md (or spec.html)
   <✓ or ✗> spec-config.yaml
   <✓ or ✗> spec-model.yaml
-  <✓ or ✗> design.md
-  <✓ or ✗> tasks.md
+  <✓ or ✗> design.md (or design.html)
+  <✓ or ✗> tasks.md (or tasks.html)
 
 **Tasks:** <n>/<total> complete
   <✓ or ○> Phase 1: Staging   (<done>/<total>)
@@ -95,10 +99,10 @@ modscape summary <file> --json
 | Priority | Condition | Next command |
 |---|---|---|
 | 1 | Findings (Requires Model Change) | `/modscape:spec:amend <name>` |
-| 2 | Unresolved questions in questions.md | `/modscape:spec:answer <name>` |
-| 3 | No spec.md | `/modscape:spec:requirements` |
-| 4 | No design.md | `/modscape:spec:design <name>` |
-| 5 | No tasks.md | `/modscape:spec:tasks <name>` |
+| 2 | Unresolved questions in `_questions.yaml` | `/modscape:spec:answer <name>` |
+| 3 | No spec.md / spec.html | `/modscape:spec:requirements` |
+| 4 | No design.md / design.html | `/modscape:spec:design <name>` |
+| 5 | No tasks.md / tasks.html | `/modscape:spec:tasks <name>` |
 | 6 | Incomplete tasks | `/modscape:spec:implement <name>` |
 | 7 | All tasks complete | `/modscape:spec:check <name>` → `/modscape:spec:archive <name>` |
 
@@ -110,18 +114,18 @@ When invoked as `/modscape:spec:status <name> detail`, run the standard status c
 
 ### Detail instructions
 
-Read the following files if they exist:
+Read the following files if they exist (use `.html` extension if `output_format: html`):
 
-**From `spec.md`:**
+**From `spec.md` (or `spec.html`):**
 - Extract the **Why** section (background / motivation) — summarize in 2–3 sentences
 - Extract the **What Changes** section — list as bullets
 
-**From `design.md`:**
+**From `design.md` (or `design.html`):**
 - Extract the **Decisions** section — list each decision title and chosen approach in one line
 - Extract the **Non-Goals** section — list as bullets
 
-**From `tasks.md`:**
-- List all remaining `- [ ]` tasks with their full text, grouped by Phase section
+**From `tasks.md` (or `tasks.html`):**
+- List all remaining incomplete tasks, grouped by Phase section
 
 ### Detail output block
 

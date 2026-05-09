@@ -22,6 +22,12 @@ All notable changes to this project will be documented in this file.
 
 - **`design.html` template** — Removed the SVG lineage diagram section (redundant with the Cytoscape graph already visible in `modscape dev`). Added code block styling for `<pre>` and `<code>` elements.
 
+- **Questions workflow unified to `_questions.yaml`** — All SDD skills (`design`, `implement`, `amend`) previously wrote questions to a per-change `questions.md` in Markdown format, inconsistent with `requirements` which wrote directly to `_questions.yaml` in YAML format. All skills now append YAML entries to `.modscape/specs/_questions.yaml` directly, matching the format used by `requirements` and `answer`. The per-change `questions.md` (Markdown) is now treated as a legacy format — `archive` already handled migration and continues to do so for backward compatibility. Skills that write questions also re-render `questions.html` when `output_format: html` is set. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`archive` and `status` skills — HTML output mode support** — Both skills previously had no `output_format` detection and read change artifact files (`spec.md`, `design.md`, `tasks.md`) with hardcoded `.md` extensions, which would fail in HTML mode. Both now include a detection step (step 1.5) that reads `.modscape/modscape-spec.config.yaml` and switches to `.html` extensions for all change artifacts. Permanent per-table specs (`<SPEC_DIR>/<table-id>/spec.md`) remain Markdown regardless of output format. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`design` skill — open questions reference corrected** — Step 10 (surface known open questions) previously checked `.modscape/specs/questions.md`, a path that no longer exists. Now correctly reads from `_questions.yaml` filtered by `status: open` or `status: assumed`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.3.2] - 2026-05-08
 
 ### Added

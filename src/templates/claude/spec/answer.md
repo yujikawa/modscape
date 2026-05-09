@@ -95,6 +95,8 @@ Use the Edit tool to update the entry in `.modscape/specs/_questions.yaml`. Do n
   ...
 ```
 
+**If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): also re-render `.modscape/changes/<name>/questions.html` from `_questions.yaml` filtered by `change: <name>`, using `.modscape/spec-templates/questions-template.html`.
+
 ### Step 6 — Update glossary if the answer defines a term
 
 If the answer introduces or clarifies a business/data term definition, update `.modscape/specs/_glossary.yaml`:
