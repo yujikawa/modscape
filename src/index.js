@@ -39,8 +39,9 @@ program
 program
   .command('update')
   .description('Update installed skill files to the latest bundled version')
-  .action(() => {
-    updateProject();
+  .option('--html', 'Enable HTML spec output for existing project (copies templates + sets output_format: html)')
+  .action((options) => {
+    updateProject(options);
   });
 
 program
@@ -51,6 +52,7 @@ program
   .option('-c, --claude', 'Scaffold for Claude Code')
   .option('-a, --all', 'Scaffold for all agents')
   .option('-s, --sdd', 'Add SDD (Spec-Driven Data Engineering) skills')
+  .option('--html', 'Generate HTML spec artifacts (requires --sdd); copies HTML templates to .modscape/spec-templates/')
   .option('-y, --yes', 'Automatically overwrite existing files without prompting')
   .action((options) => {
     initProject(options);
@@ -67,9 +69,10 @@ program
 program
   .command('dev')
   .description('Start the development visualizer with local YAML files or directories')
-  .argument('<paths...>', 'paths to YAML model files or directories')
-  .action((paths) => {
-    startDevServer(paths, VISUALIZER_PATH);
+  .argument('[paths...]', 'paths to YAML model files or directories')
+  .option('--spec <name>', 'Start in spec viewer mode for .modscape/changes/<name>/')
+  .action((paths, options) => {
+    startDevServer(paths, VISUALIZER_PATH, options.spec || null);
   });
 
 program

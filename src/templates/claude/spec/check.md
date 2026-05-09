@@ -12,7 +12,11 @@ Pre-implementation quality check combining cross-artifact consistency and go/no-
    - If not: stop and tell the user:
      > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
 
-2. Read the following files (skip silently if a file does not exist — note which were skipped):
+2. Read `.modscape/modscape-spec.config.yaml` (YAML) and check the `output_format` key.
+   - `output_format: html` → all file references below use `.html` extension (e.g., `spec.html`, `design.html`, `tasks.html`).
+   - Default (file absent or key unset) → use `.md` extension as documented.
+
+3. Read the following files (use `.html` extension if `output_format: html`; skip silently if a file does not exist — note which were skipped):
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/tasks.md`
@@ -97,7 +101,7 @@ D-1. Unresolved questions recorded as assumptions
 
 ---
 
-3. Display the combined report:
+4. Display the combined report:
 
 ```
 ## Check: <name>
@@ -149,7 +153,7 @@ D-1. Unresolved questions recorded as assumptions
 ⏭ skipped — no Coverage Policy set in modscape-spec.custom.md
 ```
 
-4. Evaluate overall status:
+5. Evaluate overall status:
    - **Ready**: no ❌ consistency issues AND no unresolved questions AND no uncovered ACs AND no low-confidence downstream tables
      → Display: `✅ No issues found. Ready to implement.`
    - **Proceed with caution**: only ⚠️ warnings (no ❌ blockers), or open questions/assumptions exist
@@ -157,7 +161,7 @@ D-1. Unresolved questions recorded as assumptions
    - **Blocker**: at least one ❌ consistency issue exists
      → Display: `🚫 Blocking issues found. Re-run /modscape:spec:design <name> before implementing.`
 
-5. **Always output the following next steps at the end, without exception:**
+6. **Always output the following next steps at the end, without exception:**
 
 ---
 **Next steps:**

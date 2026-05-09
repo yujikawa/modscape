@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-05-09
+
+### Added
+
+- **HTML output mode for SDD skills** — All spec skills (`/modscape:spec:requirements`, `/modscape:spec:design`, `/modscape:spec:tasks`) can now generate styled HTML files instead of Markdown. Set `output_format: html` in `.modscape/modscape-spec.config.yaml` to enable. Each artifact uses a dedicated dark-themed template (`spec.html`, `design.html`, `tasks.html`, `questions.html`) with collapsible sections, status badges, filter controls, and code block highlighting for SQL and programming content. Light mode is fully supported via server-side CSS injection.
+
+- **`.modscape/modscape-spec.config.yaml`** — New machine-readable config file for modscape:spec settings. Separates structured tool settings (e.g., `output_format`) from the AI-facing rules in `modscape-spec.custom.md`. Skill files now read this YAML directly instead of scanning Markdown for settings. `readSpecConfig()` and `writeSpecConfig()` helpers added to `model-utils.js`.
+
+- **`modscape init --html` flag** — Adds `output_format: html` to `.modscape/modscape-spec.config.yaml` during project initialization, enabling HTML output for all SDD skills in one step.
+
+- **`modscape dev --spec <name>` — Spec viewer mode** — New mode for the dev server that launches a combined view for an in-progress SDD change. The left pane shows the Cytoscape dependency graph from `spec-model.yaml`; a floating window panel (toggled via the activity bar) shows the spec artifacts (`spec.html`, `design.html`, `tasks.html`, `questions.html`) as tabbed iframes. Supports live reload when spec files change. Accepts both the short change name and the full `.modscape/changes/<name>` path.
+
+- **SpecPanel floating window** — New draggable and resizable floating panel component in the visualizer, matching the existing DetailPanel UX pattern. Rendered on top of the graph in spec mode; toggled with the file-text icon in the RightPanel activity bar. Tabs switch between spec artifacts; light/dark theme is synchronized with the main app.
+
+### Changed
+
+- **SDD skill instructions** — Updated `requirements.md`, `design.md`, `tasks.md`, `amend.md`, and `check.md` to reference `.modscape/modscape-spec.config.yaml` for output format detection instead of `modscape-spec.custom.md`. Added guidance to use `<pre><code>` blocks for SQL and code content when generating HTML artifacts. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`design.html` template** — Removed the SVG lineage diagram section (redundant with the Cytoscape graph already visible in `modscape dev`). Added code block styling for `<pre>` and `<code>` elements.
+
 ## [3.3.2] - 2026-05-08
 
 ### Added

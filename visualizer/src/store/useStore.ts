@@ -53,11 +53,12 @@ interface AppState {
   // UI State
   isSidebarOpen: boolean;
   isRightPanelOpen: boolean;
+  isSpecPanelOpen: boolean;
   isQuickConnectBarOpen: boolean;
   isTerminalOpen: boolean;
   connectMode: 'lineage' | 'er' | null;
   activeTab: 'yaml' | 'stats';
-  activeRightPanelTab: 'search' | 'path' | 'notes' | 'decisions';
+  activeRightPanelTab: 'search' | 'path' | 'notes' | 'decisions' | 'spec';
   focusNodeId: string | null;
   pathFinderResult: { nodeIds: string[], edgeIds: string[] } | null;
   showER: boolean;
@@ -134,11 +135,12 @@ interface AppState {
   // Sidebar Actions
   setIsSidebarOpen: (isOpen: boolean) => void;
   setIsRightPanelOpen: (isOpen: boolean) => void;
+  setIsSpecPanelOpen: (isOpen: boolean) => void;
   setIsQuickConnectBarOpen: (isOpen: boolean) => void;
   setIsTerminalOpen: (isOpen: boolean) => void;
   setConnectMode: (mode: 'lineage' | 'er' | null) => void;
   setActiveTab: (tab: 'yaml' | 'stats') => void;
-  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
+  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes' | 'decisions' | 'spec') => void;
   setIsContextPanelOpen: (open: boolean) => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
   setFocusNodeId: (id: string | null) => void;
@@ -224,6 +226,7 @@ export const useStore = create<AppState>()(persist(
   // UI Defaults
   isSidebarOpen: true,
   isRightPanelOpen: false,
+  isSpecPanelOpen: false,
   isQuickConnectBarOpen: false,
   isTerminalOpen: false,
   connectMode: null,
@@ -292,6 +295,7 @@ export const useStore = create<AppState>()(persist(
   setIsCliMode: (isCli) => set({ isCliMode: isCli }),
   setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
   setIsRightPanelOpen: (isOpen) => set({ isRightPanelOpen: isOpen }),
+  setIsSpecPanelOpen: (isOpen) => set({ isSpecPanelOpen: isOpen }),
   setIsQuickConnectBarOpen: (isOpen) => set({ isQuickConnectBarOpen: isOpen }),
   setIsTerminalOpen: (isOpen: boolean) => set({ isTerminalOpen: isOpen }),
   setConnectMode: (mode) => set({ connectMode: mode }),

@@ -19,14 +19,18 @@ After the command, describe the issue, error, or change in free text. For exampl
    - If not: stop and tell the user:
      > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
 
-2. Read the following files to understand current state:
+2. Read `.modscape/modscape-spec.config.yaml` (YAML) and check the `output_format` key.
+   - `output_format: html` → all file references below use `.html` extension (e.g., `spec.html`, `design.html`, `tasks.html`).
+   - Default (file absent or key unset) → use `.md` extension as documented.
+
+3. Read the following files to understand current state (use `.html` extension if `output_format: html`):
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/tasks.md`
    - `.modscape/changes/<name>/questions.md` (if it exists)
    - `.modscape/changes/<name>/spec-model.yaml` (if it exists)
 
-3. Analyze the user's input and classify the finding:
+4. Analyze the user's input and classify the finding:
 
    **判断基準 — 軽微な修正 vs 設計変更:**
    - **軽微な修正**: 列の型・制約・名前・説明の変更、AC の文言修正、JOIN キーの修正。`spec-model.yaml` の構造（テーブル数・lineage・relationships）は変わらない。
@@ -40,17 +44,17 @@ After the command, describe the issue, error, or change in free text. For exampl
    | Unresolved question, "needs checking", ambiguity | `questions.md` (add new Q-NNN) |
    | Multiple concerns in one input | All applicable files |
 
-4. **Update `spec.md`** if the issue affects Acceptance Criteria:
+5. **Update `spec.md`** (or `spec.html`) if the issue affects Acceptance Criteria:
    - Find the relevant `AC-NNN` entry
    - Correct it to reflect the actual behaviour or constraint
    - Do NOT renumber existing AC IDs
 
-5. **Update `design.md`** if the issue affects a design decision:
+6. **Update `design.md`** (or `design.html`) if the issue affects a design decision:
    - Find the relevant section (Decisions, Risks, etc.)
    - Correct or extend it with the discovered information
    - Add a note such as: `> ⚠ Amended <YYYY-MM-DD>: <reason>`
 
-6. **Update `spec-model.yaml`** if the finding is a **軽微な修正**:
+7. **Update `spec-model.yaml`** if the finding is a **軽微な修正**:
    - Apply changes using mutation CLI commands:
      ```bash
      modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>
@@ -69,7 +73,7 @@ After the command, describe the issue, error, or change in free text. For exampl
      > ⚠ これは設計変更を伴います。`design.md` の `### Requires Model Change` に記録しました。
      > `/modscape:spec:design <name>` を再実行して設計を更新してください。
 
-7. **Update `tasks.md`** if code changes are needed:
+8. **Update `tasks.md`** (or `tasks.html`) if code changes are needed:
    - **Never modify `- [x]` completed tasks**
    - Append a new section at the end of the file:
      ```
@@ -80,7 +84,7 @@ After the command, describe the issue, error, or change in free text. For exampl
      ```
    - If multiple amend runs occur on the same date, append to the existing `## Amend: <YYYY-MM-DD>` section.
 
-8. **Update `questions.md`** if an unresolved question arises:
+9. **Update `questions.md`** if an unresolved question arises:
    - Read the existing file and check the highest Q-NNN number to avoid duplication
    - Check whether the question already exists (compare by text; skip if duplicate)
    - Append the new question under the appropriate table section:
@@ -89,7 +93,7 @@ After the command, describe the issue, error, or change in free text. For exampl
        **Assumption:** <what you will assume to proceed> (unconfirmed)
      ```
 
-9. **Display a change summary with ripple-effect report**:
+10. **Display a change summary with ripple-effect report**:
 
    ```
    ## Amend Summary

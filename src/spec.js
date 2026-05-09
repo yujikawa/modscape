@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { MODEL_FORMAT_VERSION } from './model-format-version.js';
+import { readSpecConfig } from './model-utils.js';
 
 const CHANGES_DIR = '.modscape/changes';
 
@@ -30,7 +31,10 @@ export function specNew(name) {
   }
 
   ensureDir(dir);
-  console.log(`\n  📁 Scaffolding spec: ${name}\n`);
+
+  const html = readSpecConfig().output_format === 'html';
+  const ext = html ? 'html' : 'md';
+  console.log(`\n  📁 Scaffolding spec: ${name} (format: ${ext})\n`);
 
   // spec-config.yaml
   const config = {
@@ -49,24 +53,30 @@ export function specNew(name) {
     `version: "${MODEL_FORMAT_VERSION}"\ntables: []\n`
   );
 
-  // design.md
+  // design.md / design.html
   writeIfNotExists(
-    path.join(dir, 'design.md'),
-    `# Design: ${name}\n\n## Design Decisions\n\n## Affected Tables\n\n### Direct Impact\n\n### Indirect Impact\n\n## Findings\n\n### Requires Model Change\n\n### Implementation Notes\n`
+    path.join(dir, `design.${ext}`),
+    html
+      ? `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Design: ${name}</title></head><body><h1>Design: ${name}</h1><p>Run /modscape:spec:design to fill in this file.</p></body></html>\n`
+      : `# Design: ${name}\n\n## Design Decisions\n\n## Affected Tables\n\n### Direct Impact\n\n### Indirect Impact\n\n## Findings\n\n### Requires Model Change\n\n### Implementation Notes\n`
   );
 
-  // tasks.md
+  // tasks.md / tasks.html
   writeIfNotExists(
-    path.join(dir, 'tasks.md'),
-    `# Pipeline Tasks\n> Generated from: .modscape/changes/${name}/spec-model.yaml\n> Spec: .modscape/changes/${name}/spec.md\n> Progress: 0 / 0\n\n## Phase 1: Staging\n\n## Phase 2: Core\n\n## Phase 3: Mart\n\n## Phase 4: Tests\n`
+    path.join(dir, `tasks.${ext}`),
+    html
+      ? `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Tasks: ${name}</title></head><body><h1>Tasks: ${name}</h1><p>Run /modscape:spec:tasks to fill in this file.</p></body></html>\n`
+      : `# Pipeline Tasks\n> Generated from: .modscape/changes/${name}/spec-model.yaml\n> Spec: .modscape/changes/${name}/spec.md\n> Progress: 0 / 0\n\n## Phase 1: Staging\n\n## Phase 2: Core\n\n## Phase 3: Mart\n\n## Phase 4: Tests\n`
   );
 
-  // questions.md
+  // questions.md / questions.html
   writeIfNotExists(
-    path.join(dir, 'questions.md'),
-    `# Questions: ${name}\n\n## Pipeline-level\n\n## Table-level\n`
+    path.join(dir, `questions.${ext}`),
+    html
+      ? `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Questions: ${name}</title></head><body><h1>Questions: ${name}</h1><p>Run /modscape:spec:requirements to fill in this file.</p></body></html>\n`
+      : `# Questions: ${name}\n\n## Pipeline-level\n\n## Table-level\n`
   );
 
   console.log(`\n  ✅ Scaffold complete: ${dir}/`);
-  console.log(`\n  Next: run /modscape:spec:requirements to fill in spec.md\n`);
+  console.log(`\n  Next: run /modscape:spec:requirements to fill in spec.${ext}\n`);
 }

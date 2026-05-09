@@ -11,6 +11,7 @@ import SelectionToolbar from './components/SelectionToolbar'
 import CanvasViewToolbar from './components/CanvasViewToolbar'
 import DrawOverlay, { type DrawOverlayHandle } from './components/DrawOverlay'
 import DrawToolbar from './components/DrawToolbar'
+import SpecPanel from './components/SpecPanel'
 import { LINEAGE_BASE } from './lib/colors'
 
 // ── Flow (Canvas area) ────────────────────────────────────────────────
@@ -432,6 +433,7 @@ function Flow() {
         )}
         <SelectionToolbar />
         <DetailPanel />
+        {!!(window as any).MODSCAPE_SPEC_MODE && <SpecPanel />}
       </div>
     </div>
   )

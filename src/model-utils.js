@@ -119,6 +119,24 @@ export function writeYaml(filePath, data) {
   fs.writeFileSync(filePath, yaml.dump(normalizeSchema(data), { lineWidth: -1 }), 'utf8');
 }
 
+const SPEC_CONFIG_PATH = '.modscape/modscape-spec.config.yaml';
+
+export function readSpecConfig() {
+  const configPath = path.resolve(process.cwd(), SPEC_CONFIG_PATH);
+  if (!fs.existsSync(configPath)) return {};
+  try {
+    return yaml.load(fs.readFileSync(configPath, 'utf8')) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeSpecConfig(data) {
+  const configPath = path.resolve(process.cwd(), SPEC_CONFIG_PATH);
+  fs.mkdirSync(path.dirname(configPath), { recursive: true });
+  fs.writeFileSync(configPath, yaml.dump(data, { lineWidth: -1 }), 'utf8');
+}
+
 export function findTableById(data, id) {
   return (data.tables || []).find(t => t.id === id) || null;
 }
@@ -201,3 +219,4 @@ export function outputOk(json, action, resource, id, extra = {}) {
     console.log(`  ${icons[action] || '✅'} ${action} ${resource}: ${id}`);
   }
 }
+
