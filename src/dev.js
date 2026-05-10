@@ -323,22 +323,54 @@ export async function startDevServer(paths, _visualizerPath, specName = null) {
   });
 
   app.get('/api/context/tables', (req, res) => {
-    const specsDir = path.resolve(process.cwd(), '.modscape/specs');
-    if (!fs.existsSync(specsDir)) return res.json({});
+    const baseSpecsDir = path.resolve(process.cwd(), '.modscape/specs');
+    if (!fs.existsSync(baseSpecsDir)) return res.json({});
     try {
       const result = {};
-      const entries = fs.readdirSync(specsDir, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isDirectory() || entry.name.startsWith('_')) continue;
-        const tableId = entry.name;
-        const tableDir = path.join(specsDir, tableId);
-        const specPath = path.join(tableDir, 'spec.md');
-        const questionsPath = path.join(tableDir, 'questions.md');
-        const spec = fs.existsSync(specPath) ? fs.readFileSync(specPath, 'utf8') : undefined;
-        const questions = fs.existsSync(questionsPath) ? fs.readFileSync(questionsPath, 'utf8') : undefined;
-        if (spec || questions) result[tableId] = { spec, questions };
+      const modelSlug = req.query.model;
+      // If model slug provided, scan specs/<slug>/ flat files; otherwise fall back to specs/ root (legacy)
+      const scanDir = modelSlug ? path.join(baseSpecsDir, modelSlug) : baseSpecsDir;
+      if (!fs.existsSync(scanDir)) return res.json({});
+      const files = fs.readdirSync(scanDir);
+      const tableMap = {};
+      for (const file of files) {
+        if (file.startsWith('_')) continue;
+        if (file.endsWith('.html')) {
+          const tableId = file.slice(0, -5);
+          tableMap[tableId] = tableMap[tableId] || {};
+          tableMap[tableId].htmlFile = file;
+        } else if (file.endsWith('.md')) {
+          const tableId = file.slice(0, -3);
+          tableMap[tableId] = tableMap[tableId] || {};
+          tableMap[tableId].mdFile = file;
+        }
+      }
+      for (const [tableId, files] of Object.entries(tableMap)) {
+        const entry = {};
+        if (files.htmlFile) {
+          entry.spec = fs.readFileSync(path.join(scanDir, files.htmlFile), 'utf8');
+          entry.specIsHtml = true;
+        } else if (files.mdFile) {
+          entry.spec = fs.readFileSync(path.join(scanDir, files.mdFile), 'utf8');
+          entry.specIsHtml = false;
+        }
+        if (entry.spec) result[tableId] = entry;
       }
       res.json(result);
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+  app.get('/api/table-spec/:modelSlug/:tableId', (req, res) => {
+    const { modelSlug, tableId } = req.params;
+    const filePath = path.resolve(process.cwd(), '.modscape/specs', modelSlug, `${tableId}.html`);
+    if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      if (req.query.theme === 'light') {
+        content = content.replace('</body>', `${LIGHT_MODE_CSS}</body>`);
+      }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(content);
     } catch (e) { res.status(500).send(e.message); }
   });
 

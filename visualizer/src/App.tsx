@@ -139,7 +139,9 @@ function Flow() {
           if (data.type === 'update') refreshModelData()
           else if (data.type === 'files_changed') fetchAvailableFiles()
           else if (data.type === 'context-update') {
-            Promise.all([fetch('/api/context'), fetch('/api/context/tables'), fetch('/api/glossary')]).then(async ([ctxRes, tableSpecsRes, glossaryRes]) => {
+            const currentSlug = useStore.getState().currentModelSlug
+            const tableSpecsUrl = currentSlug ? `/api/context/tables?model=${encodeURIComponent(currentSlug)}` : '/api/context/tables'
+            Promise.all([fetch('/api/context'), fetch(tableSpecsUrl), fetch('/api/glossary')]).then(async ([ctxRes, tableSpecsRes, glossaryRes]) => {
               const { parseContextYaml, parseGlossaryYaml } = await import('./lib/parser')
               useStore.setState({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null })
               useStore.setState({ tableSpecs: tableSpecsRes.ok ? await tableSpecsRes.json() : null })

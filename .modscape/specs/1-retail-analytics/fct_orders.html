@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head><meta charset="UTF-8"><title>fct_orders — Table Spec</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+h1 { font-size: 1.4rem; color: #f1f5f9; font-family: monospace; margin-bottom: 1rem; }
+h2 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; margin: 1.5rem 0 0.5rem; }
+p, li { color: #cbd5e1; font-size: 0.9rem; }
+ul { list-style: none; }
+ul li { padding: 0.3rem 0.75rem; margin-bottom: 0.25rem; background: #1e293b; border: 1px solid #334155; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>fct_orders</h1>
+<h2>Grain</h2><p>1行 = 1注文明細。同一注文でも商品ごとに行が分かれる。</p>
+<h2>Business Rules</h2>
+<ul>
+  <li>キャンセル済み注文（status = 'cancelled'）は集計から除外する</li>
+  <li>返品処理は別テーブル fct_returns で管理する</li>
+</ul>
+<h2>Changelog</h2>
+<ul><li>2026-05-10: Initial version (SDD: test)</li></ul>
+</body>
+</html>

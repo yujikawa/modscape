@@ -1,19 +1,5 @@
 ## ADDED Requirements
 
-### Requirement: YAML File Watching
-The dev server SHALL watch the specified YAML file for changes and notify the visualizer via WebSocket.
-
-#### Scenario: YAML file is edited externally
-- **WHEN** the user saves changes to the YAML file in an external editor
-- **THEN** the dev server broadcasts an update message to all connected WebSocket clients
-
-### Requirement: Layout Update API
-The dev server SHALL provide an API endpoint to receive and persist layout changes.
-
-#### Scenario: Visualizer sends new coordinates
-- **WHEN** the dev server receives a `POST /api/layout` request with node coordinates
-- **THEN** it updates the corresponding `layout` section in the local YAML file
-
 ### Requirement: /api/context/tables が spec.html/spec.md をフラットスキャンし specIsHtml フラグを返す
 `GET /api/context/tables` エンドポイントはモデルスラグをクエリパラメータ `?model=<slug>` で受け取り、`specs/<slug>/` 配下のファイルをスキャンしなければならない（SHALL）。各テーブルに対し `<table-id>.html` が存在する場合は `{ spec: <html文字列>, specIsHtml: true }` を、`<table-id>.md` のみ存在する場合は `{ spec: <md文字列>, specIsHtml: false }` を返さなければならない（SHALL）。`<table-id>.html` が優先される（SHALL）。`model` クエリパラメータが未指定の場合は `specs/` 直下をスキャンし、従来の動作を維持しなければならない（SHALL）。
 

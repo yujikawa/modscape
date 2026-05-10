@@ -13,7 +13,7 @@ export interface ModelFile {
   path: string;
 }
 
-export interface TableSpecEntry { spec?: string; questions?: string; }
+export interface TableSpecEntry { spec?: string; specIsHtml?: boolean; }
 
 interface AppState {
   schema: Schema | null;
@@ -1181,9 +1181,10 @@ export const useStore = create<AppState>()(persist(
         }
         data = await res.json();
         try {
+          const tableSpecsUrl = slug ? `/api/context/tables?model=${encodeURIComponent(slug)}` : '/api/context/tables';
           const [ctxRes, tableSpecsRes, glossaryRes, questionsRes] = await Promise.all([
             fetch('/api/context'),
-            fetch('/api/context/tables'),
+            fetch(tableSpecsUrl),
             fetch('/api/glossary'),
             fetch('/api/questions'),
           ]);

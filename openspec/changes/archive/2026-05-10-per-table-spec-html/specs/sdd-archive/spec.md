@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: SDD作業完了時に恒久テーブルspecを自動同期する
 AIスキル `/modscape:spec:archive <name>` は `changes/<name>/spec.md`・`changes/<name>/design.md`・`changes/<name>/spec-model.yaml` を解析し、影響テーブルを特定して `.modscape/specs/<model-slug>/<table-id>.html`（または `.md`）を自動生成または更新しなければならない（SHALL）。また `changes/<name>/spec-model.yaml` を本番の main model.yaml にマージしなければならない（SHALL）。
@@ -53,58 +53,3 @@ AIスキル `/modscape:spec:archive <name>` は `changes/<name>/spec.md`・`chan
 #### Scenario: ユーザーが確認を拒否した場合にマージをスキップする
 - **WHEN** dry-run サマリー確認で拒否を選択する
 - **THEN** マージは実行されず「Archive cancelled.」と表示して終了する
-
-## ADDED Requirements
-
-### Requirement: archive 時に glossary.md を _glossary.yaml にマージする
-`archive` スキルは `.modscape/changes/<name>/glossary.md` が存在する場合、その内容を `.modscape/specs/_glossary.yaml` にマージしなければならない（SHALL）。マージ後、`glossary.md` を削除しなければならない（SHALL）。
-
-マージ戦略：
-- `id` で既存エントリを照合する
-- 未登録の場合 → `_glossary.yaml` の `terms:` に新規追加する
-- 既登録の場合 → `change` フィールドのみ更新し、`definition` は上書きしない（手動編集を保護する）
-- `_glossary.yaml` が存在しない場合 → 新規作成してマージする
-
-#### Scenario: glossary.md が存在する場合にマージが実行される
-- **WHEN** `.modscape/changes/<name>/glossary.md` が存在する状態で archive を実行する
-- **THEN** glossary.md の全エントリが `_glossary.yaml` にマージされ、glossary.md が削除される
-
-#### Scenario: glossary.md が存在しない場合はスキップされる
-- **WHEN** `.modscape/changes/<name>/glossary.md` が存在しない状態で archive を実行する
-- **THEN** glossary マージステップはスキップされ、エラーを出さずに続行する
-
-#### Scenario: 既登録の用語は definition を上書きしない
-- **WHEN** `_glossary.yaml` に既に登録されている用語が glossary.md にも存在する
-- **THEN** `change` フィールドのみ更新され、`definition` は元の値を保持する
-
----
-
-## ADDED Requirements
-
-### Requirement: Coverage Policy 設定時に archive の merge 前にカバレッジゲートを実行する
-
-`modscape:spec:archive` スキルは、`.modscape/modscape-spec.custom.md` に Coverage Policy（最小カバレッジ閾値）が設定されている場合、`modscape validate` の直後・merge の前に `modscape coverage` を実行しなければならない（SHALL）。
-
-Coverage Policy が設定されていない場合、カバレッジチェックをスキップしなければならない（SHALL）。既存プロジェクトへの影響はゼロでなければならない（SHALL）。
-
-カバレッジが閾値を下回る場合は警告を表示し、ユーザーに y/N で続行を確認しなければならない（SHALL）。ユーザーが N を選択した場合は merge をキャンセルしなければならない（SHALL）。ブロックではなく確認であるため、ユーザーが y を選択すれば閾値未満でも merge を続行できなければならない（SHALL）。
-
-#### Scenario: Coverage Policy 設定時に閾値以上でそのまま続行する
-- **WHEN** Coverage Policy が 70% に設定されており、spec-model.yaml の総合カバレッジが 75% の場合に archive を実行する
-- **THEN** 「Coverage OK: 75% >= 70%」と表示されて merge ステップに進む
-
-#### Scenario: Coverage Policy 設定時に閾値未満で確認を求める
-- **WHEN** Coverage Policy が 70% に設定されており、spec-model.yaml の総合カバレッジが 45% の場合に archive を実行する
-- **THEN** 「⚠ Coverage: 45% < 70% (threshold). Proceed anyway? (y/N)」と表示されてユーザーの入力を待つ
-
-#### Scenario: 閾値未満でユーザーが y を選択して続行する
-- **WHEN** カバレッジが閾値未満の状態で確認プロンプトに y を入力する
-- **THEN** 警告を記録した上で merge ステップに進む
-
-#### Scenario: 閾値未満でユーザーが N を選択してキャンセルする
-- **WHEN** カバレッジが閾値未満の状態で確認プロンプトに N を入力する
-- **THEN** 「Archive cancelled.」を表示して処理を終了し、main YAML への変更は行わない
-
-#### Scenario: Coverage Policy が未設定の場合にスキップする
-- **WHEN** `.modscape/modscape-spec.custom.md` に Coverage Policy が記述されていない状態で archive を実行する
-- **THEN** カバレッジチェックをスキップして通常の validate → merge の流れで処理する

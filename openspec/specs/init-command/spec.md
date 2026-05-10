@@ -20,3 +20,20 @@ The system SHALL NOT overwrite existing configuration files during the `init` pr
 #### Scenario: Claude Code向けinitでMCP案内が表示される
 - **WHEN** `modscape init --claude` が完了する
 - **THEN** 「To use the MCP server with Claude Code, run: claude mcp add modscape -- modscape mcp」というメッセージが表示される
+
+## ADDED Requirements
+
+### Requirement: --html フラグによるHTML出力モードの初期化
+`modscape init --sdd --html` を実行した場合、`.modscape/modscape-spec.custom.md` に `output_format: html` を追記しなければならない（SHALL）。ファイルが既に存在する場合は末尾に追記する。
+
+#### Scenario: --html フラグでoutput_format: htmlが追記される
+- **WHEN** `modscape init --sdd --html` を実行する
+- **THEN** `.modscape/modscape-spec.custom.md` に `output_format: html` が記載される
+
+#### Scenario: --html なしでは output_format は追記されない
+- **WHEN** `modscape init --sdd` を実行する（--html なし）
+- **THEN** `.modscape/modscape-spec.custom.md` に `output_format` の記載はない
+
+#### Scenario: 既存のmodscape-spec.custom.mdへの追記
+- **WHEN** `.modscape/modscape-spec.custom.md` が既に存在する状態で `modscape init --html` を実行する
+- **THEN** 既存の内容を保持したまま `output_format: html` が追記される

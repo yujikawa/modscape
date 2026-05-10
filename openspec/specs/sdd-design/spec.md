@@ -9,8 +9,8 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 - 新規テーブルを `changes/<name>/spec-model.yaml` に追加設計する（mutation CLIの対象は `changes/<name>/spec-model.yaml`）
 - 設計判断と影響テーブルリストを `changes/<name>/design.md` に記録する
 - 設計完了後に `modscape layout changes/<name>/spec-model.yaml` でレイアウトを更新する
-- **[NEW]** Direct Impact テーブルに関連する `specs/questions.md` の未解決質問（`- [ ]`）を検索し、該当する Q-NNN ID を `design.md` の `## Known Open Questions` セクションに参照として挿入する（本文コピーは行わない）
-- **[NEW]** `modscape spec search <keyword> --json` を内部的に実行し、Direct Impact テーブル名をキーワードとして過去 archive を検索する。マッチがあれば `design.md` の `## Related Past Specs` セクションに archive パスとタイトルを記録する
+- Direct Impact テーブルに関連する `specs/questions.md` の未解決質問（`- [ ]`）を検索し、該当する Q-NNN ID を `design.md` の `## Known Open Questions` セクションに参照として挿入する（本文コピーは行わない）
+- `modscape spec search <keyword> --json` を内部的に実行し、Direct Impact テーブル名をキーワードとして過去 archive を検索する。マッチがあれば `design.md` の `## Related Past Specs` セクションに archive パスとタイトルを記録する
 
 スキルは再実行可能でなければならず（SHALL）、再実行時は以下を行わなければならない（SHALL）:
 - 既存の `changes/<name>/design.md` の気づきセクションを読み込み設計に反映する
@@ -21,6 +21,26 @@ AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs
 スキルは `changes/<name>/spec-model.yaml` の `lineage` セクションをトポロジカルソートし、実装フェーズごとに分類した `changes/<name>/tasks.md` を生成しなければならない（SHALL）。
 
 tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.md` の `## Acceptance Criteria` から AC-NNN ID を読み込み、各テストタスクに対応する AC-NNN を `[→ AC-NNN]` 形式で付記しなければならない（SHALL）。自動テスト生成が困難な AC（数値一致検証等）は `[手動検証]` フラグを付けなければならない（SHALL）。
+
+**spec-model.yaml 変更後の AC 整合確認（必須・拡張）:**
+スキルは `spec-model.yaml` を変更した後、必ず以下を確認しなければならない（SHALL）:
+1. `spec.md` の `## Acceptance Criteria` を読み込み、変更されたテーブル・列に関連する AC を特定する
+2. 変更内容と AC の内容が矛盾しないか確認する
+3. 矛盾がある場合 → その場で `spec.md` を修正し、変更内容を波及確認レポートに記載する
+4. 矛盾がない場合 → 波及確認レポートに「spec.md: ✅ 影響なし」と記載する
+
+**変更後の波及確認レポート（必須）:**
+スキルは設計完了時に以下のレポートを出力しなければならない（SHALL）:
+
+```
+## 波及確認レポート
+
+| ファイル | 状態 | 内容 |
+|---|---|---|
+| spec.md | ✅ 影響なし / ✅ 更新済み | <変更内容> |
+| design.md | ✅ 更新済み | <更新内容の概要> |
+| spec-model.yaml | ✅ 更新済み | <変更テーブル・変更内容の概要> |
+```
 
 スキルは設計完了後に review サマリーを表示しなければならない（SHALL）。review サマリーには以下を含めなければならない（SHALL）:
 - `questions.md` の未解決質問件数と Q-NNN 一覧
@@ -39,63 +59,21 @@ tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.m
 - materialization 種別（`implementation.materialization` または `appearance.type` から推定）
 - 上流依存テーブル（`←` で表記）
 
-スキルは下流テーブルを以下のように分類しなければならない（SHALL）:
-- **Direct Impact**: `--tables` で指定したテーブル（新規作成または構造変更対象）
-- **Downstream Impact — Implement**: Direct Impact テーブルで追加・変更されるカラムを参照する下流テーブル → コード変更が必要
-- **Downstream Impact — Context Only**: Direct Impact テーブルを参照するが変更カラムを使用しない下流テーブル → コード変更不要、参照のみ
-- カラム詳細がない下流テーブル（lineage のみ）→ **Context Only** に分類し、分類確度が低い旨のコメントを付記する
+#### Scenario: 未完了タスクを順に実装する
+- **WHEN** `changes/<name>/tasks.md` に未完了タスクが存在する状態で `/modscape:spec:design <name>` を再実行する
+- **THEN** AIは `spec-model.yaml` を更新し、`spec.md` の AC との整合を確認し、必要なら `spec.md` を修正する。波及確認レポートを出力する
 
-この分類は **AI の提案** であり（SHALL）、`design.md` に免責注記を記載し、分類が誤っている場合はユーザーが直接編集するよう案内しなければならない（SHALL）。
+#### Scenario: spec-model.yaml 変更後に AC 矛盾を検出して自動修正する
+- **WHEN** `/modscape:spec:design <name>` 実行中に `fct_orders` へ `revenue_net` 列を追加し、`spec.md` に「`fct_orders` は `amount` 列のみを持つ」という AC が存在する
+- **THEN** AIはその AC を特定し、`spec.md` を修正して `revenue_net` 列を AC に反映する。波及確認レポートに `spec.md: ✅ 更新済み` と記載する
 
-スキルは設計中に人間の調査なしに判断できない事項（例：カラム定義不明、ソーステーブルの実在未確認）を検知した場合、`.modscape/changes/<name>/questions.md` に質問を追記しなければならない（SHALL）。
+#### Scenario: AC に影響がない場合は更新せずレポートに記録する
+- **WHEN** `/modscape:spec:design <name>` 実行中に `stg_raw_sales` のパーティションキーを変更したが、`spec.md` の AC にパーティションキーへの言及がない
+- **THEN** `spec.md` は変更されず、波及確認レポートに `spec.md: ✅ 影響なし` と記載される
 
-#### Scenario: spec.md のData Sourcesから関連テーブルを抽出して作業用YAMLを生成する
-- **WHEN** `changes/<name>/spec.md` が存在し `/modscape:spec:design <name>` を実行する
-- **THEN** AIはData Sourcesを読み、`modscape extract --with-downstream`で関連テーブルおよびその下流（Downstream Impact）を抽出して `changes/<name>/spec-model.yaml` を生成する
-
-#### Scenario: 本番YAMLを変更しない
-- **WHEN** `/modscape:spec:design <name>` を実行する
-- **THEN** 本番のmaster model.yaml（HR.yaml等）は一切変更されない
-
-#### Scenario: 設計中に不明な事項を questions.md に積む
-- **WHEN** 設計中にAIがカラム定義やソーステーブルの仕様を判断できない
-- **THEN** AIは `questions.md` に該当質問を追記し、仮定で進む場合は `**仮定:**` 行を付ける
-
-#### Scenario: design.md の気づきを反映して再実行する
-- **WHEN** `changes/<name>/design.md` に気づきが追記された状態で `/modscape:spec:design <name>` を再実行する
-- **THEN** AIは気づきの内容を読み込んで `changes/<name>/spec-model.yaml` の設計を更新し、tasks.md の完了済みタスクを保持したまま未完了部分を差分更新する
-
-#### Scenario: spec.md が存在しない場合にエラーメッセージを表示する
-- **WHEN** `changes/<name>/spec.md` が存在しない状態で `/modscape:spec:design <name>` を実行する
-- **THEN** AIは「先に `/modscape:spec:requirements` を実行して spec.md を作成してください」と案内する
-
-#### Scenario: Phase 4 テストタスクに AC-NNN を紐付ける
-- **WHEN** tasks.md の Phase 4 を生成し、`spec.md` に AC-NNN 形式の Acceptance Criteria が存在する
-- **THEN** 各テストタスクの末尾に対応する `[→ AC-NNN]` を付記し、自動生成できない AC には `[手動検証]` フラグを付ける
-
-#### Scenario: design 完了後に review サマリーを表示する
-- **WHEN** `/modscape:spec:design <name>` が完了する
-- **THEN** 未解決質問件数・仮定件数・AC カバレッジ・下流分類確信度の低いテーブルを含む review サマリーが表示され、`/modscape:spec:implement <name>` と `/modscape:spec:review <name>` への次ステップ案内が出力される
-
-#### Scenario: Downstream Impact の分類を design.md に記録する
-- **WHEN** 下流テーブルが特定される
-- **THEN** AIは各テーブルを Direct / Downstream Impact — Implement / Downstream Impact — Context Only に分類し、免責注記とともに `design.md` の `## Affected Tables` セクションに記録する
-
-#### Scenario: Context Only テーブルを tasks.md に含めない
-- **WHEN** tasks.md を生成する
-- **THEN** Downstream Impact — Context Only に分類されたテーブルのタスクは tasks.md に含めない
-
-#### Scenario: Direct Impact テーブルの既知未解決質問を design.md に参照挿入する
-- **WHEN** `/modscape:spec:design <name>` を実行し、`.modscape/specs/questions.md` に Direct Impact テーブルに関連する未解決質問（`- [ ]`）が存在する
-- **THEN** AIは該当する Q-NNN の ID のみを `design.md` の `## Known Open Questions` セクションに挿入する（質問本文はコピーしない）
-
-#### Scenario: Direct Impact テーブルの既知質問が存在しない場合は挿入しない
-- **WHEN** `/modscape:spec:design <name>` を実行し、`.modscape/specs/questions.md` に Direct Impact テーブルに関連する未解決質問が存在しない
-- **THEN** `design.md` に `## Known Open Questions` セクションは追加されない
-
-#### Scenario: 過去 archive のサジェストを design.md に記録する
-- **WHEN** `/modscape:spec:design <name>` を実行し、Direct Impact テーブル名で `modscape spec search` を実行した結果が 1 件以上ある
-- **THEN** マッチした archive のパスとタイトルを `design.md` の `## Related Past Specs` セクションに記録する
+#### Scenario: design.md が存在しない場合のフォールバック
+- **WHEN** `.modscape/changes/<name>/design.md` が存在しない状態で `/modscape:spec:design <name>` を初回実行する
+- **THEN** `spec-model.yaml` を新規生成し、`design.md` を作成し、AC 整合確認を行った後に波及確認レポートを出力する
 
 ## ADDED Requirements
 
@@ -118,3 +96,10 @@ design スキルは既存テーブルを変更する場合、影響範囲を `mo
 #### Scenario: 既存テーブルの変更時に影響範囲コマンドが案内される
 - **WHEN** design スキルが既存テーブルへの変更を含む spec を処理する
 - **THEN** 影響範囲の確認手段として `modscape lineage list <file> --from <tableId> --recursive --json` の実行例を出力に含める
+
+### Requirement: designコマンドのsaveヒント
+`/modscape:spec:design` の出力末尾に、作業を中断する場合の save ヒントを表示しなければならない（SHALL）。
+
+#### Scenario: design セッション終了時のsaveヒント表示
+- **WHEN** `/modscape:spec:design <name>` の出力が完了する
+- **THEN** 出力の末尾に「作業を中断する場合は `/modscape:spec:save <name>` を実行してください」というヒントを表示する

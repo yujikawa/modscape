@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: テーブル単位の恒久ビジネス仕様書フォーマットを定義する
 `.modscape/specs/<model-slug>/` 配下にテーブルごとのフラットファイルとしてビジネス仕様を記述する恒久的なドキュメントを配置しなければならない（SHALL）。
@@ -34,20 +34,3 @@
 #### Scenario: html と md が同じモデルスラグ配下に混在できる
 - **WHEN** 一部のテーブルは `fct_orders.html`、別のテーブルは `dim_customers.md` が存在する
 - **THEN** 両方が `/api/context/tables` から正常に取得できる
-
-### Requirement: specs/ディレクトリの進捗をJSONで確認できる
-AIまたはツールは `model.yaml` のテーブルリストと `specs/` ディレクトリを照合し、specの有無・最終更新日を含む進捗情報をJSON形式で返せなければならない（SHALL）。
-
-各エントリには以下を含まなければならない（SHALL）:
-- `table_id` — テーブルID
-- `has_spec` — specファイルの有無（boolean）
-- `spec_path` — specファイルのパス（存在する場合）
-- `last_updated` — specの最終更新日（存在する場合）
-
-#### Scenario: 全テーブルのspec進捗を確認する
-- **WHEN** model.yaml に5テーブルが存在し specs/ に3ファイルが存在する状態で進捗確認を実行する
-- **THEN** 5件のエントリが返され、specがないテーブルは `has_spec: false` として表示される
-
-#### Scenario: すべてのテーブルにspecが存在する場合
-- **WHEN** model.yaml の全テーブルに対応する `specs/<table-id>.md` が存在する
-- **THEN** 全エントリが `has_spec: true` で返される

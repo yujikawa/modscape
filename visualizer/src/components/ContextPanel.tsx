@@ -102,12 +102,14 @@ function GlossaryCard({ t, theme }: { t: GlossaryTerm; theme: string }) {
   )
 }
 
-function TableSpecSection({ tableId, spec, questions, theme }: { tableId: string; spec?: string; questions?: string; theme: string }) {
+function TableSpecSection({ tableId, spec, specIsHtml, theme, modelSlug }: { tableId: string; spec?: string; specIsHtml?: boolean; theme: string; modelSlug?: string }) {
   const [open, setOpen] = useState(false)
   const border = theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
   const bg = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'
   const text = theme === 'dark' ? '#cbd5e1' : '#334155'
   const headerBg = theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'
+  const themeParam = theme === 'light' ? '?theme=light' : ''
+  const iframeSrc = modelSlug ? `/api/table-spec/${encodeURIComponent(modelSlug)}/${encodeURIComponent(tableId)}${themeParam}` : ''
 
   return (
     <div style={{ border: `1px solid ${border}`, borderRadius: '8px', marginBottom: '8px', overflow: 'hidden' }}>
@@ -127,13 +129,15 @@ function TableSpecSection({ tableId, spec, questions, theme }: { tableId: string
           {spec && (
             <>
               <p style={{ margin: '0 0 6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: theme === 'dark' ? '#475569' : '#94a3b8' }}>Spec</p>
-              <pre style={{ margin: '0 0 10px', fontSize: '11px', color: text, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit' }}>{spec}</pre>
-            </>
-          )}
-          {questions && (
-            <>
-              <p style={{ margin: '0 0 6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: theme === 'dark' ? '#475569' : '#94a3b8' }}>Q&A</p>
-              <pre style={{ margin: 0, fontSize: '11px', color: text, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit' }}>{questions}</pre>
+              {specIsHtml && iframeSrc ? (
+                <iframe
+                  src={iframeSrc}
+                  style={{ width: '100%', height: '400px', border: 'none', borderRadius: '4px', marginBottom: '10px' }}
+                  title={`${tableId} spec`}
+                />
+              ) : (
+                <pre style={{ margin: '0 0 10px', fontSize: '11px', color: text, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit' }}>{spec}</pre>
+              )}
             </>
           )}
         </div>
@@ -143,7 +147,7 @@ function TableSpecSection({ tableId, spec, questions, theme }: { tableId: string
 }
 
 const ContextPanel = memo(() => {
-  const { contextData, tableSpecs, glossaryData, questionsData, isContextPanelOpen, setIsContextPanelOpen, theme } = useStore(
+  const { contextData, tableSpecs, glossaryData, questionsData, isContextPanelOpen, setIsContextPanelOpen, theme, currentModelSlug } = useStore(
     useShallow((s) => ({
       contextData: s.contextData,
       tableSpecs: s.tableSpecs,
@@ -152,6 +156,7 @@ const ContextPanel = memo(() => {
       isContextPanelOpen: s.isContextPanelOpen,
       setIsContextPanelOpen: s.setIsContextPanelOpen,
       theme: s.theme,
+      currentModelSlug: s.currentModelSlug,
     }))
   )
 
@@ -218,7 +223,7 @@ const ContextPanel = memo(() => {
     ), [questionsData, q])
   const tableSpecEntries = useMemo(() =>
     (tableSpecs ? Object.entries(tableSpecs) : []).filter(([tableId, entry]) =>
-      !q || tableId.toLowerCase().includes(q) || (entry.spec ?? '').toLowerCase().includes(q) || (entry.questions ?? '').toLowerCase().includes(q)
+      !q || tableId.toLowerCase().includes(q) || (entry.spec ?? '').toLowerCase().includes(q)
     ), [tableSpecs, q])
   const glossaryTerms = useMemo(() =>
     (glossaryData?.terms ?? []).filter(t =>
@@ -341,7 +346,7 @@ const ContextPanel = memo(() => {
             {activeTab === 'qa'        && questions.map(q => <QuestionCard key={q.id} q={q} theme={theme} />)}
             {activeTab === 'glossary'  && glossaryTerms.map(t => <GlossaryCard key={t.id} t={t} theme={theme} />)}
             {activeTab === 'specs'     && tableSpecEntries.map(([tableId, entry]) => (
-              <TableSpecSection key={tableId} tableId={tableId} spec={entry.spec} questions={entry.questions} theme={theme} />
+              <TableSpecSection key={tableId} tableId={tableId} spec={entry.spec} specIsHtml={entry.specIsHtml} theme={theme} modelSlug={currentModelSlug ?? undefined} />
             ))}
           </>
         )}
