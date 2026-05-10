@@ -71,43 +71,7 @@ export async function build(paths, _visualizerPath, outputDir) {
     }
   }
 
-  // Load _context.yaml for injection
-  let contextYaml = null;
-  const contextPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
-  if (fs.existsSync(contextPath)) {
-    try {
-      const raw = yaml.load(fs.readFileSync(contextPath, 'utf8'));
-      if (raw && typeof raw === 'object') contextYaml = raw;
-    } catch (e) {
-      console.warn(`  ⚠️ Warning: Failed to load _context.yaml: ${e.message}`);
-    }
-  }
-
-  // Load _glossary.yaml for injection
-  let glossaryYaml = null;
-  const glossaryPath = path.resolve(process.cwd(), '.modscape/specs/_glossary.yaml');
-  if (fs.existsSync(glossaryPath)) {
-    try {
-      const raw = yaml.load(fs.readFileSync(glossaryPath, 'utf8'));
-      if (raw && typeof raw === 'object') glossaryYaml = raw;
-    } catch (e) {
-      console.warn(`  ⚠️ Warning: Failed to load _glossary.yaml: ${e.message}`);
-    }
-  }
-
-  // Load _questions.yaml for injection
-  let questionsYaml = null;
-  const questionsPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
-  if (fs.existsSync(questionsPath)) {
-    try {
-      const raw = yaml.load(fs.readFileSync(questionsPath, 'utf8'));
-      if (raw && typeof raw === 'object') questionsYaml = raw;
-    } catch (e) {
-      console.warn(`  ⚠️ Warning: Failed to load _questions.yaml: ${e.message}`);
-    }
-  }
-
-  const injectionData = { isMultiFile: modelsData.length > 1, models: modelsData, contextData: contextYaml, glossaryData: glossaryYaml, questionsData: questionsYaml };
+  const injectionData = { isMultiFile: modelsData.length > 1, models: modelsData };
   html = html.replace(
     '</head>',
     `<script>window.__MODSCAPE_DATA__ = ${JSON.stringify(injectionData)}; window.MODSCAPE_CLI_MODE = false;</script></head>`

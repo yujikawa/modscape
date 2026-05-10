@@ -11,7 +11,6 @@ import {
   Moon,
   Search,
   Download,
-  BookOpen,
   FileText,
 } from 'lucide-react'
 import SearchTab from './SearchTab'
@@ -24,8 +23,6 @@ const RightPanel = memo(() => {
     setIsRightPanelOpen,
     activeRightPanelTab,
     setActiveRightPanelTab,
-    isContextPanelOpen,
-    setIsContextPanelOpen,
     isSpecPanelOpen,
     setIsSpecPanelOpen,
     theme,
@@ -36,8 +33,6 @@ const RightPanel = memo(() => {
     setIsRightPanelOpen: s.setIsRightPanelOpen,
     activeRightPanelTab: s.activeRightPanelTab,
     setActiveRightPanelTab: s.setActiveRightPanelTab,
-    isContextPanelOpen: s.isContextPanelOpen,
-    setIsContextPanelOpen: s.setIsContextPanelOpen,
     isSpecPanelOpen: s.isSpecPanelOpen,
     setIsSpecPanelOpen: s.setIsSpecPanelOpen,
     theme: s.theme,
@@ -187,17 +182,6 @@ const RightPanel = memo(() => {
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pb-2">
-          {/* Context panel toggle */}
-          <div className="relative">
-            <button
-              onClick={() => setIsContextPanelOpen(!isContextPanelOpen)}
-              className={iconClass(isContextPanelOpen)}
-            >
-              <BookOpen size={20} />
-              <Tooltip text="Context" />
-            </button>
-          </div>
-
           {/* Export as Image button */}
           <div className="relative" ref={exportPopupRef}>
             <button

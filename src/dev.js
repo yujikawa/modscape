@@ -77,61 +77,6 @@ export async function startDevServer(paths, _visualizerPath) {
     } catch (e) { res.status(500).send(e.message); }
   });
 
-  app.get('/api/context', (req, res) => {
-    const contextPath = path.resolve(process.cwd(), '.modscape/specs/_context.yaml');
-    if (!fs.existsSync(contextPath)) return res.status(404).send('Not found');
-    try {
-      res.setHeader('Content-Type', 'text/plain');
-      res.send(fs.readFileSync(contextPath, 'utf8'));
-    } catch (e) { res.status(500).send(e.message); }
-  });
-
-  app.get('/api/glossary', (req, res) => {
-    const glossaryPath = path.resolve(process.cwd(), '.modscape/specs/_glossary.yaml');
-    if (!fs.existsSync(glossaryPath)) return res.status(404).send('Not found');
-    try {
-      res.setHeader('Content-Type', 'text/plain');
-      res.send(fs.readFileSync(glossaryPath, 'utf8'));
-    } catch (e) { res.status(500).send(e.message); }
-  });
-
-  app.get('/api/questions', (req, res) => {
-    const questionsPath = path.resolve(process.cwd(), '.modscape/specs/_questions.yaml');
-    if (!fs.existsSync(questionsPath)) return res.status(404).send('Not found');
-    try {
-      res.setHeader('Content-Type', 'text/plain');
-      res.send(fs.readFileSync(questionsPath, 'utf8'));
-    } catch (e) { res.status(500).send(e.message); }
-  });
-
-  app.get('/api/context/tables', (req, res) => {
-    const baseSpecsDir = path.resolve(process.cwd(), '.modscape/specs');
-    if (!fs.existsSync(baseSpecsDir)) return res.json({});
-    try {
-      const result = {};
-      const modelSlug = req.query.model;
-      // If model slug provided, scan specs/<slug>/ flat files; otherwise fall back to specs/ root (legacy)
-      const scanDir = modelSlug ? path.join(baseSpecsDir, modelSlug) : baseSpecsDir;
-      if (!fs.existsSync(scanDir)) return res.json({});
-      const files = fs.readdirSync(scanDir);
-      const tableMap = {};
-      for (const file of files) {
-        if (file.startsWith('_') || !file.endsWith('.md')) continue;
-        const tableId = file.slice(0, -3);
-        tableMap[tableId] = tableMap[tableId] || {};
-        tableMap[tableId].mdFile = file;
-      }
-      for (const [tableId, files] of Object.entries(tableMap)) {
-        const entry = {};
-        if (files.mdFile) {
-          entry.spec = fs.readFileSync(path.join(scanDir, files.mdFile), 'utf8');
-        }
-        if (entry.spec) result[tableId] = entry;
-      }
-      res.json(result);
-    } catch (e) { res.status(500).send(e.message); }
-  });
-
   app.post('/api/save', (req, res) => {
     const p = getModelPath(req.query.model);
     try {

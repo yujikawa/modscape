@@ -3,7 +3,6 @@ import { useStore } from './store/useStore'
 import { useShallow } from 'zustand/react/shallow'
 import CytoscapeCanvas from './components/CytoscapeCanvas'
 import DetailPanel from './components/DetailPanel'
-import ContextPanel from './components/ContextPanel'
 import Sidebar from './components/Sidebar/Sidebar'
 import RightPanel from './components/RightPanel/RightPanel'
 import TerminalBar from './components/TerminalBar'
@@ -138,16 +137,6 @@ function Flow() {
           const data = JSON.parse(event.data)
           if (data.type === 'update') refreshModelData()
           else if (data.type === 'files_changed') fetchAvailableFiles()
-          else if (data.type === 'context-update') {
-            const currentSlug = useStore.getState().currentModelSlug
-            const tableSpecsUrl = currentSlug ? `/api/context/tables?model=${encodeURIComponent(currentSlug)}` : '/api/context/tables'
-            Promise.all([fetch('/api/context'), fetch(tableSpecsUrl), fetch('/api/glossary')]).then(async ([ctxRes, tableSpecsRes, glossaryRes]) => {
-              const { parseContextYaml, parseGlossaryYaml } = await import('./lib/parser')
-              useStore.setState({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null })
-              useStore.setState({ tableSpecs: tableSpecsRes.ok ? await tableSpecsRes.json() : null })
-              useStore.setState({ glossaryData: glossaryRes.ok ? parseGlossaryYaml(await glossaryRes.text()) : null })
-            }).catch(() => {})
-          }
         } catch (_) {}
       }
       ws.onclose = () => {
@@ -498,7 +487,6 @@ function App() {
       <Sidebar />
       <Flow />
       <RightPanel />
-      <ContextPanel />
     </div>
   )
 }
