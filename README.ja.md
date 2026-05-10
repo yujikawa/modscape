@@ -665,6 +665,26 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 
 > **カスタマイズ**: `.modscape/changes/modscape-spec.custom.md.example` を `modscape-spec.custom.md` にリネームすることで、ターゲットツールのデフォルト値、必須フィールド、出力規約をプロジェクトごとに上書きできます。
 
+### Spec ブラウザコマンド
+
+アーカイブが進むと、HTML・Markdown の spec が `.modscape/specs/<model-slug>/` に蓄積されます。以下のコマンドで閲覧できます。
+
+```bash
+# 作業中の変更を SDD ビューアで表示 (dev サーバー)
+modscape spec dev <name>
+
+# .modscape/specs/ 内の永久 spec をブラウザで閲覧 (ポート 5174 でライブリロード)
+modscape spec open
+
+# 静的 spec ブラウザをビルド (デフォルト: dist/specs/)
+modscape spec build
+modscape spec build ./public/specs
+```
+
+- `spec dev <name>` — `.modscape/changes/<name>/` の SDD ビューアを起動します（旧 `modscape dev --spec` フラグ相当）。
+- `spec open` — `.modscape/specs/` 専用のブラウザを起動します。左ペインにモデルスラグ別テーブル一覧、右ペインに `.html` を iframe / `.md` を `<pre>` で表示します。
+- `spec build` — `dist/specs/index.html` と全 spec ファイルを静的生成します。サーバー不要で単独動作します。
+
 ### SDDワークフロー
 
 ```

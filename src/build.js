@@ -83,27 +83,6 @@ export async function build(paths, _visualizerPath, outputDir) {
     }
   }
 
-  // Load per-table specs for injection
-  const tableSpecs = {};
-  const specsDir = path.resolve(process.cwd(), '.modscape/specs');
-  if (fs.existsSync(specsDir)) {
-    try {
-      const entries = fs.readdirSync(specsDir, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isDirectory() || entry.name.startsWith('_')) continue;
-        const tableId = entry.name;
-        const tableDir = path.join(specsDir, tableId);
-        const specPath = path.join(tableDir, 'spec.md');
-        const questionsPath = path.join(tableDir, 'questions.md');
-        const spec = fs.existsSync(specPath) ? fs.readFileSync(specPath, 'utf8') : undefined;
-        const questions = fs.existsSync(questionsPath) ? fs.readFileSync(questionsPath, 'utf8') : undefined;
-        if (spec || questions) tableSpecs[tableId] = { spec, questions };
-      }
-    } catch (e) {
-      console.warn(`  ⚠️ Warning: Failed to load table specs: ${e.message}`);
-    }
-  }
-
   // Load _glossary.yaml for injection
   let glossaryYaml = null;
   const glossaryPath = path.resolve(process.cwd(), '.modscape/specs/_glossary.yaml');
@@ -128,7 +107,7 @@ export async function build(paths, _visualizerPath, outputDir) {
     }
   }
 
-  const injectionData = { isMultiFile: modelsData.length > 1, models: modelsData, contextData: contextYaml, tableSpecs, glossaryData: glossaryYaml, questionsData: questionsYaml };
+  const injectionData = { isMultiFile: modelsData.length > 1, models: modelsData, contextData: contextYaml, glossaryData: glossaryYaml, questionsData: questionsYaml };
   html = html.replace(
     '</head>',
     `<script>window.__MODSCAPE_DATA__ = ${JSON.stringify(injectionData)}; window.MODSCAPE_CLI_MODE = false;</script></head>`

@@ -7,13 +7,17 @@
 - **WHEN** `output_format: html` が設定された状態で archive スキルを実行する
 - **THEN** archive スキルは `src/templates/spec/html/table-spec-template.html` を読み込み、テーブル情報を埋め込んだ `spec.html` を生成する
 
-### Requirement: ContextPanel の Specs タブが spec.html を iframe で表示する
-`specIsHtml: true` のエントリに対し、`TableSpecSection` コンポーネントは `<pre>` ではなく `<iframe>` で HTML を表示しなければならない（SHALL）。iframe は `/api/table-spec/:modelSlug/:tableId` エンドポイントから HTML を取得する（SHALL）。`specIsHtml: false` の場合は従来の `<pre>` 表示を維持しなければならない（SHALL）。
+### Requirement: per-table spec HTML は modscape spec コマンドで閲覧する
+per-table spec の `.html` ファイルは、ContextPanel への埋め込みではなく `modscape spec open` または `modscape spec build` コマンドで専用のブラウザ UI として閲覧しなければならない（SHALL）。`ContextPanel` の Specs タブは `.md` ファイルの `<pre>` テキスト表示のみを提供する（SHALL）。
 
-#### Scenario: spec.html が存在するテーブルを Specs タブで開く
+#### Scenario: modscape spec open で HTML spec を閲覧する
+- **WHEN** `.modscape/specs/<slug>/fct_orders.html` が存在する状態で `modscape spec open` を実行する
+- **THEN** ブラウザに左ペイン（テーブル一覧）と右ペイン（iframe で HTML spec を表示）の 2 カラム UI が表示される
+
+#### Scenario: modscape spec build で静的 spec ブラウザを生成する
+- **WHEN** `modscape spec build` を実行する
+- **THEN** `dist/specs/` に `index.html` と各スラグ配下の `.html` ファイルがコピーされ、静的ブラウザとして閲覧可能になる
+
+#### Scenario: ContextPanel の Specs タブは MD テキスト表示のみを提供する
 - **WHEN** Specs タブでテーブルを展開する
-- **THEN** spec.html の内容が iframe でレンダリングされ、テキストではなくスタイル付き HTML が表示される
-
-#### Scenario: spec.md のみ存在するテーブルは従来通り表示される
-- **WHEN** `spec.html` が存在せず `spec.md` のみ存在するテーブルを Specs タブで展開する
-- **THEN** spec.md の内容が `<pre>` テキストとして表示される（後方互換）
+- **THEN** `.md` ファイルの内容が `<pre>` テキストとして表示される（iframe や HTML 埋め込みは行わない）

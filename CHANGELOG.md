@@ -14,17 +14,18 @@ All notable changes to this project will be documented in this file.
 
 - **Per-table spec HTML template** — New self-contained dark-themed template at `src/templates/spec/html/table-spec-template.html` for generating per-table permanent specs in HTML mode. Includes sections for Overview metadata (Owner / Update Frequency / SLA), Grain, Business Context, Business Rules, Dependencies, Known Issues, and Changelog. Fully self-contained with inline CSS; no external dependencies.
 
-- **`/api/table-spec/:modelSlug/:tableId` endpoint** — New dev server endpoint that serves per-table HTML spec files as `text/html`. Supports `?theme=light` for server-side light-mode CSS injection, consistent with the existing spec artifact endpoints.
-
-- **ContextPanel — HTML spec iframe rendering** — The Specs tab in the ContextPanel now renders HTML specs via an `<iframe>` pointing to the `/api/table-spec/` endpoint when `specIsHtml: true`. Markdown specs continue to display as `<pre>` text (backward compatible). The `TableSpecEntry` type now carries a `specIsHtml` flag; the store passes the active model slug as a `?model=` query parameter when fetching table specs.
-
-- **`modscape dev --spec <name>` — Spec viewer mode** — New mode for the dev server that launches a combined view for an in-progress SDD change. The left pane shows the Cytoscape dependency graph from `spec-model.yaml`; a floating window panel (toggled via the activity bar) shows the spec artifacts (`spec.html`, `design.html`, `tasks.html`, `questions.html`) as tabbed iframes. Supports live reload when spec files change. Accepts both the short change name and the full `.modscape/changes/<name>` path.
+- **`modscape spec` command namespace** — Three new subcommands for browsing permanent specs stored in `.modscape/specs/`:
+  - **`modscape spec dev <name>`** — SDD spec viewer for an in-progress change. Replaces `modscape dev --spec <name>`. Launches the visualizer against `spec-model.yaml` with a tabbed floating panel for spec artifacts (`spec.html`, `design.html`, `tasks.html`, `questions.html`). Supports live reload.
+  - **`modscape spec open`** — Dedicated spec browser for `.modscape/specs/`. Left pane shows model-slug grouped table list; right pane renders `.html` specs in an iframe or `.md` specs in `<pre>`. Live-reloads on file changes. Runs on port 5174.
+  - **`modscape spec build [outDir]`** — Builds a static spec browser (defaults to `dist/specs/`). Copies all spec files and generates `index.html` with vanilla JS navigation. No server required; iframe `src` uses relative paths.
 
 - **SpecPanel floating window** — New draggable and resizable floating panel component in the visualizer, matching the existing DetailPanel UX pattern. Rendered on top of the graph in spec mode; toggled with the file-text icon in the RightPanel activity bar. Tabs switch between spec artifacts; light/dark theme is synchronized with the main app.
 
 ### Changed
 
-- **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table spec files. Returns a `specIsHtml` boolean per table entry (`true` for `.html`, `false` for `.md`). When both `.html` and `.md` exist for the same table ID, `.html` takes priority. Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
+- **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table Markdown spec files. Returns `{ spec: string }` per table (`.md` only; `.html` specs are now served exclusively by `modscape spec open/build`). Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
+
+- **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text; HTML spec browsing is handled by `modscape spec open` / `modscape spec build`.
 
 - **SDD skill instructions** — Updated `requirements.md`, `design.md`, `tasks.md`, `amend.md`, and `check.md` to reference `.modscape/modscape-spec.config.yaml` for output format detection instead of `modscape-spec.custom.md`. Added guidance to use `<pre><code>` blocks for SQL and code content when generating HTML artifacts. Updated for all three AI platforms (Claude / Gemini / Codex).
 

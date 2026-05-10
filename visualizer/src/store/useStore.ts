@@ -13,7 +13,7 @@ export interface ModelFile {
   path: string;
 }
 
-export interface TableSpecEntry { spec?: string; specIsHtml?: boolean; }
+export interface TableSpecEntry { spec?: string; }
 
 interface AppState {
   schema: Schema | null;

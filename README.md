@@ -667,6 +667,26 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
+### Spec Browser Commands
+
+After archiving changes, HTML and Markdown specs accumulate in `.modscape/specs/<model-slug>/`. Use these commands to browse them:
+
+```bash
+# Start an interactive spec viewer for a change in progress (dev server)
+modscape spec dev <name>
+
+# Browse all permanent specs in .modscape/specs/ (live-reloading dev server on port 5174)
+modscape spec open
+
+# Build a static spec browser (no server required, defaults to dist/specs/)
+modscape spec build
+modscape spec build ./public/specs
+```
+
+- `spec dev <name>` — launches the SDD viewer for `.modscape/changes/<name>/`, equivalent to the former `modscape dev --spec` flag.
+- `spec open` — starts a dedicated browser for `.modscape/specs/`. Left pane shows model-slug groups; right pane renders `.html` specs in an iframe or `.md` specs in `<pre>`.
+- `spec build` — generates `dist/specs/index.html` and copies all spec files. Works without a server (iframe `src` uses relative paths).
+
 ### SDD Workflow
 
 ```

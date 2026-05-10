@@ -20,7 +20,8 @@ import { runCoverage } from './coverage.js';
 import { runLint } from './lint.js';
 import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
-import { specNew } from './spec.js';
+import { specNew, startSpecDevServer } from './spec.js';
+import { startSpecOpenServer, buildSpecs } from './specs.js';
 import { runSearch } from './search.js';
 import { updateProject } from './update.js';
 
@@ -70,9 +71,8 @@ program
   .command('dev')
   .description('Start the development visualizer with local YAML files or directories')
   .argument('[paths...]', 'paths to YAML model files or directories')
-  .option('--spec <name>', 'Start in spec viewer mode for .modscape/changes/<name>/')
-  .action((paths, options) => {
-    startDevServer(paths, VISUALIZER_PATH, options.spec || null);
+  .action((paths) => {
+    startDevServer(paths, VISUALIZER_PATH);
   });
 
 program
@@ -221,6 +221,29 @@ specCommand
   .argument('<name>', 'kebab-case name for the spec (e.g. monthly-sales-summary)')
   .action((name) => {
     specNew(name);
+  });
+
+specCommand
+  .command('dev')
+  .description('Start SDD spec viewer for a change under .modscape/changes/<name>/')
+  .argument('<name>', 'kebab-case name of the change (e.g. monthly-sales-summary)')
+  .action((name) => {
+    startSpecDevServer(name);
+  });
+
+specCommand
+  .command('open')
+  .description('Start the spec browser for .modscape/specs/ (dev server with live reload)')
+  .action(() => {
+    startSpecOpenServer();
+  });
+
+specCommand
+  .command('build')
+  .description('Build a static spec browser from .modscape/specs/')
+  .argument('[outDir]', 'output directory', 'dist/specs')
+  .action((outDir) => {
+    buildSpecs(outDir);
   });
 
 specCommand
