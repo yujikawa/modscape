@@ -1,16 +1,12 @@
-Generate an implementation task list from `spec-model.yaml` and write it to `.modscape/changes/<name>/tasks.md` (or `tasks.html` when `output_format: html` is set).
+Generate an implementation task list from `spec-model.yaml` and write it to `.modscape/changes/<name>/tasks.md`.
 
 ## Instructions
 
 1. If `.modscape/modscape-spec.custom.md` exists, read it — its rules take **priority** over all defaults, including phase structure, additional tasks, and **communication preferences** (language, response format, etc.). Apply every rule in the file.
 
-   **Output format detection** — read `.modscape/modscape-spec.config.yaml` (YAML) and check the `output_format` key:
-   - `output_format: html` → output file is `tasks.html`. Use `.modscape/spec-templates/tasks-template.html` as the structural template; fill its placeholders with the task list content. All subsequent references to `tasks.md` in these instructions mean `tasks.html` instead. When writing SQL or code, use `<pre><code>...</code></pre>` for blocks and `<code>...</code>` for inline.
-   - Default (file absent or key unset) → output file is `tasks.md` as documented below.
-
 2. Read `.modscape/changes/<name>/spec-model.yaml` (default path) or the path provided by the user.
 
-3. **Build the Context Only skip list** from `design.md` (or `design.html` when `output_format: html`):
+3. **Build the Context Only skip list** from `design.md`:
    - If `.modscape/changes/<name>/design.md` exists: read it and extract all table IDs listed under `### Downstream Impact — Context Only` into a skip list.
    - If `design.md` does not exist or has no such section: the skip list is empty — all tables are treated as implementation targets.
 

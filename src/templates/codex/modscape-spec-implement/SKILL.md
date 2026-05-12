@@ -62,7 +62,6 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
    ```
    > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `_questions.yaml` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
 
-   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): also re-render `.modscape/changes/<name>/questions.html` from `_questions.yaml` filtered by `change: <name>`, using `.modscape/spec-templates/questions-template.html`.
 
 8. After each task, confirm with the user before proceeding:
    > Task complete. Ready to move on to the next task?

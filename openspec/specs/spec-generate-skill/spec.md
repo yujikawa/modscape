@@ -1,17 +1,11 @@
 ### Requirement: 任意のアーティファクトからspec.mdを一括生成する
-スキル `/modscape:spec:generate` は、model.yaml・SQLファイル・Pythonファイルなどの実装アーティファクトを読み込み、各テーブルに対してspecファイルを生成しなければならない（SHALL）。テーブルIDは物理テーブル名とする。ユーザーが別IDを明示した場合はそちらを優先する。
+スキル `/modscape:spec:generate` は、model.yaml・SQLファイル・Pythonファイルなどの実装アーティファクトを読み込み、各テーブルに対して `.modscape/specs/<table-id>/spec.md` を生成しなければならない（SHALL）。テーブルIDは物理テーブル名とする。ユーザーが別IDを明示した場合はそちらを優先する。
 
-`output_format: html` が設定されている場合、生成ファイルは `.html` 拡張子とし、`table-spec-template.html` テンプレートを使用しなければならない（SHALL）。出力パスは `.modscape/specs/<model-slug>/<table-id>.html` とする。
+出力形式は常に `.md` とする（HTMLモード廃止のため `output_format` による切り替えは行わない）。
 
-`output_format` が未設定またはデフォルトの場合、生成ファイルは `.md` 拡張子とし、出力パスは `.modscape/specs/<table-id>/spec.md` とする。
-
-#### Scenario: model.yamlを引数として実行する（MDモード）
-- **WHEN** `output_format` が設定されていない状態でユーザーが `/modscape:spec:generate model.yaml` を実行する
+#### Scenario: model.yamlを引数として実行する
+- **WHEN** ユーザーが `/modscape:spec:generate model.yaml` を実行する
 - **THEN** model.yaml内の全テーブルに対して `.modscape/specs/<table-id>/spec.md` が生成される
-
-#### Scenario: model.yamlを引数として実行する（HTMLモード）
-- **WHEN** `output_format: html` が設定された状態でユーザーが `/modscape:spec:generate model.yaml` を実行する
-- **THEN** model.yaml内の全テーブルに対して `.modscape/specs/<model-slug>/<table-id>.html` が `table-spec-template.html` を使って生成される
 
 #### Scenario: SQLファイルを引数として実行する
 - **WHEN** ユーザーが `/modscape:spec:generate models/staging/*.sql` を実行する
@@ -42,8 +36,8 @@
 ### Requirement: 既存のspecファイルはスキップする
 対象テーブルのspecファイルが既に存在する場合、スキルはそのファイルをスキップし上書きしてはならない（SHALL NOT）。
 
-#### Scenario: specファイルが既存のテーブルをスキップする
-- **WHEN** `.modscape/specs/fct_orders/spec.md`（またはhtml mode時は対応する `.html`）が既に存在する状態で生成を実行する
+#### Scenario: 既存のspec.mdはスキップする
+- **WHEN** `.modscape/specs/fct_orders/spec.md` が既に存在する状態で生成を実行する
 - **THEN** `fct_orders` のspecファイルは生成されず、最終サマリーに「スキップ」として表示される
 
 ### Requirement: 生成結果のサマリーを表示する

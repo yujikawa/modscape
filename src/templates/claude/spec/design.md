@@ -15,10 +15,6 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 1. Read `.modscape/rules.md` to understand the YAML schema and modeling rules.
    If `.modscape/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
 
-   **Output format detection** — read `.modscape/modscape-spec.config.yaml` (YAML) and check the `output_format` key:
-   - `output_format: html` → output file is `design.html`. Use `.modscape/spec-templates/design-template.html` as the structural template; fill its placeholders with the design content. All subsequent references to `design.md` in these instructions mean `design.html` instead. Also treat references to `spec.md` as `spec.html`. When writing SQL or code, use `<pre><code>...</code></pre>` for blocks and `<code>...</code>` for inline.
-   - Default (file absent or key unset) → output file is `design.md` as documented below.
-
    **Reading rules — follow strictly, no exceptions:**
    - **Model data** (tables, columns, lineage, relationships, domains): ALWAYS use modscape CLI. Never use `grep`, direct file reads, or scripts/code (Python, shell, etc.).
    - **Spec artifacts** (`spec.md`, `design.md`, `_context.yaml`, `_questions.yaml`, etc.): read directly with file read tools — these are not covered by CLI.
@@ -29,15 +25,15 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    modscape summary <file> --json
    ```
 
-2. Check that `.modscape/changes/<name>/spec.md` (or `spec.html` when `output_format: html`) exists.
+2. Check that `.modscape/changes/<name>/spec.md` exists.
    - If it does not exist: stop and tell the user:
-     > `changes/<name>/spec.md` (or `spec.html`) not found. Run `/modscape:spec:requirements` first to create it.
+     > `changes/<name>/spec.md` not found. Run `/modscape:spec:requirements` first to create it.
 
 3. **Check for existing `changes/<name>/spec-model.yaml`** (the work-scoped YAML).
    - If it **does not exist**: this is a first run — extract relevant tables from the main YAML (step 5).
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
-4. **Check for existing design file** at `.modscape/changes/<name>/design.md` (or `design.html` when `output_format: html`).
+4. **Check for existing design file** at `.modscape/changes/<name>/design.md`.
    - If it **does not exist**: this is a **first run** — proceed to step 5.
    - If it **exists**: this is a **continuation**. Resume the design session:
      1. If `### Requires Model Change` in `## Findings` has entries: **process these first** — apply the model changes to `changes/<name>/spec-model.yaml` using mutation CLI commands, then run `modscape validate`. Clear processed entries from `### Requires Model Change` after applying.
@@ -198,8 +194,6 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    ```
 
    Record every question that shaped the design — answered questions are just as important for traceability as open ones.
-
-   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): after writing to `_questions.yaml`, filter all entries where `change: <name>`, render them using `.modscape/spec-templates/questions-template.html` as the structural template, and write to `.modscape/changes/<name>/questions.html`.
 
    If there are unresolved questions (`status: open` or `status: assumed`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.

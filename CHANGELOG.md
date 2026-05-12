@@ -6,46 +6,36 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **HTML output mode for SDD skills** — All spec skills (`/modscape:spec:requirements`, `/modscape:spec:design`, `/modscape:spec:tasks`) can now generate styled HTML files instead of Markdown. Set `output_format: html` in `.modscape/modscape-spec.config.yaml` to enable. Each artifact uses a dedicated template (`spec.html`, `design.html`, `tasks.html`, `questions.html`) with collapsible sections, status badges, filter controls, and code block highlighting for SQL and programming content. Templates use a theme-agnostic light gray color scheme and require no server-side theme switching.
-
-- **`.modscape/modscape-spec.config.yaml`** — New machine-readable config file for modscape:spec settings. Separates structured tool settings (e.g., `output_format`) from the AI-facing rules in `modscape-spec.custom.md`. Skill files now read this YAML directly instead of scanning Markdown for settings. `readSpecConfig()` and `writeSpecConfig()` helpers added to `model-utils.js`.
-
-- **`modscape init --html` flag** — Adds `output_format: html` to `.modscape/modscape-spec.config.yaml` during project initialization, enabling HTML output for all SDD skills in one step.
-
-- **Per-table spec HTML template** — New self-contained template at `src/templates/spec/html/table-spec-template.html` for generating per-table permanent specs in HTML mode. Includes sections for Overview metadata (Owner / Update Frequency / SLA), Grain, Business Context, Business Rules, Dependencies, Known Issues, and Changelog. Fully self-contained with inline CSS; no external dependencies.
+- **`.modscape/modscape-spec.config.yaml`** — New machine-readable config file for modscape:spec settings. Separates structured tool settings from the AI-facing rules in `modscape-spec.custom.md`. `readSpecConfig()` and `writeSpecConfig()` helpers added to `model-utils.js`.
 
 - **`modscape spec` command namespace** — Three new subcommands for browsing permanent specs stored in `.modscape/specs/`:
-  - **`modscape spec dev <name>`** — SDD spec viewer for an in-progress change. Replaces `modscape dev --spec <name>`. Launches the visualizer against `spec-model.yaml` with a tabbed floating panel for spec artifacts (`spec.html`, `design.html`, `tasks.html`, `questions.html`). Supports live reload.
-  - **`modscape spec open`** — Dedicated spec browser for `.modscape/specs/`. Left pane shows model-slug grouped table list; right pane renders `.html` specs in an iframe or `.md` specs in `<pre>`. Live-reloads on file changes. Runs on port 5174.
-  - **`modscape spec build [outDir]`** — Builds a static spec browser (defaults to `dist/specs/`). Copies all spec files and generates `index.html` with vanilla JS navigation. No server required; iframe `src` uses relative paths.
+  - **`modscape spec dev <name>`** — SDD spec viewer for an in-progress change. Replaces `modscape dev --spec <name>`. Launches the visualizer against `spec-model.yaml` with a tabbed floating panel for spec artifacts (`spec.md`, `design.md`, `tasks.md`, `questions.md`). Supports live reload. Markdown files are rendered as styled HTML server-side using `marked` + `highlight.js` (`atom-one-light` theme).
+  - **`modscape spec open`** — Dedicated spec browser for `.modscape/specs/`. Left pane shows model-slug grouped table list; right pane renders `.md` specs in styled HTML. Live-reloads on file changes. Runs on port 5174.
+  - **`modscape spec build [outDir]`** — Builds a static spec browser (defaults to `dist/specs/`). Copies all spec files and generates `index.html` with vanilla JS navigation. No server required.
 
-- **SpecPanel floating window** — New draggable and resizable floating panel component in the visualizer, matching the existing DetailPanel UX pattern. Rendered on top of the graph in spec mode; toggled with the file-text icon in the RightPanel activity bar. Tabs switch between spec artifacts; light/dark theme is synchronized with the main app.
+- **SpecPanel floating window** — New draggable and resizable floating panel component in the visualizer, matching the existing DetailPanel UX pattern. Rendered on top of the graph in spec mode; toggled with the file-text icon in the RightPanel activity bar. Tabs switch between spec artifacts.
+
+- **Server-side Markdown rendering in `modscape spec dev`** — Spec artifacts are Markdown files (`.md`). The dev server converts them to styled HTML on-the-fly using `marked` + `marked-highlight` + `highlight.js`, with a light gray color scheme (`#f8f9fa` body, `#1e293b` text) that renders correctly regardless of OS dark mode settings. No HTML template generation required.
 
 ### Changed
 
-- **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table Markdown spec files. Returns `{ spec: string }` per table (`.md` only; `.html` specs are now served exclusively by `modscape spec open/build`). Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
+- **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table Markdown spec files. Returns `{ spec: string }` per table. Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
 
-- **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text; HTML spec browsing is handled by `modscape spec open` / `modscape spec build`.
+- **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text.
 
-- **SDD skill instructions** — Updated `requirements.md`, `design.md`, `tasks.md`, `amend.md`, and `check.md` to reference `.modscape/modscape-spec.config.yaml` for output format detection instead of `modscape-spec.custom.md`. Added guidance to use `<pre><code>` blocks for SQL and code content when generating HTML artifacts. Updated for all three AI platforms (Claude / Gemini / Codex).
+- **Questions workflow unified to `_questions.yaml`** — All SDD skills (`design`, `implement`, `amend`) previously wrote questions to a per-change `questions.md` in Markdown format, inconsistent with `requirements` which wrote directly to `_questions.yaml` in YAML format. All skills now append YAML entries to `.modscape/specs/_questions.yaml` directly, matching the format used by `requirements` and `answer`. The per-change `questions.md` (Markdown) is now treated as a legacy format — `archive` already handles migration for backward compatibility. Updated for all three AI platforms (Claude / Gemini / Codex).
 
-- **HTML spec templates — theme-agnostic light gray color scheme** — All five HTML spec templates (`spec-template.html`, `design-template.html`, `tasks-template.html`, `questions-template.html`, `table-spec-template.html`) have been rewritten from a dark-mode-fixed scheme (`#0f172a` background) to a light gray base (`#f8f9fa` body, `#ffffff` cards, `#1e293b` text). All badge, border, and code block colors updated to light-friendly variants. Templates now render identically regardless of OS or browser dark mode settings. The `LIGHT_MODE_CSS` constant and `?theme=light` injection logic in `spec.js` have been removed — templates are self-sufficient.
-
-- **`check.md` — HTML mode support** — The validation skill previously used Markdown-specific patterns that fail when `output_format: html` is active: `- [ ]` for unresolved questions, `**仮定:**`/`**Assumption:**` for assumptions, and `AC-NNN:` extraction from `spec.md`. All four detection sections now include explicit MD/HTML dual-mode instructions: unresolved questions via `<div class="q-item open">`, assumptions via `data-type="assumption"`, AC identifiers via `<span class="ac-id">`, and AC–task references via `.task-text` elements. Updated for all three AI platforms (Claude / Gemini / Codex).
-
-- **`generate.md` — HTML mode support** — The generate skill previously always output `.modscape/specs/<table-id>/spec.md` regardless of `output_format`. Step 4 now reads `.modscape/modscape-spec.config.yaml` and routes to MD mode (unchanged) or HTML mode, generating `.modscape/specs/<model-slug>/<table-id>.html` using `table-spec-template.html` with a full placeholder mapping. Updated for all three AI platforms (Claude / Gemini / Codex).
-
-- **`note.md` — HTML mode support** — The note skill previously always read and wrote `.md` spec files. Step 1 now detects `output_format`, Step 3 scans `specs/*/` directories for `<table-id>.html` in HTML mode, and Step 6 navigates HTML sections via `<h2>` + `<ul>` structure instead of Markdown heading patterns. Updated for all three AI platforms (Claude / Gemini / Codex).
-
-- **`design.html` template** — Removed the SVG lineage diagram section (redundant with the Cytoscape graph already visible in `modscape dev`). Added code block styling for `<pre>` and `<code>` elements.
-
-- **Questions workflow unified to `_questions.yaml`** — All SDD skills (`design`, `implement`, `amend`) previously wrote questions to a per-change `questions.md` in Markdown format, inconsistent with `requirements` which wrote directly to `_questions.yaml` in YAML format. All skills now append YAML entries to `.modscape/specs/_questions.yaml` directly, matching the format used by `requirements` and `answer`. The per-change `questions.md` (Markdown) is now treated as a legacy format — `archive` already handled migration and continues to do so for backward compatibility. Skills that write questions also re-render `questions.html` when `output_format: html` is set. Updated for all three AI platforms (Claude / Gemini / Codex).
-
-- **`archive` and `status` skills — HTML output mode support** — Both skills previously had no `output_format` detection and read change artifact files (`spec.md`, `design.md`, `tasks.md`) with hardcoded `.md` extensions, which would fail in HTML mode. Both now include a detection step (step 1.5) that reads `.modscape/modscape-spec.config.yaml` and switches to `.html` extensions for all change artifacts. Updated for all three AI platforms (Claude / Gemini / Codex).
-
-- **`archive` skill — model-slug directory structure and per-table HTML specs** — Permanent per-table specs are now stored at `<SPEC_DIR>/<model-slug>/<table-id>.html` (html mode) or `<SPEC_DIR>/<model-slug>/<table-id>.md` (md mode) as flat files. The model slug is derived from the main YAML filename via `path.parse().name` (e.g., `models/main-model1.yaml` → `main-model1`); greenfield projects derive it from the user-specified output path. Previously, specs were stored at `<SPEC_DIR>/<table-id>/spec.md` regardless of output format. Old folder-format specs are detected at archive time and flagged for manual migration — no auto-migration occurs. Updated for all three AI platforms (Claude / Gemini / Codex).
+- **`archive` skill — model-slug directory structure** — Permanent per-table specs are now stored at `<SPEC_DIR>/<model-slug>/<table-id>.md` as flat files. The model slug is derived from the main YAML filename via `path.parse().name` (e.g., `models/main-model1.yaml` → `main-model1`). Previously, specs were stored at `<SPEC_DIR>/<table-id>/spec.md`. Old folder-format specs are detected at archive time and flagged for manual migration. Updated for all three AI platforms (Claude / Gemini / Codex).
 
 - **`design` skill — open questions reference corrected** — Step 10 (surface known open questions) previously checked `.modscape/specs/questions.md`, a path that no longer exists. Now correctly reads from `_questions.yaml` filtered by `status: open` or `status: assumed`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+### Removed
+
+- **HTML spec output mode** — The `output_format: html` setting and all associated HTML template generation logic have been removed from all SDD skills. Spec artifacts are always generated as Markdown (`.md`). The `modscape spec dev` server renders Markdown files to styled HTML on-the-fly, making a separate HTML artifact format unnecessary. Removed for all three AI platforms (Claude / Gemini / Codex).
+
+- **HTML spec templates** — The five HTML templates (`spec-template.html`, `design-template.html`, `tasks-template.html`, `questions-template.html`, `table-spec-template.html`) have been deleted from `src/templates/spec/html/`.
+
+- **`modscape init --html` flag** — The `--html` option for `modscape init` and `modscape update` commands has been removed along with the `output_format` key it wrote to `modscape-spec.config.yaml`.
 
 ## [3.3.2] - 2026-05-08
 

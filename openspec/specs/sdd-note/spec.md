@@ -1,30 +1,23 @@
-### Requirement: テーブルIDを指定して spec ファイルに知識を追記できる
+### Requirement: テーブルIDを指定して spec.md に知識を追記できる
 
-AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブルのspecファイルに対して、フリーテキストで渡された知識を適切なセクションに追記しなければならない（SHALL）。
+AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブルの `specs/<table-id>/spec.md` に対して、フリーテキストで渡された知識を適切なセクションに追記しなければならない（SHALL）。
 
-`output_format: html` が設定されている場合、対象ファイルは `specs/<model-slug>/<table-id>.html` とし、HTMLファイルを読み書きしなければならない（SHALL）。HTMLファイルのセクション検索は、見出し要素（`<h2>` 等）またはセクションIDを使用して行わなければならない（SHALL）。
-
-`output_format` が未設定またはデフォルトの場合、対象ファイルは `specs/<table-id>/spec.md` とする（既存動作を維持）。
+対象ファイルは常に `.md` 形式とする（HTMLモード廃止のため `output_format` による切り替えは行わない）。
 
 書き込み先セクションの判断ルール（SHALL）:
-- ビジネスルール・計算ロジック・定義 → `## Business Rules`（HTMLでは対応するセクション）
-- 既知の問題・データ品質の注意点 → `## Known Issues / Caveats`（HTMLでは対応するセクション）
-- 背景・経緯・意図 → `## Business Context`（HTMLでは対応するセクション）
-- オーナー・SLA・更新頻度 → `## Overview`（HTMLでは対応するセクション）
-- 上記に分類できない場合 → `## Known Issues / Caveats`（HTMLでは対応するセクション）
+- ビジネスルール・計算ロジック・定義 → `## Business Rules`
+- 既知の問題・データ品質の注意点 → `## Known Issues / Caveats`
+- 背景・経緯・意図 → `## Business Context`
+- オーナー・SLA・更新頻度 → `## Overview`
+- 上記に分類できない場合 → `## Known Issues / Caveats`
 
 書き込みの前に更新内容のプレビューを表示し、ユーザーの確認を得てからファイルを更新しなければならない（SHALL）。
 
-対象specファイルが存在しない場合は書き込みを行わず、エラーメッセージを表示して終了しなければならない（SHALL）。
+`specs/<table-id>/spec.md` が存在しない場合は書き込みを行わず、エラーメッセージを表示して終了しなければならない（SHALL）。
 
-#### Scenario: テーブルIDを指定してビジネスルールを追記する（MDモード）
-- **WHEN** `output_format` が設定されていない状態で `/modscape:spec:note fct_orders` を実行し「fct_orders の grain は1注文につき1行」と入力する
-- **THEN** `specs/fct_orders/spec.md` の `## Business Rules` に該当テキストが追記される
-- **THEN** 書き込み前に更新内容のプレビューが表示され、確認を求められる
-
-#### Scenario: テーブルIDを指定してビジネスルールを追記する（HTMLモード）
-- **WHEN** `output_format: html` が設定された状態で `/modscape:spec:note fct_orders` を実行し知識を入力する
-- **THEN** `specs/<model-slug>/fct_orders.html` の Business Rules セクションに該当テキストが追記される
+#### Scenario: テーブルIDを指定してビジネスルールを追記する
+- **WHEN** `/modscape:spec:note fct_orders` を実行し「fct_orders の grain は1注文につき1行」と入力する
+- **THEN** `specs/fct_orders/spec.md` の Business Rules セクションに該当テキストが追記される
 - **THEN** 書き込み前に更新内容のプレビューが表示され、確認を求められる
 
 #### Scenario: spec ファイルが存在しないテーブルを指定した場合

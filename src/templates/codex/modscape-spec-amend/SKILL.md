@@ -13,11 +13,7 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    - If not: stop and tell the user:
      > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
 
-2. Read `.modscape/modscape-spec.config.yaml` (YAML) and check the `output_format` key.
-   - `output_format: html` → all file references below use `.html` extension (e.g., `spec.html`, `design.html`, `tasks.html`).
-   - Default (file absent or key unset) → use `.md` extension as documented.
-
-3. Read the following files to understand current state (use `.html` extension if `output_format: html`):
+2. Read the following files to understand current state:
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/tasks.md`
@@ -38,12 +34,12 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    | Unresolved question, "needs checking", ambiguity | `_questions.yaml` (add new Q-NNN) |
    | Multiple concerns in one input | All applicable files |
 
-5. **Update `spec.md`** (or `spec.html`) if the issue affects Acceptance Criteria:
+5. **Update `spec.md`** if the issue affects Acceptance Criteria:
    - Find the relevant `AC-NNN` entry
    - Correct it to reflect the actual behaviour or constraint
    - Do NOT renumber existing AC IDs
 
-6. **Update `design.md`** (or `design.html`) if the issue affects a design decision:
+6. **Update `design.md`** if the issue affects a design decision:
    - Find the relevant section (Decisions, Risks, etc.)
    - Correct or extend it with the discovered information
    - Add a note such as: `> ⚠ Amended <YYYY-MM-DD>: <reason>`
@@ -67,7 +63,7 @@ Update SDD artifacts based on issues or discoveries found during implementation.
      > ⚠ これは設計変更を伴います。`design.md` の `### Requires Model Change` に記録しました。
      > `/modscape:spec:design <name>` を再実行して設計を更新してください。
 
-8. **Update `tasks.md`** (or `tasks.html`) if code changes are needed:
+8. **Update `tasks.md`** if code changes are needed:
    - **Never modify `- [x]` completed tasks**
    - Append a new section at the end of the file:
      ```
@@ -91,8 +87,6 @@ Update SDD artifacts based on issues or discoveries found during implementation.
        date: <YYYY-MM-DD>
        change: <name>
      ```
-
-   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): also re-render `.modscape/changes/<name>/questions.html` from `_questions.yaml` filtered by `change: <name>`, using `.modscape/spec-templates/questions-template.html`.
 
 10. **Display a change summary with ripple-effect report**:
 

@@ -24,17 +24,13 @@ modscape summary <file> --json
    - If not: stop and tell the user:
      > `changes/<name>/spec-model.yaml` not found. Run `/modscape:spec:design <name>` first.
 
-1.5. **Detect output format** — read `.modscape/modscape-spec.config.yaml` and check the `output_format` key:
-   - `output_format: html` → all change artifact file references use `.html` extension (`spec.html`, `design.html`, `tasks.html`). All subsequent references to `spec.md` / `design.md` / `tasks.md` in these instructions mean their `.html` counterparts. Per-table permanent specs also use `.html` extension.
-   - Default (absent or key unset) → use `.md` as documented below. Per-table permanent specs use `.md` extension.
-
-2. Read the following files (use `.html` extension if `output_format: html`):
+2. Read the following files:
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/spec-config.yaml`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/spec-model.yaml`
 
-   From `design.md` (or `design.html`), build the **affected tables classification**:
+   From `design.md`, build the **affected tables classification**:
    - **Direct Impact** tables: listed under `### Direct Impact`
    - **Downstream Impact — Implement** tables: listed under `### Downstream Impact — Implement`
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
@@ -48,7 +44,7 @@ modscape summary <file> --json
 
 2.6. **Resolve model slug (`MODEL_SLUG`)** — used to determine the subdirectory within `SPEC_DIR`:
 
-   Per-table permanent specs are stored at `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.html` (html mode) or `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md` (md mode).
+   Per-table permanent specs are stored at `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`.
 
    **Normal path** (main YAML exists): for each main YAML path in `spec-config.yaml`, derive the slug with `path.parse(filePath).name`.
    - Example: `models/main-model1.yaml` → `MODEL_SLUG = main-model1`
@@ -145,7 +141,7 @@ modscape summary <file> --json
 8. Use the **affected tables classification** built in step 2 above.
 
 9. **Detect and warn about old folder-format specs (if any)**:
-   For each affected table, check whether `<SPEC_DIR>/<table-id>/spec.md` or `<SPEC_DIR>/<table-id>/spec.html` exists (old folder-per-table format).
+   For each affected table, check whether `<SPEC_DIR>/<table-id>/spec.md` exists (old folder-per-table format).
    If found, display a warning — do NOT auto-migrate:
    ```
    ⚠ Old folder-format spec detected: specs/<table-id>/spec.md
@@ -157,12 +153,10 @@ modscape summary <file> --json
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
-   Determine the output path:
-   - html mode: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.html`
-   - md mode:   `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
+   Determine the output path: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
 
    a. Check whether the target file exists.
-      - If **not**: create a new file using the format below (`table-spec-template.html` for html mode, markdown format for md mode).
+      - If **not**: create a new file using the Markdown format below.
       - If **exists**: update only the relevant sections (Overview, Business Context, Business Rules, Known Issues); preserve unrelated content.
 
    b. Append a Changelog entry.
@@ -172,14 +166,14 @@ modscape summary <file> --json
     - Do **not** perform a full spec sync for these tables.
     - Only append a Changelog entry to the target file (create with minimal content if it does not exist):
       - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
-    - Target path follows the same rule as step 10 (html/md based on output_format).
+    - Target path: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
 
 12. **Report the sync result**:
     > Merged into main YAML ✓
     > Synced specs:
-    > - Created: `specs/<MODEL_SLUG>/mart_monthly_sales.html`
-    > - Updated: `specs/<MODEL_SLUG>/fct_orders.html`
-    > - Changelog only: `specs/<MODEL_SLUG>/stg_raw_orders.html`
+    > - Created: `specs/<MODEL_SLUG>/mart_monthly_sales.md`
+    > - Updated: `specs/<MODEL_SLUG>/fct_orders.md`
+    > - Changelog only: `specs/<MODEL_SLUG>/stg_raw_orders.md`
 
 ### Step 4: Merge questions into _questions.yaml
 
@@ -250,7 +244,7 @@ modscape summary <file> --json
 
 ### Step 5.5: Extract and record project conventions
 
-Review `design.md` (or `design.html`), `spec.md` (or `spec.html`), and the decisions recorded in `_context.yaml` during this change for any **project-wide conventions** that were established or confirmed.
+Review `design.md`, `spec.md`, and the decisions recorded in `_context.yaml` during this change for any **project-wide conventions** that were established or confirmed.
 
 **Decision axis — which file to update:**
 - `rules.custom.md`: rules about the **data model** (YAML shape, naming of table/column IDs, required columns, allowed table kinds, domain structure, SCD policy). These rules apply regardless of the implementation tool.
@@ -293,9 +287,9 @@ If no conventions are found, or the user declines: skip this step silently.
 ✅ Archive complete.
 
 **Synced specs:**
-- Created: `specs/<MODEL_SLUG>/<table-id>.html` (or `.md`) ...
-- Updated: `specs/<MODEL_SLUG>/<table-id>.html` (or `.md`) ...
-- Changelog only: `specs/<MODEL_SLUG>/<table-id>.html` (or `.md`) ...
+- Created: `specs/<MODEL_SLUG>/<table-id>.md` ...
+- Updated: `specs/<MODEL_SLUG>/<table-id>.md` ...
+- Changelog only: `specs/<MODEL_SLUG>/<table-id>.md` ...
 
 **Questions merged:**
 - `_questions.yaml`: <n> entries added from `questions.md` (or: no questions.md found)
@@ -320,23 +314,10 @@ Tables without specs: <list or "none">
 ## Per-table Spec Format
 
 **Path convention:**
-- html mode: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.html`
-- md mode:   `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
-- questions: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.questions.md` (always Markdown)
+- `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
+- questions: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.questions.md`
 
-**html mode** — fill in `src/templates/spec/html/table-spec-template.html` with table information:
-- `{{TABLE_ID}}` → table ID
-- `{{KIND}}` → `conceptual.kind`
-- `{{MODEL_SLUG}}` → derived model slug
-- `{{OWNER_VALUE}}`, `{{UPDATE_FREQUENCY}}`, `{{SLA}}` → from spec or `—`
-- `{{GRAIN}}` → grain description
-- `{{BUSINESS_CONTEXT}}` → business meaning
-- `{{BUSINESS_RULES}}` → `<li>` items
-- `{{DEPENDENCIES}}` → dep-item elements (related tables)
-- `{{KNOWN_ISSUES}}` → `<li>` items (optional)
-- `{{CHANGELOG}}` → cl-item elements
-
-**md mode** — use the following Markdown structure:
+Use the following Markdown structure:
 
 ```markdown
 # <table-id>

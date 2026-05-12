@@ -1,13 +1,9 @@
-Gather business requirements interactively and generate `.modscape/changes/<name>/spec.md` (or `spec.html` when `output_format: html` is set).
+Gather business requirements interactively and generate `.modscape/changes/<name>/spec.md`.
 
 ## Instructions
 
 1. If `.modscape/modscape-spec.custom.md` exists, read it **in addition** to these instructions.
    Rules in `modscape-spec.custom.md` take **priority** when they conflict.
-
-   **Output format detection** — read `.modscape/modscape-spec.config.yaml` (YAML) and check the `output_format` key:
-   - `output_format: html` → output file is `spec.html`. Use `.modscape/spec-templates/spec-template.html` as the structural template; fill its placeholders with the collected requirements. All subsequent references to `spec.md` in these instructions mean `spec.html` instead. When writing SQL or code, use `<pre><code>...</code></pre>` for blocks and `<code>...</code>` for inline.
-   - Default (file absent or key unset) → output file is `spec.md` as documented below.
 
    **When reading model information (tables, lineage, etc.), always use modscape CLI commands — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
    ```bash
@@ -113,8 +109,6 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
    Record every question that shaped the spec — answered questions are just as important for traceability as open ones.
 
-   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): after writing to `_questions.yaml`, filter all entries where `change: <name>`, render them using `.modscape/spec-templates/questions-template.html` as the structural template, and write to `.modscape/changes/<name>/questions.html`.
-
 ## spec.md Format
 
 ```markdown
@@ -172,7 +166,7 @@ main_yamls:
 **Always output the following message at the end, without exception:**
 
 ---
-✅ `spec.md` (or `spec.html`) created at `.modscape/changes/<name>/spec.md` (or `spec.html`)
+✅ `spec.md` created at `.modscape/changes/<name>/spec.md`
 
 **Next step:**
 ```

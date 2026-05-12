@@ -669,7 +669,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 ### Spec Browser Commands
 
-After archiving changes, HTML and Markdown specs accumulate in `.modscape/specs/<model-slug>/`. Use these commands to browse them:
+After archiving changes, Markdown specs accumulate in `.modscape/specs/<model-slug>/`. Use these commands to browse them:
 
 ```bash
 # Start an interactive spec viewer for a change in progress (dev server)
@@ -684,8 +684,8 @@ modscape spec build ./public/specs
 ```
 
 - `spec dev <name>` — launches the SDD viewer for `.modscape/changes/<name>/`, equivalent to the former `modscape dev --spec` flag.
-- `spec open` — starts a dedicated browser for `.modscape/specs/`. Left pane shows model-slug groups; right pane renders `.html` specs in an iframe or `.md` specs in `<pre>`.
-- `spec build` — generates `dist/specs/index.html` and copies all spec files. Works without a server (iframe `src` uses relative paths).
+- `spec open` — starts a dedicated browser for `.modscape/specs/`. Left pane shows model-slug groups; right pane renders `.md` specs as styled HTML.
+- `spec build` — generates `dist/specs/index.html` and copies all spec files. Works without a server.
 
 ### SDD Workflow
 

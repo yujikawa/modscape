@@ -64,11 +64,8 @@ C-1. Direct Impact table task coverage
 **D. questions.md ↔ design.md**
 
 D-1. Unresolved questions recorded as assumptions
-- **MD mode**: Find all `- [ ]` entries in `questions.md` (unresolved Q-NNN)
-- **HTML mode**: Find all elements with `class="q-item"` where the class also contains `open` (i.e., `<div class="q-item open" ...>`) in `questions.html`; extract the Q-NNN from the `<span class="q-id ...">` inside each
-- For each unresolved question, check if the corresponding design file contains a reference to that Q-NNN or topic as an assumption:
-  - **MD mode**: look for `**Assumption:**` or `**仮定:**` lines in `design.md`
-  - **HTML mode**: look for elements with `data-type="assumption"` in `design.html`, or paragraphs/divs containing the text "Assumption:" or "仮定:" as visible text
+- Find all `- [ ]` entries in `questions.md` (unresolved Q-NNN)
+- For each unresolved question, check if `design.md` contains a reference to that Q-NNN or topic as an assumption (`**Assumption:**` or `**仮定:**` lines)
 - Flag unresolved questions with no assumption recorded
 
 ---
@@ -76,19 +73,14 @@ D-1. Unresolved questions recorded as assumptions
 ### Part 2: Readiness
 
 **Unresolved questions**
-- **MD mode**: Count lines matching `- [ ]` in `questions.md`; list their Q-NNN IDs
-- **HTML mode**: Count elements matching `<div class="q-item open"` in `questions.html`; extract Q-NNN from the `<span class="q-id">` inside each
+- Count lines matching `- [ ]` in `questions.md`; list their Q-NNN IDs
 
 **Assumptions**
-- **MD mode**: Find lines containing `**仮定:**` or `**Assumption:**` in `design.md` and `questions.md`; count and list them briefly (first 60 chars of each line)
-- **HTML mode**: Find elements with `data-type="assumption"` in `design.html` and `questions.html`, or any text node/element containing the string "Assumption:" or "仮定:" as rendered text; count and list them briefly
+- Find lines containing `**仮定:**` or `**Assumption:**` in `design.md` and `questions.md`; count and list them briefly (first 60 chars of each line)
 
 **AC Coverage** (requires both `spec.md` and `tasks.md`)
-- **MD mode**: Extract all `AC-NNN:` entries from `spec.md` Acceptance Criteria
-- **HTML mode**: Extract all `AC-NNN` identifiers from `<span class="ac-id">` elements in `spec.html`
-- For each AC-NNN, check if any Phase 4 task in the tasks file contains `[→ AC-NNN]`:
-  - **MD mode**: search for `[→ AC-NNN]` pattern in `tasks.md`
-  - **HTML mode**: search for `[→ AC-NNN]` text within `.task-text` elements in `tasks.html`
+- Extract all `AC-NNN:` entries from `spec.md` Acceptance Criteria
+- For each AC-NNN, check if any Phase 4 task in `tasks.md` contains `[→ AC-NNN]`
 - Classify each AC as:
   - **Test covered**: at least one Phase 4 task references it with `[→ AC-NNN]`
   - **Manual verification**: no test task, but `[manual verification]` appears near the AC in the tasks file, or the AC text describes a non-automatable condition

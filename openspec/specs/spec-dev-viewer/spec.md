@@ -27,10 +27,10 @@ specモードで起動したビジュアライザは、左ペインにspec-model
 - **THEN** 左ペインは空のキャンバスを表示し、右ペインのHTMLタブは正常に動作する
 
 ### Requirement: specモードのライブリロード
-specモードのdevサーバーは `.modscape/changes/<name>/` 配下の `.html` および `.yaml` ファイルの変更を監視し、変更時にブラウザを自動更新しなければならない（SHALL）。
+specモードのdevサーバーは `.modscape/changes/<name>/` 配下の `.md`、`.html`、`.yaml` ファイルの変更を監視し、変更時にブラウザを自動更新しなければならない（SHALL）。
 
-#### Scenario: HTMLファイルの変更がライブリロードされる
-- **WHEN** specモード起動中に `design.html` が更新される
+#### Scenario: MDファイルの変更がライブリロードされる
+- **WHEN** specモード起動中に `design.md` が更新される
 - **THEN** ブラウザの該当タブが自動的にリロードされ、最新の内容が表示される
 
 #### Scenario: spec-model.yamlの変更がグラフに反映される
@@ -38,25 +38,8 @@ specモードのdevサーバーは `.modscape/changes/<name>/` 配下の `.html`
 - **THEN** 左ペインのグラフが自動的に再描画される
 
 ### Requirement: specモードのタブ存在チェック
-対応するHTMLファイルが存在しないタブは非表示またはdisabled状態で表示されなければならない（SHALL）。
+対応するファイル（`.html` または `.md`）が存在しないタブは非表示またはdisabled状態で表示されなければならない（SHALL）。`.html` が存在しない場合は `.md` にフォールバックして表示する。
 
-#### Scenario: design.htmlが存在しない場合Designタブが無効になる
-- **WHEN** `.modscape/changes/<name>/design.html` が存在しない状態でspecモードを起動する
-- **THEN** Designタブはdisabledまたは非表示で表示される
-
-### Requirement: HTML成果物のカラースキームはテーマ非依存のライトグレーベースを使用しなければならない
-
-spec dev viewerで表示されるすべてのHTMLアーティファクト（spec.html / design.html / tasks.html / questions.html / table-spec.html）は、OSやブラウザのテーマ設定（ダーク/ライト）に関係なく同一の見た目になるテーマ非依存のカラースキームを使用しなければならない（SHALL）。
-
-基底色はライトグレー系（body背景: `#f8f9fa` 相当）を採用し、テキストは暗色（`#1e293b` 相当）を使用しなければならない（SHALL）。ダークモード固定の配色（`#0f172a` 等）を使用してはならない（SHALL NOT）。
-
-サーバー側でのテーマ切り替えCSS注入（`LIGHT_MODE_CSS` 等）を行ってはならない（SHALL NOT）。テンプレート自体がテーマ非依存であるため、クエリパラメータによるテーマ上書きも不要とする。
-
-#### Scenario: spec devビューアでHTMLがライトグレー背景で表示される
-- **WHEN** `modscape spec dev <name>` を実行し、ブラウザでspec.htmlタブを開く
-- **THEN** spec.htmlはライトグレー背景（`#f8f9fa` 相当）に暗色テキストで表示される
-- **THEN** OSのダークモード設定に関係なく、同じ見た目で表示される
-
-#### Scenario: すべてのHTMLタブで一貫したカラースキームが適用される
-- **WHEN** spec devビューアのSpec / Design / Tasks / Questionsタブを順に表示する
-- **THEN** すべてのタブで同一のカラースキームが適用される
+#### Scenario: design.mdが存在する場合Designタブが有効になる
+- **WHEN** `.modscape/changes/<name>/design.md` が存在する状態でspecモードを起動する
+- **THEN** Designタブが有効な状態で表示される

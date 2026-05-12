@@ -179,8 +179,6 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    Record every question that shaped the design — answered questions are just as important for traceability as open ones.
 
-   **If `output_format: html`** (check `.modscape/modscape-spec.config.yaml`): after writing to `_questions.yaml`, filter all entries where `change: <name>`, render them using `.modscape/spec-templates/questions-template.html` as the structural template, and write to `.modscape/changes/<name>/questions.html`.
-
    If there are unresolved questions (`status: open` or `status: assumed`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
 
