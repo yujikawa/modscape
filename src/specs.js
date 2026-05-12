@@ -7,6 +7,7 @@ import open from 'open';
 import http from 'http';
 import { WebSocketServer } from 'ws';
 import { fileURLToPath } from 'url';
+import { mdToHtml } from './md-renderer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -446,17 +447,10 @@ document.querySelectorAll('a.nav-item').forEach(a => {
     clearSpecContent();
     setBreadcrumb(['Specs', slug, table]);
 
-    if (hasHtml) {
+    if (hasHtml || hasMd) {
       document.getElementById('pane').style.display = 'none';
       document.getElementById('frame-wrap').style.display = 'block';
       document.getElementById('spec-frame').src = '/api/table-spec/' + encodeURIComponent(slug) + '/' + encodeURIComponent(table);
-    } else if (hasMd) {
-      fetch('/api/table-spec-md/' + encodeURIComponent(slug) + '/' + encodeURIComponent(table))
-        .then(r => r.text()).then(text => {
-          const pre = document.getElementById('spec-pre');
-          pre.textContent = text;
-          pre.style.display = 'block';
-        });
     }
   });
 });
@@ -525,18 +519,12 @@ export async function startSpecOpenServer() {
 
   app.get('/api/table-spec/:modelSlug/:tableId', (req, res) => {
     const { modelSlug, tableId } = req.params;
-    const filePath = path.join(baseDir, modelSlug, `${tableId}.html`);
-    if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+    const htmlPath = path.join(baseDir, modelSlug, `${tableId}.html`);
+    const mdPath = path.join(baseDir, modelSlug, `${tableId}.md`);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(fs.readFileSync(filePath, 'utf8'));
-  });
-
-  app.get('/api/table-spec-md/:modelSlug/:tableId', (req, res) => {
-    const { modelSlug, tableId } = req.params;
-    const filePath = path.join(baseDir, modelSlug, `${tableId}.md`);
-    if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.send(fs.readFileSync(filePath, 'utf8'));
+    if (fs.existsSync(htmlPath)) return res.send(fs.readFileSync(htmlPath, 'utf8'));
+    if (fs.existsSync(mdPath)) return res.send(mdToHtml(fs.readFileSync(mdPath, 'utf8')));
+    res.status(404).send('Not found');
   });
 
   app.get('/', (_req, res) => {

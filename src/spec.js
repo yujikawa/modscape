@@ -7,58 +7,9 @@ import open from 'open';
 import http from 'http';
 import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
-import { marked } from 'marked';
-import { markedHighlight } from 'marked-highlight';
-import hljs from 'highlight.js';
 import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 import { readSpecConfig, resolveImports } from './model-utils.js';
-
-const __hlCss = fs.readFileSync(
-  new URL('../node_modules/highlight.js/styles/atom-one-light.css', import.meta.url),
-  'utf8'
-);
-
-marked.use(markedHighlight({
-  langPrefix: 'hljs language-',
-  highlight(code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-    return hljs.highlight(code, { language }).value;
-  },
-}));
-
-function mdToHtml(mdContent) {
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<style>
-${__hlCss}
-*, *::before, *::after { box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #334155; line-height: 1.7; padding: 2rem; max-width: 900px; margin: 0 auto; }
-h1 { font-size: 1.6rem; font-weight: 700; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-top: 0; }
-h2 { font-size: 1.05rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.3rem; margin-top: 2rem; }
-h3 { font-size: 1rem; font-weight: 600; color: #1e293b; margin-top: 1.5rem; }
-h4 { font-size: 0.9rem; font-weight: 600; color: #475569; margin-top: 1rem; }
-p { color: #475569; margin: 0.5rem 0 1rem; }
-a { color: #2563eb; text-decoration: none; }
-a:hover { text-decoration: underline; }
-ul, ol { padding-left: 1.5rem; color: #475569; }
-li { margin: 0.3rem 0; }
-li input[type="checkbox"] { margin-right: 0.4rem; }
-blockquote { border-left: 3px solid #cbd5e1; margin: 1rem 0; padding: 0.5rem 1rem; background: #f1f5f9; color: #64748b; border-radius: 0 0.25rem 0.25rem 0; }
-blockquote p { margin: 0; }
-code { font-family: 'SF Mono','Fira Code','Cascadia Code', monospace; font-size: 0.85em; background: #f1f5f9; color: #0550ae; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid #e2e8f0; }
-pre { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 0.5rem; padding: 1rem 1.25rem; overflow-x: auto; margin: 1rem 0; }
-pre code { background: none; color: inherit; padding: 0; border: none; font-size: 0.85rem; line-height: 1.7; }
-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
-thead tr { background: #f1f5f9; }
-th { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; font-weight: 600; color: #1e293b; }
-td { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; color: #475569; }
-tbody tr:hover { background: #f8fafc; }
-hr { border: none; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
-</style>
-</head><body>
-${marked.parse(mdContent)}
-</body></html>`;
-}
+import { mdToHtml } from './md-renderer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
