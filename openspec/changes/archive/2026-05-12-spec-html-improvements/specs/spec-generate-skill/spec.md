@@ -1,3 +1,5 @@
+## MODIFIED Requirements
+
 ### Requirement: 任意のアーティファクトからspec.mdを一括生成する
 スキル `/modscape:spec:generate` は、model.yaml・SQLファイル・Pythonファイルなどの実装アーティファクトを読み込み、各テーブルに対してspecファイルを生成しなければならない（SHALL）。テーブルIDは物理テーブル名とする。ユーザーが別IDを明示した場合はそちらを優先する。
 

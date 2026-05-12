@@ -2,17 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.4.0] - 2026-05-09
+## [3.4.0] - 2026-05-12
 
 ### Added
 
-- **HTML output mode for SDD skills** — All spec skills (`/modscape:spec:requirements`, `/modscape:spec:design`, `/modscape:spec:tasks`) can now generate styled HTML files instead of Markdown. Set `output_format: html` in `.modscape/modscape-spec.config.yaml` to enable. Each artifact uses a dedicated dark-themed template (`spec.html`, `design.html`, `tasks.html`, `questions.html`) with collapsible sections, status badges, filter controls, and code block highlighting for SQL and programming content. Light mode is fully supported via server-side CSS injection.
+- **HTML output mode for SDD skills** — All spec skills (`/modscape:spec:requirements`, `/modscape:spec:design`, `/modscape:spec:tasks`) can now generate styled HTML files instead of Markdown. Set `output_format: html` in `.modscape/modscape-spec.config.yaml` to enable. Each artifact uses a dedicated template (`spec.html`, `design.html`, `tasks.html`, `questions.html`) with collapsible sections, status badges, filter controls, and code block highlighting for SQL and programming content. Templates use a theme-agnostic light gray color scheme and require no server-side theme switching.
 
 - **`.modscape/modscape-spec.config.yaml`** — New machine-readable config file for modscape:spec settings. Separates structured tool settings (e.g., `output_format`) from the AI-facing rules in `modscape-spec.custom.md`. Skill files now read this YAML directly instead of scanning Markdown for settings. `readSpecConfig()` and `writeSpecConfig()` helpers added to `model-utils.js`.
 
 - **`modscape init --html` flag** — Adds `output_format: html` to `.modscape/modscape-spec.config.yaml` during project initialization, enabling HTML output for all SDD skills in one step.
 
-- **Per-table spec HTML template** — New self-contained dark-themed template at `src/templates/spec/html/table-spec-template.html` for generating per-table permanent specs in HTML mode. Includes sections for Overview metadata (Owner / Update Frequency / SLA), Grain, Business Context, Business Rules, Dependencies, Known Issues, and Changelog. Fully self-contained with inline CSS; no external dependencies.
+- **Per-table spec HTML template** — New self-contained template at `src/templates/spec/html/table-spec-template.html` for generating per-table permanent specs in HTML mode. Includes sections for Overview metadata (Owner / Update Frequency / SLA), Grain, Business Context, Business Rules, Dependencies, Known Issues, and Changelog. Fully self-contained with inline CSS; no external dependencies.
 
 - **`modscape spec` command namespace** — Three new subcommands for browsing permanent specs stored in `.modscape/specs/`:
   - **`modscape spec dev <name>`** — SDD spec viewer for an in-progress change. Replaces `modscape dev --spec <name>`. Launches the visualizer against `spec-model.yaml` with a tabbed floating panel for spec artifacts (`spec.html`, `design.html`, `tasks.html`, `questions.html`). Supports live reload.
@@ -28,6 +28,14 @@ All notable changes to this project will be documented in this file.
 - **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text; HTML spec browsing is handled by `modscape spec open` / `modscape spec build`.
 
 - **SDD skill instructions** — Updated `requirements.md`, `design.md`, `tasks.md`, `amend.md`, and `check.md` to reference `.modscape/modscape-spec.config.yaml` for output format detection instead of `modscape-spec.custom.md`. Added guidance to use `<pre><code>` blocks for SQL and code content when generating HTML artifacts. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **HTML spec templates — theme-agnostic light gray color scheme** — All five HTML spec templates (`spec-template.html`, `design-template.html`, `tasks-template.html`, `questions-template.html`, `table-spec-template.html`) have been rewritten from a dark-mode-fixed scheme (`#0f172a` background) to a light gray base (`#f8f9fa` body, `#ffffff` cards, `#1e293b` text). All badge, border, and code block colors updated to light-friendly variants. Templates now render identically regardless of OS or browser dark mode settings. The `LIGHT_MODE_CSS` constant and `?theme=light` injection logic in `spec.js` have been removed — templates are self-sufficient.
+
+- **`check.md` — HTML mode support** — The validation skill previously used Markdown-specific patterns that fail when `output_format: html` is active: `- [ ]` for unresolved questions, `**仮定:**`/`**Assumption:**` for assumptions, and `AC-NNN:` extraction from `spec.md`. All four detection sections now include explicit MD/HTML dual-mode instructions: unresolved questions via `<div class="q-item open">`, assumptions via `data-type="assumption"`, AC identifiers via `<span class="ac-id">`, and AC–task references via `.task-text` elements. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`generate.md` — HTML mode support** — The generate skill previously always output `.modscape/specs/<table-id>/spec.md` regardless of `output_format`. Step 4 now reads `.modscape/modscape-spec.config.yaml` and routes to MD mode (unchanged) or HTML mode, generating `.modscape/specs/<model-slug>/<table-id>.html` using `table-spec-template.html` with a full placeholder mapping. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`note.md` — HTML mode support** — The note skill previously always read and wrote `.md` spec files. Step 1 now detects `output_format`, Step 3 scans `specs/*/` directories for `<table-id>.html` in HTML mode, and Step 6 navigates HTML sections via `<h2>` + `<ul>` structure instead of Markdown heading patterns. Updated for all three AI platforms (Claude / Gemini / Codex).
 
 - **`design.html` template** — Removed the SVG lineage diagram section (redundant with the Cytoscape graph already visible in `modscape dev`). Added code block styling for `<pre>` and `<code>` elements.
 

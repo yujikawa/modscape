@@ -86,16 +86,29 @@ Read the file and parse:
 
 **Conflict resolution**: If the same physical table name appears in multiple files, use the **first file** that defined it and note the conflict in the final summary.
 
-### Step 4: Generate spec.md for each table
+### Step 4: Detect output format and generate spec file for each table
 
-For each discovered table, determine the output path:
+First, read `.modscape/modscape-spec.config.yaml` and check the `output_format` key:
+- `output_format: html` → generate `.html` files using `table-spec-template.html`
+- Default (file absent or key unset) → generate `.md` files
+
+**MD mode** — output path per table:
 ```
 .modscape/specs/<table-id>/spec.md
 ```
 
+**HTML mode** — determine `<model-slug>` from the primary input YAML filename (without extension, e.g., `model.yaml` → `model`). Output path:
+```
+.modscape/specs/<model-slug>/<table-id>.html
+```
+
+In HTML mode, read `.modscape/spec-templates/table-spec-template.html` (fall back to `src/templates/spec/html/table-spec-template.html` if custom one is absent) and fill in the placeholders.
+
 **If the file already exists: skip it.** Do not overwrite.
 
-**If the file does not exist**: create the directory and write the file using this format:
+**If the file does not exist**: create the directory and write the file.
+
+**MD mode** — write using this format:
 
 ```markdown
 # <table-id>
@@ -117,6 +130,20 @@ For each discovered table, determine the output path:
 ## Changelog
 - <YYYY-MM-DD>: Bootstrapped from existing implementation (`/modscape:spec:generate`)
 ```
+
+**HTML mode** — fill in the `table-spec-template.html` placeholders:
+- `{{TABLE_ID}}`: table ID
+- `{{KIND}}`: `conceptual.kind` or "table"
+- `{{MODEL_SLUG}}`: derived from the input YAML filename
+- `{{OWNER}}` / `{{OWNER_VALUE}}`: `metadata.owner` or "—"
+- `{{UPDATE_FREQUENCY}}`: inferred from `physical.strategy` + `physical.partition.granularity` or "—"
+- `{{SLA}}`: `metadata.sla` or "—"
+- `{{GRAIN}}`: `logical.grain` joined as comma-separated list, or "—"
+- `{{BUSINESS_CONTEXT}}`: `conceptual.description` or "—"
+- `{{BUSINESS_RULES}}`: each column description/expression as `<li>` items, or `<li>—</li>`
+- `{{DEPENDENCIES}}`: lineage entries referencing this table as `<div class="dep-item">` elements, or empty
+- `{{KNOWN_ISSUES}}`: empty (bootstrapped)
+- `{{CHANGELOG}}`: `<div class="cl-item"><span class="cl-date"><YYYY-MM-DD></span><span class="cl-text">Bootstrapped from existing implementation (/modscape:spec:generate)</span></div>`
 
 Fill `<YYYY-MM-DD>` with today's date.
 

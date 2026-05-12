@@ -1,3 +1,5 @@
+## MODIFIED Requirements
+
 ### Requirement: テーブルIDを指定して spec ファイルに知識を追記できる
 
 AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブルのspecファイルに対して、フリーテキストで渡された知識を適切なセクションに追記しなければならない（SHALL）。

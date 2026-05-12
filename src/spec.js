@@ -20,80 +20,6 @@ const SPEC_TABS = [
   { id: 'questions', label: 'Questions', file: 'questions.html' },
 ];
 
-const LIGHT_MODE_CSS = `<style>
-/* ── Base ── */
-html, body { background: #f8fafc !important; color: #334155 !important; }
-h1 { color: #0f172a !important; }
-h2 { color: #475569 !important; border-color: #e2e8f0 !important; }
-h3, h4 { color: #64748b !important; }
-p, li, .ac-text, .q-text, .task-text, .impact-desc, .finding-item, .decision-item p, .stakeholder-group .name { color: #475569 !important; }
-ul li::before { color: #94a3b8 !important; }
-.stakeholder-group label { color: #94a3b8 !important; }
-header, footer { border-color: #e2e8f0 !important; }
-footer { color: #94a3b8 !important; }
-.card, .ac-item, .source-chip, .rel-item, .table-card, .impact-item, .decision-item, .findings-box, .skipped-section, .task-item, .q-item, .filter-btn { background: #ffffff !important; background-color: #ffffff !important; border-color: #e2e8f0 !important; }
-.table-card-header { border-color: #e2e8f0 !important; background: #f8fafc !important; }
-.column-list { background: #ffffff !important; }
-.column-row { background: #ffffff !important; color: #334155 !important; }
-.column-row:hover { background: #f1f5f9 !important; }
-.col-name { color: #334155 !important; }
-.col-type { color: #64748b !important; }
-.table-name { color: #0f172a !important; }
-.progress-bar-track { background: #e2e8f0 !important; }
-.phase-line { background: #e2e8f0 !important; }
-.progress-label { color: #64748b !important; }
-.phase-title { color: #0f172a !important; }
-.phase-count { color: #94a3b8 !important; }
-.task-item.done { background: #f0fdf4 !important; border-color: #bbf7d0 !important; }
-.task-item.done .task-text { color: #94a3b8 !important; }
-.task-checkbox { border-color: #cbd5e1 !important; }
-.task-id { background: #dbeafe !important; color: #1d4ed8 !important; }
-.task-deps { color: #94a3b8 !important; }
-.skipped-item { color: #94a3b8 !important; }
-.ac-id { background: #dbeafe !important; color: #1d4ed8 !important; }
-.ac-item.done { background: #f0fdf4 !important; border-color: #bbf7d0 !important; }
-.ac-item.done .ac-id { background: #dcfce7 !important; color: #166534 !important; }
-.impact-direct { background: #fee2e2 !important; color: #b91c1c !important; }
-.impact-implement { background: #ffedd5 !important; color: #c2410c !important; }
-.impact-context { background: #f8fafc !important; color: #64748b !important; border-color: #cbd5e1 !important; }
-.impact-item.direct { border-color: #f87171 !important; }
-.impact-item.implement { border-color: #fb923c !important; }
-.impact-item.context { border-color: #cbd5e1 !important; }
-.impact-item .impact-id { color: #334155 !important; }
-.kind-fact { background: #dbeafe !important; color: #1d4ed8 !important; }
-.kind-dimension { background: #dcfce7 !important; color: #166534 !important; }
-.kind-mart { background: #f3e8ff !important; color: #6b21a8 !important; }
-.kind-staging { background: #f5f5f4 !important; color: #44403c !important; }
-.kind-hub { background: #ecfeff !important; color: #0e7490 !important; }
-.kind-link { background: #fffbeb !important; color: #92400e !important; }
-.kind-satellite { background: #f5f3ff !important; color: #5b21b6 !important; }
-.badge-status { background: #dbeafe !important; color: #1d4ed8 !important; border-color: #93c5fd !important; }
-.badge-tool { background: #dcfce7 !important; color: #166534 !important; border-color: #86efac !important; }
-.badge-owner { background: #f3e8ff !important; color: #6b21a8 !important; border-color: #c4b5fd !important; }
-.badge-design { background: #dbeafe !important; color: #1d4ed8 !important; border-color: #93c5fd !important; }
-.q-item.open { border-color: #e2e8f0 !important; border-left-color: #f87171 !important; }
-.q-item.assumed { border-color: #e2e8f0 !important; border-left-color: #fb923c !important; }
-.q-item.answered { border-color: #e2e8f0 !important; border-left-color: #4ade80 !important; }
-.q-text { color: #334155 !important; }
-.q-table { background: #f1f5f9 !important; color: #64748b !important; }
-.q-date { color: #94a3b8 !important; }
-.q-id-open { background: #fee2e2 !important; color: #b91c1c !important; }
-.q-id-assumed { background: #ffedd5 !important; color: #c2410c !important; }
-.q-id-answered { background: #dcfce7 !important; color: #166534 !important; }
-.q-answer { background: #f0fdf4 !important; color: #166534 !important; border-color: #bbf7d0 !important; }
-.q-assumption { background: #fff7ed !important; color: #c2410c !important; border-color: #fed7aa !important; }
-.pill-open { background: #fee2e2 !important; color: #b91c1c !important; border-color: #f87171 !important; }
-.pill-assumed { background: #ffedd5 !important; color: #c2410c !important; border-color: #fb923c !important; }
-.pill-answered { background: #dcfce7 !important; color: #166534 !important; border-color: #4ade80 !important; }
-pre { background: #f6f8fa !important; border-color: #d0d7de !important; color: #24292f !important; }
-code { background: #f1f5f9 !important; color: #0550ae !important; border-color: #e2e8f0 !important; }
-pre code { background: none !important; color: inherit !important; border: none !important; }
-.filter-btn { background: #f1f5f9 !important; border-color: #e2e8f0 !important; color: #64748b !important; }
-.filter-btn:hover, .filter-btn.active { background: #3b82f6 !important; color: #ffffff !important; border-color: #3b82f6 !important; }
-.rel-arrow { color: #2563eb !important; }
-.rel-card-label { color: #94a3b8 !important; }
-</style>`;
-
 export async function startSpecDevServer(specName) {
   const app = express();
   const server = http.createServer(app);
@@ -150,8 +76,7 @@ export async function startSpecDevServer(specName) {
     const filePath = path.join(specDir, file);
     if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
     try {
-      let content = fs.readFileSync(filePath, 'utf8');
-      if (req.query.theme === 'light') content = content.replace('</body>', `${LIGHT_MODE_CSS}</body>`);
+      const content = fs.readFileSync(filePath, 'utf8');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(content);
     } catch (e) { res.status(500).send(e.message); }

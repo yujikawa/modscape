@@ -27,13 +27,17 @@ Examples:
 
 ## Instructions
 
-### Step 1: Collect input
+### Step 1: Collect input and detect output format
 
 After the command is invoked, prompt the user to paste or type the knowledge they want to record:
 
 > What would you like to note? (Paste text from a conversation, Slack, or meeting notes)
 
 Wait for the user's free-text input before proceeding.
+
+Also read `.modscape/modscape-spec.config.yaml` and check the `output_format` key:
+- `output_format: html` → **HTML mode**: target files use `.html` extension; section detection uses HTML structure
+- Default (file absent or key unset) → **MD mode**: target files use `.md` extension (existing behavior)
 
 ### Step 2: Determine target table(s)
 
@@ -56,12 +60,16 @@ Wait for the user's free-text input before proceeding.
 
 ### Step 3: Verify spec files exist
 
-For each identified table ID, check whether `specs/<table-id>/spec.md` exists.
+For each identified table ID, determine the target file path based on output format:
+- **MD mode**: `specs/<table-id>/spec.md`
+- **HTML mode**: scan `specs/*/` directories for `<table-id>.html` (the model-slug subfolder may vary); if not found, try `specs/<table-id>.html` as fallback
+
+Check whether the target spec file exists.
 
 - If a spec file **does not exist**, stop and display:
 
   ```
-  ⚠ specs/<table-id>/spec.md が見つかりません。
+  ⚠ specs/<table-id>/spec.md (or .html) が見つかりません。
   先に /modscape:spec:generate を実行してspecを作成してください。
   ```
 
@@ -107,6 +115,7 @@ Wait for the user's response:
 
 For each planned update:
 
+**MD mode:**
 1. Read the target `specs/<table-id>/spec.md`.
 2. Locate the target section (e.g., `## Business Rules`).
    - If the section **exists**: append a new bullet point at the end of that section.
@@ -114,6 +123,19 @@ For each planned update:
 3. Format the appended line as:
    ```
    - <content> <!-- noted <YYYY-MM-DD> -->
+   ```
+   Fill `<YYYY-MM-DD>` with today's date.
+4. Write the updated file.
+
+**HTML mode:**
+1. Read the target `specs/<model-slug>/<table-id>.html`.
+2. Locate the target section by finding the `<h2>` element whose text matches the section name (e.g., `Business Rules`, `Known Issues / Caveats`, `Business Context`, `Overview`), then locate the `<ul>` element that follows it.
+   - If the `<ul>` **exists**: append a new `<li>` element at the end of that `<ul>`.
+   - If the `<ul>` **does not exist**: insert a new `<ul><li>...</li></ul>` block after the corresponding `<h2>` element.
+   - If neither the `<h2>` nor the `<ul>` exists: append a new `<section><h2><section-name></h2><ul><li>...</li></ul></section>` block before the `<footer>` element.
+3. Format the new `<li>` as:
+   ```html
+   <li><!-- noted <YYYY-MM-DD> --><content></li>
    ```
    Fill `<YYYY-MM-DD>` with today's date.
 4. Write the updated file.

@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: SDD 作業フォルダ内の全アーティファクトの整合性を一発チェックできる
 `/modscape:spec:validate <name>` は `.modscape/changes/<name>/` 内のすべての SDD アーティファクトを横断して整合性チェックを行い、矛盾・抜け・ズレをカテゴリ別に報告しなければならない（SHALL）。自動修正は行わず、報告と修正ヒントの提示のみを行わなければならない（SHALL）。
