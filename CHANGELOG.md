@@ -25,11 +25,13 @@ All notable changes to this project will be documented in this file.
 
 - **`modscape spec dev` — Spec name copy button** — A copy icon button has been added to the SpecPanel title bar. Clicking it copies the spec name to the clipboard, making it easy to paste into `/modscape <spec name>` skill invocations.
 
+- **`modscape spec dev` — Code block copy button** — All code blocks in rendered Markdown spec files now show a "Copy" button on hover (top-right corner). Useful for copying SQL snippets and other code directly from specs.
+
 - **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table Markdown spec files. Returns `{ spec: string }` per table. Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
 
 - **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text.
 
-- **Questions workflow unified to `_questions.yaml`** — All SDD skills (`design`, `implement`, `amend`) previously wrote questions to a per-change `questions.md` in Markdown format, inconsistent with `requirements` which wrote directly to `_questions.yaml` in YAML format. All skills now append YAML entries to `.modscape/specs/_questions.yaml` directly, matching the format used by `requirements` and `answer`. The per-change `questions.md` (Markdown) is now treated as a legacy format — `archive` already handles migration for backward compatibility. Updated for all three AI platforms (Claude / Gemini / Codex).
+- **Questions workflow reverted to per-spec `questions.md`** — During active development (`requirements`, `design`, `implement`, `amend`), questions are written to `.modscape/changes/<name>/questions.md` in YAML format. `_questions.yaml` is updated only at archive time, keeping the project-wide file clean from in-progress spec data. `archive` reads `questions.md` as YAML and appends entries to `_questions.yaml` directly (no ID reassignment needed). Updated for all three AI platforms (Claude / Gemini / Codex).
 
 - **`archive` skill — model-slug directory structure** — Permanent per-table specs are now stored at `<SPEC_DIR>/<model-slug>/<table-id>.md` as flat files. The model slug is derived from the main YAML filename via `path.parse().name` (e.g., `models/main-model1.yaml` → `main-model1`). Previously, specs were stored at `<SPEC_DIR>/<table-id>/spec.md`. Old folder-format specs are detected at archive time and flagged for manual migration. Updated for all three AI platforms (Claude / Gemini / Codex).
 

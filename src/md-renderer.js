@@ -40,8 +40,12 @@ li input[type="checkbox"]:checked { accent-color: #16a34a; }
 blockquote { border-left: 3px solid #cbd5e1; margin: 1rem 0; padding: 0.5rem 1rem; background: #f1f5f9; color: #64748b; border-radius: 0 0.25rem 0.25rem 0; }
 blockquote p { margin: 0; }
 code { font-family: 'SF Mono','Fira Code','Cascadia Code', monospace; font-size: 0.85em; background: #f1f5f9; color: #0550ae; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid #e2e8f0; }
-pre { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 0.5rem; padding: 1rem 1.25rem; overflow-x: auto; margin: 1rem 0; }
+pre { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 0.5rem; padding: 1rem 1.25rem; overflow-x: auto; margin: 1rem 0; position: relative; }
 pre code { background: none; color: inherit; padding: 0; border: none; font-size: 0.85rem; line-height: 1.7; }
+.copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: #fff; border: 1px solid #d0d7de; border-radius: 0.3rem; padding: 0.2rem 0.55rem; font-size: 0.72rem; font-family: inherit; cursor: pointer; color: #64748b; opacity: 0; transition: opacity 0.15s, color 0.15s; line-height: 1.6; }
+pre:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: #1e293b; border-color: #94a3b8; }
+.copy-btn.copied { color: #16a34a; border-color: #86efac; }
 table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
 thead tr { background: #f1f5f9; }
 th { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; font-weight: 600; color: #1e293b; }
@@ -61,6 +65,21 @@ hr { border: none; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
 ${body}
 <script>
 (function() {
+  document.querySelectorAll('pre').forEach(function(pre) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function() {
+      var code = pre.querySelector('code');
+      navigator.clipboard.writeText(code ? code.innerText : pre.innerText).then(function() {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
   var headings = document.querySelectorAll('h2, h3');
   if (headings.length > 2) {
     var btn = document.createElement('button');

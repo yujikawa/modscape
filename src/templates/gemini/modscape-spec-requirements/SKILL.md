@@ -90,7 +90,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
    If no qualifying terms were found, skip silently.
 
-11. Review the **entire conversation** and append question entries to `.modscape/specs/_questions.yaml` for all of the following:
+11. Review the **entire conversation** and append question entries to `.modscape/changes/<name>/questions.md` (create if it does not exist) for all of the following:
 
    - **Answered** — questions you asked and the user gave a clear answer to → `status: answered`, record the answer in the `answer` field
    - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
@@ -102,7 +102,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - Is the join type known (LEFT / INNER / etc.)? If not → add a question
    These are blocking questions for implementation — do not leave them unasked.
 
-   Use this format. Determine the next ID by reading the current max ID in `_questions.yaml`:
+   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use this format:
    ```yaml
    - id: Q-NNN
      question: "<question text>"

@@ -177,16 +177,13 @@ modscape summary <file> --json
 
 ### Step 4: Merge questions into _questions.yaml
 
-13. If `.modscape/changes/<name>/questions.md` exists (legacy format from older SDD runs):
+13. If `.modscape/changes/<name>/questions.md` exists:
 
-    Read `.modscape/changes/<name>/questions.md` and `<SPEC_DIR>/_questions.yaml`.
-    Determine the current maximum ID in `_questions.yaml` (e.g. Q-005), then assign new sequential IDs starting from Q-006.
+    Read `.modscape/changes/<name>/questions.md` as a YAML list and `<SPEC_DIR>/_questions.yaml`.
 
     **For each entry in `questions.md`:**
-    - Parse: question text, answer (if `[x]`), assumption (if `**Assumption:**` line present)
-    - Determine `status`: `answered` if answered, `assumed` if only assumption present, `open` otherwise
-    - Infer `table` from the section header if the questions.md has per-table sections; leave absent for pipeline-level questions
-    - Append to `_questions.yaml` with `change: <name>` and `date: <YYYY-MM-DD>`
+    - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
+    - Append the entry to `_questions.yaml` as-is (all fields are already present: `id`, `question`, `status`, `answer`, `assumption`, `table`, `date`, `change`)
 
     After merging all entries, delete `.modscape/changes/<name>/questions.md`:
     ```bash

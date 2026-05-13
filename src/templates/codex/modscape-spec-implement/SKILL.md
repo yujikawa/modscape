@@ -50,7 +50,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 6. After generating code for a task, immediately update the checkbox in `.modscape/changes/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
-7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/specs/_questions.yaml` using the next available Q-NNN ID (read current max from the file first), then ask the user whether to pause or continue with an assumption:
+7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md` (create if it does not exist) using the next available Q-NNN ID (read current max across both `_questions.yaml` and `questions.md` first), then ask the user whether to pause or continue with an assumption:
    ```yaml
    - id: Q-NNN
      question: "<what needs investigation>"
@@ -60,7 +60,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
      date: <YYYY-MM-DD>
      change: <name>
    ```
-   > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `_questions.yaml` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
+   > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `questions.md` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
 
 
 8. After each task, confirm with the user before proceeding:
@@ -99,7 +99,7 @@ For each `lineage` entry where `to` is the current table:
    - **`cross`**: `CROSS JOIN {{ ref('from_table') }}` (no ON clause)
    - **`none`**: reference as CTE only; do not generate a JOIN clause
    - **When omitted**: default to `LEFT JOIN` if a relationship exists; otherwise treat as `none`
-3. If no matching `relationship` entry exists for the pair → add `-- TODO: relationship not defined for this join` and record a question in `_questions.yaml`
+3. If no matching `relationship` entry exists for the pair → add `-- TODO: relationship not defined for this join` and record a question in `questions.md`
 
 ### WHERE clause — `physical.filter_key` / `physical.lookback`
 

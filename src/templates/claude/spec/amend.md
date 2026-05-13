@@ -80,10 +80,10 @@ After the command, describe the issue, error, or change in free text. For exampl
      ```
    - If multiple amend runs occur on the same date, append to the existing `## Amend: <YYYY-MM-DD>` section.
 
-9. **Update `_questions.yaml`** if an unresolved question arises:
-   - Read `.modscape/specs/_questions.yaml` and find the current max Q-NNN to avoid duplication
+9. **Update `questions.md`** if an unresolved question arises:
+   - Read `.modscape/changes/<name>/questions.md` and find the current max Q-NNN; also check `_questions.yaml` to avoid global duplication
    - Check whether the question already exists (compare by text; skip if duplicate)
-   - Append a new entry:
+   - Append a new entry to `.modscape/changes/<name>/questions.md` (create if it does not exist):
      ```yaml
      - id: Q-NNN
        question: "<question text>"
