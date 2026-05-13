@@ -126,6 +126,8 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - If no results: omit the `## Related Past Specs` section entirely.
    - To incorporate findings from a past spec, run `@modscape-spec-search <keyword>`.
 
+11.5. **Read `## Business Context` from `spec.md`** before designing. This section contains data occurrence conditions, business process flows, and domain rules that must inform every design decision. If `## Business Context` is absent or sparse, ask the user to fill it in before proceeding — a design without business context produces untraceable decisions.
+
 12. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
    - Define `lineage` entries to answer: **"which tables does this table's query read from?"** — one entry per input→output pair
@@ -197,6 +199,26 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    If there are unresolved questions (`status: open` or `status: assumed`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `@modscape-spec-implement <name>`.
 
+18.5. **Proactive Tacit Knowledge Detection** — Review `spec-model.yaml` and the design conversation for signals that would cause an **analyst using this data product to draw wrong conclusions**. For each signal found, add a question to `questions.md` with `status: open` and `source: ai-detected`:
+
+   Focus on signals that affect **analytical correctness**:
+   - A column named `type`, `kind`, `status`, `flag`, `code`, or `_kbn` — whose possible values and meanings for analysis were not documented (an analyst filtering on unknown values will silently miss records)
+   - A lineage JOIN across tables from different source systems — without confirmation that the join keys mean the same thing in both systems
+   - A table grain assumed during design but never confirmed by the user — grain misunderstanding is the most common cause of incorrect aggregations
+   - A measure or dimension column whose scope (which business events are included) was assumed rather than stated
+   - A date column in a fact table — whose timestamp semantics (event time / entry time / processing time) affect time-series analysis but were not specified
+
+   Use this format:
+   ```yaml
+   - id: Q-NNN
+     question: "<specific question: what would an analyst get wrong without knowing this?>"
+     status: open
+     source: ai-detected
+     table: <table-id>
+     date: <YYYY-MM-DD>
+     change: <name>
+   ```
+
 19. Review the design conversation for any project-specific or in-house business terms that were introduced or defined. Append qualifying terms to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist).
 
    Target terms (record these):
@@ -225,7 +247,10 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 # Design: <pipeline title>
 
 ## Design Decisions
-<Key design choices and their rationale>
+<!-- Each decision must record both the technical choice AND the business reason behind it.
+     "Because the spec says so" is not a rationale — explain the business logic or process that drives the decision. -->
+<Key design choices and their rationale — updated on each re-run>
+<Format per decision: "**<decision>** — <business reason>. Technical: <technical note if needed>">
 
 ## Affected Tables
 

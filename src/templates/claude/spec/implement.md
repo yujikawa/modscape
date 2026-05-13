@@ -60,7 +60,13 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 6. After generating code for a task, immediately update the checkbox in `.modscape/changes/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
-7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md` (create if it does not exist) using the next available Q-NNN ID (read current max across both `_questions.yaml` and `questions.md` first), then ask the user whether to pause or continue with an assumption:
+7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md`
+
+   Also flag signals that would cause an **analyst to draw wrong conclusions from this data** — add to `questions.md` with `source: ai-detected` and `status: open` WITHOUT pausing:
+   - A cross-system JOIN produces unexpected row counts — the join key may not be semantically equivalent, causing silent over- or under-counting
+   - A source column contains values not listed in the spec (unknown status codes, unexpected NULL patterns) — an analyst filtering on documented values would miss these records
+   - An ID column has mixed formats or patterns suggesting it was populated by different processes — selecting "all" rows may include records with different business meaning
+   - A measure column has a wider value range than expected (e.g., negative values, zero, outliers) — analysts may not know to handle these correctly (create if it does not exist) using the next available Q-NNN ID (read current max across both `_questions.yaml` and `questions.md` first), then ask the user whether to pause or continue with an assumption:
    ```yaml
    - id: Q-NNN
      question: "<what needs investigation>"

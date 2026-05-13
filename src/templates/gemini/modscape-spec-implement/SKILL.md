@@ -77,6 +77,12 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
    ```
    > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `questions.md` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
 
+   Also flag signals that would cause an **analyst to draw wrong conclusions from this data** — add to `questions.md` with `source: ai-detected` and `status: open` WITHOUT pausing:
+   - A cross-system JOIN produces unexpected row counts — the join key may not be semantically equivalent, causing silent over- or under-counting
+   - A source column contains values not listed in the spec (unknown status codes, unexpected NULL patterns) — an analyst filtering on documented values would miss these records
+   - An ID column has mixed formats or patterns suggesting it was populated by different processes — selecting "all" rows may include records with different business meaning
+   - A measure column has a wider value range than expected (e.g., negative values, zero, outliers) — analysts may not know to handle these correctly
+
 8. After each task, confirm with the user before proceeding:
    > Task complete. Ready to move on to the next task?
 
