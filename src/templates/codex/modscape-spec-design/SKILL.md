@@ -9,6 +9,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 1. Read `.modscape/rules.md` to understand the YAML schema and modeling rules.
    If `.modscape/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
 

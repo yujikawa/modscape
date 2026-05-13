@@ -20,7 +20,7 @@ import { runCoverage } from './coverage.js';
 import { runLint } from './lint.js';
 import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
-import { specNew, startSpecDevServer } from './spec.js';
+import { specNew, specList, startSpecDevServer } from './spec.js';
 import { startSpecOpenServer, buildSpecs } from './specs.js';
 import { runSearch } from './search.js';
 import { updateProject } from './update.js';
@@ -212,6 +212,14 @@ program
 const specCommand = program
   .command('spec')
   .description('Spec-Driven Data Engineering (SDD) commands');
+
+specCommand
+  .command('list')
+  .description('List all specs under .modscape/changes/')
+  .option('--json', 'output as JSON')
+  .action((opts) => {
+    specList(opts);
+  });
 
 specCommand
   .command('new')

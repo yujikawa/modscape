@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 ## Communication Rules
 
@@ -160,18 +160,18 @@ When adding or modifying fields or sections, verify all of the following:
 
 ### When updating SDD skills
 
-**Claude Code is the primary implementation.** Gemini and Codex versions are derived from it and may lag behind.
+All three agent versions (Claude Code, Gemini, Codex) must always be kept in sync. When any skill is added or modified, update all three at the same time.
 
-When modifying SDD skills:
+Skill file locations:
+- **Claude Code** — `src/templates/claude/spec/*.md`
+- **Gemini** — `src/templates/gemini/modscape-spec-*/SKILL.md`
+- **Codex** — `src/templates/codex/modscape-spec-*/SKILL.md`
 
-1. **Always update Claude Code first** — `src/templates/claude/spec/*.md` is the source of truth
-2. **Then sync to Gemini and Codex** — `src/templates/gemini/modscape-spec-*/SKILL.md` and `src/templates/codex/modscape-spec-*/SKILL.md`
-
-Format differences to apply when syncing:
+Format differences to apply when writing each version:
 - **Gemini**: add YAML frontmatter (`name`, `description`); change command references to `@modscape-spec-xxx`
 - **Codex**: add YAML frontmatter + `## COMMAND: /modscape:spec:xxx` section at the bottom; command syntax stays `/modscape:spec:xxx`
 
-It is acceptable for Gemini/Codex versions to be temporarily behind Claude Code. When in doubt, prioritize keeping Claude Code correct over syncing all three immediately.
+Never leave one version behind. A skill change is not complete until all three files are updated.
 
 ### CLI mutation command implementation rules
 

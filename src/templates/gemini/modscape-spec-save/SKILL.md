@@ -13,6 +13,14 @@ Save the current session state to `.modscape/changes/<name>/session.md`. Run thi
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 1. Verify that `.modscape/changes/<name>/` exists.
    - If not: tell the user the folder was not found and suggest running `@modscape-spec-requirements` to start a new spec.
 

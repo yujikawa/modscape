@@ -2,6 +2,14 @@ Generate an implementation task list from `spec-model.yaml` and write it to `.mo
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 1. If `.modscape/modscape-spec.custom.md` exists, read it — its rules take **priority** over all defaults, including phase structure, additional tasks, and **communication preferences** (language, response format, etc.). Apply every rule in the file.
 
 2. Read `.modscape/changes/<name>/spec-model.yaml` (default path) or the path provided by the user.

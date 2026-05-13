@@ -152,6 +152,67 @@ function writeIfNotExists(filePath, content) {
   return true;
 }
 
+export function specList(opts = {}) {
+  if (!fs.existsSync(CHANGES_DIR)) {
+    if (opts.json) { console.log(JSON.stringify([])); return; }
+    console.log('  (no specs found — run `modscape spec new <name>` to create one)');
+    return;
+  }
+
+  const entries = fs.readdirSync(CHANGES_DIR)
+    .filter(e => fs.statSync(path.join(CHANGES_DIR, e)).isDirectory())
+    .sort();
+
+  if (entries.length === 0) {
+    if (opts.json) { console.log(JSON.stringify([])); return; }
+    console.log('  (no specs found — run `modscape spec new <name>` to create one)');
+    return;
+  }
+
+  const specs = entries.map(name => {
+    const dir = path.join(CHANGES_DIR, name);
+    const specMdPath = path.join(dir, 'spec.md');
+    const tasksMdPath = path.join(dir, 'tasks.md');
+
+    const title = (() => {
+      if (!fs.existsSync(specMdPath)) return null;
+      const content = fs.readFileSync(specMdPath, 'utf8');
+      const m = content.match(/^#\s+(.+)/m);
+      return m ? m[1].trim() : null;
+    })();
+
+    const taskProgress = (() => {
+      if (!fs.existsSync(tasksMdPath)) return null;
+      const content = fs.readFileSync(tasksMdPath, 'utf8');
+      const done = (content.match(/- \[x\]/gi) || []).length;
+      const total = done + (content.match(/- \[ \]/g) || []).length;
+      return { done, total };
+    })();
+
+    const docs = ['spec.md', 'design.md', 'tasks.md', 'questions.md'].filter(
+      f => fs.existsSync(path.join(dir, f))
+    );
+
+    return { name, title, docs, taskProgress };
+  });
+
+  if (opts.json) {
+    console.log(JSON.stringify(specs, null, 2));
+    return;
+  }
+
+  console.log(`\n  Specs in ${CHANGES_DIR}/\n`);
+  for (const s of specs) {
+    const label = s.title ? `${s.name}  (${s.title})` : s.name;
+    const progress = s.taskProgress
+      ? `  [${s.taskProgress.done}/${s.taskProgress.total} tasks]`
+      : '';
+    const docs = s.docs.length ? `  docs: ${s.docs.join(', ')}` : '';
+    console.log(`  • ${label}${progress}${docs}`);
+  }
+  console.log('');
+}
+
 export function specNew(name) {
   const dir = path.join(CHANGES_DIR, name);
 
