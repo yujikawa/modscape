@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { GripHorizontal, X } from 'lucide-react'
+import { GripHorizontal, X, Copy, Check } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 interface SpecTab {
@@ -22,6 +22,14 @@ export default function SpecPanel() {
 
   const [tabs, setTabs] = useState<SpecTab[]>([])
   const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const copySpecName = useCallback(() => {
+    navigator.clipboard.writeText(specName).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }, [specName])
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // Floating window state
@@ -162,6 +170,14 @@ export default function SpecPanel() {
         <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b', fontFamily: 'monospace' }}>
           spec: {specName}
         </span>
+        <button
+          onMouseDown={e => e.stopPropagation()}
+          onClick={copySpecName}
+          title="Copy spec name"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', borderRadius: 4 }}
+        >
+          {copied ? <Check size={13} style={{ color: '#22c55e' }} /> : <Copy size={13} />}
+        </button>
         <div style={{ flex: 1 }} />
         <button
           onMouseDown={e => e.stopPropagation()}

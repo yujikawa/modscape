@@ -19,6 +19,7 @@ const SPEC_TABS = [
   { id: 'design',    label: 'Design',    file: 'design.html' },
   { id: 'tasks',     label: 'Tasks',     file: 'tasks.html' },
   { id: 'questions', label: 'Questions', file: 'questions.html' },
+  { id: 'glossary',  label: 'Glossary',  file: 'glossary.html' },
 ];
 
 export async function startSpecDevServer(specName) {

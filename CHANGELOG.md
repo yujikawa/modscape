@@ -19,6 +19,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Left sidebar closed by default** — The left sidebar now starts closed on first load. The YAML tab remains the active tab when the sidebar is opened.
+
+- **`modscape spec dev` — Glossary tab** — `glossary.md` in the spec change directory is now displayed as a dedicated "Glossary" tab in the SpecPanel, alongside Spec / Design / Tasks / Questions.
+
+- **`modscape spec dev` — Spec name copy button** — A copy icon button has been added to the SpecPanel title bar. Clicking it copies the spec name to the clipboard, making it easy to paste into `/modscape <spec name>` skill invocations.
+
 - **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table Markdown spec files. Returns `{ spec: string }` per table. Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
 
 - **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text.

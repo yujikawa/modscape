@@ -211,7 +211,7 @@ export const useStore = create<AppState>()(persist(
   currentModelSlug: null,
 
   // UI Defaults
-  isSidebarOpen: true,
+  isSidebarOpen: false,
   isRightPanelOpen: false,
   isSpecPanelOpen: false,
   isQuickConnectBarOpen: false,
