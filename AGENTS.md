@@ -184,6 +184,14 @@ Skill file locations:
 - **Gemini** — `src/templates/gemini/modscape-spec-*/SKILL.md`
 - **Codex** — `src/templates/codex/modscape-spec-*/SKILL.md`
 
+Current SDD skills (all three platforms must stay in sync):
+`generate`, `requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `search`, `answer`, `check`, `note`, `save`, `load`, `help`
+
+**When adding a new SDD skill:**
+1. Add template files for all three agents (Claude / Gemini / Codex).
+2. Add the skill name to `SPEC_SKILL_NAMES` in `src/template-files.js` — this is what `modscape init` and `modscape update` use to install/refresh skills.
+3. Update the skill list above in this file.
+
 Format differences to apply when writing each version:
 - **Gemini**: add YAML frontmatter (`name`, `description`); change command references to `@modscape-spec-xxx`
 - **Codex**: add YAML frontmatter + `## COMMAND: /modscape:spec:xxx` section at the bottom; command syntax stays `/modscape:spec:xxx`

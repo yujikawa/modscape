@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.2] - 2026-05-15
+
+### Fixed
+
+- **`modscape init` / `modscape update` — `load` skill now installed correctly** — The `/modscape:spec:load` skill added in v3.4.1 was missing from `SPEC_SKILL_NAMES` in `src/template-files.js`, so `init` and `update` did not install it for any AI platform. The skill name has been added to the list and is now scaffolded correctly for Claude Code, Gemini, and Codex.
+
+### Changed
+
+- **AGENTS.md — skill checklist for new SDD skills** — Added an explicit list of current SDD skills and a three-step checklist describing what must be updated when a new skill is added (template files, `SPEC_SKILL_NAMES`, and the skill list in AGENTS.md itself).
+
 ## [3.4.1] - 2026-05-14
 
 ### Added
