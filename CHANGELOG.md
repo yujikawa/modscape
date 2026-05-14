@@ -4,9 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [3.4.1] - 2026-05-14
 
+### Added
+
+- **`/modscape:spec:load` skill** — New skill paired with `/modscape:spec:save`. Reads `.modscape/changes/<name>/session.md`, injects the saved context (decisions, open issues, next action, notes) into the current conversation, then deletes the file so stale state does not accumulate. Added for all three AI platforms (Claude / Gemini / Codex).
+
 ### Changed
 
 - **SDD skill — visualizer preview command updated** — The `modscape dev .modscape/changes/<name>/spec-model.yaml` command referenced in the `design` and `implement` skill instructions has been replaced with `modscape spec dev <name>`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **SDD skills — language-agnostic output** — All skill output (labels, confirmation messages, section headers, status blocks) is now in English by default. Output language is configurable per project via the `## Communication` section in `.modscape/modscape-spec.custom.md`. Each skill reads this setting at the start of every session. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`status` skill — `session.md` auto-read removed** — The status output no longer automatically includes the "Previous session" block from `session.md`. Session state is now loaded explicitly via `/modscape:spec:load`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`save` skill — resume instruction updated** — The post-save confirmation now points to `/modscape:spec:load <name>` instead of `/modscape:spec:status <name>` for resuming a session. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`modscape-spec.custom.md.example` — Communication section clarified** — Default language (English) is now stated explicitly. Users only need to add a directive when overriding to another language.
+
+- **AGENTS.md — SDD language policy documented** — Added a dedicated section describing the language-agnostic design, the default-English rule, and the per-skill language detection pattern.
 
 ## [3.4.0] - 2026-05-14
 
