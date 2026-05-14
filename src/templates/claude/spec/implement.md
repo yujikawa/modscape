@@ -245,4 +245,4 @@ When the user reports a problem during the implementation session — whether vi
 
 🔖 To pause and resume later, run `/modscape:spec:save <name>`.
 ---
-> Run `modscape dev spec-model.yaml` to review the final model in the visualizer.
+> Run `modscape spec dev <name>` to review the final model in the visualizer.

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.1] - 2026-05-14
+
+### Changed
+
+- **SDD skill — visualizer preview command updated** — The `modscape dev .modscape/changes/<name>/spec-model.yaml` command referenced in the `design` and `implement` skill instructions has been replaced with `modscape spec dev <name>`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.4.0] - 2026-05-14
 
 ### Added

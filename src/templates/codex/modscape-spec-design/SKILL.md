@@ -331,7 +331,7 @@ Usage: `/modscape:spec:design <name> [path/to/main.yaml]`
 
 To preview the model:
 ```
-modscape dev .modscape/changes/<name>/spec-model.yaml
+modscape spec dev <name>
 ```
 
 If you discover issues, add them to `## Findings` in `design.md` and re-run `/modscape:spec:design <name>`.

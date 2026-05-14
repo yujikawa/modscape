@@ -336,7 +336,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 To preview the model:
 ```
-modscape dev .modscape/changes/<name>/spec-model.yaml
+modscape spec dev <name>
 ```
 
 If you discover issues, add them to `## Findings` in `design.md` and re-run `@modscape-spec-design <name>`.
