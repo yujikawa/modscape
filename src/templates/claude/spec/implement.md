@@ -60,13 +60,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 6. After generating code for a task, immediately update the checkbox in `.modscape/changes/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
-7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md`
-
-   Also flag signals that would cause an **analyst to draw wrong conclusions from this data** — add to `questions.md` with `source: ai-detected` and `status: open` WITHOUT pausing:
-   - A cross-system JOIN produces unexpected row counts — the join key may not be semantically equivalent, causing silent over- or under-counting
-   - A source column contains values not listed in the spec (unknown status codes, unexpected NULL patterns) — an analyst filtering on documented values would miss these records
-   - An ID column has mixed formats or patterns suggesting it was populated by different processes — selecting "all" rows may include records with different business meaning
-   - A measure column has a wider value range than expected (e.g., negative values, zero, outliers) — analysts may not know to handle these correctly (create if it does not exist) using the next available Q-NNN ID (read current max across both `_questions.yaml` and `questions.md` first), then ask the user whether to pause or continue with an assumption:
+7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md` (create if it does not exist) using the next available Q-NNN ID (read current max across both `_questions.yaml` and `questions.md` first), then ask the user whether to pause or continue with an assumption:
    ```yaml
    - id: Q-NNN
      question: "<what needs investigation>"
@@ -77,6 +71,38 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
      change: <name>
    ```
    > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `questions.md` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
+
+   Also flag signals that would cause an **analyst to draw wrong conclusions from this data** — add to `questions.md` with `source: ai-detected` and `status: open` WITHOUT pausing. Also generate a PII-safe investigation query in the `investigation:` block:
+   - A cross-system JOIN produces unexpected row counts — the join key may not be semantically equivalent, causing silent over- or under-counting
+   - A source column contains values not listed in the spec (unknown status codes, unexpected NULL patterns) — an analyst filtering on documented values would miss these records
+   - An ID column has mixed formats or patterns suggesting it was populated by different processes — selecting "all" rows may include records with different business meaning
+   - A measure column has a wider value range than expected (e.g., negative values, zero, outliers) — analysts may not know to handle these correctly
+
+   Use this format for `ai-detected` entries:
+   ```yaml
+   - id: Q-NNN
+     question: "<specific question: what would an analyst get wrong without knowing this?>"
+     status: open
+     source: ai-detected
+     table: <table-id>
+     date: <YYYY-MM-DD>
+     change: <name>
+     investigation:
+       query: |
+         -- PII-safe: aggregation only
+         SELECT <column>, COUNT(*) AS cnt
+         FROM <table>
+         GROUP BY <column>
+         ORDER BY cnt DESC
+       result: null     # human fills in after running the query
+       finding: null    # AI fills in after result is provided via /modscape:spec:answer
+   ```
+
+   **PII safety rules for the query (non-negotiable):**
+   - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
+   - Never SELECT * or raw row samples
+   - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
+   - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
 
 8. After each task, confirm with the user before proceeding:
    > Task complete. Ready to move on to the next task?

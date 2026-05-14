@@ -15,11 +15,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Tab definitions for spec viewer mode
 const SPEC_TABS = [
-  { id: 'spec',      label: 'Spec',      file: 'spec.html' },
-  { id: 'design',    label: 'Design',    file: 'design.html' },
-  { id: 'tasks',     label: 'Tasks',     file: 'tasks.html' },
-  { id: 'questions', label: 'Questions', file: 'questions.html' },
-  { id: 'glossary',  label: 'Glossary',  file: 'glossary.html' },
+  { id: 'spec',          label: 'Spec',          file: 'spec.html' },
+  { id: 'design',        label: 'Design',        file: 'design.html' },
+  { id: 'tasks',         label: 'Tasks',         file: 'tasks.html' },
+  { id: 'questions',     label: 'Questions',     file: 'questions.html' },
+  { id: 'glossary',      label: 'Glossary',      file: 'glossary.html' },
 ];
 
 export async function startSpecDevServer(specName) {

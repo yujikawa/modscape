@@ -217,6 +217,8 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - A measure or dimension column whose scope (which business events are included) was assumed rather than stated
    - A date column in a fact table — whose timestamp semantics (event time / entry time / processing time) affect time-series analysis but were not specified
 
+   For each signal, write the entry to `questions.md` **and generate a PII-safe investigation query** in the `investigation:` block. This query is ready to run against the real data — the human fills in `result:` after running it, then AI fills in `finding:` via `/modscape:spec:answer`.
+
    Use this format:
    ```yaml
    - id: Q-NNN
@@ -226,7 +228,23 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
      table: <table-id>
      date: <YYYY-MM-DD>
      change: <name>
+     investigation:
+       query: |
+         -- PII-safe: aggregation only
+         SELECT <column>, COUNT(*) AS cnt
+         FROM <table>
+         GROUP BY <column>
+         ORDER BY cnt DESC
+       result: null     # human fills in after running the query
+       finding: null    # AI fills in after result is provided via /modscape:spec:answer
    ```
+
+   **PII safety rules for the query (non-negotiable):**
+   - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
+   - Never SELECT * or raw row samples
+   - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
+   - For value distribution: use GROUP BY + COUNT(*) — never show raw PII values
+   - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
 
 19. Review the design conversation for any project-specific or in-house business terms that were introduced or defined. Append qualifying terms to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist).
 

@@ -125,6 +125,8 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - A status or flag whose values were not enumerated — where an analyst filtering on a subset of values might unknowingly exclude valid records
    - Data described as covering "all X" — but where there are known segments, periods, or conditions that are actually excluded
 
+   For each signal, write the entry to `questions.md` **and generate a PII-safe investigation query** in the `investigation:` block. This query is ready to run against the real data — the human fills in `result:` after running it, then AI fills in `finding:` via `@modscape-spec-answer`.
+
    Use this format:
    ```yaml
    - id: Q-NNN
@@ -134,7 +136,23 @@ Gather business requirements interactively and generate `.modscape/changes/<name
      table: <table-id>    # if specific to a table
      date: <YYYY-MM-DD>
      change: <name>
+     investigation:
+       query: |
+         -- PII-safe: aggregation only
+         SELECT <column>, COUNT(*) AS cnt
+         FROM <table>
+         GROUP BY <column>
+         ORDER BY cnt DESC
+       result: null     # human fills in after running the query
+       finding: null    # AI fills in after result is provided via @modscape-spec-answer
    ```
+
+   **PII safety rules for the query (non-negotiable):**
+   - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
+   - Never SELECT * or raw row samples
+   - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
+   - For value distribution: use GROUP BY + COUNT(*) — never show raw PII values
+   - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
 
 11. Review the **entire conversation** and append question entries to `.modscape/changes/<name>/questions.md` (create if it does not exist) for all of the following:
 
