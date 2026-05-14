@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.4.0] - 2026-05-12
+## [3.4.0] - 2026-05-14
 
 ### Added
 
@@ -36,14 +36,6 @@ All notable changes to this project will be documented in this file.
 - **`archive` skill — model-slug directory structure** — Permanent per-table specs are now stored at `<SPEC_DIR>/<model-slug>/<table-id>.md` as flat files. The model slug is derived from the main YAML filename via `path.parse().name` (e.g., `models/main-model1.yaml` → `main-model1`). Previously, specs were stored at `<SPEC_DIR>/<table-id>/spec.md`. Old folder-format specs are detected at archive time and flagged for manual migration. Updated for all three AI platforms (Claude / Gemini / Codex).
 
 - **`design` skill — open questions reference corrected** — Step 10 (surface known open questions) previously checked `.modscape/specs/questions.md`, a path that no longer exists. Now correctly reads from `_questions.yaml` filtered by `status: open` or `status: assumed`. Updated for all three AI platforms (Claude / Gemini / Codex).
-
-### Removed
-
-- **HTML spec output mode** — The `output_format: html` setting and all associated HTML template generation logic have been removed from all SDD skills. Spec artifacts are always generated as Markdown (`.md`). The `modscape spec dev` server renders Markdown files to styled HTML on-the-fly, making a separate HTML artifact format unnecessary. Removed for all three AI platforms (Claude / Gemini / Codex).
-
-- **HTML spec templates** — The five HTML templates (`spec-template.html`, `design-template.html`, `tasks-template.html`, `questions-template.html`, `table-spec-template.html`) have been deleted from `src/templates/spec/html/`.
-
-- **`modscape init --html` flag** — The `--html` option for `modscape init` and `modscape update` commands has been removed along with the `output_format` key it wrote to `modscape-spec.config.yaml`.
 
 ## [3.3.2] - 2026-05-08
 
