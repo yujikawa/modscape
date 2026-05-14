@@ -1,6 +1,10 @@
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { writeRules, writeAgentTemplates } from './template-files.js';
+import { readSpecConfig, writeSpecConfig } from './model-utils.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Files under .modscape/specs/ are user data — never overwrite
 function isUserData(filePath) {
@@ -38,7 +42,7 @@ function detectSdd(agents) {
   return false;
 }
 
-export async function updateProject() {
+export async function updateProject(options = {}) {
   console.log('\n  🔄  Modscape Update\n');
 
   const agents = detectInstalledAgents();
@@ -56,6 +60,31 @@ export async function updateProject() {
 
   await writeRules(forceWrite);
   await writeAgentTemplates(agents, sdd, forceWrite);
+
+  // Update HTML spec templates if already installed, or install fresh when --html is passed
+  const specTemplatesDir = path.resolve(process.cwd(), '.modscape/spec-templates');
+  const htmlSrcDir = path.join(__dirname, 'templates', 'spec', 'html');
+  const htmlFiles = ['spec-template.html', 'design-template.html', 'tasks-template.html', 'questions-template.html'];
+
+  if (options.html || fs.existsSync(specTemplatesDir)) {
+    for (const file of htmlFiles) {
+      const src = path.join(htmlSrcDir, file);
+      if (fs.existsSync(src)) {
+        forceWrite(`.modscape/spec-templates/${file}`, fs.readFileSync(src, 'utf8'));
+      }
+    }
+  }
+
+  // When --html is passed, also ensure output_format: html is set in config.yaml
+  if (options.html) {
+    const existing = readSpecConfig();
+    if (existing.output_format !== 'html') {
+      writeSpecConfig({ ...existing, output_format: 'html' });
+      console.log('  Created/Updated .modscape/modscape-spec.config.yaml (output_format: html)');
+    } else {
+      console.log('  .modscape/modscape-spec.config.yaml already has output_format: html — skipped');
+    }
+  }
 
   console.log('\n  💡 User data in .modscape/specs/ was not modified.\n');
 }

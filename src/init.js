@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { writeRules, writeAgentTemplates } from './template-files.js';
+import { readSpecConfig, writeSpecConfig } from './model-utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -78,6 +79,8 @@ export async function initProject(options = {}) {
       await safeWriteFile('.modscape/modscape-spec.custom.md.example', readTpl('modscape-spec.custom.md.example'), yes);
       await safeWriteFile('.modscape/rules.custom.md.example', readTpl('rules.custom.md.example'), yes);
       await safeWriteFile('.modscape/specs/.gitkeep', '', yes);
+
+
       await safeWriteFile('.modscape/specs/_context.yaml', `# .modscape/specs/_context.yaml
 # Cross-project architectural decisions from SDD interactions.
 # Do NOT store schema info here — that belongs in model.yaml.

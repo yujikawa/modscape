@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import yaml from 'js-yaml'
-import type { Schema, Table, Relationship, Domain, Annotation, Consumer, ContextYaml, GlossaryYaml, QuestionsYaml } from '../types/schema'
-import { parseYAML, normalizeSchema, parseContextYaml, parseGlossaryYaml, parseQuestionsYaml } from '../lib/parser'
+import type { Schema, Table, Relationship, Domain, Annotation, Consumer } from '../types/schema'
+import { parseYAML, normalizeSchema } from '../lib/parser'
 
 // Debounce timer for syncToYamlInput — avoids yaml.dump on every frame during drag
 let syncTimer: ReturnType<typeof setTimeout> | null = null
@@ -13,15 +13,8 @@ export interface ModelFile {
   path: string;
 }
 
-export interface TableSpecEntry { spec?: string; questions?: string; }
-
 interface AppState {
   schema: Schema | null;
-  contextData: ContextYaml | null;
-  tableSpecs: Record<string, TableSpecEntry> | null;
-  glossaryData: GlossaryYaml | null;
-  questionsData: QuestionsYaml | null;
-  isContextPanelOpen: boolean;
   selectedTableId: string | null;
   selectedTableIds: string[];
   selectedEdgeId: string | null;
@@ -53,11 +46,12 @@ interface AppState {
   // UI State
   isSidebarOpen: boolean;
   isRightPanelOpen: boolean;
+  isSpecPanelOpen: boolean;
   isQuickConnectBarOpen: boolean;
   isTerminalOpen: boolean;
   connectMode: 'lineage' | 'er' | null;
   activeTab: 'yaml' | 'stats';
-  activeRightPanelTab: 'search' | 'path' | 'notes' | 'decisions';
+  activeRightPanelTab: 'search' | 'path' | 'notes' | 'decisions' | 'spec';
   focusNodeId: string | null;
   pathFinderResult: { nodeIds: string[], edgeIds: string[] } | null;
   showER: boolean;
@@ -134,12 +128,12 @@ interface AppState {
   // Sidebar Actions
   setIsSidebarOpen: (isOpen: boolean) => void;
   setIsRightPanelOpen: (isOpen: boolean) => void;
+  setIsSpecPanelOpen: (isOpen: boolean) => void;
   setIsQuickConnectBarOpen: (isOpen: boolean) => void;
   setIsTerminalOpen: (isOpen: boolean) => void;
   setConnectMode: (mode: 'lineage' | 'er' | null) => void;
   setActiveTab: (tab: 'yaml' | 'stats') => void;
-  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes') => void;
-  setIsContextPanelOpen: (open: boolean) => void;
+  setActiveRightPanelTab: (tab: 'search' | 'path' | 'notes' | 'decisions' | 'spec') => void;
   setPathFinderResult: (result: { nodeIds: string[], edgeIds: string[] } | null) => void;
   setFocusNodeId: (id: string | null) => void;
   toggleTheme: () => void;
@@ -174,11 +168,6 @@ const pushHistory = (get: () => AppState, set: (partial: Partial<AppState>) => v
 export const useStore = create<AppState>()(persist(
   (set, get) => ({
   schema: null,
-  contextData: null,
-  tableSpecs: null,
-  glossaryData: null,
-  questionsData: null,
-  isContextPanelOpen: false,
   selectedTableId: null,
   selectedTableIds: [],
   selectedEdgeId: null,
@@ -222,8 +211,9 @@ export const useStore = create<AppState>()(persist(
   currentModelSlug: null,
 
   // UI Defaults
-  isSidebarOpen: true,
+  isSidebarOpen: false,
   isRightPanelOpen: false,
+  isSpecPanelOpen: false,
   isQuickConnectBarOpen: false,
   isTerminalOpen: false,
   connectMode: null,
@@ -292,12 +282,12 @@ export const useStore = create<AppState>()(persist(
   setIsCliMode: (isCli) => set({ isCliMode: isCli }),
   setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
   setIsRightPanelOpen: (isOpen) => set({ isRightPanelOpen: isOpen }),
+  setIsSpecPanelOpen: (isOpen) => set({ isSpecPanelOpen: isOpen }),
   setIsQuickConnectBarOpen: (isOpen) => set({ isQuickConnectBarOpen: isOpen }),
   setIsTerminalOpen: (isOpen: boolean) => set({ isTerminalOpen: isOpen }),
   setConnectMode: (mode) => set({ connectMode: mode }),
   setActiveTab: (tab) => set({ activeTab: tab, isSidebarOpen: true }),
   setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab, isRightPanelOpen: true }),
-  setIsContextPanelOpen: (open) => set({ isContextPanelOpen: open }),
   setIsAutoSaveEnabled: (enabled) => set({ isAutoSaveEnabled: enabled }),
   setCyInstance: (cy) => set({ cyInstance: cy }),
   setLastUpdateSource: (source) => set({ lastUpdateSource: source }),
@@ -1164,10 +1154,6 @@ export const useStore = create<AppState>()(persist(
       if (injectedData?.models) {
         const model = injectedData.models.find((m: any) => m.slug === slug);
         data = model?.schema;
-        if (injectedData.contextData) set({ contextData: injectedData.contextData });
-        if (injectedData.tableSpecs) set({ tableSpecs: injectedData.tableSpecs });
-        if (injectedData.glossaryData) set({ glossaryData: injectedData.glossaryData });
-        if (injectedData.questionsData) set({ questionsData: injectedData.questionsData });
       } else {
         const res = await fetch(`/api/model?model=${slug}`);
         if (!res.ok) {
@@ -1176,18 +1162,6 @@ export const useStore = create<AppState>()(persist(
           return;
         }
         data = await res.json();
-        try {
-          const [ctxRes, tableSpecsRes, glossaryRes, questionsRes] = await Promise.all([
-            fetch('/api/context'),
-            fetch('/api/context/tables'),
-            fetch('/api/glossary'),
-            fetch('/api/questions'),
-          ]);
-          set({ contextData: ctxRes.ok ? parseContextYaml(await ctxRes.text()) : null });
-          set({ tableSpecs: tableSpecsRes.ok ? await tableSpecsRes.json() : null });
-          set({ glossaryData: glossaryRes.ok ? parseGlossaryYaml(await glossaryRes.text()) : null });
-          set({ questionsData: questionsRes.ok ? parseQuestionsYaml(await questionsRes.text()) : null });
-        } catch { set({ contextData: null, tableSpecs: null, glossaryData: null, questionsData: null }); }
       }
       const loadedSchema = normalizeSchema(data);
       const loadedYaml = yaml.dump(loadedSchema, { indent: 2, lineWidth: -1, noRefs: true });

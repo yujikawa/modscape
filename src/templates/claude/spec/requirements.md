@@ -28,6 +28,31 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - **Target Tool** — `dbt` | `SQLMesh` | `Spark SQL` | `plain SQL` (skip if set in custom.md)
    - **Main YAML(s)** — path(s) to main model YAML file(s) (skip if set in custom.md; otherwise ask)
 
+3.5. **Business Context Elicitation** — Probe for data-related business context that only humans know. This is the most important step: the goal is to capture knowledge about how data is generated, what it means, and how the business operates around it. AI cannot derive this from the schema alone.
+
+   Ask each question below explicitly. Do not skip even if requirements seem clear.
+
+   **Data occurrence conditions** — for each source table or event:
+   - "What business event or action causes a row to be created in `<table>`?"
+   - "What happens in the business process *before* this data is recorded?"
+   - "Who enters this data, in what system, and for what purpose?"
+   - "Under what conditions is a row updated or deleted?"
+
+   **Business process / flow**:
+   - "Walk me through the end-to-end business process that this data is part of."
+   - "What happens *after* this data is recorded? Who consumes it and for what?"
+   - "Are there upstream approvals, rejections, or corrections that affect this data?"
+
+   **Domain-specific rules and edge cases**:
+   - "Are there cases where the data looks wrong but is actually correct by business rule? (e.g., a negative amount, a future date, a NULL that means something specific)"
+   - "Are there status codes, flags, or magic values in this data that have a specific meaning only your team knows?"
+   - "What's the most common mistake engineers make when working with this data?"
+
+   Catch-all (always ask):
+   - "Is there anything about how this business works or how this data is generated that an engineer would get wrong without being told?"
+
+   Record all answers in `spec.md` under `## Business Context`. If a question yields no new information, skip it silently.
+
 4. After collecting requirements, propose a work folder name:
    - Derive a short, descriptive kebab-case name from the pipeline title (e.g., `monthly-sales-summary`)
    - Present the proposed name to the user:
@@ -83,7 +108,48 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
    If no qualifying terms were found, skip silently.
 
-11. Review the **entire conversation** and append question entries to `.modscape/specs/_questions.yaml` for all of the following:
+10.6. **Proactive Tacit Knowledge Detection** — Review the conversation for signals that would cause an **analyst using this data product to draw wrong conclusions or be confused**. For each signal found, add a question to `.modscape/changes/<name>/questions.md` with `status: open` and `source: ai-detected`. Do not ask the user now — record it for a later ヒアリング session.
+
+   Focus only on signals that affect **analytical correctness** — things an analyst would get wrong without being told:
+   - A metric or measure with an ambiguous name (e.g., "revenue", "sales", "count") — whose inclusion/exclusion criteria (tax? returns? cancellations?) were not stated
+   - A key or ID that appears in multiple systems — but whether it is semantically equivalent across systems was not confirmed (a cross-system JOIN may silently produce wrong results)
+   - A process described as "sometimes manual", "for exceptions", or "irregular" — without stating whether these records appear in the data or are excluded
+   - A date or timestamp column — whose business meaning (event time vs. record entry time vs. processing time) was not clarified
+   - A status or flag whose values were not enumerated — where an analyst filtering on a subset of values might unknowingly exclude valid records
+   - Data described as covering "all X" — but where there are known segments, periods, or conditions that are actually excluded
+
+   For each signal, write the entry to `questions.md` **and generate a PII-safe investigation query** in the `investigation:` block. This query is ready to run against the real data — the human fills in `result:` after running it, then AI fills in `finding:` via `/modscape:spec:answer`.
+
+   Use this format:
+   ```yaml
+   - id: Q-NNN
+     question: "<specific question: what would an analyst get wrong without knowing this?>"
+     status: open
+     source: ai-detected
+     table: <table-id>    # if specific to a table
+     date: <YYYY-MM-DD>
+     change: <name>
+     investigation:
+       query: |
+         -- PII-safe: aggregation only
+         SELECT <column>, COUNT(*) AS cnt
+         FROM <table>
+         GROUP BY <column>
+         ORDER BY cnt DESC
+       result: null     # human fills in after running the query
+       finding: null    # AI fills in after result is provided via /modscape:spec:answer
+   ```
+
+   **PII safety rules for the generated query:**
+   - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
+   - Never SELECT * or raw row samples
+   - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
+   - For value distribution: use GROUP BY + COUNT(*) — never show raw PII values
+   - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
+
+   > ⚠️ **Human review required before running**: The AI generates this query as a starting point following PII-safety rules, but **the human must review the query before executing it** to verify no PII columns are inadvertently included. AI cannot know which columns contain PII in your specific environment. Never run without reviewing.
+
+11. Review the **entire conversation** and append question entries to `.modscape/changes/<name>/questions.md` (create if it does not exist) for all of the following:
 
    - **Answered** — questions you asked and the user gave a clear answer to → `status: answered`, record the answer in the `answer` field
    - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
@@ -95,7 +161,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - Is the join type known (LEFT / INNER / etc.)? If not → add a question
    These are blocking questions for implementation — do not leave them unasked.
 
-   Use this format. Determine the next ID by reading the current max ID in `_questions.yaml`:
+   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use this format:
    ```yaml
    - id: Q-NNN
      question: "<question text>"
@@ -128,6 +194,20 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 ## Table Relationships
 - <source_table>.<column> → <other_table>.<column> [<one-to-many|many-to-one|...>]
 - (omit section if no FK relationships are known)
+
+## Business Context
+<!-- Data-related business context that only humans know. Populated by step 3.5. -->
+
+### Data Occurrence Conditions
+- <table>: <What business event creates a row? Who enters it, in what system, for what purpose?>
+
+### Business Process Flow
+<End-to-end business process that generates or consumes this data. What happens before and after?>
+
+### Domain Rules & Edge Cases
+- <Rule or quirk that an engineer would not know from the schema alone>
+- <Status codes, magic values, flags with business-specific meaning>
+- <Common mistakes engineers make about this data>
 
 ## Acceptance Criteria
 - [ ] AC-001: <criterion 1>

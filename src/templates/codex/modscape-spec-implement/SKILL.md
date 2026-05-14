@@ -9,6 +9,14 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 1. Read `.modscape/modscape-spec.custom.md` if it exists — it contains all project-specific rules including target tool, output directories, naming conventions, and code generation preferences. These rules take **priority** over any defaults.
    If `.modscape/codegen-rules.md` also exists, read it as supplementary reference.
 
@@ -50,8 +58,51 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 6. After generating code for a task, immediately update the checkbox in `.modscape/changes/<name>/tasks.md`:
    `- [ ]` → `- [x]`
 
-7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md` using the next available Q-NNN ID, then ask the user whether to pause or continue with an assumption:
-   > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として questions.md に記録しました）。回答を待ちますか、それとも仮定で進めますか？
+7. If during implementation you discover anything that requires human investigation (e.g. unexpected column type, NULL in a column assumed non-null, source record not found), append a question to `.modscape/changes/<name>/questions.md` (create if it does not exist) using the next available Q-NNN ID (read current max across both `_questions.yaml` and `questions.md` first), then ask the user whether to pause or continue with an assumption:
+   ```yaml
+   - id: Q-NNN
+     question: "<what needs investigation>"
+     status: open         # or: assumed (if you proceed with an assumption)
+     assumption: "<what you assumed>"   # only if status: assumed
+     table: <table-id>
+     date: <YYYY-MM-DD>
+     change: <name>
+   ```
+   > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `questions.md` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
+
+   Also flag signals that would cause an **analyst to draw wrong conclusions from this data** — add to `questions.md` with `source: ai-detected` and `status: open` WITHOUT pausing. Also generate a PII-safe investigation query in the `investigation:` block:
+   - A cross-system JOIN produces unexpected row counts — the join key may not be semantically equivalent, causing silent over- or under-counting
+   - A source column contains values not listed in the spec (unknown status codes, unexpected NULL patterns) — an analyst filtering on documented values would miss these records
+   - An ID column has mixed formats or patterns suggesting it was populated by different processes — selecting "all" rows may include records with different business meaning
+   - A measure column has a wider value range than expected (e.g., negative values, zero, outliers) — analysts may not know to handle these correctly
+
+   Use this format for `ai-detected` entries:
+   ```yaml
+   - id: Q-NNN
+     question: "<specific question: what would an analyst get wrong without knowing this?>"
+     status: open
+     source: ai-detected
+     table: <table-id>
+     date: <YYYY-MM-DD>
+     change: <name>
+     investigation:
+       query: |
+         -- PII-safe: aggregation only
+         SELECT <column>, COUNT(*) AS cnt
+         FROM <table>
+         GROUP BY <column>
+         ORDER BY cnt DESC
+       result: null     # human fills in after running the query
+       finding: null    # AI fills in after result is provided via /modscape:spec:answer
+   ```
+
+   **PII safety rules for the generated query:**
+   - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
+   - Never SELECT * or raw row samples
+   - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
+   - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
+
+   > ⚠️ **Human review required before running**: The AI generates this query as a starting point following PII-safety rules, but **the human must review the query before executing it** to verify no PII columns are inadvertently included. AI cannot know which columns contain PII in your specific environment. Never run without reviewing.
 
 8. After each task, confirm with the user before proceeding:
    > Task complete. Ready to move on to the next task?

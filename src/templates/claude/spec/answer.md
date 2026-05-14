@@ -27,17 +27,19 @@ If not → stop and tell the user:
 ### Step 2 — Resolve the question ID
 
 If `<id>` is not provided:
-- Read `.modscape/specs/_questions.yaml`
-- List all entries where `status` is `open` or `assumed`, filtered to those with `change: <name>` (or show all open if no change filter matches)
-- Display them and ask the user which one to answer
+- Read `.modscape/changes/<name>/questions.md`
+- List all entries where `status` is `open` or `assumed`
+- For entries with `source: ai-detected` and a non-null `investigation.result`, flag them as **"Ready to analyze"** — these have data and need AI interpretation
+- Display the list and ask the user which one to answer
 
-If `<id>` is provided but not found in `_questions.yaml` → stop and tell the user:
-> `<id>` not found in `_questions.yaml`.
+If `<id>` is provided but not found → stop and tell the user:
+> `<id>` not found in `questions.md`.
 
-### Step 3 — Display the question
+### Step 3 — Display the question and detect investigation mode
 
-Show the full question entry from `_questions.yaml`:
+Read the entry from `.modscape/changes/<name>/questions.md`.
 
+Show:
 ```
 ## Answering <id> — <change name>
 
@@ -45,8 +47,29 @@ Show the full question entry from `_questions.yaml`:
 **Current state:** unanswered  (or: assumed — "<assumption text>")
 ```
 
-Then ask:
+**If `investigation.result` is non-null (human has already run the query):**
+- Enter **investigation analysis mode** — skip steps 4 and 5, go directly to Step 3.5.
+
+**Otherwise:** ask the user:
 > What is your answer? (Type freely — I'll follow up if anything is unclear.)
+> 
+> If you have already run the investigation query and have results to share, paste them here.
+
+### Step 3.5 — Investigation analysis mode (when `investigation.result` is filled)
+
+Read `investigation.result`. Interpret the query results in the context of the original question and the data model.
+
+1. **Write `finding`** — a concise, analyst-facing interpretation:
+   - What the data shows
+   - Whether it confirms or contradicts the assumption in the spec
+   - What an analyst must know before using this data
+
+2. **Update the `questions.md` entry**:
+   - Set `investigation.finding` to the interpretation
+   - Set `status: answered`
+   - Set `answer` to a one-line summary of the finding
+
+3. **Assess design impact** — go to Step 7.
 
 ### Step 4 — Evaluate the answer
 
@@ -65,9 +88,9 @@ Receive the user's free-text reply. Evaluate it against these criteria:
 
 If ambiguous, ask a targeted follow-up question (one question at a time). Continue until the answer is clear or the user says it is unresolvable.
 
-### Step 5 — Write to `_questions.yaml`
+### Step 5 — Write to `questions.md`
 
-Use the Edit tool to update the entry in `.modscape/specs/_questions.yaml`. Do not rewrite the entire file.
+Use the Edit tool to update the entry in `.modscape/changes/<name>/questions.md`. Do not rewrite the entire file.
 
 **If a clear answer was obtained:**
 - Set `answer: "<final clarified answer>"`
@@ -95,12 +118,14 @@ Use the Edit tool to update the entry in `.modscape/specs/_questions.yaml`. Do n
   ...
 ```
 
+**If the entry has an `investigation:` block:** also update `investigation.finding` with the interpretation (see Step 3.5).
+
 ### Step 6 — Update glossary if the answer defines a term
 
-If the answer introduces or clarifies a business/data term definition, update `.modscape/specs/_glossary.yaml`:
-- If the term is not yet registered, append a new entry under `terms:`.
+If the answer introduces or clarifies a business/data term definition, update `.modscape/changes/<name>/glossary.md`:
+- If the term is not yet registered, append a new entry.
 - If an existing entry's definition changed, update it.
-- If `_glossary.yaml` does not exist, skip silently.
+- If `glossary.md` does not exist, create it.
 
 ### Step 7 — Assess design impact
 

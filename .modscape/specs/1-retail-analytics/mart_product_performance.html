@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mart_product_performance — Table Spec</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; padding: 2rem; }
+  .container { max-width: 860px; margin: 0 auto; }
+  header { border-bottom: 1px solid #334155; padding-bottom: 1.5rem; margin-bottom: 2rem; }
+  h1 { font-size: 1.6rem; font-weight: 700; color: #f1f5f9; font-family: monospace; margin-bottom: 0.5rem; }
+  .meta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.65rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 600; }
+  .badge-kind    { background: #1e3a5f; color: #93c5fd; border: 1px solid #3b82f6; }
+  .badge-model   { background: #1a2e1a; color: #86efac; border: 1px solid #22c55e; }
+  .badge-owner   { background: #2d1b4e; color: #c4b5fd; border: 1px solid #8b5cf6; }
+  section { margin-bottom: 2rem; }
+  h2 { font-size: 1rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.875rem; padding-bottom: 0.375rem; border-bottom: 1px solid #1e293b; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 1.125rem 1.25rem; }
+  .overview-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+  .ov-item label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; display: block; margin-bottom: 0.25rem; }
+  .ov-item .value { font-size: 0.9rem; color: #e2e8f0; }
+  p { color: #cbd5e1; font-size: 0.9rem; }
+  ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.375rem; }
+  ul li { padding: 0.375rem 0.75rem; color: #cbd5e1; font-size: 0.9rem; display: flex; align-items: flex-start; gap: 0.5rem; background: #1e293b; border-radius: 0.375rem; border: 1px solid #334155; }
+  ul li::before { content: '—'; color: #475569; flex-shrink: 0; }
+  .dep-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .dep-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.875rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; font-family: monospace; font-size: 0.85rem; }
+  .dep-table { color: #93c5fd; }
+  .dep-join { font-size: 0.75rem; color: #64748b; margin-left: auto; }
+  .changelog-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .cl-item { display: flex; gap: 0.875rem; padding: 0.5rem 0.875rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; font-size: 0.85rem; }
+  .cl-date { color: #64748b; font-family: monospace; flex-shrink: 0; }
+  .cl-text { color: #cbd5e1; }
+  .cl-sdd  { color: #8b5cf6; font-size: 0.78rem; margin-left: auto; flex-shrink: 0; font-family: monospace; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #1e293b; font-size: 0.75rem; color: #475569; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>mart_product_performance</h1>
+    <div class="meta">
+      <span class="badge badge-kind">mart</span>
+      <span class="badge badge-model">1-retail-analytics</span>
+      <span class="badge badge-owner">merchandising</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Overview</h2>
+    <div class="card overview-grid">
+      <div class="ov-item">
+        <label>Owner</label>
+        <span class="value">merchandising</span>
+      </div>
+      <div class="ov-item">
+        <label>Update Frequency</label>
+        <span class="value">Monthly</span>
+      </div>
+      <div class="ov-item">
+        <label>SLA</label>
+        <span class="value">翌月1日 09:00 JST</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Grain</h2>
+    <div class="card">
+      <p>1行 = 1月 × 1商品の売上パフォーマンス集計。<code>month_key + product_key</code> が複合主キー。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Business Context</h2>
+    <div class="card">
+      <p>月次の商品別売上ランキングとパフォーマンス指標を提供するマートテーブル。マーチャンダイジング部門が品揃えや仕入れ判断に使用する。revenue_rank はカテゴリ内での月次順位を示す。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Business Rules</h2>
+    <ul>
+      <li>revenue_rank はカテゴリ内での降順順位（1が最高売上）</li>
+      <li>total_revenue・total_units は当月の確定値のみ（前月以前の修正を含む）</li>
+      <li>販売実績が0の商品もレコードとして存在する（total_revenue = 0, total_units = 0）</li>
+      <li>廃番商品（is_active = false）は集計対象だが、ランキング対象から除外する</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Dependencies</h2>
+    <div class="dep-list">
+      <div class="dep-item">
+        <span class="dep-table">fct_orders</span>
+        <span class="dep-join">GROUP BY month_key, product_key</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Changelog</h2>
+    <div class="changelog-list">
+      <div class="cl-item">
+        <span class="cl-date">2026-05-10</span>
+        <span class="cl-text">Initial version</span>
+        <span class="cl-sdd">SDD: retail-analytics-v1</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>Generated by modscape SDD — mart_product_performance (1-retail-analytics)</footer>
+</div>
+</body>
+</html>

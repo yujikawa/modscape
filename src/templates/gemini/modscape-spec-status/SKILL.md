@@ -16,6 +16,14 @@ Show the current status of a spec work folder.
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 **When reading model information, always use modscape CLI commands — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
 ```bash
 modscape table list <file>
@@ -38,7 +46,7 @@ modscape summary <file> --json
    - `spec.md` only → `requirements`
    - `spec-model.yaml` + `design.md` + `tasks.md` exist → check tasks
      - Any `- [ ]` remaining → `implement`
-     - All `- [x]` → `ready to archive`
+     - All complete → `ready to archive`
 
 4. If `tasks.md` exists, count tasks:
    - Total tasks: count all `- [ ]` and `- [x]` lines
@@ -54,7 +62,7 @@ modscape summary <file> --json
 
 7. Determine the **next action** using the following priority rules (use the first that applies):
    - `design.md` has entries under `## Findings > ### Requires Model Change` → `@modscape-spec-amend <name>`
-   - `questions.md` has unresolved entries (`- [ ]`) → `@modscape-spec-answer <name>` (include count)
+   - `_questions.yaml` has entries with `status: open` or `status: assumed` for `change: <name>` → `@modscape-spec-answer <name>` (include count)
    - No `spec.md` → `@modscape-spec-requirements`
    - No `design.md` → `@modscape-spec-design <name>`
    - No `tasks.md` → `@modscape-spec-tasks <name>`
@@ -102,7 +110,7 @@ modscape summary <file> --json
 | Priority | Condition | Next command |
 |---|---|---|
 | 1 | Findings (Requires Model Change) | `@modscape-spec-amend <name>` |
-| 2 | Unresolved questions in questions.md | `@modscape-spec-answer <name>` |
+| 2 | Unresolved questions in `_questions.yaml` | `@modscape-spec-answer <name>` |
 | 3 | No spec.md | `@modscape-spec-requirements` |
 | 4 | No design.md | `@modscape-spec-design <name>` |
 | 5 | No tasks.md | `@modscape-spec-tasks <name>` |
@@ -113,7 +121,7 @@ modscape summary <file> --json
 
 ## `detail` subcommand
 
-When invoked as `@modscape-spec-status <name> detail`, run the standard status check first, then append the following detail section.
+When invoked as `@modscape-spec-status <name> detail`, run the standard status check first (steps 1–6 above), then append the following detail section.
 
 ### Detail instructions
 
@@ -128,7 +136,7 @@ Read the following files if they exist:
 - Extract the **Non-Goals** section — list as bullets
 
 **From `tasks.md`:**
-- List all remaining `- [ ]` tasks with their full text, grouped by Phase section
+- List all remaining incomplete tasks, grouped by Phase section
 
 ### Detail output block
 

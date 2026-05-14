@@ -16,6 +16,14 @@ Merge the work-scoped YAML back into the main model, then sync permanent table s
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 **When reading model information, always use modscape CLI commands — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
 ```bash
 modscape table list <file>
@@ -133,16 +141,13 @@ modscape summary <file> --json
 
 ### Step 4: Merge questions into _questions.yaml
 
-10. If `.modscape/changes/<name>/questions.md` exists (legacy format from older SDD runs):
+10. If `.modscape/changes/<name>/questions.md` exists:
 
-    Read `.modscape/changes/<name>/questions.md` and `<SPEC_DIR>/_questions.yaml`.
-    Determine the current maximum ID in `_questions.yaml`, then assign new sequential IDs.
+    Read `.modscape/changes/<name>/questions.md` as a YAML list and `<SPEC_DIR>/_questions.yaml`.
 
     For each entry in `questions.md`:
-    - Parse: question text, answer (if `[x]`), assumption (if `**Assumption:**` line present)
-    - Determine `status`: `answered` if answered, `assumed` if only assumption present, `open` otherwise
-    - Infer `table` from section headers if the file has per-table sections
-    - Append to `_questions.yaml` with `change: <name>` and `date: <YYYY-MM-DD>`
+    - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
+    - Append the entry to `_questions.yaml` as-is (all fields are already present: `id`, `question`, `status`, `answer`, `assumption`, `table`, `date`, `change`)
 
     After merging, delete `.modscape/changes/<name>/questions.md`.
 
@@ -260,19 +265,54 @@ Tables without specs: <list or "none">
 # <table-id>
 
 ## Overview
-- **Owner**: <from spec.md stakeholders.owner>
-- **Update Frequency**: <inferred from implementation.* or spec.md>
-- **SLA**: <from spec.md if available, otherwise "—">
+- **Owner**: <from spec stakeholders.owner>
+- **Update Frequency**: <inferred from implementation or spec>
+- **SLA**: <from spec if available, otherwise "—">
+- **Grain**: <What does one row represent in business terms? e.g., "one completed order line">
+- **Primary Consumers**: <teams or systems that use this table and for what purpose>
 
 ## Business Context
-<Business meaning of this table>
+<!-- The most important section. Capture what only humans know: why this data exists,
+     what business process generates it, and what it means in the context of operations. -->
+
+### Data Occurrence Conditions
+<What business event or action causes a row to be created? Who enters it, in what system, for what purpose?
+ Source: spec.md ## Business Context → Data Occurrence Conditions, or ask the user.>
+
+### Business Process Flow
+<End-to-end business process that produces or consumes this table. What happens before this data is created? After?
+ Source: spec.md ## Business Context → Business Process Flow>
+
+### Domain Rules & Edge Cases
+<!-- Things an engineer would get wrong without being told. Include status codes, magic values,
+     known quirks, and the most common misunderstandings about this data. -->
+- <Rule or quirk that is not derivable from the schema alone>
+- <Any status codes, flags, or NULL semantics with business-specific meaning>
+- <Common mistakes engineers make about this data>
+<!-- Source: spec.md ## Business Context → Domain Rules, questions.md answered/assumed entries, design.md findings -->
 
 ## Business Rules
-- <Key business rule or calculation logic>
+<!-- Explicit rules governing what data is included, how it is calculated, and what is excluded. -->
+- **Inclusion criteria**: <which records are included>
+- **Exclusion criteria**: <which records are filtered out and why>
+- **Calculations**: <how key measures or derived columns are computed>
+- **Special cases**: <exceptions to normal rules>
+<!-- Source: spec.md ## Business Context → Domain Rules, questions.md, design.md Design Decisions -->
 
 ## Known Issues / Caveats
-- <From design.md ## Findings section, if any>
+- <Data quality issues, known source defects, or technical gotchas>
+<!-- Source: design.md ## Findings, questions.md status: assumed entries -->
 
 ## Changelog
 - <YYYY-MM-DD>: Initial version (SDD: <name>)
 ```
+
+**Population guidance for step 10** — source each section as follows:
+- `Grain`: from `spec.md` goal/data sources, or from `conceptual.description` in `spec-model.yaml`
+- `Data Occurrence Conditions`: from `spec.md ## Business Context → Data Occurrence Conditions`
+- `Business Process Flow`: from `spec.md ## Business Context → Business Process Flow`
+- `Domain Rules & Edge Cases`: from `spec.md ## Business Context → Domain Rules`, plus `questions.md` answered/assumed entries, plus `design.md ## Findings`
+- `Business Rules`: from `spec.md ## Business Context → Domain Rules`, plus `design.md ## Design Decisions`
+- `Known Issues`: from `design.md ## Findings → Implementation Notes` and `questions.md status: assumed`
+
+If any source is absent, leave the subsection with a `<!-- TODO: fill in -->` placeholder rather than omitting it.

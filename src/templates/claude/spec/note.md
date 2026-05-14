@@ -49,7 +49,9 @@ Wait for the user's free-text input before proceeding.
 
 ### Step 3: Verify spec files exist
 
-For each identified table ID, check whether `specs/<table-id>/spec.md` exists.
+For each identified table ID, determine the target file path: `specs/<table-id>/spec.md`
+
+Check whether the target spec file exists.
 
 - If a spec file **does not exist**, stop and display:
 

@@ -2,6 +2,8 @@
 
 AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブルの `specs/<table-id>/spec.md` に対して、フリーテキストで渡された知識を適切なセクションに追記しなければならない（SHALL）。
 
+対象ファイルは常に `.md` 形式とする（HTMLモード廃止のため `output_format` による切り替えは行わない）。
+
 書き込み先セクションの判断ルール（SHALL）:
 - ビジネスルール・計算ロジック・定義 → `## Business Rules`
 - 既知の問題・データ品質の注意点 → `## Known Issues / Caveats`
@@ -15,17 +17,17 @@ AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブル�
 
 #### Scenario: テーブルIDを指定してビジネスルールを追記する
 - **WHEN** `/modscape:spec:note fct_orders` を実行し「fct_orders の grain は1注文につき1行」と入力する
-- **THEN** `specs/fct_orders/spec.md` の `## Business Rules` に該当テキストが追記される
+- **THEN** `specs/fct_orders/spec.md` の Business Rules セクションに該当テキストが追記される
 - **THEN** 書き込み前に更新内容のプレビューが表示され、確認を求められる
 
 #### Scenario: spec ファイルが存在しないテーブルを指定した場合
 - **WHEN** `/modscape:spec:note fct_nonexistent` を実行する
-- **THEN** `specs/fct_nonexistent/spec.md が見つかりません` というエラーが表示される
+- **THEN** 対象のspecファイルが見つからないというエラーが表示される
 - **THEN** ファイルへの書き込みは行われない
 
 ### Requirement: テーブルIDを指定せずにフリーテキストから対象を自動推定できる
 
-`/modscape:spec:note`（引数なし）は、ユーザーが入力したフリーテキストを解析して言及されているテーブルIDを自動推定し、該当する `specs/<table-id>/spec.md` を更新対象として提示しなければならない（SHALL）。
+`/modscape:spec:note`（引数なし）は、ユーザーが入力したフリーテキストを解析して言及されているテーブルIDを自動推定し、該当するspecファイルを更新対象として提示しなければならない（SHALL）。
 
 複数のテーブルが言及されている場合は、それぞれのspecに分配して更新内容を提示しなければならない（SHALL）。
 
@@ -35,7 +37,7 @@ AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブル�
 - **WHEN** `/modscape:spec:note` を実行し「fct_orders の Q1 2023 の updated_at は壊れてる。dim_customers は SCD Type2 で grain は有効期間ごとの行」と入力する
 - **THEN** AIが `fct_orders` と `dim_customers` の2テーブルを推定する
 - **THEN** 「以下のspecを更新します: ...」という確認プレビューが表示される
-- **THEN** ユーザーが承認後、それぞれの spec.md が更新される
+- **THEN** ユーザーが承認後、それぞれの specファイルが更新される
 
 #### Scenario: テーブルIDを推定できない入力の場合
 - **WHEN** `/modscape:spec:note` を実行し「このテーブルは更新が遅い」のように特定テーブルを特定できないテキストを入力する
@@ -67,8 +69,8 @@ AIスキル `/modscape:spec:note <table-id>` は、指定されたテーブル�
 
 `/modscape:spec:note` は `changes/<name>/` などのアクティブな変更コンテキストを必要とせずに動作しなければならない（SHALL）。
 
-対象は常に `specs/<table-id>/spec.md`（恒久テーブル仕様）であり、`changes/<name>/spec.md`（変更固有の要件）は対象にしてはならない（SHALL NOT）。
+対象は常に恒久テーブルspecファイルであり、`changes/<name>/spec.md` や `changes/<name>/spec.html`（変更固有の要件ファイル）は対象にしてはならない（SHALL NOT）。
 
 #### Scenario: アクティブな変更がない状態で実行できる
 - **WHEN** `.modscape/changes/` が空またはアクティブな変更が存在しない状態で `/modscape:spec:note fct_orders` を実行する
-- **THEN** エラーなく動作し、`specs/fct_orders/spec.md` が更新される
+- **THEN** エラーなく動作し、対象の恒久specファイルが更新される

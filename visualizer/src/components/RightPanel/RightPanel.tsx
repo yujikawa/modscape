@@ -11,7 +11,7 @@ import {
   Moon,
   Search,
   Download,
-  BookOpen,
+  FileText,
 } from 'lucide-react'
 import SearchTab from './SearchTab'
 import PathFinderTab from './PathFinderTab'
@@ -23,8 +23,8 @@ const RightPanel = memo(() => {
     setIsRightPanelOpen,
     activeRightPanelTab,
     setActiveRightPanelTab,
-    isContextPanelOpen,
-    setIsContextPanelOpen,
+    isSpecPanelOpen,
+    setIsSpecPanelOpen,
     theme,
     toggleTheme,
     cyInstance,
@@ -33,12 +33,15 @@ const RightPanel = memo(() => {
     setIsRightPanelOpen: s.setIsRightPanelOpen,
     activeRightPanelTab: s.activeRightPanelTab,
     setActiveRightPanelTab: s.setActiveRightPanelTab,
-    isContextPanelOpen: s.isContextPanelOpen,
-    setIsContextPanelOpen: s.setIsContextPanelOpen,
+    isSpecPanelOpen: s.isSpecPanelOpen,
+    setIsSpecPanelOpen: s.setIsSpecPanelOpen,
     theme: s.theme,
     toggleTheme: s.toggleTheme,
     cyInstance: s.cyInstance,
   })))
+
+  const isSpecMode = !!(window as any).MODSCAPE_SPEC_MODE
+  const specName: string | undefined = (window as any).MODSCAPE_SPEC_NAME
 
   // Export popup state
   const [isExportOpen, setIsExportOpen] = useState(false)
@@ -142,6 +145,16 @@ const RightPanel = memo(() => {
         </button>
 
         <div className="flex flex-col gap-2 mb-6">
+          {isSpecMode && specName && (
+            <button
+              onClick={() => setIsSpecPanelOpen(!isSpecPanelOpen)}
+              className={iconClass(isSpecPanelOpen)}
+            >
+              <FileText size={20} />
+              <Tooltip text="Spec" />
+            </button>
+          )}
+
           <button
             onClick={() => { setActiveRightPanelTab('search'); setIsRightPanelOpen(true); }}
             className={iconClass(activeRightPanelTab === 'search' && isRightPanelOpen)}
@@ -169,17 +182,6 @@ const RightPanel = memo(() => {
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pb-2">
-          {/* Context panel toggle */}
-          <div className="relative">
-            <button
-              onClick={() => setIsContextPanelOpen(!isContextPanelOpen)}
-              className={iconClass(isContextPanelOpen)}
-            >
-              <BookOpen size={20} />
-              <Tooltip text="Context" />
-            </button>
-          </div>
-
           {/* Export as Image button */}
           <div className="relative" ref={exportPopupRef}>
             <button
@@ -255,7 +257,7 @@ const RightPanel = memo(() => {
 
       {/* 2. Content Panel (Left side of the Right Panel) */}
       <div
-        className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 sidebar-content ${
+        className={`flex flex-col min-w-0 overflow-hidden transition-[opacity] duration-300 sidebar-content relative ${
           theme === 'dark' ? 'bg-slate-900' : 'bg-white'
         } ${
           isRightPanelOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -263,7 +265,7 @@ const RightPanel = memo(() => {
         style={{ width: isRightPanelOpen ? '400px' : '0px' }}
       >
         {/* Header */}
-        <div className={`p-4 border-b flex items-center justify-between ${
+        <div className={`p-4 border-b flex items-center justify-between flex-shrink-0 ${
           theme === 'dark' ? 'border-slate-800' : 'border-slate-100'
         }`}>
           <h2 className={`text-sm font-bold tracking-tight uppercase ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
@@ -272,8 +274,6 @@ const RightPanel = memo(() => {
             {activeRightPanelTab === 'notes' && 'Note Search'}
           </h2>
         </div>
-
-        {/* Tab Content */}
         {activeRightPanelTab === 'search' && <SearchTab />}
         {activeRightPanelTab === 'path' && <PathFinderTab />}
         {activeRightPanelTab === 'notes' && <NoteSearchTab />}

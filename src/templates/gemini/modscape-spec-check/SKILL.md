@@ -13,6 +13,14 @@ Pre-implementation quality check combining cross-artifact consistency and go/no-
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 1. Check that `.modscape/changes/<name>/` exists.
    - If not: stop and tell the user:
      > `changes/<name>/` not found. Run `@modscape-spec-requirements` to start a new spec.
@@ -64,30 +72,28 @@ C-1. Direct Impact table task coverage
 **D. questions.md ↔ design.md**
 
 D-1. Unresolved questions recorded as assumptions
-- Find all `- [ ]` entries in `questions.md`
-- For each, check if `design.md` contains a corresponding `**Assumption:**` line
-- Flag unresolved questions with no assumption in `design.md`
+- Find all `- [ ]` entries in `questions.md` (unresolved Q-NNN)
+- For each unresolved question, check if `design.md` contains a reference to that Q-NNN or topic as an assumption (`**Assumption:**` or `**仮定:**` lines)
+- Flag unresolved questions with no assumption recorded
 
 ---
 
 ### Part 2: Readiness
 
 **Unresolved questions**
-- Count lines matching `- [ ]` in `questions.md`
-- List their Q-NNN IDs
+- Count lines matching `- [ ]` in `questions.md`; list their Q-NNN IDs
 
 **Assumptions**
-- Find lines containing `**仮定:**` or `**Assumption:**` in `design.md` and `questions.md`
-- Count and list them briefly (first 60 chars of each line)
+- Find lines containing `**仮定:**` or `**Assumption:**` in `design.md` and `questions.md`; count and list them briefly (first 60 chars of each line)
 
 **AC Coverage** (requires both `spec.md` and `tasks.md`)
 - Extract all `AC-NNN:` entries from `spec.md` Acceptance Criteria
 - For each AC-NNN, check if any Phase 4 task in `tasks.md` contains `[→ AC-NNN]`
 - Classify each AC as:
   - **Test covered**: at least one Phase 4 task references it with `[→ AC-NNN]`
-  - **Manual verification**: no test task, but `[manual verification]` appears near the AC in tasks.md, or the AC text describes a non-automatable condition
-  - **Uncovered**: no reference found in tasks.md at all
-- If `spec.md` or `tasks.md` do not exist or have no AC-NNN entries: skip this section
+  - **Manual verification**: no test task, but `[manual verification]` appears near the AC in the tasks file, or the AC text describes a non-automatable condition
+  - **Uncovered**: no reference found in tasks file at all
+- If the spec or tasks file does not exist or has no AC-NNN entries: skip this section
 
 **Downstream classification confidence**
 - Scan `design.md` for tables marked with low confidence

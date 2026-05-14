@@ -20,7 +20,8 @@ import { runCoverage } from './coverage.js';
 import { runLint } from './lint.js';
 import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
-import { specNew } from './spec.js';
+import { specNew, specList, startSpecDevServer } from './spec.js';
+import { startSpecOpenServer, buildSpecs } from './specs.js';
 import { runSearch } from './search.js';
 import { updateProject } from './update.js';
 
@@ -39,8 +40,8 @@ program
 program
   .command('update')
   .description('Update installed skill files to the latest bundled version')
-  .action(() => {
-    updateProject();
+  .action((options) => {
+    updateProject(options);
   });
 
 program
@@ -67,7 +68,7 @@ program
 program
   .command('dev')
   .description('Start the development visualizer with local YAML files or directories')
-  .argument('<paths...>', 'paths to YAML model files or directories')
+  .argument('[paths...]', 'paths to YAML model files or directories')
   .action((paths) => {
     startDevServer(paths, VISUALIZER_PATH);
   });
@@ -213,11 +214,42 @@ const specCommand = program
   .description('Spec-Driven Data Engineering (SDD) commands');
 
 specCommand
+  .command('list')
+  .description('List all specs under .modscape/changes/')
+  .option('--json', 'output as JSON')
+  .action((opts) => {
+    specList(opts);
+  });
+
+specCommand
   .command('new')
   .description('Scaffold a new spec work folder under .modscape/changes/<name>/')
   .argument('<name>', 'kebab-case name for the spec (e.g. monthly-sales-summary)')
   .action((name) => {
     specNew(name);
+  });
+
+specCommand
+  .command('dev')
+  .description('Start SDD spec viewer for a change under .modscape/changes/<name>/')
+  .argument('<name>', 'kebab-case name of the change (e.g. monthly-sales-summary)')
+  .action((name) => {
+    startSpecDevServer(name);
+  });
+
+specCommand
+  .command('open')
+  .description('Start the spec browser for .modscape/specs/ (dev server with live reload)')
+  .action(() => {
+    startSpecOpenServer();
+  });
+
+specCommand
+  .command('build')
+  .description('Build a static spec browser from .modscape/specs/')
+  .argument('[outDir]', 'output directory', 'dist/specs')
+  .action((outDir) => {
+    buildSpecs(outDir);
   });
 
 specCommand

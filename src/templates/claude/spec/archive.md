@@ -12,6 +12,14 @@ Merge the work-scoped YAML back into the main model, then sync permanent table s
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 **When reading model information, always use modscape CLI commands — do not use `grep` or direct file reads unless the information is genuinely unavailable from CLI:**
 ```bash
 modscape table list <file>
@@ -41,6 +49,17 @@ modscape summary <file> --json
      - Extract the value (pattern: `Spec directory: <path>`)
      - Set `SPEC_DIR = <path>` (use this path for all spec file operations in Steps 3–5)
    - Otherwise: `SPEC_DIR = .modscape/specs`
+
+2.6. **Resolve model slug (`MODEL_SLUG`)** — used to determine the subdirectory within `SPEC_DIR`:
+
+   Per-table permanent specs are stored at `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`.
+
+   **Normal path** (main YAML exists): for each main YAML path in `spec-config.yaml`, derive the slug with `path.parse(filePath).name`.
+   - Example: `models/main-model1.yaml` → `MODEL_SLUG = main-model1`
+   - If multiple main YAMLs exist, use the slug of each respective YAML when writing specs for its tables.
+
+   **Greenfield path**: derive slug from the output path the user specified in step 3 below.
+   - Example: user chooses `analytics/model.yaml` → `MODEL_SLUG = model`
 
 ### Step 1: Dry-run — show merge preview and confirm
 
@@ -129,51 +148,50 @@ modscape summary <file> --json
 
 8. Use the **affected tables classification** built in step 2 above.
 
-9. **Migrate old flat-file specs (if any)**:
-   For each affected table, check whether `<SPEC_DIR>/<table-id>.md` exists as a plain file (old format).
-   If found, move it into the new directory format before proceeding:
-   ```bash
-   mkdir -p <SPEC_DIR>/<table-id>
-   mv <SPEC_DIR>/<table-id>.md <SPEC_DIR>/<table-id>/spec.md
+9. **Detect and warn about old folder-format specs (if any)**:
+   For each affected table, check whether `<SPEC_DIR>/<table-id>/spec.md` exists (old folder-per-table format).
+   If found, display a warning — do NOT auto-migrate:
+   ```
+   ⚠ Old folder-format spec detected: specs/<table-id>/spec.md
+     → New format path: specs/<MODEL_SLUG>/<table-id>.md
+     Please move it manually after archiving.
    ```
 
 10. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
-   a. Check whether `<SPEC_DIR>/<table-id>/spec.md` exists.
-      - If **not**: create a new file using the format below (also create the directory).
+   Determine the output path: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
+
+   a. Check whether the target file exists.
+      - If **not**: create a new file using the Markdown format below.
       - If **exists**: update only the relevant sections (Overview, Business Context, Business Rules, Known Issues); preserve unrelated content.
 
-   b. Append a Changelog entry:
-      ```
-      - <YYYY-MM-DD>: <brief description of change> (SDD: <name>)
-      ```
+   b. Append a Changelog entry.
+
 
 11. **Changelog only for Downstream Impact — Context Only tables**:
     - Do **not** perform a full spec sync for these tables.
-    - Only append a Changelog entry to `<SPEC_DIR>/<table-id>/spec.md` (create the file and directory with minimal content if it does not exist):
+    - Only append a Changelog entry to the target file (create with minimal content if it does not exist):
       - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
+    - Target path: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
 
 12. **Report the sync result**:
     > Merged into main YAML ✓
     > Synced specs:
-    > - Created: `specs/mart_monthly_sales/spec.md`
-    > - Updated: `specs/fct_orders/spec.md`
-    > - Changelog only: `specs/stg_raw_orders/spec.md`
+    > - Created: `specs/<MODEL_SLUG>/mart_monthly_sales.md`
+    > - Updated: `specs/<MODEL_SLUG>/fct_orders.md`
+    > - Changelog only: `specs/<MODEL_SLUG>/stg_raw_orders.md`
 
 ### Step 4: Merge questions into _questions.yaml
 
-13. If `.modscape/changes/<name>/questions.md` exists (legacy format from older SDD runs):
+13. If `.modscape/changes/<name>/questions.md` exists:
 
-    Read `.modscape/changes/<name>/questions.md` and `<SPEC_DIR>/_questions.yaml`.
-    Determine the current maximum ID in `_questions.yaml` (e.g. Q-005), then assign new sequential IDs starting from Q-006.
+    Read `.modscape/changes/<name>/questions.md` as a YAML list and `<SPEC_DIR>/_questions.yaml`.
 
     **For each entry in `questions.md`:**
-    - Parse: question text, answer (if `[x]`), assumption (if `**Assumption:**` line present)
-    - Determine `status`: `answered` if answered, `assumed` if only assumption present, `open` otherwise
-    - Infer `table` from the section header if the questions.md has per-table sections; leave absent for pipeline-level questions
-    - Append to `_questions.yaml` with `change: <name>` and `date: <YYYY-MM-DD>`
+    - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
+    - Append the entry to `_questions.yaml` as-is (all fields are already present: `id`, `question`, `status`, `answer`, `assumption`, `table`, `date`, `change`)
 
     After merging all entries, delete `.modscape/changes/<name>/questions.md`:
     ```bash
@@ -274,9 +292,9 @@ If no conventions are found, or the user declines: skip this step silently.
 ✅ Archive complete.
 
 **Synced specs:**
-- Created: `specs/<table-id>/spec.md` ...
-- Updated: `specs/<table-id>/spec.md` ...
-- Changelog only: `specs/<table-id>/spec.md` ...
+- Created: `specs/<MODEL_SLUG>/<table-id>.md` ...
+- Updated: `specs/<MODEL_SLUG>/<table-id>.md` ...
+- Changelog only: `specs/<MODEL_SLUG>/<table-id>.md` ...
 
 **Questions merged:**
 - `_questions.yaml`: <n> entries added from `questions.md` (or: no questions.md found)
@@ -298,25 +316,67 @@ Tables without specs: <list or "none">
 🎉 All work for this spec is complete!
 ---
 
-## `specs/<table-id>/spec.md` Format
+## Per-table Spec Format
+
+**Path convention:**
+- `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
+- questions: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.questions.md`
+
+Use the following Markdown structure:
 
 ```markdown
 # <table-id>
 
 ## Overview
-- **Owner**: <from spec.md stakeholders.owner>
-- **Update Frequency**: <inferred from implementation.* or spec.md>
-- **SLA**: <from spec.md if available, otherwise "—">
+- **Owner**: <from spec stakeholders.owner>
+- **Update Frequency**: <inferred from implementation or spec>
+- **SLA**: <from spec if available, otherwise "—">
+- **Grain**: <What does one row represent in business terms? e.g., "one completed order line">
+- **Primary Consumers**: <teams or systems that use this table and for what purpose>
 
 ## Business Context
-<Business meaning of this table>
+<!-- The most important section. Capture what only humans know: why this data exists,
+     what business process generates it, and what it means in the context of operations. -->
+
+### Data Occurrence Conditions
+<What business event or action causes a row to be created? Who enters it, in what system, for what purpose?
+ Source: spec.md ## Business Context → Data Occurrence Conditions, or ask the user.>
+
+### Business Process Flow
+<End-to-end business process that produces or consumes this table. What happens before this data is created? After?
+ Source: spec.md ## Business Context → Business Process Flow>
+
+### Domain Rules & Edge Cases
+<!-- Things an engineer would get wrong without being told. Include status codes, magic values,
+     known quirks, and the most common misunderstandings about this data. -->
+- <Rule or quirk that is not derivable from the schema alone>
+- <Any status codes, flags, or NULL semantics with business-specific meaning>
+- <Common mistakes engineers make about this data>
+<!-- Source: spec.md ## Business Context → Domain Rules, questions.md answered/assumed entries, design.md findings -->
 
 ## Business Rules
-- <Key business rule or calculation logic>
+<!-- Explicit rules governing what data is included, how it is calculated, and what is excluded.
+     Each rule should be traceable to a decision recorded during requirements or design. -->
+- **Inclusion criteria**: <which records are included>
+- **Exclusion criteria**: <which records are filtered out and why>
+- **Calculations**: <how key measures or derived columns are computed>
+- **Special cases**: <exceptions to normal rules>
+<!-- Source: spec.md ## Business Context → Domain Rules, questions.md, design.md Design Decisions -->
 
 ## Known Issues / Caveats
-- <From design.md ## Findings section, if any>
+- <Data quality issues, known source defects, or technical gotchas>
+<!-- Source: design.md ## Findings, questions.md status: assumed entries -->
 
 ## Changelog
 - <YYYY-MM-DD>: Initial version (SDD: <name>)
 ```
+
+**Population guidance for step 10** — when writing the per-table spec, source each section as follows:
+- `Grain`: from `spec.md` goal/data sources, or from `conceptual.description` in `spec-model.yaml`
+- `Data Occurrence Conditions`: from `spec.md ## Business Context → Data Occurrence Conditions`
+- `Business Process Flow`: from `spec.md ## Business Context → Business Process Flow`
+- `Domain Rules & Edge Cases`: from `spec.md ## Business Context → Domain Rules`, plus `questions.md` `status: answered` or `status: assumed` entries for this table, plus `design.md ## Findings`
+- `Business Rules`: from `spec.md ## Business Context → Domain Rules`, plus `design.md ## Design Decisions` (only the rules relevant to this table)
+- `Known Issues`: from `design.md ## Findings → Implementation Notes` and `questions.md status: assumed`
+
+If any of these sources are absent or empty, leave the corresponding subsection with a `<!-- TODO: fill in -->` placeholder rather than omitting it. An incomplete permanent spec is better than a missing one.

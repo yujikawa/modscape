@@ -12,6 +12,14 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Instructions
 
+0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+   ```bash
+   modscape spec list
+   ```
+   - No specs: stop and tell the user to run `modscape spec new <name>` first.
+   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
+   - Multiple specs: show the list and ask the user to choose one.
+
 1. Read `.modscape/rules.md` to understand the YAML schema and modeling rules.
    If `.modscape/modscape-spec.custom.md` exists, read it too — its rules take **priority**.
 
@@ -33,7 +41,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - If it **does not exist**: this is a first run — extract relevant tables from the main YAML (step 5).
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
-4. **Check for existing design.md** at `.modscape/changes/<name>/design.md`.
+4. **Check for existing design file** at `.modscape/changes/<name>/design.md`.
    - If it **does not exist**: this is a **first run** — proceed to step 5.
    - If it **exists**: this is a **continuation**. Resume the design session:
      1. If `### Requires Model Change` in `## Findings` has entries: **process these first** — apply the model changes to `changes/<name>/spec-model.yaml` using mutation CLI commands, then run `modscape validate`. Clear processed entries from `### Requires Model Change` after applying.
@@ -41,7 +49,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
         ```bash
         modscape summary .modscape/changes/<name>/spec-model.yaml --json
         ```
-        Display a brief summary: table count, table IDs, and any unresolved questions from `questions.md`.
+        Display a brief summary: table count, table IDs, and any unresolved questions from `.modscape/changes/<name>/questions.md`.
      3. Ask the user what they want to continue with:
         > Design is in progress (N tables: `<id1>`, `<id2>`, ...). What would you like to add or change? When satisfied with the design, run `/modscape:spec:tasks <name>` to generate implementation tasks.
      4. Wait for user input, then proceed to step 12 to apply requested changes. Skip steps 5–11 (first-run only steps).
@@ -98,11 +106,11 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 10. **Surface known open questions** (first run only):
 
-   Check `.modscape/specs/questions.md` for unresolved questions (`- [ ]`) that reference any Direct Impact table ID.
+   Check `.modscape/specs/_questions.yaml` for entries with `status: open` or `status: assumed` that reference any Direct Impact table ID (via the `table` field or question text).
    - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
      ```markdown
-     ## Known Open Questions (from specs/questions.md)
-     There are unresolved questions related to Direct Impact tables. See `.modscape/specs/questions.md` for details.
+     ## Known Open Questions (from changes/<name>/questions.md)
+     There are unresolved questions related to Direct Impact tables. See `.modscape/changes/<name>/questions.md` for details.
      - Q-012, Q-015 → `fct_orders`
      - Q-019 → `dim_customers`
      ```
@@ -123,6 +131,8 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
      ```
    - If no results: omit the `## Related Past Specs` section entirely.
    - To incorporate findings from a past spec, run `/modscape:spec:search <keyword>`.
+
+11.5. **Read `## Business Context` from `spec.md`** before designing. This section contains data occurrence conditions, business process flows, and domain rules that must inform every design decision. If `## Business Context` is absent or sparse, ask the user to fill it in before proceeding — a design without business context produces untraceable decisions.
 
 12. Design the data model — **all changes go to `changes/<name>/spec-model.yaml`, never to the main YAML**:
    - Propose tables (with `conceptual.kind`: staging → core fact/dimension → mart)
@@ -174,26 +184,69 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
 
-18. Review the **entire design conversation** and append entries to `.modscape/changes/<name>/questions.md` for all of the following:
+18. Review the **entire design conversation** and append question entries to `.modscape/changes/<name>/questions.md` (create if it does not exist) for all of the following:
 
-   - **Answered** — questions you asked during design and the user gave a clear answer to → mark `[x]` and append the answer inline
-   - **Assumed** — items you could not confirm and proceeded with an assumption → mark `[ ]` with an `**Assumption:**` line
-   - **Open** — items still unresolved → mark `[ ]` with no assumption
+   - **Answered** — questions you asked during design and the user gave a clear answer to → `status: answered`, record the answer in the `answer` field
+   - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
+   - **Open** — items still unresolved → `status: open`
 
-   Use this format. Use the next available ID continuing from any existing questions:
+   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use this format:
 
-```markdown
-- [x] **Q-NNN** <question text>
-  **Answer:** <answer the user gave>
-
-- [ ] **Q-NNN** <question text>
-  **Assumption:** <what you assumed to proceed> (unconfirmed)
-```
+   ```yaml
+   - id: Q-NNN
+     question: "<question text>"
+     answer: "<answer the user gave>"    # only if status: answered
+     status: answered                    # answered | assumed | open
+     assumption: "<what you assumed>"    # only if status: assumed
+     table: <table-id>                   # optional — only if specific to one table
+     date: <YYYY-MM-DD>
+     change: <name>
+   ```
 
    Record every question that shaped the design — answered questions are just as important for traceability as open ones.
 
-   If there are unresolved questions (`- [ ]`) at the end of design, output:
+   If there are unresolved questions (`status: open` or `status: assumed`) at the end of design, output:
     > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
+
+18.5. **Proactive Tacit Knowledge Detection** — Review `spec-model.yaml` and the design conversation for signals that would cause an **analyst using this data product to draw wrong conclusions**. For each signal found, add a question to `questions.md` with `status: open` and `source: ai-detected`:
+
+   Focus on signals that affect **analytical correctness**:
+   - A column named `type`, `kind`, `status`, `flag`, `code`, or `_kbn` — whose possible values and meanings for analysis were not documented (an analyst filtering on unknown values will silently miss records)
+   - A lineage JOIN across tables from different source systems — without confirmation that the join keys mean the same thing in both systems
+   - A table grain assumed during design but never confirmed by the user — grain misunderstanding is the most common cause of incorrect aggregations
+   - A measure or dimension column whose scope (which business events are included) was assumed rather than stated
+   - A date column in a fact table — whose timestamp semantics (event time / entry time / processing time) affect time-series analysis but were not specified
+
+   For each signal, write the entry to `questions.md` **and generate a PII-safe investigation query** in the `investigation:` block. This query is ready to run against the real data — the human fills in `result:` after running it, then AI fills in `finding:` via `/modscape:spec:answer`.
+
+   Use this format:
+   ```yaml
+   - id: Q-NNN
+     question: "<specific question: what would an analyst get wrong without knowing this?>"
+     status: open
+     source: ai-detected
+     table: <table-id>
+     date: <YYYY-MM-DD>
+     change: <name>
+     investigation:
+       query: |
+         -- PII-safe: aggregation only
+         SELECT <column>, COUNT(*) AS cnt
+         FROM <table>
+         GROUP BY <column>
+         ORDER BY cnt DESC
+       result: null     # human fills in after running the query
+       finding: null    # AI fills in after result is provided via /modscape:spec:answer
+   ```
+
+   **PII safety rules for the generated query:**
+   - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
+   - Never SELECT * or raw row samples
+   - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
+   - For value distribution: use GROUP BY + COUNT(*) — never show raw PII values
+   - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
+
+   > ⚠️ **Human review required before running**: The AI generates this query as a starting point following PII-safety rules, but **the human must review the query before executing it** to verify no PII columns are inadvertently included. AI cannot know which columns contain PII in your specific environment. Never run without reviewing.
 
 19. Review the design conversation for any project-specific or in-house business terms that were introduced or defined. Append qualifying terms to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist).
 
@@ -223,7 +276,10 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 # Design: <pipeline title>
 
 ## Design Decisions
+<!-- Each decision must record both the technical choice AND the business reason behind it.
+     "Because the spec says so" is not a rationale — explain the business logic or process that drives the decision. -->
 <Key design choices and their rationale — updated on each re-run>
+<Format per decision: "**<decision>** — <business reason>. Technical: <technical note if needed>">
 
 ## Affected Tables
 
@@ -238,9 +294,9 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 ### Downstream Impact — Context Only
 - `<table-id>`: <why no code change is needed — e.g., does not reference changed columns>
 
-## Known Open Questions (from specs/questions.md)
+## Known Open Questions (from changes/<name>/questions.md)
 <!-- Populated automatically by /modscape:spec:design. Only Direct Impact tables. Omit section if none. -->
-- Q-NNN → `<table-id>` — see .modscape/specs/questions.md
+- Q-NNN → `<table-id>` — see .modscape/changes/<name>/questions.md
 
 ## Related Past Specs
 <!-- Populated automatically by /modscape:spec:design via modscape spec search. Omit section if no results. -->
@@ -263,7 +319,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Next Step
 
-**Always output the following at the end, without exception. Build the review summary from the actual state of `questions.md` and `design.md`:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of `.modscape/changes/<name>/questions.md` and `design.md`:**
 
 ---
 ✅ Design updated. `spec-model.yaml` and `design.md` are current.
@@ -278,9 +334,9 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 ## Review Checkpoint
 
-**Unresolved Questions:** N — Q-NNN, Q-NNN (see questions.md) *(show "none" if 0)*
+**Unresolved Questions:** N — Q-NNN, Q-NNN (see `questions.md`) *(show "none" if 0)*
 
-**Assumptions:** N *(list `**Assumption:**` lines from design.md / questions.md; show "none" if 0)*
+**Assumptions:** N *(list `status: assumed` entries from `questions.md`; show "none" if 0)*
 
 **Downstream Classification (Low Confidence):** `<table-id>` *(show "none" if empty)*
 

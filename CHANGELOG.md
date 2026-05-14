@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-05-14
+
+### Added
+
+- **`.modscape/modscape-spec.config.yaml`** — New machine-readable config file for modscape:spec settings. Separates structured tool settings from the AI-facing rules in `modscape-spec.custom.md`. `readSpecConfig()` and `writeSpecConfig()` helpers added to `model-utils.js`.
+
+- **`modscape spec` command namespace** — Three new subcommands for browsing permanent specs stored in `.modscape/specs/`:
+  - **`modscape spec dev <name>`** — SDD spec viewer for an in-progress change. Replaces `modscape dev --spec <name>`. Launches the visualizer against `spec-model.yaml` with a tabbed floating panel for spec artifacts (`spec.md`, `design.md`, `tasks.md`, `questions.md`). Supports live reload. Markdown files are rendered as styled HTML server-side using `marked` + `highlight.js` (`atom-one-light` theme).
+  - **`modscape spec open`** — Dedicated spec browser for `.modscape/specs/`. Left pane shows model-slug grouped table list; right pane renders `.md` specs in styled HTML. Live-reloads on file changes. Runs on port 5174.
+  - **`modscape spec build [outDir]`** — Builds a static spec browser (defaults to `dist/specs/`). Copies all spec files and generates `index.html` with vanilla JS navigation. No server required.
+
+- **SpecPanel floating window** — New draggable and resizable floating panel component in the visualizer, matching the existing DetailPanel UX pattern. Rendered on top of the graph in spec mode; toggled with the file-text icon in the RightPanel activity bar. Tabs switch between spec artifacts.
+
+- **Server-side Markdown rendering in `modscape spec dev`** — Spec artifacts are Markdown files (`.md`). The dev server converts them to styled HTML on-the-fly using `marked` + `marked-highlight` + `highlight.js`, with a light gray color scheme (`#f8f9fa` body, `#1e293b` text) that renders correctly regardless of OS dark mode settings. No HTML template generation required.
+
+### Changed
+
+- **Left sidebar closed by default** — The left sidebar now starts closed on first load. The YAML tab remains the active tab when the sidebar is opened.
+
+- **`modscape spec dev` — Glossary tab** — `glossary.md` in the spec change directory is now displayed as a dedicated "Glossary" tab in the SpecPanel, alongside Spec / Design / Tasks / Questions.
+
+- **`modscape spec dev` — Spec name copy button** — A copy icon button has been added to the SpecPanel title bar. Clicking it copies the spec name to the clipboard, making it easy to paste into `/modscape <spec name>` skill invocations.
+
+- **`modscape spec dev` — Code block copy button** — All code blocks in rendered Markdown spec files now show a "Copy" button on hover (top-right corner). Useful for copying SQL snippets and other code directly from specs.
+
+- **`/api/context/tables` endpoint** — Now accepts a `?model=<slug>` query parameter to scan the `specs/<slug>/` subdirectory for per-table Markdown spec files. Returns `{ spec: string }` per table. Omitting `?model=` falls back to scanning `specs/` directly (backward compatible).
+
+- **`modscape dev --spec` removed** — The `--spec` flag for `modscape dev` has been replaced by the `modscape spec dev <name>` subcommand. The ContextPanel Specs tab continues to display Markdown specs as `<pre>` text.
+
+- **Questions workflow reverted to per-spec `questions.md`** — During active development (`requirements`, `design`, `implement`, `amend`), questions are written to `.modscape/changes/<name>/questions.md` in YAML format. `_questions.yaml` is updated only at archive time, keeping the project-wide file clean from in-progress spec data. `archive` reads `questions.md` as YAML and appends entries to `_questions.yaml` directly (no ID reassignment needed). Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`archive` skill — model-slug directory structure** — Permanent per-table specs are now stored at `<SPEC_DIR>/<model-slug>/<table-id>.md` as flat files. The model slug is derived from the main YAML filename via `path.parse().name` (e.g., `models/main-model1.yaml` → `main-model1`). Previously, specs were stored at `<SPEC_DIR>/<table-id>/spec.md`. Old folder-format specs are detected at archive time and flagged for manual migration. Updated for all three AI platforms (Claude / Gemini / Codex).
+
+- **`design` skill — open questions reference corrected** — Step 10 (surface known open questions) previously checked `.modscape/specs/questions.md`, a path that no longer exists. Now correctly reads from `_questions.yaml` filtered by `status: open` or `status: assumed`. Updated for all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.3.2] - 2026-05-08
 
 ### Added
