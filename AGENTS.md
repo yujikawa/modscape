@@ -158,6 +158,23 @@ When adding or modifying fields or sections, verify all of the following:
 3. `src/templates/rules.md` — Update Section 12 (CLI Flag Reference)
 4. `CHANGELOG.md` — Add a changelog entry
 
+### SDD skill language policy
+
+SDD skills are language-agnostic. **Default output language is English.** Users configure a per-project language via the `## Communication` section in `.modscape/modscape-spec.custom.md`:
+
+```markdown
+## Communication
+
+- Always respond in Japanese.
+```
+
+Every skill must respect this setting. The reading pattern is:
+1. Check whether `.modscape/modscape-spec.custom.md` exists.
+2. If it has a `## Communication` section, extract the language directive and use it for all output in this session.
+3. If no setting is found, default to English.
+
+This check belongs at the top of each skill's instruction sequence (before any other steps). Skills that already read `modscape-spec.custom.md` for other settings (requirements, design) cover this implicitly. Lighter skills (save, load, status, etc.) must add an explicit step.
+
 ### When updating SDD skills
 
 All three agent versions (Claude Code, Gemini, Codex) must always be kept in sync. When any skill is added or modified, update all three at the same time.

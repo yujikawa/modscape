@@ -30,9 +30,9 @@ Update SDD artifacts based on issues or discoveries found during implementation.
 
 4. Analyze the user's input and classify the finding:
 
-   **判断基準 — 軽微な修正 vs 設計変更:**
-   - **軽微な修正**: 列の型・制約・名前・説明の変更、AC の文言修正、JOIN キーの修正。`spec-model.yaml` の構造（テーブル数・lineage・relationships）は変わらない。
-   - **設計変更**: テーブルの追加・削除、lineage の変更、grain の変更、`spec-model.yaml` の構造に影響する変更。
+   **Decision criteria — Minor fix vs. Design change:**
+   - **Minor fix**: Column type, constraint, name, or description changes; AC wording fixes; JOIN key corrections. The structure of `spec-model.yaml` (table count, lineage, relationships) does not change.
+   - **Design change**: Table additions or removals, lineage changes, grain changes, or any change that affects the structure of `spec-model.yaml`.
 
    | Input type | Target artifacts |
    |---|---|
@@ -52,7 +52,7 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    - Correct or extend it with the discovered information
    - Add a note such as: `> ⚠ Amended <YYYY-MM-DD>: <reason>`
 
-7. **Update `spec-model.yaml`** if the finding is a **軽微な修正**:
+7. **Update `spec-model.yaml`** if the finding is a **Minor fix**:
    - Apply changes using mutation CLI commands:
      ```bash
      modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>
@@ -64,12 +64,12 @@ Update SDD artifacts based on issues or discoveries found during implementation.
      ```
    - If validate fails: fix the error before proceeding.
 
-   If the finding is a **設計変更**:
+   If the finding is a **Design change**:
    - Do NOT modify `spec-model.yaml` yet.
    - Add the finding to `design.md` under `## Findings > ### Requires Model Change`.
    - Ask the user to confirm, then output:
-     > ⚠ これは設計変更を伴います。`design.md` の `### Requires Model Change` に記録しました。
-     > `/modscape:spec:design <name>` を再実行して設計を更新してください。
+     > ⚠ This is a design change. Recorded in `design.md` under `### Requires Model Change`.
+     > Re-run the design command to update the design.
 
 8. **Update `tasks.md`** if code changes are needed:
    - **Never modify `- [x]` completed tasks**
@@ -102,7 +102,7 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    ## Amend Summary
 
    **Input interpreted as:** <one-line classification of the issue>
-   **Classification:** 軽微な修正 / 設計変更
+   **Classification:** Minor fix / Design change
 
    **Files updated:**
    - `spec.md`: AC-003 corrected — "amount_jpy" → "amount"
@@ -112,13 +112,13 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    Then output the ripple-effect report:
 
    ```
-   ## 波及確認レポート
+   ## Impact report
 
-   | ファイル | 状態 | 内容 |
+   | File | Status | Details |
    |---|---|---|
-   | spec.md | ✅ 影響なし / ✅ 更新済み / ⚠️ 要確認 | <変更内容または確認が必要な理由> |
-   | design.md | ✅ 影響なし / ✅ 更新済み / ⚠️ 要確認 | <変更内容または確認が必要な理由> |
-   | spec-model.yaml | ✅ 影響なし / ✅ 更新済み / ⏸ 保留（設計変更のため design 再実行が必要） | <変更内容> |
+   | spec.md | ✅ No impact / ✅ Updated / ⚠️ Needs review | <change details or reason review is needed> |
+   | design.md | ✅ No impact / ✅ Updated / ⚠️ Needs review | <change details or reason review is needed> |
+   | spec-model.yaml | ✅ No impact / ✅ Updated / ⏸ On hold (re-run design first) | <change details> |
    ```
 
    Then output the following next-step guidance:
@@ -129,7 +129,7 @@ Update SDD artifacts based on issues or discoveries found during implementation.
    - Re-check open issues: `/modscape:spec:review <name>`
    - If design change flagged: `/modscape:spec:design <name>`
 
-   🔖 To pause and resume later, run `/modscape:spec:save <name>`.
+   💾 To save session state before ending, run `/modscape:spec:save <name>`. To resume in a new session, run `/modscape:spec:load <name>`.
    ---
 
 ## COMMAND: /modscape:spec:amend

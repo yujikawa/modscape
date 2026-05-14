@@ -9,7 +9,9 @@ Pre-implementation quality check combining cross-artifact consistency and go/no-
 
 ## Instructions
 
-0. **Resolve `<name>`** — if the user did not provide a spec name argument:
+0. **Detect language** — If `.modscape/modscape-spec.custom.md` exists, read it and look for a `## Communication` section. If it contains a language directive (e.g., "Always respond in Japanese"), use that language for all output in this session. Otherwise default to English.
+
+1. **Resolve `<name>`** — if the user did not provide a spec name argument:
    ```bash
    modscape spec list
    ```
@@ -17,11 +19,11 @@ Pre-implementation quality check combining cross-artifact consistency and go/no-
    - Exactly one spec: use it automatically and note "Using spec: `<name>`".
    - Multiple specs: show the list and ask the user to choose one.
 
-1. Check that `.modscape/changes/<name>/` exists.
+2. Check that `.modscape/changes/<name>/` exists.
    - If not: stop and tell the user:
      > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
 
-2. Read the following files (skip silently if a file does not exist — note which were skipped):
+3. Read the following files (skip silently if a file does not exist — note which were skipped):
    - `.modscape/changes/<name>/spec.md`
    - `.modscape/changes/<name>/design.md`
    - `.modscape/changes/<name>/tasks.md`
@@ -104,7 +106,7 @@ D-1. Unresolved questions recorded as assumptions
 
 ---
 
-3. Display the combined report:
+4. Display the combined report:
 
 ```
 ## Check: <name>
@@ -133,10 +135,10 @@ D-1. Unresolved questions recorded as assumptions
 ### Part 2: Readiness
 
 #### Unresolved Questions
-- 3 件 — Q-001, Q-003, Q-007 (see .modscape/changes/<name>/questions.md)
+- 3 — Q-001, Q-003, Q-007 (see .modscape/changes/<name>/questions.md)
 
 #### Assumptions
-- 2 件
+- 2
   - `fct_orders`: NULL rate assumed < 5% (unconfirmed)
   - ...
 
@@ -151,7 +153,7 @@ D-1. Unresolved questions recorded as assumptions
 - `dim_customer`: lineage only — Context Only (low confidence)
 ```
 
-4. Evaluate overall status:
+5. Evaluate overall status:
    - **Ready**: no ❌ consistency issues AND no unresolved questions AND no uncovered ACs AND no low-confidence downstream tables
      → Display: `✅ No issues found. Ready to implement.`
    - **Proceed with caution**: only ⚠️ warnings, or open questions/assumptions exist
@@ -159,7 +161,7 @@ D-1. Unresolved questions recorded as assumptions
    - **Blocker**: at least one ❌ consistency issue exists
      → Display: `🚫 Blocking issues found. Re-run /modscape:spec:design <name> before implementing.`
 
-5. **Always output the following next steps at the end:**
+6. **Always output the following next steps at the end:**
 
 ---
 **Next steps:**

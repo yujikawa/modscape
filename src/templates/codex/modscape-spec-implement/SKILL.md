@@ -68,7 +68,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
      date: <YYYY-MM-DD>
      change: <name>
    ```
-   > ⚠ 実装中に不明な点が見つかりました（**Q-NNN** として `questions.md` に記録しました）。回答を待ちますか、それとも仮定で進めますか？
+   > ⚠ A question came up during implementation (recorded as **Q-NNN** in `questions.md`). Should I wait for your answer or proceed with an assumption?
 
    Also flag signals that would cause an **analyst to draw wrong conclusions from this data** — add to `questions.md` with `source: ai-detected` and `status: open` WITHOUT pausing. Also generate a PII-safe investigation query in the `investigation:` block:
    - A cross-system JOIN produces unexpected row counts — the join key may not be semantically equivalent, causing silent over- or under-counting
@@ -170,52 +170,52 @@ When `logical.scd.type: type2` but `business_key`/`valid_from`/`valid_to` are ab
 
 When the user reports a problem during the implementation session — whether via a command or **in plain conversation** ("this column was wrong", "the type is different") — treat it as a finding and handle it inline without requiring a command switch.
 
-**判断基準 — 軽微な修正 vs 設計変更:**
-- **軽微な修正**: 列の型・制約・名前・説明の変更、AC の文言修正、JOIN キーの修正。`spec-model.yaml` の構造（テーブル数・lineage・relationships）は変わらない。
-- **設計変更**: テーブルの追加・削除、lineage の変更、grain の変更、`spec-model.yaml` の構造に影響する変更。
+**Decision criteria — Minor fix vs. Design change:**
+- **Minor fix**: Column type, constraint, name, or description changes; AC wording fixes; JOIN key corrections. The structure of `spec-model.yaml` (table count, lineage, relationships) does not change.
+- **Design change**: Table additions or removals, lineage changes, grain changes, or any change that affects the structure of `spec-model.yaml`.
 
-### 軽微な修正の場合（コマンド不要・実装継続）
+### For a Minor fix (no command switch — resume implementation)
 
-1. **`spec-model.yaml` を即時修正** — mutation CLI で変更し validate を実行する:
+1. **Immediately fix `spec-model.yaml`** — apply change with mutation CLI and run validate:
    ```bash
    modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>
    modscape validate .modscape/changes/<name>/spec-model.yaml
    ```
-2. **`spec.md` の AC を確認** — 変更に矛盾する AC があれば即時修正する。Do NOT renumber AC IDs.
-3. **`design.md` の Findings に記録** — `## Findings > ### Implementation Notes` に追記する:
+2. **Check `spec.md` ACs** — fix any AC that contradicts the change immediately. Do NOT renumber AC IDs.
+3. **Record in `design.md` Findings** — append to `## Findings > ### Implementation Notes`:
    ```
-   - `<table-id>`: <発見内容と修正内容> (amended <YYYY-MM-DD>)
+   - `<table-id>`: <finding and fix> (amended <YYYY-MM-DD>)
    ```
-4. **波及確認レポートを出力**する（フォーマットは下記）。
-5. **実装を継続する** — 次のタスクへ進む。
+4. **Output the impact report** (format below).
+5. **Resume implementation** — proceed to the next task.
 
-### 設計変更の場合（実装中断・design 再実行）
+### For a Design change (pause implementation — re-run design)
 
-1. **`design.md` の `## Findings > ### Requires Model Change` に記録**する:
+1. **Record in `design.md` under `## Findings > ### Requires Model Change`**:
    ```
-   - `<table-id>`: <発見内容と必要な変更>
+   - `<table-id>`: <finding and required change>
    ```
-2. **実装を中断**し、ユーザーに通知する。
-3. **`spec-model.yaml` は変更しない** — 設計変更は design 再実行後に適用する。
+2. **Pause implementation** and notify the user.
+3. **Do not modify `spec-model.yaml`** — design changes are applied after re-running design.
 
-**発見時の出力フォーマット:**
+**Output format when a finding is discovered:**
 
 ---
-⚠️ 実装中に発見しました: <issue description>
+⚠️ Found during implementation: <issue description>
 
-**分類:** 軽微な修正 / 設計変更
+**Classification:** Minor fix / Design change
 
-## 波及確認レポート（インライン修正）
+## Impact report (inline fix)
 
-| ファイル | 状態 | 内容 |
+| File | Status | Details |
 |---|---|---|
-| spec.md | ✅ 影響なし / ✅ 更新済み | <変更した AC または「影響なし」> |
-| design.md | ✅ 更新済み | <Findings に追記した内容> |
-| spec-model.yaml | ✅ 更新済み / ⏸ 保留（設計変更のため design 再実行が必要） | <変更内容または保留理由> |
+| spec.md | ✅ No impact / ✅ Updated | <changed AC or "No impact"> |
+| design.md | ✅ Updated | <content appended to Findings> |
+| spec-model.yaml | ✅ Updated / ⏸ On hold (re-run design first) | <change details or reason for hold> |
 
-*(軽微な修正の場合)* → 実装を継続します。
+*(For a Minor fix)* → Resuming implementation.
 
-*(設計変更の場合)* → 実装を中断します。次のステップ:
+*(For a Design change)* → Implementation paused. Next steps:
 ```
 /modscape:spec:design <name>
 ```
@@ -243,5 +243,5 @@ Usage: `/modscape:spec:implement <name> [path/to/model.yaml]`
 
 <n> tasks remaining. Ready to continue?
 
-🔖 To pause and resume later, run `/modscape:spec:save <name>`.
+💾 To save session state before ending, run `/modscape:spec:save <name>`. To resume in a new session, run `/modscape:spec:load <name>`.
 ---

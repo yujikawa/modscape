@@ -18,6 +18,10 @@ Interactively answer a question in `questions.md` for a given change.
 
 ## Instructions
 
+### Step 0 — Detect language
+
+If `.modscape/modscape-spec.custom.md` exists, read it and look for a `## Communication` section. If it contains a language directive (e.g., "Always respond in Japanese"), use that language for all output in this session. Otherwise default to English.
+
 ### Step 1 — Resolve the change name
 
 If `<name>` is not provided:

@@ -43,9 +43,10 @@
 ## Communication
 
 # Set the language for all AI responses in this project.
-# Uncomment one of the lines below:
+# Default is English — no configuration needed if you want English output.
+# Uncomment one of the lines below to override:
 # - Always respond in Japanese.
-# - Always respond in English.
+# - Always respond in French.
 
 ## Main YAMLs
 
