@@ -618,6 +618,8 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
    - **Acceptance Criteria are automatically assigned sequential IDs** (`AC-001`, `AC-002`, ...) for traceability
    - Resolves main-model.yaml path from `modscape-spec.custom.md` or prompts the user
+   - **Business Context Elicitation**: explicitly probes for data-related knowledge that AI cannot derive from schemas — data occurrence conditions (what business event creates a row?), business process flows (end-to-end process before/after this data is recorded), and domain rules & edge cases (magic values, common mistakes, special cases)
+   - **Proactive Tacit Knowledge Detection**: auto-flags signals that could cause analysts to draw wrong conclusions (ambiguous metric names, cross-system ID equivalence, undocumented status codes, date semantics, etc.) — writes `ai-detected` questions to `questions.md` with a ready-to-run PII-safe investigation query
    - Unresolved items are recorded as `Q-NNN` entries in `questions.md`
    - Output: `.modscape/changes/<name>/spec.md`
 
@@ -630,9 +632,10 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
    - **Phase 4 test tasks include `[→ AC-NNN]` annotations** linking each test to its acceptance criterion; ACs that require manual verification are flagged as `[手動検証]`
    - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to update model and tasks
+   - **Proactive Tacit Knowledge Detection**: flags model-level signals (undocumented status/flag columns, cross-system JOIN key equivalence, assumed grain, date semantics) and auto-writes `ai-detected` questions with PII-safe investigation queries to `questions.md`
    - Outputs a **Review Checkpoint** summary (open questions, assumptions, AC coverage) at the end
 
-4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes
+4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes; also flags analyst-misleading signals discovered during code generation (unexpected row counts, unknown status codes, mixed-format IDs) as `ai-detected` questions with investigation queries
 
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
    - **Dry-run preview first**: displays tables to add / update (with changed fields) / unchanged, and asks for confirmation before merging
@@ -653,6 +656,21 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
        └── questions.md           ← Q&A history for this table
    ```
 
+> **Investigation queries**: AI-detected questions in `questions.md` automatically include an `investigation:` block containing a PII-safe SQL query (aggregation only, no raw rows, no PII columns). **Always review the generated query before running it** — AI cannot know which columns contain PII in your specific environment. After confirming it is safe, run the query, paste the result into `result:`, then use `/modscape:spec:answer` — the AI interprets the data and writes `finding:`, updating the question to `answered` automatically.
+>
+> ```yaml
+> - id: Q-007
+>   question: "Does the status column contain MANUAL_ADJ values?"
+>   status: open
+>   source: ai-detected
+>   investigation:
+>     query: |
+>       -- PII-safe: aggregation only
+>       SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status
+>     result: null    # human fills in after running the query
+>     finding: null   # AI fills in via /modscape:spec:answer
+> ```
+
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command. Add `detail` for a narrative view suitable for handoff: `/modscape:spec:status <name> detail`.
 
 > **Save your session**: Run `/modscape:spec:save <name>` before ending a work session during requirements, design, or amend. The saved state (decisions made, open questions, next action) is shown the next time you run `/modscape:spec:status <name>`.
@@ -672,6 +690,10 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 After archiving changes, Markdown specs accumulate in `.modscape/specs/<model-slug>/`. Use these commands to browse them:
 
 ```bash
+# List all active spec folders with status (name, title, progress, docs)
+modscape spec list
+modscape spec list --json
+
 # Start an interactive spec viewer for a change in progress (dev server)
 modscape spec dev <name>
 
@@ -699,14 +721,14 @@ requirements → design → implement → archive
 | Skill | Command | What it does | Main output |
 |-------|---------|-------------|-------------|
 | Generate | `/modscape:spec:generate [files...]` | Bootstrap `specs/<table-id>/spec.md` for all tables from existing model.yaml, SQL, or Python files | `specs/<id>/spec.md` |
-| Requirements | `/modscape:spec:requirements` | Collect goal, stakeholders, ACs, Q&As interactively | `spec.md` |
-| Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list | `design.md`, `tasks.md` |
-| Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code | `tasks.md` (updated) |
+| Requirements | `/modscape:spec:requirements` | Collect goal, stakeholders, ACs, Q&As interactively; elicit business context (data occurrence conditions, process flows, domain rules); auto-detect tacit knowledge gaps | `spec.md` |
+| Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list; auto-detect analyst-misleading signals with PII-safe investigation queries | `design.md`, `tasks.md` |
+| Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code; flag analyst-misleading signals found during code generation | `tasks.md` (updated) |
 | Archive | `/modscape:spec:archive <name>` | Merge to main model, persist permanent specs | `specs/<id>/spec.md`, `_context.yaml` |
 | Check | `/modscape:spec:check <name>` | Pre-implement quality check: consistency + go/no-go readiness (optional) | — |
 | Amend | `/modscape:spec:amend <name>` | Patch artifacts when issues are found mid-implementation (optional) | — |
 | Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
-| Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question and assess design impact (optional) | — |
+| Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question; when `investigation.result` is filled in, analyzes the query results and writes `finding` (optional) | — |
 | Note | `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to `specs/<table-id>/spec.md` — no active workflow required (optional) | — |
 | Save | `/modscape:spec:save <name>` | Save the current session state (decisions, open questions, next action) to `session.md` for later resumption (optional) | `session.md` |
 

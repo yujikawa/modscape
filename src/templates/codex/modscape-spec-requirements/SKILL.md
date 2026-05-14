@@ -147,12 +147,14 @@ Gather business requirements interactively and generate `.modscape/changes/<name
        finding: null    # AI fills in after result is provided via /modscape:spec:answer
    ```
 
-   **PII safety rules for the query (non-negotiable):**
+   **PII safety rules for the generated query:**
    - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
    - Never SELECT * or raw row samples
    - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
    - For value distribution: use GROUP BY + COUNT(*) — never show raw PII values
    - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
+
+   > ⚠️ **Human review required before running**: The AI generates this query as a starting point following PII-safety rules, but **the human must review the query before executing it** to verify no PII columns are inadvertently included. AI cannot know which columns contain PII in your specific environment. Never run without reviewing.
 
 11. Review the **entire conversation** and append question entries to `.modscape/changes/<name>/questions.md` (create if it does not exist) for all of the following:
 

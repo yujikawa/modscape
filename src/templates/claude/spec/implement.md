@@ -98,11 +98,13 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
        finding: null    # AI fills in after result is provided via /modscape:spec:answer
    ```
 
-   **PII safety rules for the query (non-negotiable):**
+   **PII safety rules for the generated query:**
    - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
    - Never SELECT * or raw row samples
    - Never include columns that may contain PII (names, emails, phone numbers, addresses, birth dates, national IDs, IP addresses, account numbers)
    - If unsure whether a column contains PII, exclude it and add a `-- PII risk: excluded` comment
+
+   > ⚠️ **Human review required before running**: The AI generates this query as a starting point following PII-safety rules, but **the human must review the query before executing it** to verify no PII columns are inadvertently included. AI cannot know which columns contain PII in your specific environment. Never run without reviewing.
 
 8. After each task, confirm with the user before proceeding:
    > Task complete. Ready to move on to the next task?
