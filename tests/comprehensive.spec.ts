@@ -33,6 +33,9 @@ test.describe.serial('Modscape Main E2E Suite', () => {
   });
 
   test('Sidebar: Elements and Tab Switching', async ({ page }) => {
+    // Sidebar starts closed by default — open it via the logo toggle button
+    await page.locator('img[alt="Logo"]').click();
+
     const sidebar = page.locator('.sidebar-content').first();
     await expect(sidebar.locator('h1:has-text("Modscape")')).toBeVisible();
 
@@ -70,6 +73,8 @@ test.describe.serial('Modscape Main E2E Suite', () => {
   });
 
   test('Visual: Sidebar snapshot', async ({ page }) => {
+    // Sidebar starts closed by default — open it first
+    await page.locator('img[alt="Logo"]').click();
     await page.addStyleTag({ content: '::-webkit-scrollbar { display: none !important; }' });
     const sidebar = page.locator('.sidebar-content').first();
     await expect(sidebar).toHaveScreenshot('sidebar-main.png', {
@@ -87,6 +92,8 @@ test.describe.serial('Modscape Main E2E Suite', () => {
   });
 
   test('T50: v2 YAML — YAML editor shows version 2.0.0', async ({ page }) => {
+    // Sidebar starts closed by default — open it first
+    await page.locator('img[alt="Logo"]').click();
     const editor = page.locator('.cm-editor');
     await expect(editor).toBeVisible();
     await expect(editor).toContainText('2.0.0');
