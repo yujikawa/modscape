@@ -160,8 +160,8 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    Read `.modscape/changes/<name>/spec.md` and extract all `AC-NNN:` entries. For each changed table or column, check whether any AC references it and whether the change contradicts the AC.
 
-   - **Contradiction found**: Fix `spec.md` inline — update the relevant AC to reflect the actual state. Do NOT renumber AC IDs. Note the change in the ripple-effect report as `spec.md: ✅ 更新済み`.
-   - **No contradiction**: Note in the ripple-effect report as `spec.md: ✅ 影響なし`.
+   - **Contradiction found**: Fix `spec.md` inline — update the relevant AC to reflect the actual state. Do NOT renumber AC IDs. Note the change in the ripple-effect report as `spec.md: ✅ Updated`.
+   - **No contradiction**: Note in the ripple-effect report as `spec.md: ✅ No impact`.
    - **spec.md does not exist**: Skip silently.
 
 15. Write `.modscape/changes/<name>/design.md` using the format below.
@@ -247,7 +247,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    ## <change-name>
 
    - **<term-id>**: <definition>
-     - label: <日本語名> (optional)
+     - label: <display name> (optional)
      - tables: <table_a>, <table_b> (optional)
      - columns: <table_a.col> (optional)
    ```
@@ -304,13 +304,13 @@ Usage: `/modscape:spec:design <name> [path/to/main.yaml]`
 ---
 ✅ Design updated. `spec-model.yaml` and `design.md` are current.
 
-## 波及確認レポート
+## Impact report
 
-| ファイル | 状態 | 内容 |
+| File | Status | Details |
 |---|---|---|
-| spec.md | ✅ 影響なし / ✅ 更新済み | <変更した AC の番号と内容、または「影響なし」> |
-| design.md | ✅ 更新済み | <更新内容の概要> |
-| spec-model.yaml | ✅ 更新済み | <変更テーブル・変更内容の概要> |
+| spec.md | ✅ No impact / ✅ Updated | <changed AC number and content, or "No impact"> |
+| design.md | ✅ Updated | <summary of updates> |
+| spec-model.yaml | ✅ Updated | <changed tables and summary of changes> |
 
 ## Review Checkpoint
 
@@ -336,5 +336,5 @@ modscape spec dev <name>
 
 If you discover issues, add them to `## Findings` in `design.md` and re-run `/modscape:spec:design <name>`.
 
-🔖 To pause and resume later, run `/modscape:spec:save <name>`.
+💾 To save session state before ending, run `/modscape:spec:save <name>`. To resume in a new session, run `/modscape:spec:load <name>`.
 ---

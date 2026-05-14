@@ -63,7 +63,8 @@ These commands assist during an active SDD workflow. They require a `changes/<na
 | `@modscape-spec-check <name>` | Pre-implement quality check: consistency + go/no-go readiness |
 | `@modscape-spec-amend <name>` | Update artifacts when issues are found mid-implementation |
 | `@modscape-spec-answer <name>` | Answer a recorded Q-NNN question |
-| `@modscape-spec-save <name>` | Save session state (decisions, open questions, next action) to `session.md` for later resumption |
+| `@modscape-spec-save <name>` | Save session state (decisions, open questions, next action) to `session.md` |
+| `@modscape-spec-load <name>` | Load a saved session state from `session.md` into the current conversation, then delete it |
 
 ## Standalone Commands
 

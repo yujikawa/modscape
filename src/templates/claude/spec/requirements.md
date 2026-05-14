@@ -101,14 +101,14 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    ## <change-name>
 
    - **<term-id>**: <definition>
-     - label: <日本語名> (optional)
+     - label: <display name> (optional)
      - tables: <table_a>, <table_b> (optional)
      - columns: <table_a.col> (optional)
    ```
 
    If no qualifying terms were found, skip silently.
 
-10.6. **Proactive Tacit Knowledge Detection** — Review the conversation for signals that would cause an **analyst using this data product to draw wrong conclusions or be confused**. For each signal found, add a question to `.modscape/changes/<name>/questions.md` with `status: open` and `source: ai-detected`. Do not ask the user now — record it for a later ヒアリング session.
+10.6. **Proactive Tacit Knowledge Detection** — Review the conversation for signals that would cause an **analyst using this data product to draw wrong conclusions or be confused**. For each signal found, add a question to `.modscape/changes/<name>/questions.md` with `status: open` and `source: ai-detected`. Do not ask the user now — record it for a later interview session.
 
    Focus only on signals that affect **analytical correctness** — things an analyst would get wrong without being told:
    - A metric or measure with an ambiguous name (e.g., "revenue", "sales", "count") — whose inclusion/exclusion criteria (tax? returns? cancellations?) were not stated
@@ -253,5 +253,5 @@ main_yamls:
 /modscape:spec:design <name>
 ```
 
-🔖 To pause and resume later, run `/modscape:spec:save <name>`.
+💾 To save session state before ending, run `/modscape:spec:save <name>`. To resume in a new session, run `/modscape:spec:load <name>`.
 ---

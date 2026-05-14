@@ -20,6 +20,10 @@ Examples:
 
 ## Instructions
 
+### Step 0: Detect language
+
+If `.modscape/modscape-spec.custom.md` exists, read it and look for a `## Communication` section. If it contains a language directive (e.g., "Always respond in Japanese"), use that language for all output in this session. Otherwise default to English.
+
 ### Step 1: Collect input
 
 After the command is invoked, prompt the user to paste or type the knowledge they want to record:
@@ -41,8 +45,8 @@ Wait for the user's free-text input before proceeding.
 - If no table ID can be identified, stop and display:
 
   ```
-  対象テーブルを特定できませんでした。
-  `/modscape:spec:note <table-id>` でテーブルIDを指定して再実行してください。
+  Could not identify the target table.
+  Re-run with a table ID: `/modscape:spec:note <table-id>`
   ```
 
   Then exit without writing any file.
@@ -56,8 +60,8 @@ Check whether the target spec file exists.
 - If a spec file **does not exist**, stop and display:
 
   ```
-  ⚠ specs/<table-id>/spec.md が見つかりません。
-  先に /modscape:spec:generate を実行してspecを作成してください。
+  ⚠ specs/<table-id>/spec.md not found.
+  Run /modscape:spec:generate first to create the spec.
   ```
 
   Then exit without writing any file.
@@ -66,13 +70,13 @@ Check whether the target spec file exists.
 
 For each piece of information extracted from the input, map it to the most appropriate section using the following rules:
 
-| 入力の性質 | 書き込み先セクション |
+| Input type | Target section |
 |---|---|
-| ビジネスルール・計算ロジック・定義・grain | `## Business Rules` |
-| 既知の問題・データ品質の注意点・バグ・信頼性 | `## Known Issues / Caveats` |
-| 背景・経緯・意図・由来 | `## Business Context` |
-| オーナー・SLA・更新頻度 | `## Overview` |
-| 上記に分類できないメモ | `## Known Issues / Caveats` |
+| Business rules, calculation logic, definitions, grain | `## Business Rules` |
+| Known issues, data quality caveats, bugs, reliability | `## Known Issues / Caveats` |
+| Background, history, intent, origin | `## Business Context` |
+| Owner, SLA, update frequency | `## Overview` |
+| Notes that do not fit any of the above | `## Known Issues / Caveats` |
 
 When input covers multiple tables, split the content and assign each piece to the appropriate table and section independently.
 
@@ -81,22 +85,22 @@ When input covers multiple tables, split the content and assign each piece to th
 Before writing anything, display a preview of all planned updates:
 
 ```
-以下の更新を行います:
+Will apply the following updates:
 
 📄 specs/fct_orders/spec.md
-  セクション: Known Issues / Caveats
-  追記内容: "Q1 2023 の updated_at は信頼不可。ETL バグにより NULL が混入している"
+  Section: Known Issues / Caveats
+  Content: "Q1 2023 の updated_at は信頼不可。ETL バグにより NULL が混入している"
 
 📄 specs/dim_customers/spec.md
-  セクション: Business Rules
-  追記内容: "SCD Type2。grain は顧客の有効期間ごとの1行"
+  Section: Business Rules
+  Content: "SCD Type2。grain は顧客の有効期間ごとの1行"
 
-続けますか？ [Y/n]
+Continue? [Y/n]
 ```
 
 Wait for the user's response:
 - If the user confirms (Y or Enter): proceed to Step 6.
-- If the user declines (n): display `更新をキャンセルしました。` and exit without writing.
+- If the user declines (n): display `Update cancelled.` and exit without writing.
 
 ### Step 6: Write updates
 
@@ -118,9 +122,9 @@ For each planned update:
 After all updates are written:
 
 ```
-✅ spec:note 完了
+✅ spec:note complete
 
-更新したファイル:
-- specs/fct_orders/spec.md（Known Issues / Caveats に追記）
-- specs/dim_customers/spec.md（Business Rules に追記）
+Updated files:
+- specs/fct_orders/spec.md (appended to Known Issues / Caveats)
+- specs/dim_customers/spec.md (appended to Business Rules)
 ```
