@@ -40,6 +40,7 @@ program
 program
   .command('update')
   .description('Update installed skill files to the latest bundled version')
+  .option('-y, --yes', 'Overwrite format templates without prompting (even if customized)')
   .action((options) => {
     updateProject(options);
   });

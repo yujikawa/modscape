@@ -25,7 +25,13 @@ export async function writeRules(writeFn) {
  * Write agent skill command files.
  * writeFn(filePath, content) — may be async (init) or sync (update).
  */
-export async function writeAgentTemplates(agents, sdd, writeFn) {
+export async function writeAgentTemplates(agents, sdd, writeFn, formatWriteFn = writeFn) {
+  if (sdd) {
+    for (const fmt of ['spec-format', 'design-format', 'glossary-format', 'questions-format', 'tasks-format']) {
+      await formatWriteFn(`.modscape/formats/${fmt}.md`, tpl('formats', `${fmt}.md`));
+    }
+  }
+
   if (agents.includes('gemini')) {
     await writeFn('.gemini/skills/modscape-modeling/SKILL.md', tpl('gemini/modscape-modeling/SKILL.md'));
     await writeFn('.gemini/skills/modscape-codegen/SKILL.md', tpl('gemini/modscape-codegen/SKILL.md'));

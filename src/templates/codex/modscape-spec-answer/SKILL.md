@@ -88,35 +88,29 @@ If ambiguous, ask a targeted follow-up question (one question at a time). Contin
 
 ### Step 5 — Write to `questions.md`
 
-Edit `.modscape/changes/<name>/questions.md` directly. Do not rewrite the entire file.
+Use the Edit tool to update the `## 🔴 Q-NNN` (or `## 🔵 Q-NNN`) section in `.modscape/changes/<name>/questions.md`. Do not rewrite the entire file. The format is defined in `.modscape/formats/questions-format.md`.
 
 **If a clear answer was obtained:**
-- Set `answer: "<final clarified answer>"`
-- Set `status: answered`
-- Remove `assumption` field if present
+1. Change the heading emoji: `## 🔴 Q-NNN` → `## 🟢 Q-NNN` (or `## 🔵` → `## 🟢`)
+2. Add an **Answer** block after the metadata list:
+   ```
+   **Answer**
 
-```yaml
-- id: Q-001
-  question: "<question text>"
-  answer: "<final clarified answer>"
-  status: answered
-  ...
-```
+   <final clarified answer>
+   ```
+3. Remove the **Assumption** block if present.
 
 **If unresolvable (proceed with assumption):**
-- Set `status: assumed`
-- Set `assumption: "<what will be assumed to proceed>"`
-- Leave `answer` absent
+1. Change the heading emoji: `## 🔴 Q-NNN` → `## 🟡 Q-NNN`
+2. Add an **Assumption** block after the metadata list:
+   ```
+   **Assumption**
 
-```yaml
-- id: Q-001
-  question: "<question text>"
-  assumption: "<what will be assumed to proceed>"
-  status: assumed
-  ...
-```
+   <what will be assumed to proceed>
+   ```
+3. Remove the **Answer** block if present.
 
-**If the entry has an `investigation:` block:** also update `investigation.finding` with the interpretation (see Step 3.5).
+**If the entry has an Investigation query block:** also replace `*(pending — paste query output here)*` under **Result** with the actual query output, and replace `*(pending)*` under **Finding** with the interpretation (see Step 3.5). Change `## 🔵` → `## 🟢` if fully resolved.
 
 ### Step 6 — Update glossary if the answer defines a term
 
