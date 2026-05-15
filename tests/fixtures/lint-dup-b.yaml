@@ -1,0 +1,20 @@
+version: 2.0.0
+tables:
+  - id: shared_table
+    conceptual:
+      name: Shared Table (copy)
+      kind: dimension
+    columns:
+      - id: pk
+        name: Primary Key
+        type: String
+        isPrimaryKey: true
+  - id: unique_to_b
+    conceptual:
+      name: Unique To B
+      kind: dimension
+    columns:
+      - id: pk
+        name: Primary Key
+        type: String
+        isPrimaryKey: true

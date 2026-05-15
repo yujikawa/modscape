@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 
 - **`modscape update --yes` / `-y`** — New flag that overwrites format template files without prompting. Without `--yes`, `modscape update` now asks before overwriting any file in `.modscape/formats/` (since these may be project-customized). Skill and rules files continue to be overwritten unconditionally as before.
 
+- **`modscape lint` — cross-file duplicate table ID detection** — `modscape lint` now accepts multiple files and directories (`modscape lint models/` or `modscape lint a.yaml b.yaml`). A new lint rule `no-duplicate-table-ids` warns when the same table ID is defined in more than one YAML file without an explicit `imports:` relationship. The correct pattern is for one file to own the table definition while consumers reference it via `imports:`. Severity defaults to `warn` and can be suppressed via `.modscape/lint-rules.yaml`. The `--json` output includes a `files` array on each warning entry identifying which files contain the duplicate.
+
+- **`modscape extract` — duplicate table ID warning** — When `extract` encounters the same table ID in multiple source files, it now prints a `WARN: <id>  duplicate-table-id` message to stderr showing which file was overwritten. The last-wins merge behavior is unchanged.
+
 ## [3.4.2] - 2026-05-15
 
 ### Fixed

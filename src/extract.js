@@ -160,6 +160,12 @@ export function extractModels(inputs, options) {
     let matched = 0;
     for (const table of data.tables || []) {
       if (effectiveTableIds.includes(table.id)) {
+        if (tableMap.has(table.id)) {
+          const prevFile = tableSourceMap.get(table.id) || '(unknown)';
+          process.stderr.write(`  ⚠️  WARN: ${table.id}  duplicate-table-id\n`);
+          process.stderr.write(`       First defined in: ${path.basename(prevFile)}\n`);
+          process.stderr.write(`       Overwriting with: ${path.basename(filePath)}\n`);
+        }
         tableMap.set(table.id, table); // upsert: 新規追加 or 既存上書き
         extractedIds.push(table.id);
         if (!tableSourceMap.has(table.id)) {

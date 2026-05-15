@@ -17,7 +17,7 @@ import { extractModels } from './extract.js';
 import { tableCommand, columnCommand, relationshipCommand, lineageCommand, domainCommand, annotationCommand, summaryCommand, consumerCommand } from './cli.js';
 import { runValidate } from './validate.js';
 import { runCoverage } from './coverage.js';
-import { runLint } from './lint.js';
+import { runLint, runLintMulti } from './lint.js';
 import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
 import { specNew, specList, startSpecDevServer } from './spec.js';
@@ -192,11 +192,11 @@ program
 program
   .command('lint')
   .description('Check documentation quality and modeling best-practice compliance')
-  .argument('<file>', 'path to the YAML model file')
+  .argument('<paths...>', 'YAML model file(s) or directory(ies)')
   .option('--rules <path>', 'path to lint-rules.yaml (default: .modscape/lint-rules.yaml)')
   .option('--json', 'output as JSON')
-  .action((file, opts) => {
-    runLint(file, { rules: opts.rules, json: opts.json });
+  .action((paths, opts) => {
+    runLintMulti(paths, { rules: opts.rules, json: opts.json });
   });
 
 program

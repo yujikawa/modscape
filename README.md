@@ -466,19 +466,25 @@ modscape coverage model.yaml --json
 
 ### Lint
 
-Check documentation quality and modeling best-practice compliance. Rules are configured in `.modscape/lint-rules.yaml` (ESLint-style `error` / `warn` / `off`). Runs with a default rule set when no config file is present.
+Check documentation quality and modeling best-practice compliance. Accepts a single file, multiple files, or a directory. Rules are configured in `.modscape/lint-rules.yaml` (ESLint-style `error` / `warn` / `off`). Runs with a default rule set when no config file is present.
 
 ```bash
 modscape lint model.yaml
+
+# Lint multiple files or an entire directory
+modscape lint models/
+modscape lint sales.yaml inventory.yaml conformed.yaml
 
 # Use a custom rules file
 modscape lint model.yaml --rules .modscape/lint-rules.yaml
 
 # Machine-readable output for CI/CD (exits 1 on any error)
-modscape lint model.yaml --json
+modscape lint models/ --json
 ```
 
 Rules are defined using actual model.yaml field paths under a `require:` section. Default fields checked (all at `warn`): `conceptual.description`, `physical.name`, `conceptual.tags`, `columns[].type`, `columns[].isPrimaryKey`.
+
+When linting multiple files, the `no-duplicate-table-ids` cross-file rule also runs: it warns when the same table ID is defined in more than one file without an explicit `imports:` relationship. The correct pattern is for one file to own the table, and consumers to reference it via `imports:`.
 
 Example `.modscape/lint-rules.yaml`:
 
@@ -493,6 +499,10 @@ require:
     kinds: [fact, mart]
   columns[].type: warn
   columns[].isPrimaryKey: error
+
+# Cross-file rules
+no-duplicate-table-ids:
+  severity: warn   # set to off to suppress
 ```
 
 ### Prune
