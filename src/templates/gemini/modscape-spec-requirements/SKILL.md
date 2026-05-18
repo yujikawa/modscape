@@ -104,14 +104,8 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
    For each qualifying term, append to `.modscape/changes/<name>/glossary.md` (create the file if it does not exist). Do NOT write to `_glossary.yaml` directly.
 
-   ```markdown
-   ## <change-name>
-
-   - **<term-id>**: <definition>
-     - label: <display name> (optional)
-     - tables: <table_a>, <table_b> (optional)
-     - columns: <table_a.col> (optional)
-   ```
+   The format template is defined in `.modscape/formats/glossary-format.md`.
+   Read that file and use it when writing entries to `glossary.md`.
 
    If no qualifying terms were found, skip silently.
 
@@ -127,25 +121,7 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
    For each signal, write the entry to `questions.md` **and generate a PII-safe investigation query** in the `investigation:` block. This query is ready to run against the real data — the human fills in `result:` after running it, then AI fills in `finding:` via `@modscape-spec-answer`.
 
-   Use this format:
-   ```yaml
-   - id: Q-NNN
-     question: "<specific question: what would an analyst get wrong without knowing this?>"
-     status: open
-     source: ai-detected
-     table: <table-id>    # if specific to a table
-     date: <YYYY-MM-DD>
-     change: <name>
-     investigation:
-       query: |
-         -- PII-safe: aggregation only
-         SELECT <column>, COUNT(*) AS cnt
-         FROM <table>
-         GROUP BY <column>
-         ORDER BY cnt DESC
-       result: null     # human fills in after running the query
-       finding: null    # AI fills in after result is provided via @modscape-spec-answer
-   ```
+   Use the format defined in `.modscape/formats/questions-format.md` (ai-detected entry with investigation query).
 
    **PII safety rules for the generated query:**
    - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
@@ -168,64 +144,14 @@ Gather business requirements interactively and generate `.modscape/changes/<name
    - Is the join type known (LEFT / INNER / etc.)? If not → add a question
    These are blocking questions for implementation — do not leave them unasked.
 
-   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use this format:
-   ```yaml
-   - id: Q-NNN
-     question: "<question text>"
-     answer: "<answer the user gave>"    # only if status: answered
-     status: answered                    # answered | assumed | open
-     assumption: "<what you assumed>"    # only if status: assumed
-     table: <table-id>                   # optional — only if specific to one table
-     date: <YYYY-MM-DD>
-     change: <name>
-   ```
+   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use the format defined in `.modscape/formats/questions-format.md` (standard question entry).
 
    Record every question that shaped the spec — answered questions are just as important for traceability as open ones.
 
 ## spec.md Format
 
-```markdown
-# Pipeline Spec: <title>
-
-## Goal
-<Who is this for and what problem does it solve?>
-
-## Stakeholders
-- owner: <team or person>
-- consumers: [<list of downstream users or systems>]
-
-## Data Sources
-- <source 1>
-- <source 2>
-
-## Table Relationships
-- <source_table>.<column> → <other_table>.<column> [<one-to-many|many-to-one|...>]
-- (omit section if no FK relationships are known)
-
-## Business Context
-<!-- Data-related business context that only humans know. Populated by step 3.5. -->
-
-### Data Occurrence Conditions
-- <table>: <What business event creates a row? Who enters it, in what system, for what purpose?>
-
-### Business Process Flow
-<End-to-end business process that generates or consumes this data. What happens before and after?>
-
-### Domain Rules & Edge Cases
-- <Rule or quirk that an engineer would not know from the schema alone>
-- <Status codes, magic values, flags with business-specific meaning>
-- <Common mistakes engineers make about this data>
-
-## Acceptance Criteria
-- [ ] AC-001: <criterion 1>
-- [ ] AC-002: <criterion 2>
-
-## Target Tool
-<dbt | SQLMesh | Spark SQL | plain SQL>
-
-## Status
-requirements
-```
+The format template is defined in `.modscape/formats/spec-format.md`.
+Read that file before writing `spec.md` and use it as the template.
 
 ## spec-config.yaml Format
 

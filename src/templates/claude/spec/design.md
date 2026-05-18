@@ -190,18 +190,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - **Assumed** — items you could not confirm and proceeded with an assumption → `status: assumed`, record the assumption in the `assumption` field
    - **Open** — items still unresolved → `status: open`
 
-   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use this format:
-
-   ```yaml
-   - id: Q-NNN
-     question: "<question text>"
-     answer: "<answer the user gave>"    # only if status: answered
-     status: answered                    # answered | assumed | open
-     assumption: "<what you assumed>"    # only if status: assumed
-     table: <table-id>                   # optional — only if specific to one table
-     date: <YYYY-MM-DD>
-     change: <name>
-   ```
+   Determine the next ID by reading the current max Q-NNN across both `.modscape/specs/_questions.yaml` and `questions.md`. Use the format defined in `.modscape/formats/questions-format.md` (standard question entry).
 
    Record every question that shaped the design — answered questions are just as important for traceability as open ones.
 
@@ -219,25 +208,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    For each signal, write the entry to `questions.md` **and generate a PII-safe investigation query** in the `investigation:` block. This query is ready to run against the real data — the human fills in `result:` after running it, then AI fills in `finding:` via `/modscape:spec:answer`.
 
-   Use this format:
-   ```yaml
-   - id: Q-NNN
-     question: "<specific question: what would an analyst get wrong without knowing this?>"
-     status: open
-     source: ai-detected
-     table: <table-id>
-     date: <YYYY-MM-DD>
-     change: <name>
-     investigation:
-       query: |
-         -- PII-safe: aggregation only
-         SELECT <column>, COUNT(*) AS cnt
-         FROM <table>
-         GROUP BY <column>
-         ORDER BY cnt DESC
-       result: null     # human fills in after running the query
-       finding: null    # AI fills in after result is provided via /modscape:spec:answer
-   ```
+   Use the format defined in `.modscape/formats/questions-format.md` (ai-detected entry with investigation query).
 
    **PII safety rules for the generated query:**
    - Only aggregate functions: COUNT, COUNT(DISTINCT), MIN, MAX, AVG, SUM
@@ -259,63 +230,15 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - Standard data modeling concepts (fact, dimension, hub, satellite, etc.)
    - Self-evident column names (created_at, id, etc.)
 
-   ```markdown
-   ## <change-name>
-
-   - **<term-id>**: <definition>
-     - label: <display name> (optional)
-     - tables: <table_a>, <table_b> (optional)
-     - columns: <table_a.col> (optional)
-   ```
+   The format template is defined in `.modscape/formats/glossary-format.md`.
+   Read that file and use it when writing entries to `glossary.md`.
 
    If no qualifying terms were found, skip silently.
 
 ## design.md Format
 
-```markdown
-# Design: <pipeline title>
-
-## Design Decisions
-<!-- Each decision must record both the technical choice AND the business reason behind it.
-     "Because the spec says so" is not a rationale — explain the business logic or process that drives the decision. -->
-<Key design choices and their rationale — updated on each re-run>
-<Format per decision: "**<decision>** — <business reason>. Technical: <technical note if needed>">
-
-## Affected Tables
-
-> ⚠️ This Affected Tables classification is an AI proposal. Edit directly if the classification is incorrect.
-
-### Direct Impact
-- `<table-id>`: <reason (new / column added / restructured)>
-
-### Downstream Impact — Implement
-- `<table-id>`: <which changed column is referenced and why this table must be updated>
-
-### Downstream Impact — Context Only
-- `<table-id>`: <why no code change is needed — e.g., does not reference changed columns>
-
-## Known Open Questions (from changes/<name>/questions.md)
-<!-- Populated automatically by /modscape:spec:design. Only Direct Impact tables. Omit section if none. -->
-- Q-NNN → `<table-id>` — see .modscape/changes/<name>/questions.md
-
-## Related Past Specs
-<!-- Populated automatically by /modscape:spec:design via modscape spec search. Omit section if no results. -->
-- `archives/YYYY-MM-DD-<name>/` — <spec title>
-
-## Findings
-
-### Requires Model Change
-<Observations that require changes to spec-model.yaml — processed first on re-run>
-<Example:>
-<- `fct_orders`: NULL rate for customer_id was 12% → add `null_customer_flag` column>
-<- Grain was off: one row per order line, not per order → redesign fct_orders>
-
-### Implementation Notes
-<Observations that do NOT require model changes — for reference only>
-<Example:>
-<- stg_raw_sales partition by event_date works as expected>
-<- dbt incremental merge on order_id performs well>
-```
+The format template is defined in `.modscape/formats/design-format.md`.
+Read that file before writing `design.md` and use it as the template.
 
 ## Next Step
 

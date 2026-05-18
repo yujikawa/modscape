@@ -1,3 +1,4 @@
+import { confirm } from '@inquirer/prompts';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -17,6 +18,24 @@ function forceWrite(filePath, content) {
   if (isUserData(filePath)) return;
   const abs = path.resolve(process.cwd(), filePath);
   fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.writeFileSync(abs, content, 'utf8');
+  console.log(`  Updated ${filePath}`);
+}
+
+async function askWrite(filePath, content, yes) {
+  if (isUserData(filePath)) return;
+  const abs = path.resolve(process.cwd(), filePath);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  if (fs.existsSync(abs) && !yes) {
+    const overwrite = await confirm({
+      message: `${filePath} already exists (may be customized). Overwrite?`,
+      default: false,
+    });
+    if (!overwrite) {
+      console.log(`  Skipping ${filePath}`);
+      return;
+    }
+  }
   fs.writeFileSync(abs, content, 'utf8');
   console.log(`  Updated ${filePath}`);
 }
@@ -58,8 +77,9 @@ export async function updateProject(options = {}) {
   if (sdd) console.log('  SDD skills: installed');
   console.log('');
 
+  const formatWriteFn = (filePath, content) => askWrite(filePath, content, !!options.yes);
   await writeRules(forceWrite);
-  await writeAgentTemplates(agents, sdd, forceWrite);
+  await writeAgentTemplates(agents, sdd, forceWrite, formatWriteFn);
 
   // Update HTML spec templates if already installed, or install fresh when --html is passed
   const specTemplatesDir = path.resolve(process.cwd(), '.modscape/spec-templates');

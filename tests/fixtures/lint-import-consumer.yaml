@@ -1,0 +1,15 @@
+version: 2.0.0
+imports:
+  - from: ./lint-dup-a.yaml
+    ids:
+      - shared_table
+tables:
+  - id: consumer_only_table
+    conceptual:
+      name: Consumer Only
+      kind: fact
+    columns:
+      - id: pk
+        name: Primary Key
+        type: String
+        isPrimaryKey: true

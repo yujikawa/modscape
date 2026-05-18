@@ -1170,6 +1170,7 @@ A project MAY place a `.modscape/rules.custom.md` file to define rules that exte
 
 ## SCD Policy
 - Dimension tables use SCD Type 1 only. Do NOT apply `scd.type: type2` or higher.
+
 ```
 
 `modscape init --sdd` generates `.modscape/rules.custom.md.example`. Rename it to `rules.custom.md` to activate.

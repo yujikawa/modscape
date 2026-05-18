@@ -46,3 +46,25 @@
 # Uncomment to require BEAM* tags on specific table kinds:
 # - All fact tables MUST have at least one of: WHAT, HOW_MUCH, COUNT
 # - All dimension tables MUST have at least one of: WHO, WHERE, WHEN
+
+## Lint Rule Actions
+
+# When `modscape lint` reports warnings during SDD or data modeling work,
+# respond to each rule as follows.
+# Uncomment and customize the rules you want AI to act on.
+
+# ### no-duplicate-table-ids
+# A table ID is defined in more than one YAML file without an `imports:` relationship.
+# This means table ownership is ambiguous and SDD archive cannot determine the merge target.
+#
+# Action:
+# 1. Identify which file is the true owner (the one that produces or maintains the data).
+# 2. Remove the duplicate definition from all other files.
+# 3. Add an `imports:` entry in each consumer file referencing the owner file.
+# 4. Run `modscape lint` again to confirm the warning is resolved.
+
+# ### require / conceptual.description
+# A table is missing its business description.
+#
+# Action: Add a 1-2 sentence `conceptual.description` explaining what the table
+# represents in business terms before continuing with modeling work.
