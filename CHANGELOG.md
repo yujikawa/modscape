@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - **`/modscape:spec:investigate` skill** — New skill for user-initiated static investigation. The user describes a topic (e.g. "compare logic between table A and table B"), and the AI reads relevant repo files (SQL, dbt models, spec.md, spec-model.yaml, design.md, model.yaml) and records findings in `design.md → ## Findings`. Added for all three AI platforms (Claude / Gemini / Codex). If the investigation reveals a logic error, the skill guides the user to the inline fix flow in `/modscape:spec:implement`; if a model structure change is needed, it points to `/modscape:spec:design`; if an AC contradiction is found, it points to updating spec.md directly.
 
+### Fixed
+
+- **`modscape spec dev` — layout changes now saved to `spec-model.yaml`** — The spec dev server was missing a `POST /api/save` endpoint, so node layout adjustments made in the UI were silently lost on every restart. The endpoint has been added; layout changes are now persisted to `.modscape/changes/<name>/spec-model.yaml` in the same way as the normal `modscape dev` server.
+
 ### Changed
 
 - **`check` skill — SSOT-driven consistency checker** — Redesigned from a fixed pairwise comparison to an explicit single-source-of-truth (SSOT) mode. Usage: `/modscape:spec:check <name> [--from spec-model.yaml|design.md|spec.md]`. Default SSOT is `spec-model.yaml` (machine-readable truth); other artifacts are validated against it. Each issue includes a `→ Fix:` pointer to the correct artifact to update. Verdict levels: ✅ Ready / ⚠️ Caution / 🚫 Blocker. Updated for all three AI platforms (Claude / Gemini / Codex).
