@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.1] - 2026-05-21
+
+### Changed
+
+- **`/modscape:spec:implement` skill — 仕様修正フローをインライン一括完結に統一** — 実装セッション中にユーザーが仕様の修正を依頼した場合、「軽微な修正 / 設計変更」の 2 パス分岐を廃止し、修正の種類を問わず `design.md` → `spec-model.yaml` → `tasks.md` の 3 ファイルをインラインで一括更新するフローに統一した。設計変更（テーブル追加・削除・lineage 変更）でも `/modscape:spec:design` への案内で停止することなく、更新完了後に「実装を続けますか？（はい / いいえ）」の確認のみで実装を再開できる。`tasks.md` は全再生成ではなく影響タスクのみ外科的に更新する（テーブル追加時はフェーズを lineage から判定して挿入、削除時は該当行を削除、lineage 変更時は変更テーブルおよび downstream のタスクを `[ ]` に戻す）。Claude / Gemini / Codex の 3 プラットフォームすべてに適用済み。
+
 ## [3.5.0] - 2026-05-21
 
 ### Added
