@@ -60,8 +60,9 @@ These commands assist during an active SDD workflow. They require a `changes/<na
 |---------|---------|
 | `@modscape-spec-status <name>` | Show current progress of a work folder |
 | `@modscape-spec-status <name> detail` | Detailed view for handoff or onboarding |
-| `@modscape-spec-check <name>` | Pre-implement quality check: SSOT-driven consistency + go/no-go readiness |
+| `@modscape-spec-check <name> [--from spec-model.yaml\|design.md\|spec.md]` | Pre-implement quality check: SSOT-driven consistency + go/no-go readiness |
 | `@modscape-spec-answer <name>` | Answer a recorded Q-NNN question |
+| `@modscape-spec-investigate <name>` | Investigate a topic by reading repo files and record findings in `design.md` |
 
 ## Standalone Commands
 

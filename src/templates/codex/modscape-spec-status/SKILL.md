@@ -110,6 +110,8 @@ modscape summary <file> --json
 | 6 | Incomplete tasks | `/modscape:spec:implement <name>` |
 | 7 | All tasks complete | `/modscape:spec:check <name>` → `/modscape:spec:archive <name>` |
 
+> **Anytime:** `/modscape:spec:investigate <name>` — Ask AI to read repo files and investigate a discrepancy or logic question. Findings are recorded in `design.md`.
+
 ---
 
 ## `detail` subcommand
