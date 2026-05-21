@@ -51,6 +51,8 @@ export async function startSpecDevServer(specName) {
 
   const specModelPath = path.join(specDir, 'spec-model.yaml');
 
+  app.use(express.json({ limit: '10mb' }));
+
   app.get('/api/files', (_req, res) => {
     res.json([{ slug: resolvedSpecName, name: resolvedSpecName, path: path.relative(process.cwd(), specModelPath) }]);
   });
@@ -61,6 +63,21 @@ export async function startSpecDevServer(specName) {
       const raw = yaml.load(fs.readFileSync(specModelPath, 'utf8')) || {};
       const { schema } = resolveImports(raw, specDir);
       res.json(schema);
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+  app.post('/api/save', (req, res) => {
+    try {
+      const incoming = yaml.load(req.body.yaml) || {};
+      if (Array.isArray(incoming.tables)) {
+        incoming.tables = incoming.tables.filter(t => !t.isImported);
+      }
+      const original = fs.existsSync(specModelPath) ? (yaml.load(fs.readFileSync(specModelPath, 'utf8')) || {}) : {};
+      if (Array.isArray(original.imports)) {
+        incoming.imports = original.imports;
+      }
+      fs.writeFileSync(specModelPath, yaml.dump(incoming, { lineWidth: -1 }), 'utf8');
+      res.json({ success: true });
     } catch (e) { res.status(500).send(e.message); }
   });
 

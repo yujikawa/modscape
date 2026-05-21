@@ -42,7 +42,13 @@ Generate an implementation task list from `spec-model.yaml` and write it to `.mo
    - Materialization type in brackets (from `physical.strategy` or inferred from `conceptual.kind`)
    - Upstream dependencies with `←` notation (omit for Phase 1)
 
-7. Write `.modscape/changes/<name>/tasks.md` using the format below.
+7. **Write `.modscape/changes/<name>/tasks.md`** — 既存ファイルの状態に応じて以下の挙動を取ること:
+
+   - **`tasks.md` が存在しない** → そのままフォーマットに従って生成する。
+   - **`tasks.md` が存在し、完了済みタスク（`- [x]`）が 0 件** → 上書き生成する。
+   - **`tasks.md` が存在し、完了済みタスク（`- [x]`）が 1 件以上** → マージ処理を行う:
+     1. 差分（追加・維持・削除）をユーザーに提示し、確認を得てからマージ実行する。
+     2. マージルール: 旧 `[x]` かつ新 `spec-model.yaml` に存在 → `[x]` 維持。新規テーブル → `[ ]` 追加。削除テーブル → tasks.md から除去。
 
 8. Update `Status` in `.modscape/changes/<name>/spec.md` from `design` to `tasks` (if spec.md exists).
 

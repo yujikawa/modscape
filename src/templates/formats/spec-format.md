@@ -46,8 +46,12 @@
 
 ## Acceptance Criteria
 
-- [ ] **AC-001** — <criterion 1>
-- [ ] **AC-002** — <criterion 2>
+<!-- 抽象的な条件のみを記載すること。検証SQL・変換式・WHEN/THENシナリオは design.md に書く。 -->
+<!-- 良い例: "注文金額が正しく集計されること" -->
+<!-- 悪い例: "SELECT COUNT(*) FROM orders WHERE amount IS NULL = 0" → design.md へ -->
+
+- [ ] **AC-001** — <何が満たされるべきかを抽象的に記述>
+- [ ] **AC-002** — <何が満たされるべきかを抽象的に記述>
 
 ## Target Tool
 
