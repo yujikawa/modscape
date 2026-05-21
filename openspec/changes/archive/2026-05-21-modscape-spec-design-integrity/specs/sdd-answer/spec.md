@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Q-NNN への対話的回答記録ができる
 AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質問をユーザーに提示し、回答を対話的に収集して `changes/<name>/questions.md` に記録しなければならない（SHALL）。
@@ -16,9 +16,7 @@ AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質�
 3. 影響しない場合 → 波及確認レポートに「design.md: ✅ 影響なし」と記載する
 4. その後 `questions.md` のステータスを更新する
 
-スキルは `<name>` が省略された場合、アクティブな change を自動推定しなければならない（SHALL）:
-- アクティブな change が 1 つ → 自動選択
-- 複数 → 一覧を示してユーザーに選択させる
+スキルは `<name>` が省略された場合、アクティブな change を自動推定しなければならない（SHALL）。
 
 **曖昧と判断する基準（追加ヒアリングが必要）:**
 - 「たぶん」「おそらく」「〜のはず」など不確かな表現
@@ -46,15 +44,3 @@ AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質�
 #### Scenario: 回答できない場合は仮定として記録する
 - **WHEN** ユーザーが「わからない、後で確認します」と入力する
 - **THEN** `questions.md` の `**Assumption:**` 行に「未確認のまま進む」旨が記録され、チェックは `[ ]` のまま保持される
-
-#### Scenario: 回答が設計変更（テーブル構造・lineage）に影響する場合に再設計を提案する
-- **WHEN** 回答内容が `design.md` のテーブル構造や lineage に影響する（設計変更レベル）
-- **THEN** AIは `design.md` の Findings に記録し、`/modscape:spec:design <name>` の再実行を提案する
-
-#### Scenario: name を省略してもアクティブな change が 1 つなら動作する
-- **WHEN** `/modscape:spec:answer Q-001` のように name を省略して実行する
-- **THEN** アクティブな change が 1 つであれば自動選択して動作する
-
-#### Scenario: changes フォルダが存在しない場合はエラーを表示する
-- **WHEN** 存在しない `<name>` または Q-NNN で実行する
-- **THEN** AIは適切なエラーメッセージを表示する

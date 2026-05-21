@@ -180,7 +180,8 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 15. Write `.modscape/changes/<name>/design.md` using the format below.
     - On first run: create with design decisions and affected tables. Initialize `## Findings` with empty subsections.
-    - On re-run: preserve `## Findings` content; update `## Design Decisions` and `## Affected Tables` only.
+    - On re-run: preserve `## Findings` content; update `## Design Decisions`, `## Affected Tables`, and `## Implementation Details` only.
+    - **`## Implementation Details` の記載ルール**: 変換式（`expression`）・フィルター条件（`filter_key`/`WHERE`）・検証SQL・テストパターンのいずれかが存在するテーブルについて、`### <table-id>` セクションを作成して記載すること。実装者が `design.md` だけを参照して実装できる水準を目指す。
 
 16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
 

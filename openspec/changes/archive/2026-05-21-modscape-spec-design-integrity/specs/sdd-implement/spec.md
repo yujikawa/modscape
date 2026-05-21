@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: tasks.md の未完了タスクを順に実装する
 AIスキル `/modscape:spec:implement <name>` は `.modscape/changes/<name>/tasks.md` の未完了タスク（`- [ ]`）を Phase 順に1つずつ実装し、完了したタスクのチェックボックスを更新しなければならない（SHALL）。
@@ -14,13 +14,9 @@ AIスキル `/modscape:spec:implement <name>` は `.modscape/changes/<name>/task
 
 スキルは `.modscape/changes/modscape-spec.custom.md` が存在する場合、ターゲットツールや出力フォーマットについてそのルールを優先して適用しなければならない（SHALL）。
 
-スキルは `design.md` から **Context Only スキップリスト** を構築しなければならない（SHALL）:
-- `.modscape/changes/<name>/design.md` が存在する場合: `### Downstream Impact — Context Only` セクションからすべてのテーブルIDを抽出してスキップリストに追加する
-- `design.md` が存在しない、またはそのセクションが存在しない場合: スキップリストは空とし、すべてのテーブルを実装対象として扱う（後方互換）
+スキルは `design.md` から **Context Only スキップリスト** を構築しなければならない（SHALL）。
 
-スキップリストに含まれるテーブルIDのタスクは `⏭️ Skipping \`<id>\` (Context Only)` を出力してスキップしなければならない（SHALL）。
-
-スキルは実装中に人間の調査なしに判断できない事項（例：型の不一致、想定外のNULL、ソースレコードの不在）を検知した場合、`.modscape/changes/<name>/questions.md` に質問を追記しなければならない（SHALL）。質問がある場合、実装を一時停止してユーザーに確認するか、仮定を記録して続行するかを選択しなければならない（SHALL）。
+スキルは実装中に人間の調査なしに判断できない事項を検知した場合、`.modscape/changes/<name>/questions.md` に質問を追記しなければならない（SHALL）。
 
 **実装中の修正指摘処理（改定）:**
 スキルは実装セッション中にユーザーから修正指摘を受けた場合、以下の順序で処理しなければならない（SHALL）。生成済みファイルの直接編集は禁止する（SHALL NOT）。
@@ -63,10 +59,6 @@ AIスキル `/modscape:spec:implement <name>` は `.modscape/changes/<name>/task
 - **WHEN** `changes/<name>/tasks.md` に未完了タスクが存在する状態で `/modscape:spec:implement <name>` を実行する
 - **THEN** AIは `changes/<name>/spec-model.yaml` を参照して最初の未完了タスクのコードを生成し、tasks.md のチェックボックスを更新して次タスクへの確認を行う
 
-#### Scenario: 実装中に不明な事項を questions.md に積む
-- **WHEN** 実装中にAIが型の不一致や想定外のNULLを発見した
-- **THEN** AIは `questions.md` に質問を追記し、ユーザーに確認するか仮定で進むかを提示する
-
 #### Scenario: 修正指摘を受けたとき design.md を先に更新する
 - **WHEN** タスク完了後にユーザーが「`fct_orders.amount` の型が DECIMAL(18,2) に変えてほしい」と指摘する
 - **THEN** AIは生成済みの SQL ファイルを直接編集せず、まず `design.md` の該当テーブルセクションを更新し、次に `spec-model.yaml` を mutation CLI で修正し、波及確認レポートを出力してからタスクを戻すかユーザーに確認する
@@ -86,24 +78,3 @@ AIスキル `/modscape:spec:implement <name>` は `.modscape/changes/<name>/task
 #### Scenario: すべてのタスクが完了している場合にメッセージを表示する
 - **WHEN** `changes/<name>/tasks.md` の全タスクが完了済み（`- [x]`）の状態で `/modscape:spec:implement <name>` を実行する
 - **THEN** AIは「すべてのタスクが完了しています。`/modscape:spec:archive <name>` を実行してspecを同期してください」と案内する
-
-#### Scenario: tasks.md が存在しない場合に案内メッセージを表示する
-- **WHEN** `.modscape/changes/<name>/tasks.md` が存在しない状態で `/modscape:spec:implement <name>` を実行する
-- **THEN** AIは「先に `/modscape:spec:design <name>` を実行してタスクリストを生成してください」と案内する
-
-#### Scenario: Context Only テーブルをスキップする
-- **WHEN** tasks.md のタスクが `design.md` の `### Downstream Impact — Context Only` に含まれるテーブルIDである
-- **THEN** AIはコードを生成せず `⏭️ Skipping \`<id>\` (Context Only)` を出力して次のタスクに進む
-
-#### Scenario: design.md が存在しない場合のフォールバック
-- **WHEN** `.modscape/changes/<name>/design.md` が存在しない状態で `/modscape:spec:implement <name>` を実行する
-- **THEN** スキップリストは空として扱い、tasks.md に含まれるすべてのテーブルを実装対象として処理する
-
-## ADDED Requirements
-
-### Requirement: implementコマンドのsaveヒント
-`/modscape:spec:implement` の出力末尾に、作業を中断する場合の save ヒントを表示しなければならない（SHALL）。
-
-#### Scenario: implement セッション終了時のsaveヒント表示
-- **WHEN** `/modscape:spec:implement <name>` の出力が完了する（完了・中断問わず）
-- **THEN** 出力の末尾に「作業を中断する場合は `/modscape:spec:save <name>` を実行してください」というヒントを表示する

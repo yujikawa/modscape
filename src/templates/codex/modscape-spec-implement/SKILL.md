@@ -9,6 +9,8 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
 ## Instructions
 
+> ⛔ **生成済みファイルへの直接編集を禁止**: 実装中に修正が必要になった場合でも、生成済みの SQL/dbt ファイルを直接編集してはならない。修正は必ず `design.md → spec-model.yaml → 再生成` の順で行うこと。
+
 0. **Resolve `<name>`** — if the user did not provide a spec name argument:
    ```bash
    modscape spec list
@@ -176,18 +178,17 @@ When the user reports a problem during the implementation session — whether vi
 
 ### For a Minor fix (no command switch — resume implementation)
 
-1. **Immediately fix `spec-model.yaml`** — apply change with mutation CLI and run validate:
+1. **Update `design.md` first** — update the relevant table section in `## Implementation Details` (create the section if it does not exist). Record the fix there.
+2. **Fix `spec-model.yaml`** — apply changes with mutation CLI and run validate:
    ```bash
    modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>
    modscape validate .modscape/changes/<name>/spec-model.yaml
    ```
-2. **Check `spec.md` ACs** — fix any AC that contradicts the change immediately. Do NOT renumber AC IDs.
-3. **Record in `design.md` Findings** — append to `## Findings > ### Implementation Notes`:
-   ```
-   - `<table-id>`: <finding and fix> (amended <YYYY-MM-DD>)
-   ```
+3. **Check `spec.md` ACs** — fix any AC that contradicts the change immediately. Do NOT renumber AC IDs.
 4. **Output the impact report** (format below).
-5. **Resume implementation** — proceed to the next task.
+5. **Ask the user about the task checkbox** — use the confirmation format below.
+6. If the user chooses **yes** → uncheck the task (`[x]` → `[ ]`) and regenerate the SQL from the updated `spec-model.yaml`.
+7. If the user chooses **no** → proceed to the next task (the fix is applied; SQL will reflect it on the next build).
 
 ### For a Design change (pause implementation — re-run design)
 
@@ -209,11 +210,14 @@ When the user reports a problem during the implementation session — whether vi
 
 | File | Status | Details |
 |---|---|---|
+| design.md | ✅ Updated | <updated section in Implementation Details> |
 | spec.md | ✅ No impact / ✅ Updated | <changed AC or "No impact"> |
-| design.md | ✅ Updated | <content appended to Findings> |
 | spec-model.yaml | ✅ Updated / ⏸ On hold (re-run design first) | <change details or reason for hold> |
 
-*(For a Minor fix)* → Resuming implementation.
+*(For a Minor fix)* → このタスクを未完了（`[ ]`）に戻して実装し直しますか？
+
+- **はい** → タスクを `[ ]` に戻し、SQL を再生成します
+- **いいえ** → 修正は適用済みです。次のタスクへ進みます（SQL は次回ビルドで反映されます）
 
 *(For a Design change)* → Implementation paused. Next steps:
 ```

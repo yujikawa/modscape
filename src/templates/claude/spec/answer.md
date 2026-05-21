@@ -92,6 +92,29 @@ Receive the user's free-text reply. Evaluate it against these criteria:
 
 If ambiguous, ask a targeted follow-up question (one question at a time). Continue until the answer is clear or the user says it is unresolvable.
 
+### Step 4.5 — Update `design.md` before recording the answer
+
+Before writing to `questions.md`, check whether the answer has design impact:
+
+| Answer content | Impact |
+|---|---|
+| Affects column types, JOIN keys, schema structure, table decisions, transformation expressions, filter conditions | **Design impact** |
+| Affects acceptance criteria (AC-NNN) in `spec.md` | **Spec impact** |
+| Purely contextual / reference information | **No structural impact** |
+
+**If design impact:**
+1. Read `.modscape/changes/<name>/design.md`
+2. Update the relevant section — typically `## Design Decisions` or `## Implementation Details > ### <table-id>`
+3. Output a brief update summary: `design.md updated: <section> — <what was changed>`
+
+**If spec impact:**
+1. Note the affected AC-NNN for update (update spec.md or note it as pending)
+
+**If no structural impact:**
+1. Proceed to Step 5 without modifying design.md
+
+This step ensures design.md reflects the answer *before* the question is marked as answered.
+
 ### Step 5 — Write to `questions.md`
 
 Use the Edit tool to update the `## 🔴 Q-NNN` (or `## 🔵 Q-NNN`) section in `.modscape/changes/<name>/questions.md`. Do not rewrite the entire file. The format is defined in `.modscape/formats/questions-format.md`.
@@ -143,14 +166,19 @@ Determine impact category:
 ## Answer Recorded — <id>
 
 **Answer:** <the recorded answer>
-**_questions.yaml:** <id> status → answered  (or: assumed — assumption updated)
+**questions.md:** <id> status → answered  (or: assumed — assumption updated)
 
 **Design impact:** <assessment>
+
+| File | Status | Details |
+|---|---|---|
+| design.md | ✅ 更新済み / ✅ 影響なし | <updated section or "No impact"> |
+| spec.md | ✅ 更新済み / ✅ 影響なし | <updated AC or "No impact"> |
 
 **Next step:**
 ```
 
 Then based on impact:
-- Design impact → `Run /modscape:spec:design <name> to incorporate this into the design, or /modscape:spec:amend <name> to patch an existing design.`
+- Design impact (and design.md already updated) → `design.md を更新しました。引き続き /modscape:spec:implement <name> で実装を続けてください。`
 - Spec impact → `Run /modscape:spec:amend <name> to update the affected AC.`
 - No impact → `No design changes needed. Continue with /modscape:spec:implement <name>.`
