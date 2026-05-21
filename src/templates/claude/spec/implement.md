@@ -247,6 +247,5 @@ When the user reports a problem during the implementation session — whether vi
 
 <n> tasks remaining. Ready to continue?
 
-💾 To save session state before ending, run `/modscape:spec:save <name>`. To resume in a new session, run `/modscape:spec:load <name>`.
 ---
 > Run `modscape spec dev <name>` to review the final model in the visualizer.

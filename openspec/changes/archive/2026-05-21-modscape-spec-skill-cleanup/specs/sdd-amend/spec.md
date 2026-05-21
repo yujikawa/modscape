@@ -1,5 +1,3 @@
-> **廃止**: このスキルは `modscape-spec-skill-cleanup`（2026-05-21）で廃止されました。実装後の修正は `implement` スキルの inline 修正プロトコルで行ってください。
-
 ## REMOVED Requirements
 
 ### Requirement: 実装中に発覚した問題を SDD 成果物に反映できる

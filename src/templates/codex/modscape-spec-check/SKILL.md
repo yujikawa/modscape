@@ -1,177 +1,91 @@
 ---
 name: modscape-spec-check
-description: Pre-implementation quality check combining cross-artifact consistency and go/no-go readiness.
+description: Pre-implementation quality check with SSOT-driven consistency and go/no-go readiness.
 ---
 
 # Spec Check
 
-Pre-implementation quality check combining cross-artifact consistency and go/no-go readiness.
+Pre-implementation quality check: SSOT-driven consistency + go/no-go readiness.
+
+## Usage
+
+```
+/modscape:spec:check <name> [--from <artifact>]
+```
+
+- `<artifact>`: `spec-model.yaml` (default), `design.md`, or `spec.md`
 
 ## Instructions
 
-0. **Detect language** — If `.modscape/modscape-spec.custom.md` exists, read it and look for a `## Communication` section. If it contains a language directive (e.g., "Always respond in Japanese"), use that language for all output in this session. Otherwise default to English.
+### Step 0 — Detect language
 
-1. **Resolve `<name>`** — if the user did not provide a spec name argument:
-   ```bash
-   modscape spec list
-   ```
-   - No specs: stop and tell the user to run `modscape spec new <name>` first.
-   - Exactly one spec: use it automatically and note "Using spec: `<name>`".
-   - Multiple specs: show the list and ask the user to choose one.
+If `.modscape/modscape-spec.custom.md` exists, read it and look for a `## Communication` section. If it contains a language directive, use that language. Otherwise default to English.
 
-2. Check that `.modscape/changes/<name>/` exists.
-   - If not: stop and tell the user:
-     > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
+### Step 1 — Resolve the change name and SSOT
 
-3. Read the following files (skip silently if a file does not exist — note which were skipped):
-   - `.modscape/changes/<name>/spec.md`
-   - `.modscape/changes/<name>/design.md`
-   - `.modscape/changes/<name>/tasks.md`
-   - `.modscape/changes/<name>/questions.md`
-   - `.modscape/changes/<name>/spec-model.yaml` — use `modscape table list` to get table IDs
+Resolve `<name>` from argument or auto-detect (single active change). Resolve SSOT from `--from` (default: `spec-model.yaml`).
 
----
+Read the following files (skip silently if missing, note which were skipped):
+- `.modscape/changes/<name>/spec.md`
+- `.modscape/changes/<name>/design.md`
+- `.modscape/changes/<name>/tasks.md`
+- `.modscape/changes/<name>/questions.md`
+- `.modscape/changes/<name>/spec-model.yaml` (use `modscape table list` for table IDs)
 
-### Part 1: Consistency
+### Step 2 — Part 1: SSOT-driven Consistency
 
-Run checks by category. For each category, if a required file is missing, display `⏭ skipped — <filename> not found` and move to the next category.
+Run checks based on the chosen SSOT. For each issue, include a **→ Fix:** line.
 
-**A. spec.md ↔ design.md**
+**When SSOT = `spec-model.yaml` (default):**
+- A. Check all spec-model.yaml tables are classified in design.md Affected Tables (❌ if missing → re-run `/modscape:spec:design`)
+- B. Check all Direct Impact tables have at least one task in tasks.md (❌ if missing → re-run `/modscape:spec:tasks`)
+- C. Check unresolved Q-NNN questions have an Assumption block in design.md (⚠️ if missing → run `/modscape:spec:answer`)
 
-A-1. Table coverage
-- Extract table IDs mentioned in `spec.md` (kebab-case identifiers matching table IDs in the model)
-- Check that each ID appears in `design.md` under `## Affected Tables`
-- Flag any table ID found in `spec.md` but absent from `design.md` Affected Tables
+**When SSOT = `design.md`:**
+- A. Check all tables in design.md Implementation Details exist in spec-model.yaml (❌ if absent → fix design.md or add to model)
+- B. Check all Direct Impact tables have tasks (❌ if missing → re-run `/modscape:spec:tasks`)
+- C. Check all spec.md ACs are referenced in design.md (⚠️ if not found → update design.md)
 
-A-2. Requires Model Change tracking
-- Extract entries listed under `### Requires Model Change` in `design.md`
-- For each entry, check if a corresponding task exists in `tasks.md`
-- Flag any entry with no corresponding task
+**When SSOT = `spec.md`:**
+- A. Check all spec.md ACs are mentioned in design.md (❌ if absent → update design.md)
+- B. Classify each AC: ✅ Phase 4 test covers it / 🔧 manual verification / ❌ uncovered (→ add task or mark manual)
 
-**B. design.md ↔ spec-model.yaml**
+### Step 3 — Part 2: Readiness (always run)
 
-B-1. Direct Impact tables exist in model
-- Extract table IDs listed under `### Direct Impact` in `design.md`
-- Check each ID against `modscape table list .modscape/changes/<name>/spec-model.yaml`
-- Flag any ID listed as Direct Impact but absent from `spec-model.yaml`
+- **Unresolved questions**: count and list open/assumed Q-NNN entries
+- **Assumptions**: count Assumption blocks in questions.md and design.md
+- **AC Coverage**: classify each AC-NNN (if not already done in Part 1)
+- **Documentation Coverage**: run `modscape coverage` if Coverage Policy is set in modscape-spec.custom.md; skip otherwise
 
-B-2. Model tables are classified in design
-- Get all table IDs from `modscape table list .modscape/changes/<name>/spec-model.yaml`
-- Check each ID appears somewhere in `design.md` `## Affected Tables`
-- Flag any table in `spec-model.yaml` that has no classification in `design.md`
-
-**C. design.md ↔ tasks.md**
-
-C-1. Direct Impact table task coverage
-- Extract table IDs under `### Direct Impact` in `design.md`
-- For each, check if at least one task in `tasks.md` references it
-- Flag Direct Impact tables with no corresponding task
-
-**D. questions.md ↔ design.md**
-
-D-1. Unresolved questions recorded as assumptions
-- Find all `- [ ]` entries in `questions.md` (unresolved Q-NNN)
-- For each unresolved question, check if `design.md` contains a reference to that Q-NNN or topic as an assumption (`**Assumption:**` or `**仮定:**` lines)
-- Flag unresolved questions with no assumption recorded
-
----
-
-### Part 2: Readiness
-
-**Unresolved questions**
-- Count lines matching `- [ ]` in `questions.md`; list their Q-NNN IDs
-
-**Assumptions**
-- Find lines containing `**仮定:**` or `**Assumption:**` in `design.md` and `questions.md`; count and list them briefly (first 60 chars of each line)
-
-**AC Coverage** (requires both `spec.md` and `tasks.md`)
-- Extract all `AC-NNN:` entries from `spec.md` Acceptance Criteria
-- For each AC-NNN, check if any Phase 4 task in `tasks.md` contains `[→ AC-NNN]`
-- Classify each AC as:
-  - **Test covered**: at least one Phase 4 task references it with `[→ AC-NNN]`
-  - **Manual verification**: no test task, but `[manual verification]` appears near the AC in the tasks file, or the AC text describes a non-automatable condition
-  - **Uncovered**: no reference found in tasks file at all
-- If the spec or tasks file does not exist or has no AC-NNN entries: skip this section
-
-**Downstream classification confidence**
-- Scan `design.md` for tables marked with low confidence
-- List those table IDs
-
-**Documentation Coverage** (only when `modscape-spec.custom.md` has a `## Coverage Policy` section with a minimum threshold)
-- Read `.modscape/modscape-spec.custom.md` and extract the minimum coverage value from `## Coverage Policy` (pattern: `Minimum documentation coverage: <N>%`)
-- If found, run: `modscape coverage .modscape/changes/<name>/spec-model.yaml`
-- Parse the output and display per-table coverage
-- Flag tables below the threshold with ⚠️
-- If `modscape-spec.custom.md` does not exist or has no Coverage Policy: skip this section entirely
-
----
-
-4. Display the combined report:
+### Step 4 — Display report and verdict
 
 ```
-## Check: <name>
+## Check: <name>  (SSOT: <artifact>)
 
 ### Part 1: Consistency
-
-#### A. spec.md ↔ design.md
-✅ All tables in spec.md are classified in design.md
-❌ Requires Model Change "fct_orders: add column revenue_net" has no corresponding task in tasks.md
-   → Add a task to tasks.md or re-run /modscape:spec:design <name>
-
-#### B. design.md ↔ spec-model.yaml
-✅ All Direct Impact tables exist in spec-model.yaml
-⚠️  mart_summary: exists in spec-model.yaml but not classified in design.md Affected Tables
-   → Re-run /modscape:spec:design <name> to classify this table
-
-#### C. design.md ↔ tasks.md
-⚠️  stg_orders: Direct Impact but no matching task found in tasks.md
-   → Add a task or re-run /modscape:spec:design <name>
-
-#### D. questions.md ↔ design.md
-✅ All unresolved questions are recorded as assumptions in design.md
+#### A. <title>
+✅ / ❌ <finding>
+   → Fix: <what to do>
 
 ---
-
 ### Part 2: Readiness
-
 #### Unresolved Questions
-- 3 — Q-001, Q-003, Q-007 (see .modscape/changes/<name>/questions.md)
-
 #### Assumptions
-- 2
-  - `fct_orders`: NULL rate assumed < 5% (unconfirmed)
-  - ...
-
-#### AC Coverage (4/6)
-- ✅ AC-001: <text> ← Phase 4 test
-- ✅ AC-003: <text> ← Phase 4 test
-- 🔧 AC-002: <text> [manual verification]
-- ❌ AC-004: <text> — no test generated
-- ❌ AC-005: <text> — no test generated
-
-#### Downstream Classification (Low Confidence)
-- `dim_customer`: lineage only — Context Only (low confidence)
+#### AC Coverage
+#### Documentation Coverage
 ```
 
-5. Evaluate overall status:
-   - **Ready**: no ❌ consistency issues AND no unresolved questions AND no uncovered ACs AND no low-confidence downstream tables
-     → Display: `✅ No issues found. Ready to implement.`
-   - **Proceed with caution**: only ⚠️ warnings, or open questions/assumptions exist
-     → Display: `⚠️ Issues found above. Review before implementing. You may still proceed if needed.`
-   - **Blocker**: at least one ❌ consistency issue exists
-     → Display: `🚫 Blocking issues found. Re-run /modscape:spec:design <name> before implementing.`
+**Verdict:**
+- `✅ No issues found. Ready to implement.` — no ❌, no uncovered ACs, no unresolved questions
+- `⚠️ Issues found above. Review before implementing.` — warnings only
+- `🚫 Blocking issues found. Fix inconsistencies before implementing.` — any ❌
 
-6. **Always output the following next steps at the end:**
-
----
-**Next steps:**
+**Next steps (always show):**
 ```
-/modscape:spec:design <name>    # re-run design to fix model/task gaps
-/modscape:spec:implement <name> # proceed to implementation
-/modscape:spec:check <name>     # re-run after making changes
+/modscape:spec:design <name>
+/modscape:spec:implement <name>
+/modscape:spec:check <name> --from design.md
+/modscape:spec:check <name> --from spec.md
 ```
----
 
 ## COMMAND: /modscape:spec:check
-
-Usage: `/modscape:spec:check <name>`

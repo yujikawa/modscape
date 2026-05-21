@@ -1,5 +1,3 @@
-> **廃止**: このスキル（save / load）は `modscape-spec-skill-cleanup`（2026-05-21）で廃止されました。セッション状態の把握には `status` コマンドを使用してください。
-
 ## REMOVED Requirements
 
 ### Requirement: saveコマンド

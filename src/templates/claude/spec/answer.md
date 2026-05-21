@@ -180,5 +180,5 @@ Determine impact category:
 
 Then based on impact:
 - Design impact (and design.md already updated) → `design.md を更新しました。引き続き /modscape:spec:implement <name> で実装を続けてください。`
-- Spec impact → `Run /modscape:spec:amend <name> to update the affected AC.`
+- Spec impact → spec.md の該当 AC-NNN を更新し、`/modscape:spec:implement <name>` を続けてください。
 - No impact → `No design changes needed. Continue with /modscape:spec:implement <name>.`

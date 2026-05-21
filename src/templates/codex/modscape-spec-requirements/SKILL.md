@@ -177,5 +177,4 @@ Usage: `/modscape:spec:requirements`
 /modscape:spec:design <name>
 ```
 
-💾 To save session state before ending, run `/modscape:spec:save <name>`. To resume in a new session, run `/modscape:spec:load <name>`.
 ---

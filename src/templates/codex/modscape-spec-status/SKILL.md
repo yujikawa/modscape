@@ -60,7 +60,7 @@ modscape summary <file> --json
    - If it has entries: flag as ⚠️ model changes pending
 
 7. Determine the **next action** using the following priority rules (use the first that applies):
-   - `design.md` has entries under `## Findings > ### Requires Model Change` → `/modscape:spec:amend <name>`
+   - `design.md` has entries under `## Findings > ### Requires Model Change` → `/modscape:spec:implement <name>` (inline fix protocol)
    - `_questions.yaml` has entries with `status: open` or `status: assumed` for `change: <name>` → `/modscape:spec:answer <name>` (include count)
    - No `spec.md` → `/modscape:spec:requirements`
    - No `design.md` → `/modscape:spec:design <name>`
@@ -102,7 +102,7 @@ modscape summary <file> --json
 
 | Priority | Condition | Next command |
 |---|---|---|
-| 1 | Findings (Requires Model Change) | `/modscape:spec:amend <name>` |
+| 1 | Findings (Requires Model Change) | `/modscape:spec:implement <name>` (inline fix protocol) |
 | 2 | Unresolved questions in `_questions.yaml` | `/modscape:spec:answer <name>` |
 | 3 | No spec.md | `/modscape:spec:requirements` |
 | 4 | No design.md | `/modscape:spec:design <name>` |
