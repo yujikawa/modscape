@@ -4,9 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [3.5.1] - 2026-05-21
 
+### Added
+
+- **`archive` skill — `## Usage Guide` section added to permanent table specs** — Each per-table spec (`<SPEC_DIR>/<model-slug>/<table-id>.md`) now includes a `## Usage Guide` section with four subsections: `⚠ Don't Do This` (patterns that produce incorrect results such as double-counting or wrong JOINs), `Required Filters` (filters that must be applied in every query), `Common JOIN Patterns` (correct join patterns with any SCD or fan-out notes), and `Example Queries` (concrete SQL for common use cases). Population guidance added for each subsection. Applied to all three AI platforms (Claude / Gemini / Codex).
+
+- **`note` skill — `## Usage Guide` added to section routing** — Free-form input describing dangerous patterns, required filters, JOIN patterns, or query examples is now routed to `## Usage Guide` instead of falling through to `## Known Issues / Caveats`. Applied to all three AI platforms (Claude / Gemini / Codex).
+
+- **`note` skill — find-based spec file lookup** — The skill no longer requires knowledge of the exact file path. It locates the spec by running `find <SPEC_DIR> -name "<table-id>.md"` instead of assuming a fixed path structure. When multiple files match (e.g. same table ID in different model slugs), the skill lists the candidates and asks the user to choose. Applied to all three AI platforms (Claude / Gemini / Codex).
+
 ### Changed
 
-- **`/modscape:spec:implement` skill — 仕様修正フローをインライン一括完結に統一** — 実装セッション中にユーザーが仕様の修正を依頼した場合、「軽微な修正 / 設計変更」の 2 パス分岐を廃止し、修正の種類を問わず `design.md` → `spec-model.yaml` → `tasks.md` の 3 ファイルをインラインで一括更新するフローに統一した。設計変更（テーブル追加・削除・lineage 変更）でも `/modscape:spec:design` への案内で停止することなく、更新完了後に「実装を続けますか？（はい / いいえ）」の確認のみで実装を再開できる。`tasks.md` は全再生成ではなく影響タスクのみ外科的に更新する（テーブル追加時はフェーズを lineage から判定して挿入、削除時は該当行を削除、lineage 変更時は変更テーブルおよび downstream のタスクを `[ ]` に戻す）。Claude / Gemini / Codex の 3 プラットフォームすべてに適用済み。
+- **`/modscape:spec:implement` skill — spec fix flow unified to inline single-pass** — When the user requests a spec correction during an implementation session, the previous two-path branch ("minor fix / design change") has been removed. Regardless of the type of change, the skill now updates `design.md` → `spec-model.yaml` → `tasks.md` inline in one pass. Even for structural design changes (table additions, deletions, lineage changes), the flow no longer stops to redirect to `/modscape:spec:design`; after the updates are complete, it simply asks "Continue implementing? (yes / no)". `tasks.md` is updated surgically — only affected tasks are touched (new tasks inserted at the phase determined from lineage, deleted table tasks removed, lineage-changed tasks reset to `[ ]`). Applied to all three AI platforms (Claude / Gemini / Codex).
+
+- **README (EN / JA) — archive output and file structure updated** — The archive section now reflects the current `<model-slug>/<table-id>.md` path convention (replacing the outdated `<table-id>/spec.md` folder-per-table format). `_questions.yaml`, `_glossary.yaml`, and `_context.yaml` are listed explicitly in the file structure diagram and command output column. The `_context.yaml` description is corrected to state that it stores cross-project architectural decisions only (not per-table `last_change` / `open_questions` / `has_spec` metadata). The `generate` and `note` command descriptions are updated to remove hardcoded path references.
 
 ## [3.5.0] - 2026-05-21
 
