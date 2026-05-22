@@ -1,9 +1,4 @@
-# unified-search-tab Specification
-
-## Purpose
-The Unified Search Tab provides a central place for users to discover and navigate through the data model. It intelligently switches between a domain-based hierarchy and a full-text search based on user input.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 統合 Search タブの表示切り替え
 右パネルの Search タブは検索ワードの有無によって表示内容を自動切り替えしなければならない（SHALL）。
@@ -27,10 +22,3 @@ The Unified Search Tab provides a central place for users to discover and naviga
 #### Scenario: Metricの計算式で検索できる
 - **WHEN** ユーザーがMetricの `expression` に含まれる文字列を入力する
 - **THEN** 該当するMetricが検索結果に表示される
-
-### Requirement: 右パネルのタブ削減
-右パネルのタブは Search / Path Finder / Note Search の3タブ構成にしなければならない（SHALL）。Tables タブ・Information Search タブ・Model Stats タブは削除しなければならない（SHALL）。
-
-#### Scenario: 右パネルに3タブのみ存在する
-- **WHEN** ユーザーが右パネルの ActivityBar を見る
-- **THEN** Search・Path Finder・Note Search の3つのアイコンボタンのみが表示される

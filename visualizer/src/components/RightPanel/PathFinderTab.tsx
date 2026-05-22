@@ -18,6 +18,7 @@ import {
 
 type Mode = 'single' | 'path'
 type SingleRange = 'direct' | 'all'
+type NodeKind = 'table' | 'consumer' | 'metric'
 
 const PathFinderTab = () => {
   const { schema, theme, setPathFinderResult, setFocusNodeId } = useStore()
@@ -35,10 +36,12 @@ const PathFinderTab = () => {
 
   const tables = useMemo(() => schema?.tables || [], [schema])
   const consumers = useMemo(() => schema?.consumers || [], [schema])
+  const metrics = useMemo(() => schema?.metrics || [], [schema])
   const allNodes = useMemo(() => [
-    ...tables.map(t => ({ id: t.id, name: t.conceptual?.name ?? t.id, kind: 'table' as const })),
-    ...consumers.map(c => ({ id: c.id, name: c.name, kind: 'consumer' as const })),
-  ], [tables, consumers])
+    ...tables.map(t => ({ id: t.id, name: t.conceptual?.name ?? t.id, kind: 'table' as NodeKind })),
+    ...consumers.map(c => ({ id: c.id, name: c.name, kind: 'consumer' as NodeKind })),
+    ...metrics.map(m => ({ id: m.id, name: m.name, kind: 'metric' as NodeKind })),
+  ], [tables, consumers, metrics])
 
   // Group nodes by domain for optgroup display
   const groupedNodes = useMemo(() => {
@@ -108,9 +111,11 @@ const PathFinderTab = () => {
     ? `text-slate-400 hover:text-slate-200`
     : `text-slate-500 hover:text-slate-700`
 
-  const NodeIcon = ({ kind }: { kind: 'table' | 'consumer' }) =>
+  const NodeIcon = ({ kind }: { kind: NodeKind }) =>
     kind === 'consumer'
       ? <FileChartColumnIncreasing size={12} className="text-violet-400 shrink-0" />
+      : kind === 'metric'
+      ? <GitGraph size={12} className="text-emerald-400 shrink-0" />
       : <Database size={12} className="text-emerald-500 shrink-0" />
 
   // Combobox: free-text filter + dropdown selector

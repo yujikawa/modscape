@@ -28,7 +28,7 @@ export function listDownstreamLineages(entries, fromId, { recursive = false, dep
 }
 
 function findNodeById(schema, id) {
-  return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || null;
+  return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || (schema.metrics || []).find(m => m.id === id) || null;
 }
 
 export function addLineage(filePath, { from, to, id, description }) {

@@ -86,7 +86,7 @@ export function readYaml(filePath) {
   return data || {};
 }
 
-const ROOT_KEY_ORDER = ['version', 'imports', 'domains', 'tables', 'lineage', 'relationships', 'annotations', 'layout', 'consumers'];
+const ROOT_KEY_ORDER = ['version', 'imports', 'domains', 'tables', 'lineage', 'relationships', 'annotations', 'layout', 'consumers', 'metrics'];
 const TABLE_KEY_ORDER = ['id', 'conceptual', 'logical', 'physical', 'display', 'columns', 'metadata', 'sampleData'];
 const COLUMN_KEY_ORDER = ['id', 'name', 'type', 'description', 'isPrimaryKey', 'isForeignKey', 'isPartitionKey', 'additivity', 'expression', 'physical'];
 

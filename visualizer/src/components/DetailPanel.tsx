@@ -1,9 +1,9 @@
 import { memo, useState, useCallback, useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
-import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, FileChartColumnIncreasing, Copy } from 'lucide-react'
+import { X, Plus, Trash2, Tag as TagIcon, Table as TableIcon, Database, Link as LinkIcon, Unlink, GripHorizontal, FileChartColumnIncreasing, Copy, ChartLine } from 'lucide-react'
 import type { Table, Column } from '../types/schema'
-import { TYPE_CONFIG } from '../lib/cytoscapeElements'
+import { TYPE_CONFIG, METRIC_DEFAULT_COLOR } from '../lib/cytoscapeElements'
 import { LINEAGE_BASE, CONSUMER_DEFAULT_COLOR, ANNOTATION_DEFAULT_COLOR } from '../lib/colors'
 
 const CardBadge = ({ label }: { label: string }) => (
@@ -18,6 +18,7 @@ const DetailPanel = memo(() => {
     getSelectedTable,
     getSelectedDomain,
     getSelectedConsumer,
+    getSelectedMetric,
     getSelectedRelationship,
     getSelectedAnnotation,
     updateTable,
@@ -25,6 +26,8 @@ const DetailPanel = memo(() => {
     renameColumnId,
     updateDomain,
     updateConsumer,
+    updateMetric,
+    removeMetric,
     updateRelationship,
     updateRelationshipDescription,
     updateLineageDescription,
@@ -40,6 +43,7 @@ const DetailPanel = memo(() => {
     getSelectedTable: s.getSelectedTable,
     getSelectedDomain: s.getSelectedDomain,
     getSelectedConsumer: s.getSelectedConsumer,
+    getSelectedMetric: s.getSelectedMetric,
     getSelectedRelationship: s.getSelectedRelationship,
     getSelectedAnnotation: s.getSelectedAnnotation,
     updateTable: s.updateTable,
@@ -47,6 +51,8 @@ const DetailPanel = memo(() => {
     renameColumnId: s.renameColumnId,
     updateDomain: s.updateDomain,
     updateConsumer: s.updateConsumer,
+    updateMetric: s.updateMetric,
+    removeMetric: s.removeMetric,
     updateRelationship: s.updateRelationship,
     updateRelationshipDescription: s.updateRelationshipDescription,
     updateLineageDescription: s.updateLineageDescription,
@@ -66,6 +72,7 @@ const DetailPanel = memo(() => {
   const table = getSelectedTable()
   const domain = getSelectedDomain()
   const consumer = getSelectedConsumer()
+  const metric = getSelectedMetric()
   const relationshipData = getSelectedRelationship()
   const annotation = getSelectedAnnotation()
   
@@ -194,7 +201,7 @@ const DetailPanel = memo(() => {
   })
 
   if (!isDetailPanelOpen) return null
-  if (!table && !domain && !consumer && !relationshipData && !annotation) return null
+  if (!table && !domain && !consumer && !metric && !relationshipData && !annotation) return null
 
   // Helper to prevent event propagation to canvas
   const stopPropagation = (e: React.MouseEvent | React.TouchEvent | React.PointerEvent) => {
@@ -393,6 +400,89 @@ const DetailPanel = memo(() => {
         <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
       </div>
     );
+  }
+
+  // --- Metric Editor Rendering ---
+  if (metric) {
+    return (
+      <div
+        ref={panelRef}
+        className="shadow-2xl z-50 flex flex-col sidebar-content"
+        onClick={stopPropagation}
+        onMouseDown={stopPropagation}
+        onPointerDown={stopPropagation}
+        style={panelStyle}
+      >
+        {dragBar(METRIC_DEFAULT_COLOR)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderBottom: '1px solid var(--border-main)', backgroundColor: 'var(--header-bg)' }}>
+          <ChartLine size={16} style={{ color: METRIC_DEFAULT_COLOR, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{metric.name}</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', backgroundColor: `${METRIC_DEFAULT_COLOR}20`, color: METRIC_DEFAULT_COLOR, border: `1px solid ${METRIC_DEFAULT_COLOR}40`, textTransform: 'uppercase' }}>METRIC</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+              <button
+                onMouseDown={e => e.stopPropagation()}
+                onClick={() => copyEdgeId(metric.id)}
+                title="Copy ID"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '1px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+              >
+                <Copy size={11} />
+              </button>
+              <p style={{ fontSize: '11px', color: copiedId === metric.id ? '#22c55e' : 'var(--text-secondary)', margin: 0, fontFamily: 'monospace', fontWeight: copiedId === metric.id ? 600 : 400 }}>ID: {metric.id}</p>
+            </div>
+          </div>
+          <button
+            onMouseDown={e => e.stopPropagation()}
+            onClick={() => removeMetric(metric.id)}
+            title="Delete metric"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', borderRadius: '4px' }}
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Name */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Name</h3>
+              <input
+                value={metric.name}
+                onChange={(e) => updateMetric(metric.id, { name: e.target.value })}
+                className={`w-full border rounded text-sm p-2 outline-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+              />
+            </section>
+
+            {/* Description */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Description</h3>
+              <textarea
+                value={metric.description || ''}
+                onChange={(e) => updateMetric(metric.id, { description: e.target.value || undefined })}
+                rows={3}
+                placeholder="What this metric measures..."
+                className={`w-full border rounded text-sm p-2 outline-none resize-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+              />
+            </section>
+
+            {/* Expression */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Expression</h3>
+              <textarea
+                value={metric.expression || ''}
+                onChange={(e) => updateMetric(metric.id, { expression: e.target.value || undefined })}
+                rows={4}
+                placeholder="SUM(fct_orders.amount) / COUNT(DISTINCT customer_id)"
+                className={`w-full border rounded text-sm p-2 outline-none resize-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+              />
+            </section>
+          </div>
+        </div>
+        <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />
+      </div>
+    )
   }
 
   // --- Consumer Editor Rendering ---

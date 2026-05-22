@@ -20,6 +20,7 @@ export function validateModel(filePath) {
   const lineage = data.lineage || [];
   const layout = data.layout || {};
   const consumers = data.consumers || [];
+  const metrics = data.metrics || [];
 
   // ── ID sets ───────────────────────────────────────────────────────────────
   const tableIds = new Set();
@@ -27,6 +28,7 @@ export function validateModel(filePath) {
   const relIds = new Set();
   const lineageIds = new Set();
   const consumerIds = new Set(consumers.map(c => c.id).filter(Boolean));
+  const metricIds = new Set(metrics.map(m => m.id).filter(Boolean));
 
   // ── v1 schema detection ──────────────────────────────────────────────────
   const version = typeof data.version === 'string' ? data.version : '1.0.0';
@@ -90,8 +92,20 @@ export function validateModel(filePath) {
     else if (!tableIds.has(rel.to.table)) err(`${prefix}.to.table`, `Table "${rel.to.table}" not found`);
   }
 
+  // ── Structural checks: metrics ────────────────────────────────────────────
+  for (const [i, metric] of metrics.entries()) {
+    const prefix = `metrics[${i}]`;
+    if (!metric.id) { err(prefix, 'Missing required field: id'); continue; }
+    if (!metric.name) warn(`${prefix}(${metric.id})`, 'Missing required field: name');
+    if (tableIds.has(metric.id) || consumerIds.has(metric.id)) {
+      err(prefix, `Duplicate id "${metric.id}": already used by a table or consumer`);
+    }
+    if (metricIds.has(metric.id)) err(prefix, `Duplicate metric id: "${metric.id}"`);
+    metricIds.add(metric.id);
+  }
+
   // ── Structural checks: lineage ────────────────────────────────────────────
-  const validLineageTargets = new Set([...tableIds, ...consumerIds]);
+  const validLineageTargets = new Set([...tableIds, ...consumerIds, ...metricIds]);
   for (const [i, entry] of lineage.entries()) {
     const prefix = `lineage[${i}]`;
     if (entry.id) {
@@ -99,9 +113,9 @@ export function validateModel(filePath) {
       lineageIds.add(entry.id);
     }
     if (!entry.from) err(prefix, 'Missing from');
-    else if (!validLineageTargets.has(entry.from)) err(`${prefix}.from`, `"${entry.from}" not found in tables or consumers`);
+    else if (!validLineageTargets.has(entry.from)) err(`${prefix}.from`, `"${entry.from}" not found in tables, consumers, or metrics`);
     if (!entry.to) err(prefix, 'Missing to');
-    else if (!validLineageTargets.has(entry.to)) err(`${prefix}.to`, `"${entry.to}" not found in tables or consumers`);
+    else if (!validLineageTargets.has(entry.to)) err(`${prefix}.to`, `"${entry.to}" not found in tables, consumers, or metrics`);
   }
 
   // ── Column completeness ───────────────────────────────────────────────────
@@ -123,7 +137,7 @@ export function validateModel(filePath) {
   }
 
   // ── Layout checks ─────────────────────────────────────────────────────────
-  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds]);
+  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds, ...metricIds]);
   for (const [id, coords] of Object.entries(layout)) {
     if (!validLayoutIds.has(id)) {
       warn(`layout.${id}`, `"${id}" not found in tables or domains — orphaned layout entry`);

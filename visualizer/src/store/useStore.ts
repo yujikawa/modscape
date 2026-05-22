@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import yaml from 'js-yaml'
-import type { Schema, Table, Relationship, Domain, Annotation, Consumer } from '../types/schema'
+import type { Schema, Table, Relationship, Domain, Annotation, Consumer, Metric } from '../types/schema'
 import { parseYAML, normalizeSchema } from '../lib/parser'
 
 // Debounce timer for syncToYamlInput — avoids yaml.dump on every frame during drag
@@ -93,6 +93,7 @@ interface AppState {
   addTable: (x: number, y: number, name?: string) => void;
   addDomain: (x: number, y: number, name?: string) => void;
   addConsumer: (x: number, y: number, name?: string) => void;
+  addMetric: (x: number, y: number, name?: string) => void;
   addRelationship: (source: string, target: string, sourceHandle?: string | null, targetHandle?: string | null, relType?: Relationship['type']) => void;
   bulkAddRelationship: (source: { table: string, column?: string }, targetPattern: string, type: Relationship['type'] | 'lineage') => void;
   addLineage: (source: string, target: string) => void;
@@ -146,9 +147,12 @@ interface AppState {
   getSelectedTable: () => Table | null;
   getSelectedDomain: () => Domain | null;
   getSelectedConsumer: () => Consumer | null;
+  getSelectedMetric: () => Metric | null;
   getSelectedRelationship: () => { relationship: Relationship; index: number; kind: 'er' | 'lineage' } | null;
   getSelectedAnnotation: () => Annotation | null;
   updateConsumer: (id: string, updates: Partial<Consumer>) => void;
+  updateMetric: (id: string, updates: Partial<Metric>) => void;
+  removeMetric: (id: string) => void;
 }
 
 let saveTimeout: any = null;
@@ -498,6 +502,24 @@ export const useStore = create<AppState>()(persist(
     const newSchema = {
       ...schema,
       consumers: [...(schema.consumers || []), newUsecase],
+      layout: { ...(schema.layout || {}), [newId]: { x: Math.round(x), y: Math.round(y) } }
+    };
+    set({ schema: normalizeSchema(newSchema), selectedTableId: newId });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  addMetric: (x, y, name) => {
+    pushHistory(get, set);
+    const schema = get().schema || { tables: [], relationships: [], layout: {} };
+    const newId = name ? name.toLowerCase().replace(/\s+/g, '_') : `new_metric_${Date.now()}`;
+    const newMetric = {
+      id: newId,
+      name: name || 'NEW_METRIC',
+    };
+    const newSchema = {
+      ...schema,
+      metrics: [...(schema.metrics || []), newMetric],
       layout: { ...(schema.layout || {}), [newId]: { x: Math.round(x), y: Math.round(y) } }
     };
     set({ schema: normalizeSchema(newSchema), selectedTableId: newId });
@@ -1191,11 +1213,36 @@ export const useStore = create<AppState>()(persist(
     return schema.consumers.find(u => u.id === selectedTableId) || null;
   },
 
+  getSelectedMetric: () => {
+    const { schema, selectedTableId } = get();
+    if (!schema || !selectedTableId || !schema.metrics) return null;
+    return schema.metrics.find(m => m.id === selectedTableId) || null;
+  },
+
   updateConsumer: (id, updates) => {
     const { schema } = get();
     if (!schema) return;
     const newUsecases = (schema.consumers || []).map(u => u.id === id ? { ...u, ...updates } : u);
     set({ schema: { ...schema, consumers: newUsecases } });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  updateMetric: (id, updates) => {
+    const { schema } = get();
+    if (!schema) return;
+    const newMetrics = (schema.metrics || []).map(m => m.id === id ? { ...m, ...updates } : m);
+    set({ schema: { ...schema, metrics: newMetrics } });
+    get().syncToYamlInput();
+    get().saveSchema();
+  },
+
+  removeMetric: (id) => {
+    const { schema } = get();
+    if (!schema) return;
+    const newMetrics = (schema.metrics || []).filter(m => m.id !== id);
+    const newLineage = (schema.lineage || []).filter(l => l.from !== id && l.to !== id);
+    set({ schema: { ...schema, metrics: newMetrics, lineage: newLineage }, selectedTableId: null });
     get().syncToYamlInput();
     get().saveSchema();
   },

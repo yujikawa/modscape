@@ -9,9 +9,11 @@ import {
   HelpCircle,
   FileChartColumnIncreasing,
   Database,
+  ChartLine,
 } from 'lucide-react'
-import type { Table, Column } from '../../types/schema'
+import type { Table, Column, Metric } from '../../types/schema'
 import { LINEAGE_BASE } from '../../lib/colors'
+import { METRIC_DEFAULT_COLOR } from '../../lib/cytoscapeElements'
 
 const MAX_RESULTS = 30
 
@@ -24,6 +26,17 @@ interface TableResult {
 function matchesKeyword(value: string | undefined, keyword: string): boolean {
   if (!value) return false
   return value.toLowerCase().includes(keyword)
+}
+
+function searchMetrics(metrics: Metric[], keyword: string): Metric[] {
+  const kw = keyword.toLowerCase().trim()
+  if (!kw) return []
+  return metrics.filter(m =>
+    matchesKeyword(m.name, kw) ||
+    matchesKeyword(m.id, kw) ||
+    matchesKeyword(m.expression, kw) ||
+    matchesKeyword(m.description, kw)
+  )
 }
 
 function searchModel(tables: Table[], keyword: string): TableResult[] {
@@ -102,7 +115,7 @@ const SearchTab = memo(() => {
 
   // Tree data (all tables grouped, no filtering — used when query is empty)
   const treeData = useMemo(() => {
-    if (!schema) return { domains: [], unassigned: [], consumers: [] }
+    if (!schema) return { domains: [], unassigned: [], consumers: [], metrics: [] }
 
     const domainMap: Record<string, Table[]> = {}
     const assignedTableIds = new Set<string>()
@@ -120,13 +133,19 @@ const SearchTab = memo(() => {
     const domains = (schema.domains || []).map(d => ({ ...d, tables: domainMap[d.id] }))
     const unassigned = schema.tables.filter(t => !assignedTableIds.has(t.id) && !schema.domains?.some(d => d.members.includes(t.id)))
     const consumers = schema.consumers || []
+    const metrics = schema.metrics || []
 
-    return { domains, unassigned, consumers }
+    return { domains, unassigned, consumers, metrics }
   }, [schema])
 
   // Fulltext search results (used when query is non-empty)
   const searchResults = useMemo(
     () => searchModel(schema?.tables ?? [], query),
+    [schema, query]
+  )
+
+  const metricSearchResults = useMemo(
+    () => searchMetrics(schema?.metrics ?? [], query),
     [schema, query]
   )
 
@@ -271,7 +290,38 @@ const SearchTab = memo(() => {
               </section>
             )}
 
-            {treeData.domains.length === 0 && treeData.unassigned.length === 0 && treeData.consumers.length === 0 && (
+            {treeData.metrics.length > 0 && (
+              <section className="flex flex-col">
+                <div
+                  className={`flex items-center justify-between group px-1 py-1.5 cursor-pointer rounded transition-colors ${
+                    theme === 'dark' ? 'hover:bg-slate-800/30' : 'hover:bg-slate-100'
+                  }`}
+                  onClick={() => toggleDomain('metrics')}
+                >
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    {collapsedDomains.has('metrics') ? <ChevronRight size={12} className="text-slate-500" /> : <ChevronDown size={12} className="text-slate-500" />}
+                    <ChartLine size={12} style={{ color: METRIC_DEFAULT_COLOR }} className="shrink-0" />
+                    <h3 className={`text-[10px] font-bold uppercase tracking-wider truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>Metrics</h3>
+                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${theme === 'dark' ? 'text-slate-600 bg-slate-800/50' : 'text-slate-400 bg-slate-100'}`}>{treeData.metrics.length}</span>
+                  </div>
+                </div>
+                {!collapsedDomains.has('metrics') && (
+                  <div className={`ml-4 mt-1 space-y-0.5 border-l pl-2 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-100'}`}>
+                    {treeData.metrics.map(m => (
+                      <button key={m.id} onClick={() => handleFocus(m.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'}`}>
+                        <span className="flex flex-col min-w-0">
+                          <span className="truncate">{m.name}</span>
+                          {m.name !== m.id && <span className="truncate font-mono text-[9px] opacity-50">{m.id}</span>}
+                        </span>
+                        <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {treeData.domains.length === 0 && treeData.unassigned.length === 0 && treeData.consumers.length === 0 && treeData.metrics.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
                 <Database size={48} className="mb-4 text-slate-400" />
                 <p className="text-sm font-medium">No tables found in this model.</p>
@@ -357,6 +407,41 @@ const SearchTab = memo(() => {
                 Showing top {MAX_RESULTS} results. Refine your search to narrow down.
               </p>
             )}
+
+            {metricSearchResults.map(m => (
+              <button
+                key={m.id}
+                onClick={() => handleFocus(m.id)}
+                className={`w-full p-3 text-left rounded-lg border transition-all group relative ${cardClass}`}
+              >
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold leading-tight truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                      {m.name}
+                    </p>
+                    {m.description && (
+                      <p className={`text-xs leading-tight truncate ${textBody}`}>{m.description}</p>
+                    )}
+                    {m.id !== m.name && (
+                      <p className={`text-[10px] leading-tight truncate font-mono ${textMuted}`}>{m.id}</p>
+                    )}
+                  </div>
+                  <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide`} style={{ backgroundColor: `${METRIC_DEFAULT_COLOR}20`, color: METRIC_DEFAULT_COLOR, border: `1px solid ${METRIC_DEFAULT_COLOR}40` }}>
+                    metric
+                  </span>
+                </div>
+                {m.expression && (
+                  <div className={`mt-2 pt-2 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-100'}`}>
+                    <p className={`text-[10px] font-mono truncate ${textMuted}`}>{m.expression}</p>
+                  </div>
+                )}
+                <ArrowUpRight
+                  size={12}
+                  className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: METRIC_DEFAULT_COLOR }}
+                />
+              </button>
+            ))}
           </div>
         )}
       </div>

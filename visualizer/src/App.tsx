@@ -35,6 +35,7 @@ function Flow() {
     addTable,
     addDomain,
     addConsumer,
+    addMetric,
     addAnnotation,
     theme,
     refreshModelData,
@@ -68,6 +69,7 @@ function Flow() {
     addTable: s.addTable,
     addDomain: s.addDomain,
     addConsumer: s.addConsumer,
+    addMetric: s.addMetric,
     addAnnotation: s.addAnnotation,
     theme: s.theme,
     refreshModelData: s.refreshModelData,
@@ -346,6 +348,10 @@ function Flow() {
     addConsumer(x, y)
   }, [addConsumer])
 
+  const handleAddMetric = useCallback((x: number, y: number) => {
+    addMetric(x, y)
+  }, [addMetric])
+
   const handleAddAnnotation = useCallback((x: number, y: number) => {
     if (!showAnnotations) useStore.getState().setShowAnnotations(true)
     addAnnotation({ x, y })
@@ -415,6 +421,7 @@ function Flow() {
             onAddTableAt={handleAddTable}
             onAddDomainAt={handleAddDomain}
             onAddConsumerAt={handleAddConsumer}
+            onAddMetricAt={handleAddMetric}
             onAddAnnotationAt={handleAddAnnotation}
             onFitView={handleFitView}
             onFocusNode={handleFocusNode}

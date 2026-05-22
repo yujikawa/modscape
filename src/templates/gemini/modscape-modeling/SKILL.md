@@ -34,6 +34,20 @@ Only edit YAML directly for complex nested fields not covered by CLI flags (e.g.
 - **Kind**: When creating new tables, set `conceptual: { name: "...", kind: "..." }` with an appropriate kind (`fact`, `dimension`, `mart`, `hub`, `link`, `satellite`, `table`) to ensure correct visualization.
 - **Layout**: You are responsible for the initial placement of new entities. Assign logical `x` and `y` coordinates in the `layout` section so they don't overlap existing nodes. The user will fine-tune the layout via the GUI.
 
+## Metrics & Lineage
+
+When the user defines business metrics, add them to the top-level `metrics:` section:
+
+```yaml
+metrics:
+  - id: revenue
+    name: Revenue
+    expression: "SUM(fact_orders.amount) WHERE status = 'completed'"
+    description: "Total completed order revenue"
+```
+
+After adding metrics, analyze the `expression` field and generate `lineage:` entries connecting source tables to the metric. Use table-level granularity (not column-level). Add one lineage entry per source table referenced in the expression.
+
 ## Interactive Modeling
 When the user wants to perform modeling tasks, ensure you are utilizing the strategy and conventions defined in the project rules.
 
