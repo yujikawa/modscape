@@ -175,62 +175,40 @@ When `logical.scd.type: type2` but `business_key`/`valid_from`/`valid_to` are ab
 - Attempt to infer roles from column names (`valid_from`, `valid_to`, `is_current`, `current_flag`, etc.)
 - Add `-- TODO: set logical.scd fields to specify column roles` for any unresolved column
 
-## If You Discover Issues During Implementation
+## When User Requests a Modification During Implementation
 
-When the user reports a problem during the implementation session — whether via a command or **in plain conversation** ("this column was wrong", "the type is different") — treat it as a finding and handle it inline without requiring a command switch.
+When the user explicitly requests a modification during the implementation session — whether via a command or **in plain conversation** ("change this column type", "add a table", "modify the lineage") — handle it inline without switching commands. Update all three files in order, then ask to continue.
 
-**Decision criteria — Minor fix vs. Design change:**
-- **Minor fix**: Column type, constraint, name, or description changes; AC wording fixes; JOIN key corrections. The structure of `spec-model.yaml` (table count, lineage, relationships) does not change.
-- **Design change**: Table additions or removals, lineage changes, grain changes, or any change that affects the structure of `spec-model.yaml`.
+**Update sequence (all modifications):**
 
-### For a Minor fix (no command switch — resume implementation)
-
-1. **Update `design.md` first** — update the relevant table section in `## Implementation Details` (create the section if it does not exist). Record the fix there.
-2. **Fix `spec-model.yaml`** — apply changes with mutation CLI and run validate:
+1. **Update `design.md`** — update the relevant table section in `## Implementation Details` (create the section if it does not exist).
+2. **Update `spec-model.yaml`** — apply changes with mutation CLI and run validate:
    ```bash
    modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>
    modscape validate .modscape/changes/<name>/spec-model.yaml
    ```
-3. **Check `spec.md` ACs** — fix any AC that contradicts the change immediately. Do NOT renumber AC IDs.
-4. **Output the impact report** (format below).
-5. **Ask the user about the task checkbox** — use the confirmation format below.
-6. If the user chooses **yes** → uncheck the task (`[x]` → `[ ]`) and regenerate the SQL from the updated `spec-model.yaml`.
-7. If the user chooses **no** → proceed to the next task (the fix is applied; SQL will reflect it on the next build).
-
-### For a Design change (pause implementation — re-run design)
-
-1. **Record in `design.md` under `## Findings > ### Requires Model Change`**:
-   ```
-   - `<table-id>`: <finding and required change>
-   ```
-2. **Pause implementation** and notify the user.
-3. **Do not modify `spec-model.yaml`** — design changes are applied after re-running design.
-
-**Output format when a finding is discovered:**
+3. **Update `tasks.md` surgically** — update only the affected tasks:
+   - **Column-level changes** (type, name, constraint, expression): uncheck the affected table's task (`[x]` → `[ ]`) — confirm with user first (see output format below)
+   - **Table additions**: determine the new table's phase from its lineage (leaf node = Staging, 1-hop downstream = Core, furthest downstream = Mart), insert a new `- [ ]` task in the correct phase group
+   - **Table deletions**: remove the task row for the deleted table (skip if already `[x]`)
+   - **Lineage / grain changes**: uncheck the changed table's task AND all downstream tables' tasks (`[x]` → `[ ]`)
+4. **Output the update summary** and ask to continue:
 
 ---
-⚠️ Found during implementation: <issue description>
+✅ 修正完了。
 
-**Classification:** Minor fix / Design change
+| ファイル | 更新内容 |
+|---|---|
+| design.md | <更新箇所の説明> |
+| spec-model.yaml | <変更内容> |
+| tasks.md | <変更したタスクの一覧（追加・削除・チェック解除）> |
 
-## Impact report (inline fix)
+実装を続けますか？（はい / いいえ）
 
-| File | Status | Details |
-|---|---|---|
-| design.md | ✅ Updated | <updated section in Implementation Details> |
-| spec.md | ✅ No impact / ✅ Updated | <changed AC or "No impact"> |
-| spec-model.yaml | ✅ Updated / ⏸ On hold (re-run design first) | <change details or reason for hold> |
-
-*(For a Minor fix)* → このタスクを未完了（`[ ]`）に戻して実装し直しますか？
-
-- **はい** → タスクを `[ ]` に戻し、SQL を再生成します
-- **いいえ** → 修正は適用済みです。次のタスクへ進みます（SQL は次回ビルドで反映されます）
-
-*(For a Design change)* → Implementation paused. Next steps:
-```
-@modscape-spec-design <name>
-```
 ---
+
+- **はい** → resume from the next pending task
+- **いいえ** → stop (show save hint)
 
 ## Completion
 

@@ -650,20 +650,22 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
    - **Dry-run preview first**: displays tables to add / update (with changed fields) / unchanged, and asks for confirmation before merging
    - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
-   - Generates / updates `.modscape/specs/<table-id>/spec.md` for each affected table (old `specs/<table-id>.md` flat files are migrated automatically)
-   - Upstream tables receive a Changelog entry only
-   - Syncs `questions.md` `## Table-level` entries to per-table `.modscape/specs/<table-id>/questions.md`; `## Pipeline-level` entries stay in the archive folder
-   - Updates `specs/_context.yaml` with `last_change`, `open_questions`, `has_spec` per table, and appends key decisions to the `decisions` list
+   - Generates / updates `<SPEC_DIR>/<model-slug>/<table-id>.md` for each affected table (Overview, Business Context, Business Rules, Known Issues, Usage Guide, Changelog)
+   - Upstream tables (Context Only) receive a Changelog entry only
+   - Merges `questions.md` entries into `<SPEC_DIR>/_questions.yaml`
+   - Merges `glossary.md` terms into `<SPEC_DIR>/_glossary.yaml`
+   - Appends key cross-project decisions to `<SPEC_DIR>/_context.yaml`
    - **Archive summary includes AC coverage**: test-covered, manual verification, and uncovered AC counts
    - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
 
-   Permanent specs are stored in a per-table directory structure:
+   Permanent specs accumulate under `SPEC_DIR` (default: `.modscape/specs`, overridable via `modscape-spec.custom.md`):
    ```
-   .modscape/specs/
-   ├── _context.yaml              ← cross-table SDD metadata (visualizer context layer)
-   └── <table-id>/
-       ├── spec.md                ← business context & design decisions
-       └── questions.md           ← Q&A history for this table
+   <SPEC_DIR>/
+   ├── <model-slug>/
+   │   └── <table-id>.md          ← business context, rules, usage guide & changelog per table
+   ├── _questions.yaml            ← Q&A history across all changes
+   ├── _glossary.yaml             ← business term definitions
+   └── _context.yaml              ← cross-project architectural decisions
    ```
 
 > **Investigation queries**: AI-detected questions in `questions.md` automatically include an `investigation:` block containing a PII-safe SQL query (aggregation only, no raw rows, no PII columns). **Always review the generated query before running it** — AI cannot know which columns contain PII in your specific environment. After confirming it is safe, run the query, paste the result into `result:`, then use `/modscape:spec:answer` — the AI interprets the data and writes `finding:`, updating the question to `answered` automatically.
@@ -691,7 +693,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Search past work**: Run `/modscape:spec:search <keyword>` (or `modscape spec search <keyword>`) to search past archives and permanent specs for similar designs and patterns. Use `--limit <n>` to control result count (default: 5). Add `--json` for machine-readable output.
 
-> **Onboarding an existing project**: Run `/modscape:spec:generate [files...]` to bulk-create `specs/<table-id>/spec.md` from existing model.yaml, SQL files, or Python models — before starting the regular SDD flow. Existing spec files are never overwritten. Omit arguments to specify files interactively.
+> **Onboarding an existing project**: Run `/modscape:spec:generate [files...]` to bulk-create permanent specs from existing model.yaml, SQL files, or Python models — before starting the regular SDD flow. Existing spec files are never overwritten. Omit arguments to specify files interactively.
 
 > **Customization**: Rename `.modscape/changes/modscape-spec.custom.md.example` to `modscape-spec.custom.md` to override default tool targets, required fields, and output conventions per project.
 
@@ -730,16 +732,16 @@ requirements → design → implement → archive
 
 | Skill | Command | What it does | Main output |
 |-------|---------|-------------|-------------|
-| Generate | `/modscape:spec:generate [files...]` | Bootstrap `specs/<table-id>/spec.md` for all tables from existing model.yaml, SQL, or Python files | `specs/<id>/spec.md` |
+| Generate | `/modscape:spec:generate [files...]` | Bootstrap permanent specs for all tables from existing model.yaml, SQL, or Python files | `<model-slug>/<id>.md` |
 | Requirements | `/modscape:spec:requirements` | Collect goal, stakeholders, ACs, Q&As interactively; elicit business context (data occurrence conditions, process flows, domain rules); auto-detect tacit knowledge gaps | `spec.md` |
 | Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list; auto-detect analyst-misleading signals with PII-safe investigation queries | `design.md`, `tasks.md` |
 | Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code; flag analyst-misleading signals found during code generation | `tasks.md` (updated) |
-| Archive | `/modscape:spec:archive <name>` | Merge to main model, persist permanent specs | `specs/<id>/spec.md`, `_context.yaml` |
+| Archive | `/modscape:spec:archive <name>` | Merge to main model, persist permanent specs | `<model-slug>/<id>.md`, `_questions.yaml`, `_glossary.yaml`, `_context.yaml` |
 | Check | `/modscape:spec:check <name>` | Pre-implement quality check: consistency + go/no-go readiness (optional) | — |
 | Amend | `/modscape:spec:amend <name>` | Patch artifacts when issues are found mid-implementation (optional) | — |
 | Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
 | Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question; when `investigation.result` is filled in, analyzes the query results and writes `finding` (optional) | — |
-| Note | `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to `specs/<table-id>/spec.md` — no active workflow required (optional) | — |
+| Note | `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to a permanent table spec — finds the file by table ID, no path knowledge needed. Maps input to the right section (Business Rules, Known Issues, Usage Guide, etc.). No active workflow required (optional) | — |
 | Save | `/modscape:spec:save <name>` | Save the current session state (decisions, open questions, next action) to `session.md` for later resumption (optional) | `session.md` |
 
 **Example: designing a monthly sales summary pipeline**

@@ -367,6 +367,38 @@ Use the following Markdown structure:
 - <Data quality issues, known source defects, or technical gotchas>
 <!-- Source: design.md ## Findings, questions.md status: assumed entries -->
 
+## Usage Guide
+<!-- For analysts and consumers of this table. Focus on what is NOT obvious from the schema. -->
+
+### ⚠ Don't Do This
+<!-- Patterns that cause incorrect results — double-counting, wrong JOINs, misused columns -->
+- <e.g., Do not SUM(amount) without filtering cancelled rows — cancelled records remain in the table>
+<!-- Source: design.md ## Findings, questions.md, Domain Rules & Edge Cases -->
+
+### Required Filters
+<!-- Filters that MUST be applied in every query against this table -->
+- <e.g., Always filter `is_deleted = false`>
+<!-- Source: spec.md ## Business Rules → Exclusion criteria, design.md Design Decisions -->
+
+### Common JOIN Patterns
+<!-- How to correctly join this table with others; note any SCD type 2 or fan-out risks -->
+```sql
+-- <describe what this join does>
+FROM <table-id> t
+JOIN <other-table> o ON t.<key> = o.<key>
+  -- <any required join conditions, e.g., AND o.is_current = true>
+```
+<!-- Source: spec-model.yaml relationships, design.md Design Decisions -->
+
+### Example Queries
+```sql
+-- <describe what this query does, e.g., monthly revenue summary>
+SELECT ...
+FROM <table-id>
+WHERE ...
+```
+<!-- Source: spec.md goals, questions.md answered entries -->
+
 ## Changelog
 - <YYYY-MM-DD>: Initial version (SDD: <name>)
 ```
@@ -378,5 +410,9 @@ Use the following Markdown structure:
 - `Domain Rules & Edge Cases`: from `spec.md ## Business Context → Domain Rules`, plus `questions.md` `status: answered` or `status: assumed` entries for this table, plus `design.md ## Findings`
 - `Business Rules`: from `spec.md ## Business Context → Domain Rules`, plus `design.md ## Design Decisions` (only the rules relevant to this table)
 - `Known Issues`: from `design.md ## Findings → Implementation Notes` and `questions.md status: assumed`
+- `Usage Guide — Don't Do This`: from `design.md ## Findings`, `questions.md` answered/assumed entries, and `Domain Rules & Edge Cases` — focus on patterns that produce wrong results
+- `Usage Guide — Required Filters`: from `spec.md ## Business Rules → Exclusion criteria` and `design.md ## Design Decisions`
+- `Usage Guide — Common JOIN Patterns`: from `spec-model.yaml` relationships and `design.md ## Design Decisions`
+- `Usage Guide — Example Queries`: from `spec.md` goals and `questions.md` answered entries — write concrete SQL when enough context is available, otherwise leave a `<!-- TODO: fill in -->` placeholder
 
 If any of these sources are absent or empty, leave the corresponding subsection with a `<!-- TODO: fill in -->` placeholder rather than omitting it. An incomplete permanent spec is better than a missing one.
