@@ -871,6 +871,8 @@ export default function CytoscapeCanvas({
               isSelected={isSelected}
               isDimmed={isDimmed}
               theme={themeRef.current}
+              isConnectMode={isConnectMode}
+              isPendingSource={isPendingSource}
             />
           )
         } else if (consumer) {
@@ -880,6 +882,8 @@ export default function CytoscapeCanvas({
               isSelected={isSelected}
               isDimmed={isDimmed}
               theme={themeRef.current}
+              isConnectMode={isConnectMode}
+              isPendingSource={isPendingSource}
             />
           )
         } else {

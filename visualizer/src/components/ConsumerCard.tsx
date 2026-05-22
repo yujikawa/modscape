@@ -20,30 +20,44 @@ interface ConsumerCardProps {
   isSelected: boolean
   isDimmed: boolean
   theme: 'dark' | 'light'
+  isConnectMode?: boolean
+  isPendingSource?: boolean
 }
 
-const ConsumerCard = ({ consumer, isSelected, isDimmed, theme }: ConsumerCardProps) => {
+const ConsumerCard = ({ consumer, isSelected, isDimmed, theme, isConnectMode = false, isPendingSource = false }: ConsumerCardProps) => {
   const color = consumer.display?.color || DEFAULT_COLOR
   const icon = consumer.display?.icon || DEFAULT_ICON
   const dark = theme === 'dark'
 
+  const borderColor = isPendingSource ? '#22c55e' : isSelected ? color : isConnectMode ? '#22c55e' : dark ? '#334155' : '#e2e8f0'
+  const boxShadow = isPendingSource
+    ? '0 0 0 3px #22c55e, 0 0 16px 4px rgba(34, 197, 94, 0.45)'
+    : isSelected
+    ? `0 0 0 3px ${color}40, 0 4px 16px ${color}25`
+    : isConnectMode
+    ? '0 0 0 1px #22c55e40'
+    : dark
+    ? '0 2px 8px rgba(0,0,0,0.4)'
+    : '0 2px 8px rgba(0,0,0,0.08)'
+
   return (
+    <div style={{ position: 'relative', userSelect: 'none' }}>
+      {isPendingSource && (
+        <div style={{ position: 'absolute', top: '-10px', right: '8px', padding: '0 6px', height: '14px', backgroundColor: '#22c55e', color: '#fff', fontSize: '8px', fontWeight: 900, borderRadius: '4px', display: 'flex', alignItems: 'center', letterSpacing: '0.05em', textTransform: 'uppercase', zIndex: 2, pointerEvents: 'none' }}>
+          FROM
+        </div>
+      )}
     <div
       style={{
         width: '220px',
         borderRadius: '10px',
-        border: `2px solid ${isSelected ? color : dark ? '#334155' : '#e2e8f0'}`,
+        border: `2px solid ${borderColor}`,
         backgroundColor: dark ? '#0f172a' : '#ffffff',
-        boxShadow: isSelected
-          ? `0 0 0 3px ${color}40, 0 4px 16px ${color}25`
-          : dark
-          ? '0 2px 8px rgba(0,0,0,0.4)'
-          : '0 2px 8px rgba(0,0,0,0.08)',
+        boxShadow,
         opacity: isDimmed ? 0.25 : 1,
         overflow: 'hidden',
         transition: 'box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
         pointerEvents: 'none',
-        userSelect: 'none',
       }}
     >
       {/* Top accent bar */}
@@ -109,6 +123,7 @@ const ConsumerCard = ({ consumer, isSelected, isDimmed, theme }: ConsumerCardPro
           </div>
         </div>
       </div>
+    </div>
     </div>
   )
 }

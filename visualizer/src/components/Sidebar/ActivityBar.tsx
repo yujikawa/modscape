@@ -9,7 +9,7 @@ import {
   X,
   Command,
   Tag,
-  FileChartColumnIncreasing,
+  Users,
   Pencil,
   Spline,
   Network,
@@ -161,7 +161,7 @@ const ActivityBar = () => {
               className={iconClass(false, 'text-violet-400')}
             >
               <div className="relative">
-                <FileChartColumnIncreasing size={20} />
+                <Users size={20} />
                 <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
               </div>
               <Tooltip text="Add Consumer (C)" />
