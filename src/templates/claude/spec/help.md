@@ -64,7 +64,7 @@ These commands work independently — no active workflow or work folder required
 | Command | Purpose |
 |---------|---------|
 | `/modscape:spec:generate [files...]` | Generate `specs/<table-id>/spec.md` for existing tables from model.yaml, SQL, or Python files — use this to bootstrap specs for an existing project |
-| `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to one or more `specs/<table-id>/spec.md` files |
+| `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to a permanent table spec. Finds the spec by table ID (no need to know the exact path). Maps input to the right section: Business Rules, Known Issues, Business Context, Usage Guide, etc. |
 | `/modscape:spec:search <keyword>` | Search past archives and permanent specs |
 | `/modscape:spec:help [topic]` | This help |
 

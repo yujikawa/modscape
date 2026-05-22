@@ -1,4 +1,4 @@
-Capture free-form knowledge (from a conversation, Slack message, or meeting) and append it to one or more permanent table spec files (`specs/<table-id>/spec.md`). Runs outside the SDD implementation workflow — no active change required.
+Capture free-form knowledge (from a conversation, Slack message, or meeting) and append it to one or more permanent table spec files. Runs outside the SDD implementation workflow — no active change required.
 
 ## Usage
 
@@ -51,20 +51,29 @@ Wait for the user's free-text input before proceeding.
 
   Then exit without writing any file.
 
-### Step 3: Verify spec files exist
+### Step 3: Locate spec files
 
-For each identified table ID, determine the target file path: `specs/<table-id>/spec.md`
+For each identified table ID:
 
-Check whether the target spec file exists.
-
-- If a spec file **does not exist**, stop and display:
-
-  ```
-  ⚠ specs/<table-id>/spec.md not found.
-  Run /modscape:spec:generate first to create the spec.
-  ```
-
-  Then exit without writing any file.
+1. Read `SPEC_DIR` from `.modscape/modscape-spec.custom.md` (`## Spec Directory` section) if present; otherwise use `.modscape/specs`.
+2. Search for the spec file by table ID — do not assume a specific path structure:
+   ```bash
+   find <SPEC_DIR> -name "<table-id>.md" -not -name "*.questions.md"
+   ```
+3. If exactly one file is found: use it as the target.
+4. If multiple files are found: show the list and ask the user to choose:
+   ```
+   Multiple spec files found for <table-id>:
+     1. <SPEC_DIR>/model-a/<table-id>.md
+     2. <SPEC_DIR>/model-b/<table-id>.md
+   Which file should be updated?
+   ```
+5. If no file is found, stop and display:
+   ```
+   ⚠ No spec file found for <table-id> under <SPEC_DIR>.
+   Run /modscape:spec:archive first to create the spec, or check the table ID.
+   ```
+   Then exit without writing any file.
 
 ### Step 4: Determine target section for each update
 
@@ -76,6 +85,7 @@ For each piece of information extracted from the input, map it to the most appro
 | Known issues, data quality caveats, bugs, reliability | `## Known Issues / Caveats` |
 | Background, history, intent, origin | `## Business Context` |
 | Owner, SLA, update frequency | `## Overview` |
+| Dangerous patterns, required filters, JOIN patterns, query examples | `## Usage Guide` |
 | Notes that do not fit any of the above | `## Known Issues / Caveats` |
 
 When input covers multiple tables, split the content and assign each piece to the appropriate table and section independently.
@@ -106,7 +116,7 @@ Wait for the user's response:
 
 For each planned update:
 
-1. Read the target `specs/<table-id>/spec.md`.
+1. Read the target `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`.
 2. Locate the target section (e.g., `## Business Rules`).
    - If the section **exists**: append a new bullet point at the end of that section.
    - If the section **does not exist**: append the section header followed by the new bullet at the end of the file.
