@@ -607,14 +607,38 @@ lineage:
     to: mart_product_performance
     id: lin-fct_orders-mart_product_performance
   - from: mart_daily_revenue
-    to: sales_dashboard
-    id: lin-mart_daily_revenue-sales_dashboard
+    to: metric_gross_revenue_mtd
+    id: lin-mart_daily_revenue-metric_gross_revenue_mtd
   - from: mart_daily_revenue
+    to: metric_avg_order_value
+    id: lin-mart_daily_revenue-metric_avg_order_value
+  - from: mart_daily_revenue
+    to: metric_units_sold
+    id: lin-mart_daily_revenue-metric_units_sold
+  - from: mart_daily_revenue
+    to: metric_category_revenue_share
+    id: lin-mart_daily_revenue-metric_category_revenue_share
+  - from: fct_orders
+    to: metric_revenue_per_customer
+    id: lin-fct_orders-metric_revenue_per_customer
+  - from: metric_gross_revenue_mtd
+    to: sales_dashboard
+    id: lin-metric_gross_revenue_mtd-sales_dashboard
+  - from: metric_avg_order_value
+    to: sales_dashboard
+    id: lin-metric_avg_order_value-sales_dashboard
+  - from: metric_units_sold
+    to: sales_dashboard
+    id: lin-metric_units_sold-sales_dashboard
+  - from: metric_gross_revenue_mtd
     to: exec_report
-    id: lin-mart_daily_revenue-exec_report
-  - from: mart_product_performance
+    id: lin-metric_gross_revenue_mtd-exec_report
+  - from: metric_revenue_per_customer
     to: exec_report
-    id: lin-mart_product_performance-exec_report
+    id: lin-metric_revenue_per_customer-exec_report
+  - from: metric_category_revenue_share
+    to: exec_report
+    id: lin-metric_category_revenue_share-exec_report
 domains:
   - id: raw_vault
     name: Raw Vault
@@ -647,6 +671,17 @@ domains:
       - mart_product_performance
     display:
       color: rgba(249, 115, 22, 0.08)
+  - id: kpi_metrics
+    name: KPI Metrics
+    description: Business KPIs defined as Tableau calculated fields on top of mart tables
+    members:
+      - metric_gross_revenue_mtd
+      - metric_avg_order_value
+      - metric_units_sold
+      - metric_revenue_per_customer
+      - metric_category_revenue_share
+    display:
+      color: rgba(16, 185, 129, 0.08)
 consumers:
   - id: sales_dashboard
     name: Sales Dashboard
@@ -661,6 +696,27 @@ consumers:
     display:
       icon: 📋
       color: '#8b5cf6'
+metrics:
+  - id: metric_gross_revenue_mtd
+    name: Gross Revenue MTD
+    description: Month-to-date gross revenue. Running total filtered to current month in Tableau.
+    expression: RUNNING_SUM(SUM([Gross Revenue]))
+  - id: metric_avg_order_value
+    name: Avg Order Value
+    description: Average revenue per order. Excludes cancelled orders.
+    expression: SUM([Net Revenue]) / COUNTD([Order ID])
+  - id: metric_units_sold
+    name: Units Sold
+    description: Total quantity of items sold in the selected period.
+    expression: SUM([Quantity])
+  - id: metric_revenue_per_customer
+    name: Revenue per Customer
+    description: Net revenue divided by number of unique paying customers.
+    expression: SUM([Net Revenue]) / COUNTD([Customer Key])
+  - id: metric_category_revenue_share
+    name: Category Revenue Share
+    description: Revenue share of each category vs total. Tableau table calculation.
+    expression: SUM([Gross Revenue]) / TOTAL(SUM([Gross Revenue]))
 annotations:
   - id: note_vault_to_star
     text: |-
@@ -767,12 +823,37 @@ layout:
     'y': 315
     width: 696
     height: 473
+  metric_gross_revenue_mtd:
+    x: 2316
+    'y': 370
+    parentId: kpi_metrics
+  metric_avg_order_value:
+    x: 2316
+    'y': 446
+    parentId: kpi_metrics
+  metric_units_sold:
+    x: 2316
+    'y': 522
+    parentId: kpi_metrics
+  metric_revenue_per_customer:
+    x: 2316
+    'y': 598
+    parentId: kpi_metrics
+  metric_category_revenue_share:
+    x: 2316
+    'y': 674
+    parentId: kpi_metrics
+  kpi_metrics:
+    x: 2206
+    'y': 290
+    width: 320
+    height: 440
   sales_dashboard:
-    x: 2410
-    'y': 416
+    x: 2704
+    'y': 389
   exec_report:
-    x: 2410
-    'y': 736
+    x: 2644
+    'y': 710
 imports:
   - from: ./2-conformed-dims.yaml
     ids:

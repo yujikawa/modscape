@@ -478,6 +478,25 @@ const DetailPanel = memo(() => {
                 className={`w-full border rounded text-sm p-2 outline-none resize-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
+
+            {/* Domain Assignment */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Domain Assignment</h3>
+              <select
+                value={schema?.domains?.find(d => d.members.includes(metric.id))?.id || ''}
+                onChange={(e) => assignTableToDomain(metric.id, e.target.value || null)}
+                className={`w-full border rounded text-sm p-2 outline-none transition-colors ${
+                  theme === 'dark'
+                    ? 'bg-slate-800 border-slate-700 text-slate-200'
+                    : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+                }`}
+              >
+                <option value="">- No Domain -</option>
+                {schema?.domains?.map(d => (
+                  <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
+                ))}
+              </select>
+            </section>
           </div>
         </div>
         <div onMouseDown={onResizeStart} style={{ position: 'absolute', bottom: 0, right: 0, width: 20, height: 20, cursor: 'nwse-resize', zIndex: 300 }} />

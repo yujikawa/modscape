@@ -224,7 +224,7 @@ function buildCytoscapeStyle(theme: 'dark' | 'light', lowZoom = false) {
         'border-width': lowZoom ? 2 : 0,
         'border-color': lowZoom ? 'data(typeColor)' : '#000',
         width: 220,
-        height: 90,
+        height: 56,
         ...(lowZoom ? {
           label: 'data(label)',
           'text-valign': 'center',
