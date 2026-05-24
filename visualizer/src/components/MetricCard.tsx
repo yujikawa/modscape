@@ -94,7 +94,10 @@ const MetricCard = ({ metric, isSelected, isDimmed, theme, isConnectMode = false
               style={{
                 fontSize: '9px',
                 fontFamily: 'monospace',
-                color: dark ? '#64748b' : '#94a3b8',
+                color: dark ? '#a3e635' : '#3f6212',
+                backgroundColor: dark ? '#1e293b' : '#f1f5f9',
+                borderRadius: '4px',
+                padding: '3px 6px',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

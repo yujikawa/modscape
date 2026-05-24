@@ -840,8 +840,8 @@ layout:
     'y': 598
     parentId: kpi_metrics
   metric_category_revenue_share:
-    x: 2316
-    'y': 674
+    x: 2317
+    'y': 672
     parentId: kpi_metrics
   kpi_metrics:
     x: 2206
