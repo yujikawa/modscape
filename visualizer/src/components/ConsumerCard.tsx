@@ -47,83 +47,108 @@ const ConsumerCard = ({ consumer, isSelected, isDimmed, theme, isConnectMode = f
           FROM
         </div>
       )}
-    <div
-      style={{
-        width: '220px',
-        borderRadius: '10px',
-        border: `2px solid ${borderColor}`,
-        backgroundColor: dark ? '#0f172a' : '#ffffff',
-        boxShadow,
-        opacity: isDimmed ? 0.25 : 1,
-        overflow: 'hidden',
-        transition: 'box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
-        pointerEvents: 'none',
-      }}
-    >
-      {/* Top accent bar */}
-      <div style={{ height: '3px', backgroundColor: color }} />
 
-      {/* Body */}
+      {/* Type tab — same style as TableCard kind badge */}
       <div
         style={{
+          position: 'absolute',
+          top: '-12px',
+          left: '12px',
+          height: '14px',
+          padding: '0 6px',
+          backgroundColor: color,
+          color: contrastColor(color),
+          fontSize: '8px',
+          fontWeight: 900,
+          borderRadius: '4px 4px 0 0',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          padding: '10px 12px',
+          justifyContent: 'center',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          boxShadow: '0 -2px 4px rgba(0,0,0,0.1)',
+          zIndex: 1,
+          pointerEvents: 'none',
         }}
       >
-        {/* Icon */}
+        CONSUMER
+      </div>
+
+      <div
+        style={{
+          width: '220px',
+          borderRadius: '8px',
+          borderLeft: `2px solid ${borderColor}`,
+          borderRight: `2px solid ${borderColor}`,
+          borderBottom: `2px solid ${borderColor}`,
+          borderTop: `4px solid ${color}`,
+          backgroundColor: dark ? '#0f172a' : '#ffffff',
+          boxShadow,
+          opacity: isDimmed ? 0.25 : 1,
+          overflow: 'hidden',
+          transition: 'box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
+          pointerEvents: 'none',
+        }}
+      >
         <div
           style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            backgroundColor: `${color}22`,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            flexShrink: 0,
-            border: `1px solid ${color}40`,
+            gap: '10px',
+            padding: '10px 12px',
           }}
         >
-          {icon}
-        </div>
-
-        {/* Text */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Icon */}
           <div
             style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              color: dark ? '#f1f5f9' : '#0f172a',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              width: '26px',
+              height: '26px',
+              borderRadius: '6px',
+              backgroundColor: `${color}22`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              flexShrink: 0,
+              border: `1px solid ${color}40`,
             }}
           >
-            {consumer.name}
+            {icon}
           </div>
-          <div
-            style={{
-              marginTop: '2px',
-              display: 'inline-block',
-              fontSize: '9px',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              padding: '1px 5px',
-              borderRadius: '3px',
-              backgroundColor: dark ? `${color}20` : color,
-              color: dark ? color : contrastColor(color),
-              border: `1px solid ${dark ? `${color}40` : color}`,
-            }}
-          >
-            CONSUMER
+
+          {/* Name + Description */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: dark ? '#f1f5f9' : '#0f172a',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {consumer.name}
+            </div>
+            {consumer.description && (
+              <div
+                style={{
+                  fontSize: '9px',
+                  color: dark ? '#94a3b8' : '#64748b',
+                  marginTop: '2px',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  lineHeight: '1.4',
+                }}
+              >
+                {consumer.description}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }

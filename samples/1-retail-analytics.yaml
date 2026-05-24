@@ -829,19 +829,19 @@ layout:
     parentId: kpi_metrics
   metric_avg_order_value:
     x: 2316
-    'y': 446
+    'y': 457
     parentId: kpi_metrics
   metric_units_sold:
-    x: 2316
-    'y': 522
+    x: 2313
+    'y': 552
     parentId: kpi_metrics
   metric_revenue_per_customer:
-    x: 2316
-    'y': 598
+    x: 2311
+    'y': 639
     parentId: kpi_metrics
   metric_category_revenue_share:
-    x: 2317
-    'y': 672
+    x: 2314
+    'y': 749
     parentId: kpi_metrics
   kpi_metrics:
     x: 2206
@@ -849,11 +849,11 @@ layout:
     width: 320
     height: 440
   sales_dashboard:
-    x: 2704
-    'y': 389
+    x: 2645
+    'y': 396
   exec_report:
-    x: 2644
-    'y': 710
+    x: 2619
+    'y': 651
 imports:
   - from: ./2-conformed-dims.yaml
     ids:

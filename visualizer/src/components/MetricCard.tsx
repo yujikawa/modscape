@@ -34,67 +34,69 @@ const MetricCard = ({ metric, isSelected, isDimmed, theme, isConnectMode = false
           FROM
         </div>
       )}
+
+      {/* Type tab — same style as TableCard kind badge */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-12px',
+          left: '12px',
+          height: '14px',
+          padding: '0 6px',
+          backgroundColor: color,
+          color: '#ffffff',
+          fontSize: '8px',
+          fontWeight: 900,
+          borderRadius: '4px 4px 0 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          boxShadow: '0 -2px 4px rgba(0,0,0,0.1)',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}
+      >
+        METRIC
+      </div>
+
       <div
         style={{
           width: '220px',
           borderRadius: '8px',
-          border: `1.5px solid ${borderColor}`,
+          borderLeft: `2px solid ${borderColor}`,
+          borderRight: `2px solid ${borderColor}`,
+          borderBottom: `2px solid ${borderColor}`,
+          borderTop: `4px solid ${color}`,
           backgroundColor: dark ? '#0f172a' : '#ffffff',
           boxShadow,
           opacity: isDimmed ? 0.25 : 1,
           overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'stretch',
           transition: 'box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
           pointerEvents: 'none',
         }}
       >
-        {/* Left accent bar */}
-        <div style={{ width: '3px', backgroundColor: color, flexShrink: 0 }} />
+        <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: '13px',
+              fontWeight: 700,
+              color: dark ? '#f1f5f9' : '#0f172a',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {metric.name}
+          </span>
 
-        {/* Content */}
-        <div style={{ flex: 1, padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '3px', minWidth: 0 }}>
-          {/* Row 1: name + badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: dark ? '#f1f5f9' : '#0f172a',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              {metric.name}
-            </span>
-            <span
-              style={{
-                fontSize: '8px',
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                padding: '1px 4px',
-                borderRadius: '3px',
-                backgroundColor: dark ? `${color}20` : `${color}15`,
-                color: color,
-                border: `1px solid ${color}40`,
-                flexShrink: 0,
-              }}
-            >
-              METRIC
-            </span>
-          </div>
-
-          {/* Row 2: expression */}
           {metric.expression && (
             <div
               style={{
                 fontSize: '9px',
                 fontFamily: 'monospace',
-                color: dark ? '#a3e635' : '#3f6212',
+                color: dark ? '#e2e8f0' : '#3f6212',
                 backgroundColor: dark ? '#1e293b' : '#f1f5f9',
                 borderRadius: '4px',
                 padding: '3px 6px',
