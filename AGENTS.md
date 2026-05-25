@@ -137,6 +137,7 @@ modscape domain member add/remove <file>
 - Do not introduce database-specific assumptions.
 - Maintain compatibility with Star Schema and Data Vault modeling patterns.
 - UI text (labels, placeholders, descriptions, options) must be written in **English**.
+- AI agent skill files (`src/templates/`) must be written in **English**. (Runtime output language is controlled per-project via `modscape-spec.custom.md`.)
 
 ## Change Checklists
 
