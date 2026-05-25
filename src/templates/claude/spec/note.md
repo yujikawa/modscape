@@ -11,11 +11,11 @@ Capture free-form knowledge (from a conversation, Slack message, or meeting) and
 Examples:
 ```
 /modscape:spec:note fct_orders
-> Q1 2023 の updated_at は信頼不可。ETL バグにより NULL が混入している
+> updated_at in Q1 2023 is unreliable — NULL values were introduced by an ETL bug.
 
 /modscape:spec:note
-> fct_orders の grain は1注文につき1行。
-> dim_customers は SCD Type2 で grain は有効期間ごとの行。
+> fct_orders grain is one row per order.
+> dim_customers uses SCD Type2; grain is one row per customer validity period.
 ```
 
 ## Instructions
@@ -99,11 +99,11 @@ Will apply the following updates:
 
 📄 specs/fct_orders/spec.md
   Section: Known Issues / Caveats
-  Content: "Q1 2023 の updated_at は信頼不可。ETL バグにより NULL が混入している"
+  Content: "updated_at in Q1 2023 is unreliable — NULL values were introduced by an ETL bug."
 
 📄 specs/dim_customers/spec.md
   Section: Business Rules
-  Content: "SCD Type2。grain は顧客の有効期間ごとの1行"
+  Content: "SCD Type2. Grain is one row per customer validity period."
 
 Continue? [Y/n]
 ```

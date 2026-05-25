@@ -1164,7 +1164,7 @@ modscape spec search <keyword> --limit <n>  # Limit results (default: 5)
 - <Known data quality issues or edge cases>
 
 ## Changelog
-- YYYY-MM-DD: 初版 (SDD: <name>)
+- YYYY-MM-DD: Initial version (SDD: <name>)
 ```
 
 Customize SDD behavior by creating `.modscape/modscape-spec.custom.md` (rename from the generated `.example` file).

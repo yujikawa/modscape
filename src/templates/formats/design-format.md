@@ -41,16 +41,16 @@
 
 ## Implementation Details
 
-<!-- 実装者がここだけ読めば実装できる水準の詳細を記載する。 -->
-<!-- spec-model.yaml の内容の人間可読な補足として、変換式・検証SQL・テストパターンを書く。 -->
-<!-- 変換式や検証SQLが存在する場合は必ず記載すること。 -->
+<!-- Document details at a level that lets an implementer work from this file alone. -->
+<!-- Supplement spec-model.yaml with human-readable transformation expressions, validation SQL, and test patterns. -->
+<!-- Always include these when transformation expressions or validation SQL exist. -->
 
 ### `<table-id>`
 
-- **変換式**: `<expression の詳細 (例: CAST(raw_amount AS DECIMAL(18,2)) * fx_rate)>`
-- **フィルター条件**: `<WHERE 句の条件 (例: WHERE status != 'cancelled')>`
-- **検証SQL**: `<受け入れ条件を検証するための SQL (例: SELECT COUNT(*) FROM <table> WHERE amount IS NULL → 0件)>`
-- **テストパターン**: `<PK/FK テストの方針 (例: order_id は unique + not_null、customer_id は dim_customers への referential integrity)>`
+- **Expression**: `<expression detail (e.g., CAST(raw_amount AS DECIMAL(18,2)) * fx_rate)>`
+- **Filter condition**: `<WHERE clause condition (e.g., WHERE status != 'cancelled')>`
+- **Validation SQL**: `<SQL to verify acceptance criteria (e.g., SELECT COUNT(*) FROM <table> WHERE amount IS NULL → 0 rows)>`
+- **Test pattern**: `<PK/FK test approach (e.g., order_id is unique + not_null, customer_id has referential integrity to dim_customers)>`
 
 ---
 
