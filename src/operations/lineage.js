@@ -34,8 +34,8 @@ function findNodeById(schema, id) {
 export function addLineage(filePath, { from, to, id, description }) {
   const data = readYaml(filePath);
   const { schema: resolved } = resolveImports(data, path.dirname(path.resolve(filePath)));
-  if (!findNodeById(resolved, from)) throw new Error(`Table or consumer "${from}" not found`);
-  if (!findNodeById(resolved, to)) throw new Error(`Table or consumer "${to}" not found`);
+  if (!findNodeById(resolved, from)) throw new Error(`Table, consumer, or metric "${from}" not found`);
+  if (!findNodeById(resolved, to)) throw new Error(`Table, consumer, or metric "${to}" not found`);
   const entries = data.lineage || [];
   const lineageId = id || `lin-${from}-${to}`;
   if (entries.some(e => e.id === lineageId || (e.from === from && e.to === to))) {

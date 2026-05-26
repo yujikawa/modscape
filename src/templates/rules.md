@@ -307,7 +307,7 @@ domains:
     description: "..."      # optional
     display:
       color: "rgba(59, 130, 246, 0.1)"  # optional. rgba recommended.
-    members:                # REQUIRED. List of table or consumer IDs inside this domain.
+    members:                # REQUIRED. List of table, consumer, or metric IDs inside this domain.
       - fct_orders
       - dim_customers
 ```
@@ -376,7 +376,7 @@ consumers:
 - `id` and `name` are **REQUIRED**. All other fields are optional.
 - Add a `layout` entry for each consumer (same as tables — absolute coordinates or relative inside a domain).
 - To connect a consumer with lineage, set `lineage.to` to the consumer's `id`. The `lineage.from` must be a table ID.
-- Consumers can be added to domain `members` lists just like tables.
+- Consumers can be added to domain `members` lists just like tables. Metrics can also be added to domain `members`.
 
 ```yaml
 # Example: lineage from mart to a consumer
@@ -932,8 +932,8 @@ modscape domain add model.yaml \
 
 **domain member add / remove**
 ```bash
-modscape domain member add model.yaml --domain <domainId> --id <tableId|consumerId> [--json]
-modscape domain member remove model.yaml --domain <domainId> --id <tableId|consumerId> [--json]
+modscape domain member add model.yaml --domain <domainId> --id <tableId|consumerId|metricId> [--json]
+modscape domain member remove model.yaml --domain <domainId> --id <tableId|consumerId|metricId> [--json]
 ```
 
 **consumer list / get / add / update / remove**
@@ -1062,7 +1062,7 @@ modscape prune model.yaml --include-isolated # Also detect isolated tables
 modscape prune model.yaml --json             # Machine-readable output
 ```
 
-Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, `domains[].members` entries for non-existent tables.
+Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, `domains[].members` entries for non-existent tables, consumers, or metrics.
 Default is **dry-run** — always verify the list before adding `--write`.
 
 ### 12-6. Reading Model Information

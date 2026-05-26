@@ -61,12 +61,14 @@ export function extractModels(inputs, options) {
   const annotationsList = [];
   const domainsList = [];
   const consumersList = [];
+  const metricsList = [];
   const layoutMap = {};
   const seenRelIds = new Set();
   const seenLinIds = new Set();
   const seenAnnIds = new Set();
   const seenDomIds = new Set();
   const seenConsumerIds = new Set();
+  const seenMetricIds = new Set();
 
   if (appendMode && fs.existsSync(outputPath)) {
     try {
@@ -95,6 +97,12 @@ export function extractModels(inputs, options) {
           if (!seenConsumerIds.has(c.id)) {
             consumersList.push(c);
             seenConsumerIds.add(c.id);
+          }
+        }
+        for (const m of existing.metrics || []) {
+          if (!seenMetricIds.has(m.id)) {
+            metricsList.push(m);
+            seenMetricIds.add(m.id);
           }
         }
         Object.assign(layoutMap, existing.layout || {});
@@ -213,10 +221,24 @@ export function extractModels(inputs, options) {
       }
     }
 
-    // domains: members に対象テーブルを含むものだけ抽出（membersを対象IDのみに絞る）
+    // metrics: lineage で抽出対象テーブルとつながっているものを抽出
+    const effectiveMetricIds = new Set(
+      (data.lineage || [])
+        .filter(l => effectiveTableIds.includes(l.from) || effectiveTableIds.includes(l.to))
+        .flatMap(l => [l.from, l.to])
+        .filter(id => (data.metrics || []).some(m => m.id === id))
+    );
+    for (const metric of data.metrics || []) {
+      if (effectiveMetricIds.has(metric.id) && !seenMetricIds.has(metric.id)) {
+        metricsList.push(metric);
+        seenMetricIds.add(metric.id);
+      }
+    }
+
+    // domains: members に対象テーブルまたはメトリクスを含むものだけ抽出（membersを対象IDのみに絞る）
     for (const domain of data.domains || []) {
       if (seenDomIds.has(domain.id)) continue;
-      const filteredMembers = (domain.members || []).filter(m => effectiveTableIds.includes(m));
+      const filteredMembers = (domain.members || []).filter(m => effectiveTableIds.includes(m) || effectiveMetricIds.has(m));
       if (filteredMembers.length > 0) {
         domainsList.push({ ...domain, members: filteredMembers });
         seenDomIds.add(domain.id);
@@ -231,9 +253,9 @@ export function extractModels(inputs, options) {
       }
     }
 
-    // layout: 対象テーブルIDとドメインIDのエントリのみ抽出
+    // layout: 対象テーブルID・メトリクスID・ドメインIDのエントリのみ抽出
     for (const [key, value] of Object.entries(data.layout || {})) {
-      if ((effectiveTableIds.includes(key) || seenDomIds.has(key)) && !(key in layoutMap)) {
+      if ((effectiveTableIds.includes(key) || seenDomIds.has(key) || seenMetricIds.has(key)) && !(key in layoutMap)) {
         layoutMap[key] = value;
       }
     }
@@ -255,6 +277,7 @@ export function extractModels(inputs, options) {
   if (annotationsList.length) outputModel.annotations = annotationsList;
   if (domainsList.length) outputModel.domains = domainsList;
   if (consumersList.length) outputModel.consumers = consumersList;
+  if (metricsList.length) outputModel.metrics = metricsList;
   if (Object.keys(layoutMap).length) outputModel.layout = layoutMap;
 
   fs.writeFileSync(outputPath, yaml.dump(outputModel), 'utf8');
