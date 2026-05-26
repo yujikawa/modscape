@@ -85,7 +85,7 @@ const DetailPanel = memo(() => {
 
   // Floating window state
   const DEFAULT_W = 600
-  const DEFAULT_H = 340
+  const DEFAULT_H = 520
   const MIN_W = 320
   const MIN_H = 220
   const [pos, setPos] = useState({ x: 0, y: 0 })
