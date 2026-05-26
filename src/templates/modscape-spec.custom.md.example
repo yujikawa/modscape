@@ -92,17 +92,6 @@
 # - Dimension: dim_<entity>
 # - Mart: mart_<domain>_<metric>
 
-## Spec Directory
-
-# Override the default permanent spec storage directory.
-# Default: .modscape/specs
-# Set this when your project stores specs outside the .modscape/ tree
-# (e.g., alongside dbt models or in a shared docs directory).
-# All archive operations (spec sync, _questions.yaml, _glossary.yaml, _context.yaml)
-# will use this path instead of the default.
-#
-# - Spec directory: docs/specs
-
 ## Coverage Policy
 
 # Minimum documentation coverage threshold (0-100).

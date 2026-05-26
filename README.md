@@ -650,17 +650,17 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
    - **Dry-run preview first**: displays tables to add / update (with changed fields) / unchanged, and asks for confirmation before merging
    - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
-   - Generates / updates `<SPEC_DIR>/<model-slug>/<table-id>.md` for each affected table (Overview, Business Context, Business Rules, Known Issues, Usage Guide, Changelog)
+   - Generates / updates `.modscape/specs/<model-slug>/<table-id>.md` for each affected table (Overview, Business Context, Business Rules, Known Issues, Usage Guide, Changelog)
    - Upstream tables (Context Only) receive a Changelog entry only
-   - Merges `questions.md` entries into `<SPEC_DIR>/_questions.yaml`
-   - Merges `glossary.md` terms into `<SPEC_DIR>/_glossary.yaml`
-   - Appends key cross-project decisions to `<SPEC_DIR>/_context.yaml`
+   - Merges `questions.md` entries into `.modscape/specs/_questions.yaml`
+   - Merges `glossary.md` terms into `.modscape/specs/_glossary.yaml`
+   - Appends key cross-project decisions to `.modscape/specs/_context.yaml`
    - **Archive summary includes AC coverage**: test-covered, manual verification, and uncovered AC counts
    - Work folder is automatically moved to `.modscape/archives/YYYY-MM-DD-<name>/`
 
-   Permanent specs accumulate under `SPEC_DIR` (default: `.modscape/specs`, overridable via `modscape-spec.custom.md`):
+   Permanent specs accumulate under `.modscape/specs`:
    ```
-   <SPEC_DIR>/
+   .modscape/specs/
    ├── <model-slug>/
    │   └── <table-id>.md          ← business context, rules, usage guide & changelog per table
    ├── _questions.yaml            ← Q&A history across all changes

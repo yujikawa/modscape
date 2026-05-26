@@ -22,6 +22,10 @@ All notable changes to this project will be documented in this file.
 
 - **`rules.md` updated** — The quick reference, root structure, Section 5c (Metrics), CLI operations table, and flag reference all document the new `metrics:` key and `modscape metric` commands.
 
+### Removed
+
+- **`## Spec Directory` customization removed** — The `modscape-spec.custom.md` setting that allowed overriding the permanent spec storage path (e.g. `Spec directory: docs/specs`) has been removed. The spec directory is now fixed at `.modscape/specs`. This was removed because `modscape spec dev` and `modscape spec open` always read from the hardcoded path, so a custom path would cause the CLI commands to silently diverge from the AI skill output. All skill templates (Claude / Gemini / Codex), README (EN / JA), and `modscape-spec.custom.md.example` have been updated accordingly.
+
 ## [3.5.1] - 2026-05-21
 
 ### Added

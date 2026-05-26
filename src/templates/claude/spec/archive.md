@@ -1,4 +1,4 @@
-Merge the work-scoped YAML back into the main model, then sync permanent table specs in the spec directory (default: `.modscape/specs`, configurable via `modscape-spec.custom.md`).
+Merge the work-scoped YAML back into the main model, then sync permanent table specs in `.modscape/specs`.
 
 ## Usage
 
@@ -44,15 +44,9 @@ modscape summary <file> --json
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
    - If `design.md` does not exist or has no `## Affected Tables` section: treat all tables in `spec-model.yaml` as Direct Impact (backwards compatible).
 
-2.5. **Resolve spec directory (`SPEC_DIR`)**:
-   - If `.modscape/modscape-spec.custom.md` exists and has a `## Spec Directory` section:
-     - Extract the value (pattern: `Spec directory: <path>`)
-     - Set `SPEC_DIR = <path>` (use this path for all spec file operations in Steps 3–5)
-   - Otherwise: `SPEC_DIR = .modscape/specs`
+2.5. **Resolve model slug (`MODEL_SLUG`)** — used to determine the subdirectory within `.modscape/specs`:
 
-2.6. **Resolve model slug (`MODEL_SLUG`)** — used to determine the subdirectory within `SPEC_DIR`:
-
-   Per-table permanent specs are stored at `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`.
+   Per-table permanent specs are stored at `.modscape/specs/<MODEL_SLUG>/<table-id>.md`.
 
    **Normal path** (main YAML exists): for each main YAML path in `spec-config.yaml`, derive the slug with `path.parse(filePath).name`.
    - Example: `models/main-model1.yaml` → `MODEL_SLUG = main-model1`
@@ -152,7 +146,7 @@ modscape summary <file> --json
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
-   Determine the output path: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
+   Determine the output path: `.modscape/specs/<MODEL_SLUG>/<table-id>.md`
 
    a. Check whether the target file exists.
       - If **not**: create a new file using the Markdown format below.
@@ -165,7 +159,7 @@ modscape summary <file> --json
     - Do **not** perform a full spec sync for these tables.
     - Only append a Changelog entry to the target file (create with minimal content if it does not exist):
       - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
-    - Target path: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
+    - Target path: `.modscape/specs/<MODEL_SLUG>/<table-id>.md`
 
 12. **Report the sync result**:
     > Merged into main YAML ✓
@@ -178,7 +172,7 @@ modscape summary <file> --json
 
 13. If `.modscape/changes/<name>/questions.md` exists:
 
-    Read `.modscape/changes/<name>/questions.md` as a YAML list and `<SPEC_DIR>/_questions.yaml`.
+    Read `.modscape/changes/<name>/questions.md` as a YAML list and `.modscape/specs/_questions.yaml`.
 
     **For each entry in `questions.md`:**
     - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
@@ -195,7 +189,7 @@ modscape summary <file> --json
 
 13.5. If `.modscape/changes/<name>/glossary.md` exists:
 
-    Read `.modscape/changes/<name>/glossary.md` and `<SPEC_DIR>/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
+    Read `.modscape/changes/<name>/glossary.md` and `.modscape/specs/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
 
     **For each term entry in `glossary.md`:**
     - Parse: `id`, `definition`, and optional fields (`label`, `tables`, `columns`)
@@ -212,7 +206,7 @@ modscape summary <file> --json
 
 ### Step 5: Update `_context.yaml`
 
-14. Read or create `<SPEC_DIR>/_context.yaml`.
+14. Read or create `.modscape/specs/_context.yaml`.
 
     `_context.yaml` stores only **cross-project architectural decisions** — NOT Q&A (those are in `_questions.yaml`).
 
@@ -310,8 +304,8 @@ Tables without specs: <list or "none">
 ## Per-table Spec Format
 
 **Path convention:**
-- `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`
-- questions: `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.questions.md`
+- `.modscape/specs/<MODEL_SLUG>/<table-id>.md`
+- questions: `.modscape/specs/<MODEL_SLUG>/<table-id>.questions.md`
 
 Use the following Markdown structure:
 

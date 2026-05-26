@@ -55,22 +55,21 @@ Wait for the user's free-text input before proceeding.
 
 For each identified table ID:
 
-1. Read `SPEC_DIR` from `.modscape/modscape-spec.custom.md` (`## Spec Directory` section) if present; otherwise use `.modscape/specs`.
-2. Search for the spec file by table ID — do not assume a specific path structure:
+1. Search for the spec file by table ID under `.modscape/specs` — do not assume a specific path structure:
    ```bash
-   find <SPEC_DIR> -name "<table-id>.md" -not -name "*.questions.md"
+   find .modscape/specs -name "<table-id>.md" -not -name "*.questions.md"
    ```
-3. If exactly one file is found: use it as the target.
-4. If multiple files are found: show the list and ask the user to choose:
+2. If exactly one file is found: use it as the target.
+3. If multiple files are found: show the list and ask the user to choose:
    ```
    Multiple spec files found for <table-id>:
-     1. <SPEC_DIR>/model-a/<table-id>.md
-     2. <SPEC_DIR>/model-b/<table-id>.md
+     1. .modscape/specs/model-a/<table-id>.md
+     2. .modscape/specs/model-b/<table-id>.md
    Which file should be updated?
    ```
-5. If no file is found, stop and display:
+4. If no file is found, stop and display:
    ```
-   ⚠ No spec file found for <table-id> under <SPEC_DIR>.
+   ⚠ No spec file found for <table-id> under .modscape/specs.
    Run /modscape:spec:archive first to create the spec, or check the table ID.
    ```
    Then exit without writing any file.
@@ -116,7 +115,7 @@ Wait for the user's response:
 
 For each planned update:
 
-1. Read the target `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`.
+1. Read the target `.modscape/specs/<MODEL_SLUG>/<table-id>.md`.
 2. Locate the target section (e.g., `## Business Rules`).
    - If the section **exists**: append a new bullet point at the end of that section.
    - If the section **does not exist**: append the section header followed by the new bullet at the end of the file.
