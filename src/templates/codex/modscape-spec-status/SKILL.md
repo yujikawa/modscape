@@ -70,10 +70,25 @@ modscape summary <file> --json
 
 9. **Always output the following status block:**
 
+Phase descriptions (include after the phase name):
+- `requirements` → "Capturing business requirements and scope"
+- `design` → "Analyzing impact and designing the data model"
+- `implement` → "Implementing tasks in the codebase"
+- `ready to archive` → "All tasks complete; ready to finalize and archive"
+
+Next step one-liners (include after the command):
+- `/modscape:spec:requirements` → "Define requirements and business context"
+- `/modscape:spec:design <name>` → "Analyze impact and generate design + tasks"
+- `/modscape:spec:tasks <name>` → "Generate the implementation task list"
+- `/modscape:spec:implement <name>` → "Work through remaining implementation tasks"
+- `/modscape:spec:answer <name>` → "Review and resolve open questions"
+- `/modscape:spec:check <name>` → "Run pre-archive validation checks"
+- `/modscape:spec:archive <name>` → "Merge YAML, sync specs, and close out this change"
+
 ---
 📋 Spec: `<name>`
 
-**Phase:** <requirements | design | implement | ready to archive>
+**Phase:** <phase> — <phase description>
 
 **Files:**
   <✓ or ✗> spec.md
@@ -95,7 +110,10 @@ modscape summary <file> --json
 ```
 <next action command from priority rules above>
 ```
+<next step one-liner>
 <If unresolved questions exist, append: "  ⚠️ There are <n> unanswered questions — run `/modscape:spec:answer <name>` before implementation">
+
+💡 For full context and remaining tasks: `/modscape:spec:status <name> detail`
 ---
 
 ## Next command by phase

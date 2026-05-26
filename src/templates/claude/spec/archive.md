@@ -148,16 +148,7 @@ modscape summary <file> --json
 
 8. Use the **affected tables classification** built in step 2 above.
 
-9. **Detect and warn about old folder-format specs (if any)**:
-   For each affected table, check whether `<SPEC_DIR>/<table-id>/spec.md` exists (old folder-per-table format).
-   If found, display a warning — do NOT auto-migrate:
-   ```
-   ⚠ Old folder-format spec detected: specs/<table-id>/spec.md
-     → New format path: specs/<MODEL_SLUG>/<table-id>.md
-     Please move it manually after archiving.
-   ```
-
-10. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
+9. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
