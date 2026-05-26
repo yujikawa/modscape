@@ -35,8 +35,8 @@ export function validateModel(filePath) {
 
   // ── v1 schema detection ──────────────────────────────────────────────────
   const version = typeof data.version === 'string' ? data.version : '1.0.0';
-  if (version !== '2.0.0') {
-    err('version', `Schema v${version} detected. Run: modscape migrate <path> to upgrade to v2.0.0`);
+  if (!version.startsWith('2.')) {
+    err('version', `Schema v${version} detected. Run: modscape migrate <path> to upgrade to v2`);
     return { valid: false, errors, warnings };
   }
 
