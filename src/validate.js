@@ -1,4 +1,5 @@
-import { readYaml, buildLineageGraph, hasLineageCycle } from './model-utils.js';
+import path from 'path';
+import { readYaml, resolveImports, buildLineageGraph, hasLineageCycle } from './model-utils.js';
 
 const COORD_FIELDS = ['x', 'y', 'width', 'height'];
 
@@ -7,7 +8,8 @@ const COORD_FIELDS = ['x', 'y', 'width', 'height'];
  * Each error/warning: { type: 'error'|'warning', field, message }
  */
 export function validateModel(filePath) {
-  const data = readYaml(filePath);
+  const raw = readYaml(filePath);
+  const { schema: data } = resolveImports(raw, path.dirname(filePath));
   const errors = [];
   const warnings = [];
 
@@ -28,7 +30,8 @@ export function validateModel(filePath) {
   const relIds = new Set();
   const lineageIds = new Set();
   const consumerIds = new Set(consumers.map(c => c.id).filter(Boolean));
-  const metricIds = new Set();
+  const metricIds = new Set(metrics.map(m => m.id).filter(Boolean));
+  const seenMetricIds = new Set();
 
   // ── v1 schema detection ──────────────────────────────────────────────────
   const version = typeof data.version === 'string' ? data.version : '1.0.0';
@@ -73,9 +76,9 @@ export function validateModel(filePath) {
       if (field in domain) err(`domains[${domain.id}].${field}`, `Coordinate field "${field}" must be placed in layout, not inside domains`);
     }
 
-    // members reference check (tables or consumers)
+    // members reference check (tables, consumers, or metrics)
     for (const memberId of domain.members || []) {
-      if (!tableIds.has(memberId) && !consumerIds.has(memberId)) err(`domains[${domain.id}].members`, `Table or consumer "${memberId}" not found`);
+      if (!tableIds.has(memberId) && !consumerIds.has(memberId) && !metricIds.has(memberId)) err(`domains[${domain.id}].members`, `Table, consumer, or metric "${memberId}" not found`);
     }
   }
 
@@ -100,8 +103,8 @@ export function validateModel(filePath) {
     if (tableIds.has(metric.id) || consumerIds.has(metric.id)) {
       err(prefix, `Duplicate id "${metric.id}": already used by a table or consumer`);
     }
-    if (metricIds.has(metric.id)) err(prefix, `Duplicate metric id: "${metric.id}"`);
-    metricIds.add(metric.id);
+    if (seenMetricIds.has(metric.id)) err(prefix, `Duplicate metric id: "${metric.id}"`);
+    seenMetricIds.add(metric.id);
   }
 
   // ── Structural checks: lineage ────────────────────────────────────────────
