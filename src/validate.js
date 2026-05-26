@@ -28,7 +28,7 @@ export function validateModel(filePath) {
   const relIds = new Set();
   const lineageIds = new Set();
   const consumerIds = new Set(consumers.map(c => c.id).filter(Boolean));
-  const metricIds = new Set(metrics.map(m => m.id).filter(Boolean));
+  const metricIds = new Set();
 
   // ── v1 schema detection ──────────────────────────────────────────────────
   const version = typeof data.version === 'string' ? data.version : '1.0.0';
