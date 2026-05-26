@@ -32,6 +32,20 @@ Only edit YAML directly for complex nested fields not covered by CLI flags (e.g.
 
 ALWAYS follow the rules defined in `.modscape/rules.md` (and `.modscape/rules.custom.md` if present) for any modeling tasks.
 
+## Metrics & Lineage
+
+When the user defines business metrics, add them to the top-level `metrics:` section:
+
+```yaml
+metrics:
+  - id: revenue
+    name: Revenue
+    expression: "SUM(fact_orders.amount) WHERE status = 'completed'"
+    description: "Total completed order revenue"
+```
+
+After adding metrics, analyze the `expression` field and generate `lineage:` entries connecting source tables to the metric. Use table-level granularity (not column-level). Add one lineage entry per source table referenced in the expression.
+
 ## COMMAND: /modscape:codegen
 When the user issues this command:
 1. READ `.modscape/codegen-rules.md` to understand how to interpret the YAML for code generation.

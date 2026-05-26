@@ -9,7 +9,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
 ## Instructions
 
-> ⛔ **生成済みファイルへの直接編集を禁止**: 実装中に修正が必要になった場合でも、生成済みの SQL/dbt ファイルを直接編集してはならない。修正は必ず `design.md → spec-model.yaml → 再生成` の順で行うこと。
+> ⛔ **Do not directly edit generated files**: Even when a fix is needed during implementation, never edit generated SQL/dbt files directly. Always make changes in the order: `design.md → spec-model.yaml → regenerate`.
 
 0. **Resolve `<name>`** — if the user did not provide a spec name argument:
    ```bash
@@ -188,20 +188,20 @@ When the user explicitly requests a modification during the implementation sessi
 4. **Output the update summary** and ask to continue:
 
 ---
-✅ 修正完了。
+✅ Modification complete.
 
-| ファイル | 更新内容 |
+| File | Changes |
 |---|---|
-| design.md | <更新箇所の説明> |
-| spec-model.yaml | <変更内容> |
-| tasks.md | <変更したタスクの一覧（追加・削除・チェック解除）> |
+| design.md | <description of what was updated> |
+| spec-model.yaml | <what was changed> |
+| tasks.md | <list of tasks added, removed, or unchecked> |
 
-実装を続けますか？（はい / いいえ）
+Ready to continue implementation? (yes / no)
 
 ---
 
-- **はい** → resume from the next pending task
-- **いいえ** → stop (show save hint)
+- **yes** → resume from the next pending task
+- **no** → stop (show save hint)
 
 ## COMMAND: /modscape:spec:implement
 

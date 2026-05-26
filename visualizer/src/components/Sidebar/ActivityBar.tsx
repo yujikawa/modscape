@@ -9,10 +9,11 @@ import {
   X,
   Command,
   Tag,
-  FileChartColumnIncreasing,
+  Users,
   Pencil,
   Spline,
   Network,
+  ChartLine,
 } from 'lucide-react'
 import logo from '/favicon.svg?url'
 
@@ -23,6 +24,7 @@ const ActivityBar = () => {
     addTable,
     addDomain,
     addConsumer,
+    addMetric,
     addAnnotation,
     showAnnotations,
     setShowAnnotations,
@@ -64,6 +66,11 @@ const ActivityBar = () => {
   const handleAddConsumer = () => {
     const center = screenToCanvasCenter()
     addConsumer(center.x - 80, center.y - 30)
+  }
+
+  const handleAddMetric = () => {
+    const center = screenToCanvasCenter()
+    addMetric(center.x - 110, center.y - 45)
   }
 
   const handleAddAnnotation = () => {
@@ -154,10 +161,20 @@ const ActivityBar = () => {
               className={iconClass(false, 'text-violet-400')}
             >
               <div className="relative">
-                <FileChartColumnIncreasing size={20} />
+                <Users size={20} />
                 <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
               </div>
               <Tooltip text="Add Consumer (C)" />
+            </button>
+            <button
+              onClick={handleAddMetric}
+              className={iconClass(false, 'text-emerald-400')}
+            >
+              <div className="relative">
+                <ChartLine size={20} />
+                <Plus size={12} className="absolute -bottom-1 -right-1 text-amber-500 stroke-[3.5px]" />
+              </div>
+              <Tooltip text="Add Metric (M)" />
             </button>
             <button onClick={handleAddAnnotation} className={iconClass(false, 'text-amber-400')}>
               <div className="relative">
@@ -230,6 +247,7 @@ const ActivityBar = () => {
                 <ShortcutRow label="New Table" keys={['T']} />
                 <ShortcutRow label="New Domain" keys={['D']} />
                 <ShortcutRow label="New Consumer" keys={['C']} />
+                <ShortcutRow label="New Metric" keys={['M']} />
                 <ShortcutRow label="New Sticky Note" keys={['S']} />
                 <ShortcutRow label="Draw Lineage Edge" keys={['L']} />
                 <ShortcutRow label="Draw ER Edge" keys={['R']} />

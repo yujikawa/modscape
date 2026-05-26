@@ -2,7 +2,7 @@ import path from 'path';
 import { readYaml, writeYaml, findTableById, findDomainById, resolveImports } from '../model-utils.js';
 
 function findMemberById(schema, id) {
-  return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || null;
+  return findTableById(schema, id) || (schema.consumers || []).find(c => c.id === id) || (schema.metrics || []).find(m => m.id === id) || null;
 }
 
 export function listDomains(filePath) {
@@ -57,7 +57,7 @@ export function addDomainMember(filePath, { domainId, memberId }) {
   const { schema: resolved } = resolveImports(data, path.dirname(path.resolve(filePath)));
   const domain = findDomainById(data, domainId);
   if (!domain) throw new Error(`Domain "${domainId}" not found`);
-  if (!findMemberById(resolved, memberId)) throw new Error(`Table or consumer "${memberId}" not found`);
+  if (!findMemberById(resolved, memberId)) throw new Error(`Table, consumer, or metric "${memberId}" not found`);
   if (!domain.members) domain.members = [];
   if (domain.members.includes(memberId)) throw new Error(`"${memberId}" is already in domain "${domainId}"`);
   domain.members.push(memberId);

@@ -7,6 +7,16 @@ Format version is recorded in the `version` field at the root of `model.yaml`.
 
 ---
 
+## [2.1.0]
+
+### Added
+- `metrics[]` — new optional top-level array for defining business KPIs and calculated measures. Each entry has `id` (string, required), `name` (string, required), `expression` (string, optional — free-form formula), and `description` (string, optional).
+- `lineage[].to` now accepts a metric `id` in addition to a table `id`, enabling data flow arrows from source tables to metric nodes.
+
+Existing `model.yaml` files without a `metrics:` key are fully compatible — no migration needed.
+
+---
+
 ## [2.0.0]
 
 ### Added

@@ -11,11 +11,11 @@ Capture free-form knowledge (from a conversation, Slack message, or meeting) and
 Examples:
 ```
 /modscape:spec:note fct_orders
-> Q1 2023 の updated_at は信頼不可。ETL バグにより NULL が混入している
+> updated_at in Q1 2023 is unreliable — NULL values were introduced by an ETL bug.
 
 /modscape:spec:note
-> fct_orders の grain は1注文につき1行。
-> dim_customers は SCD Type2 で grain は有効期間ごとの行。
+> fct_orders grain is one row per order.
+> dim_customers uses SCD Type2; grain is one row per customer validity period.
 ```
 
 ## Instructions
@@ -55,22 +55,21 @@ Wait for the user's free-text input before proceeding.
 
 For each identified table ID:
 
-1. Read `SPEC_DIR` from `.modscape/modscape-spec.custom.md` (`## Spec Directory` section) if present; otherwise use `.modscape/specs`.
-2. Search for the spec file by table ID — do not assume a specific path structure:
+1. Search for the spec file by table ID under `.modscape/specs` — do not assume a specific path structure:
    ```bash
-   find <SPEC_DIR> -name "<table-id>.md" -not -name "*.questions.md"
+   find .modscape/specs -name "<table-id>.md" -not -name "*.questions.md"
    ```
-3. If exactly one file is found: use it as the target.
-4. If multiple files are found: show the list and ask the user to choose:
+2. If exactly one file is found: use it as the target.
+3. If multiple files are found: show the list and ask the user to choose:
    ```
    Multiple spec files found for <table-id>:
-     1. <SPEC_DIR>/model-a/<table-id>.md
-     2. <SPEC_DIR>/model-b/<table-id>.md
+     1. .modscape/specs/model-a/<table-id>.md
+     2. .modscape/specs/model-b/<table-id>.md
    Which file should be updated?
    ```
-5. If no file is found, stop and display:
+4. If no file is found, stop and display:
    ```
-   ⚠ No spec file found for <table-id> under <SPEC_DIR>.
+   ⚠ No spec file found for <table-id> under .modscape/specs.
    Run /modscape:spec:archive first to create the spec, or check the table ID.
    ```
    Then exit without writing any file.
@@ -99,11 +98,11 @@ Will apply the following updates:
 
 📄 specs/fct_orders/spec.md
   Section: Known Issues / Caveats
-  Content: "Q1 2023 の updated_at は信頼不可。ETL バグにより NULL が混入している"
+  Content: "updated_at in Q1 2023 is unreliable — NULL values were introduced by an ETL bug."
 
 📄 specs/dim_customers/spec.md
   Section: Business Rules
-  Content: "SCD Type2。grain は顧客の有効期間ごとの1行"
+  Content: "SCD Type2. Grain is one row per customer validity period."
 
 Continue? [Y/n]
 ```
@@ -116,7 +115,7 @@ Wait for the user's response:
 
 For each planned update:
 
-1. Read the target `<SPEC_DIR>/<MODEL_SLUG>/<table-id>.md`.
+1. Read the target `.modscape/specs/<MODEL_SLUG>/<table-id>.md`.
 2. Locate the target section (e.g., `## Business Rules`).
    - If the section **exists**: append a new bullet point at the end of that section.
    - If the section **does not exist**: append the section header followed by the new bullet at the end of the file.

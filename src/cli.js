@@ -9,6 +9,7 @@ import { listDomains, getDomain, addDomain, updateDomain, removeDomain, addDomai
 import { listAnnotations, addAnnotation, updateAnnotation, removeAnnotation } from './operations/annotation.js';
 import { summarizeModel } from './operations/summarize.js';
 import { listConsumers, getConsumer, addConsumer, updateConsumer, removeConsumer } from './operations/consumer.js';
+import { listMetrics, getMetric, addMetric, updateMetric, removeMetric } from './operations/metrics.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -683,6 +684,84 @@ export function consumerCommand() {
       run(opts.json, () => {
         removeConsumer(file, opts.id);
         outputOk(opts.json, 'remove', 'consumer', opts.id);
+      });
+    });
+
+  return cmd;
+}
+
+// ── Metric command ────────────────────────────────────────────────────────────
+
+export function metricCommand() {
+  const cmd = new Command('metric').description('Manage business metrics in a YAML model');
+
+  cmd
+    .command('list <file>')
+    .description('List all metrics in the model')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const metrics = listMetrics(file);
+        if (opts.json) {
+          console.log(JSON.stringify(metrics));
+        } else {
+          if (metrics.length === 0) console.log('  (no metrics)');
+          else metrics.forEach(m => console.log(`  ${m.id}  ${m.name || ''}`));
+        }
+      });
+    });
+
+  cmd
+    .command('get <file>')
+    .description('Get a metric definition by ID')
+    .requiredOption('--id <id>', 'metric ID')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        const metric = getMetric(file, opts.id);
+        console.log(opts.json ? JSON.stringify(metric) : JSON.stringify(metric, null, 2));
+      });
+    });
+
+  cmd
+    .command('add <file>')
+    .description('Add a new metric')
+    .requiredOption('--id <id>', 'metric ID (snake_case)')
+    .requiredOption('--name <name>', 'display name')
+    .option('--expression <expr>', 'calculation formula or SQL expression')
+    .option('--description <text>', 'description')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        addMetric(file, { id: opts.id, name: opts.name, expression: opts.expression, description: opts.description });
+        outputOk(opts.json, 'add', 'metric', opts.id);
+      });
+    });
+
+  cmd
+    .command('update <file>')
+    .description('Update fields of an existing metric')
+    .requiredOption('--id <id>', 'metric ID to update')
+    .option('--name <name>', 'display name')
+    .option('--expression <expr>', 'calculation formula or SQL expression (empty string to remove)')
+    .option('--description <text>', 'description (empty string to remove)')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        updateMetric(file, { id: opts.id, name: opts.name, expression: opts.expression, description: opts.description });
+        outputOk(opts.json, 'update', 'metric', opts.id);
+      });
+    });
+
+  cmd
+    .command('remove <file>')
+    .description('Remove a metric from the model')
+    .requiredOption('--id <id>', 'metric ID to remove')
+    .option('--json', 'output as JSON')
+    .action((file, opts) => {
+      run(opts.json, () => {
+        removeMetric(file, opts.id);
+        outputOk(opts.json, 'remove', 'metric', opts.id);
       });
     });
 

@@ -638,17 +638,17 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 5.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
     - **dry-run プレビューを先に表示**: 追加・更新（変更カラム）・変更なしのテーブルを ID 単位でサマリー表示し、確認後にマージを実行
     - `spec-config.yaml` を参照し、テーブルごとに対応するmain-model.yamlにマージ
-    - 影響テーブルごとに `<SPEC_DIR>/<model-slug>/<table-id>.md` を生成・更新（Overview・Business Context・Business Rules・Known Issues・Usage Guide・Changelog）
+    - 影響テーブルごとに `.modscape/specs/<model-slug>/<table-id>.md` を生成・更新（Overview・Business Context・Business Rules・Known Issues・Usage Guide・Changelog）
     - 上流テーブル（Context Only）にはChangelog追記のみ
-    - `questions.md` のエントリを `<SPEC_DIR>/_questions.yaml` にマージ
-    - `glossary.md` の用語を `<SPEC_DIR>/_glossary.yaml` にマージ
-    - プロジェクト横断の設計判断を `<SPEC_DIR>/_context.yaml` に追記
+    - `questions.md` のエントリを `.modscape/specs/_questions.yaml` にマージ
+    - `glossary.md` の用語を `.modscape/specs/_glossary.yaml` にマージ
+    - プロジェクト横断の設計判断を `.modscape/specs/_context.yaml` に追記
     - **アーカイブサマリーに AC カバレッジを表示**（テスト紐付き / 手動検証 / 未カバーの件数）
     - 作業フォルダは自動的に `.modscape/archives/YYYY-MM-DD-<name>/` へ移動
 
-    恒久スペックは `SPEC_DIR`（デフォルト: `.modscape/specs`、`modscape-spec.custom.md` で変更可）に蓄積されます:
+    恒久スペックは `.modscape/specs` に蓄積されます:
     ```
-    <SPEC_DIR>/
+    .modscape/specs/
     ├── <model-slug>/
     │   └── <table-id>.md          ← 業務文脈・ルール・使い方ガイド・Changelog
     ├── _questions.yaml            ← 全変更横断の Q&A 履歴

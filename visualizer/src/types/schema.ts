@@ -99,6 +99,15 @@ export interface Consumer {
   };
 }
 
+// ── Metric ────────────────────────────────────────────────────────────────────
+
+export interface Metric {
+  id: string;
+  name: string;
+  expression?: string;
+  description?: string;
+}
+
 // ── Annotation ───────────────────────────────────────────────────────────────
 
 export interface Annotation {
@@ -214,6 +223,7 @@ export interface Schema {
   lineage?: LineageEdge[];
   domains?: Domain[];
   consumers?: Consumer[];
+  metrics?: Metric[];
   annotations?: Annotation[];
   imports?: ImportEntry[];
   layout?: Record<string, LayoutEntry>;

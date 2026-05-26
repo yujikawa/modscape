@@ -1,4 +1,5 @@
-import { readYaml, buildLineageGraph, hasLineageCycle } from './model-utils.js';
+import path from 'path';
+import { readYaml, resolveImports, buildLineageGraph, hasLineageCycle } from './model-utils.js';
 
 const COORD_FIELDS = ['x', 'y', 'width', 'height'];
 
@@ -7,7 +8,8 @@ const COORD_FIELDS = ['x', 'y', 'width', 'height'];
  * Each error/warning: { type: 'error'|'warning', field, message }
  */
 export function validateModel(filePath) {
-  const data = readYaml(filePath);
+  const raw = readYaml(filePath);
+  const { schema: data } = resolveImports(raw, path.dirname(filePath));
   const errors = [];
   const warnings = [];
 
@@ -20,6 +22,7 @@ export function validateModel(filePath) {
   const lineage = data.lineage || [];
   const layout = data.layout || {};
   const consumers = data.consumers || [];
+  const metrics = data.metrics || [];
 
   // ── ID sets ───────────────────────────────────────────────────────────────
   const tableIds = new Set();
@@ -27,11 +30,13 @@ export function validateModel(filePath) {
   const relIds = new Set();
   const lineageIds = new Set();
   const consumerIds = new Set(consumers.map(c => c.id).filter(Boolean));
+  const metricIds = new Set(metrics.map(m => m.id).filter(Boolean));
+  const seenMetricIds = new Set();
 
   // ── v1 schema detection ──────────────────────────────────────────────────
   const version = typeof data.version === 'string' ? data.version : '1.0.0';
-  if (version !== '2.0.0') {
-    err('version', `Schema v${version} detected. Run: modscape migrate <path> to upgrade to v2.0.0`);
+  if (!version.startsWith('2.')) {
+    err('version', `Schema v${version} detected. Run: modscape migrate <path> to upgrade to v2`);
     return { valid: false, errors, warnings };
   }
 
@@ -71,9 +76,9 @@ export function validateModel(filePath) {
       if (field in domain) err(`domains[${domain.id}].${field}`, `Coordinate field "${field}" must be placed in layout, not inside domains`);
     }
 
-    // members reference check (tables or consumers)
+    // members reference check (tables, consumers, or metrics)
     for (const memberId of domain.members || []) {
-      if (!tableIds.has(memberId) && !consumerIds.has(memberId)) err(`domains[${domain.id}].members`, `Table or consumer "${memberId}" not found`);
+      if (!tableIds.has(memberId) && !consumerIds.has(memberId) && !metricIds.has(memberId)) err(`domains[${domain.id}].members`, `Table, consumer, or metric "${memberId}" not found`);
     }
   }
 
@@ -90,8 +95,20 @@ export function validateModel(filePath) {
     else if (!tableIds.has(rel.to.table)) err(`${prefix}.to.table`, `Table "${rel.to.table}" not found`);
   }
 
+  // ── Structural checks: metrics ────────────────────────────────────────────
+  for (const [i, metric] of metrics.entries()) {
+    const prefix = `metrics[${i}]`;
+    if (!metric.id) { err(prefix, 'Missing required field: id'); continue; }
+    if (!metric.name) warn(`${prefix}(${metric.id})`, 'Missing required field: name');
+    if (tableIds.has(metric.id) || consumerIds.has(metric.id)) {
+      err(prefix, `Duplicate id "${metric.id}": already used by a table or consumer`);
+    }
+    if (seenMetricIds.has(metric.id)) err(prefix, `Duplicate metric id: "${metric.id}"`);
+    seenMetricIds.add(metric.id);
+  }
+
   // ── Structural checks: lineage ────────────────────────────────────────────
-  const validLineageTargets = new Set([...tableIds, ...consumerIds]);
+  const validLineageTargets = new Set([...tableIds, ...consumerIds, ...metricIds]);
   for (const [i, entry] of lineage.entries()) {
     const prefix = `lineage[${i}]`;
     if (entry.id) {
@@ -99,9 +116,9 @@ export function validateModel(filePath) {
       lineageIds.add(entry.id);
     }
     if (!entry.from) err(prefix, 'Missing from');
-    else if (!validLineageTargets.has(entry.from)) err(`${prefix}.from`, `"${entry.from}" not found in tables or consumers`);
+    else if (!validLineageTargets.has(entry.from)) err(`${prefix}.from`, `"${entry.from}" not found in tables, consumers, or metrics`);
     if (!entry.to) err(prefix, 'Missing to');
-    else if (!validLineageTargets.has(entry.to)) err(`${prefix}.to`, `"${entry.to}" not found in tables or consumers`);
+    else if (!validLineageTargets.has(entry.to)) err(`${prefix}.to`, `"${entry.to}" not found in tables, consumers, or metrics`);
   }
 
   // ── Column completeness ───────────────────────────────────────────────────
@@ -123,17 +140,10 @@ export function validateModel(filePath) {
   }
 
   // ── Layout checks ─────────────────────────────────────────────────────────
-  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds]);
+  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds, ...metricIds]);
   for (const [id, coords] of Object.entries(layout)) {
     if (!validLayoutIds.has(id)) {
       warn(`layout.${id}`, `"${id}" not found in tables or domains — orphaned layout entry`);
-    }
-    // Grid check: x and y should be multiples of 40 (warning only — auto-layout may produce non-grid coords)
-    if (coords.x !== undefined && coords.x % 40 !== 0) {
-      warn(`layout.${id}.x`, `x should be a multiple of 40 (got ${coords.x})`);
-    }
-    if (coords.y !== undefined && coords.y % 40 !== 0) {
-      warn(`layout.${id}.y`, `y should be a multiple of 40 (got ${coords.y})`);
     }
   }
 

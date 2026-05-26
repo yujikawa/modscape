@@ -62,11 +62,11 @@ Append to `.modscape/changes/<name>/design.md` under `## Findings` (create secti
 
 ```markdown
 ### Finding: <title> (<YYYY-MM-DD>)
-**調査依頼:** <one-line summary>
-**調査対象:** <files read>
-**発見:** <what was found>
-**影響:** <impact>
-**次のアクション:** <recommended action>
+**Request:** <one-line summary>
+**Files read:** <files read>
+**Finding:** <what was found>
+**Impact:** <impact>
+**Next action:** <recommended action>
 ```
 
 ### Step 6 — Guide next action

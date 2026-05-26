@@ -6,7 +6,7 @@ Pre-implementation quality check: SSOT-driven consistency + go/no-go readiness.
 /modscape:spec:check <name> [--from <artifact>]
 ```
 
-- `<artifact>` は `spec-model.yaml`（デフォルト）、`design.md`、`spec.md` のいずれか。
+- `<artifact>` is one of `spec-model.yaml` (default), `design.md`, or `spec.md`.
 
 ## Instructions
 
@@ -47,21 +47,21 @@ For each issue found, always include a **→ Fix:** line explaining which file t
 
 #### When SSOT = `spec-model.yaml` (default)
 
-**A. spec-model.yaml → design.md: テーブル分類の網羅性**
+**A. spec-model.yaml → design.md: Table classification completeness**
 
 - Get all table IDs from `modscape table list .modscape/changes/<name>/spec-model.yaml`
 - Check each ID appears in `design.md` under `## Affected Tables` (Direct Impact, Downstream — Implement, or Downstream — Context Only)
 - ❌ Flag any table in `spec-model.yaml` that has no classification in `design.md`
   - → Fix: Run `/modscape:spec:design <name>` to classify the missing table(s).
 
-**B. spec-model.yaml → tasks.md: Direct Impact タスクカバレッジ**
+**B. spec-model.yaml → tasks.md: Direct Impact task coverage**
 
 - Extract table IDs listed under `### Direct Impact` in `design.md`
 - For each, check that at least one task in `tasks.md` references it (by table ID or closely matching name)
 - ❌ Flag Direct Impact tables with no corresponding task
   - → Fix: Add a task to `tasks.md`, or re-run `/modscape:spec:tasks <name>` to regenerate.
 
-**C. spec-model.yaml → questions.md: 未解決質問の assumption 記録**
+**C. spec-model.yaml → questions.md: Recording assumptions for unresolved questions**
 
 - Find all unresolved Q-NNN entries in `questions.md` (status: open or assumed)
 - For each, check if `design.md` contains a reference to that Q-NNN or an assumption statement (`**Assumption**` block)
@@ -72,21 +72,21 @@ For each issue found, always include a **→ Fix:** line explaining which file t
 
 #### When SSOT = `design.md`
 
-**A. design.md → spec-model.yaml: Implementation Details のテーブル存在確認**
+**A. design.md → spec-model.yaml: Verifying tables in Implementation Details exist in spec-model.yaml**
 
 - Extract table IDs listed under `## Implementation Details` in `design.md`
 - Check each ID against `modscape table list .modscape/changes/<name>/spec-model.yaml`
 - ❌ Flag any table in `design.md` Implementation Details that is absent from `spec-model.yaml`
   - → Fix: Update `design.md` to remove or correct the table entry, or add the table to `spec-model.yaml` using the mutation CLI.
 
-**B. design.md → tasks.md: Direct Impact タスクカバレッジ**
+**B. design.md → tasks.md: Direct Impact task coverage**
 
 - Extract table IDs listed under `### Direct Impact` in `design.md`
 - For each, check that at least one task in `tasks.md` references it (by table ID or closely matching name)
 - ❌ Flag Direct Impact tables with no corresponding task
   - → Fix: Add a task to `tasks.md`, or re-run `/modscape:spec:tasks <name>` to regenerate.
 
-**C. design.md → spec.md: AC と設計の整合性確認（文言チェック）**
+**C. design.md → spec.md: Consistency check between AC entries and design decisions**
 
 - Extract all `AC-NNN` entries from `spec.md`
 - For each AC, check if `design.md` references that AC-NNN or its topic
@@ -97,14 +97,14 @@ For each issue found, always include a **→ Fix:** line explaining which file t
 
 #### When SSOT = `spec.md`
 
-**A. spec.md → design.md: AC の design.md 言及確認**
+**A. spec.md → design.md: Verify each AC is referenced in design.md**
 
 - Extract all `AC-NNN` entries from `spec.md`
 - Check if each AC-NNN is mentioned in `design.md`
 - ❌ Flag ACs absent from `design.md`
   - → Fix: Update `design.md` to address the AC, or note it as out-of-scope with a reason.
 
-**B. spec.md → tasks.md: AC の Phase 4 テストカバレッジ**
+**B. spec.md → tasks.md: Phase 4 test coverage for each AC**
 
 - For each AC-NNN in `spec.md`, check if at least one Phase 4 task in `tasks.md` contains `[→ AC-NNN]`, or if `[manual verification]` is noted near the AC
 - Classify each AC:
@@ -116,7 +116,7 @@ For each issue found, always include a **→ Fix:** line explaining which file t
 
 ---
 
-### Part 2: Readiness (SSOT によらず常に実行)
+### Part 2: Readiness (always run regardless of SSOT)
 
 **Unresolved questions**
 - Count lines matching open/assumed status in `questions.md`; list their Q-NNN IDs

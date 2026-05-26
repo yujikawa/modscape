@@ -25,8 +25,9 @@ export function pruneModel(filePath, opts = {}) {
   const tableIds = new Set(data.tables?.map(t => t.id).filter(Boolean));
   const domainIds = new Set(domains.map(d => d.id).filter(Boolean));
   const consumerIds = new Set(consumers.map(c => c.id).filter(Boolean));
-  const validIds = new Set([...tableIds, ...consumerIds]);
-  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds]);
+  const metricIds = new Set((raw.metrics || []).map(m => m.id).filter(Boolean));
+  const validIds = new Set([...tableIds, ...consumerIds, ...metricIds]);
+  const validLayoutIds = new Set([...tableIds, ...domainIds, ...consumerIds, ...metricIds]);
 
   const orphans = [];
 
@@ -78,7 +79,7 @@ export function pruneModel(filePath, opts = {}) {
     if (!domain.id) continue;
     for (const memberId of domain.members || []) {
       if (!validIds.has(memberId)) {
-        orphans.push({ kind: 'domain.member', id: `${domain.id}/${memberId}`, reason: `Table "${memberId}" not found`, domainId: domain.id, memberId });
+        orphans.push({ kind: 'domain.member', id: `${domain.id}/${memberId}`, reason: `Table, consumer, or metric "${memberId}" not found`, domainId: domain.id, memberId });
       }
     }
   }

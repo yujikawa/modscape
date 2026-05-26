@@ -46,12 +46,12 @@
 
 ## Acceptance Criteria
 
-<!-- 抽象的な条件のみを記載すること。検証SQL・変換式・WHEN/THENシナリオは design.md に書く。 -->
-<!-- 良い例: "注文金額が正しく集計されること" -->
-<!-- 悪い例: "SELECT COUNT(*) FROM orders WHERE amount IS NULL = 0" → design.md へ -->
+<!-- State only abstract conditions here. Move validation SQL, transformation expressions, and WHEN/THEN scenarios to design.md. -->
+<!-- Good example: "Order amounts are correctly aggregated" -->
+<!-- Bad example: "SELECT COUNT(*) FROM orders WHERE amount IS NULL = 0" → goes in design.md -->
 
-- [ ] **AC-001** — <何が満たされるべきかを抽象的に記述>
-- [ ] **AC-002** — <何が満たされるべきかを抽象的に記述>
+- [ ] **AC-001** — <describe what should be satisfied, in abstract terms>
+- [ ] **AC-002** — <describe what should be satisfied, in abstract terms>
 
 ## Target Tool
 

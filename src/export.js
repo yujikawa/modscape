@@ -34,15 +34,19 @@ function loadContext(specsDir = DEFAULT_SPECS_DIR) {
 
   const tables = {};
   if (fs.existsSync(specsDir)) {
-    for (const entry of fs.readdirSync(specsDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const tableDir = path.join(specsDir, entry.name);
-      const spec = readFileIfExists(path.join(tableDir, 'spec.md'));
-      const questions = readFileIfExists(path.join(tableDir, 'questions.md'));
-      if (spec !== null || questions !== null) {
-        tables[entry.name] = {};
-        if (spec !== null) tables[entry.name].spec = spec;
-        if (questions !== null) tables[entry.name].questions = questions;
+    for (const modelEntry of fs.readdirSync(specsDir, { withFileTypes: true })) {
+      if (!modelEntry.isDirectory() || modelEntry.name.startsWith('_')) continue;
+      const modelDir = path.join(specsDir, modelEntry.name);
+      for (const file of fs.readdirSync(modelDir)) {
+        if (!file.endsWith('.md') || file.includes('.questions.')) continue;
+        const tableId = file.replace(/\.md$/, '');
+        const spec = readFileIfExists(path.join(modelDir, file));
+        const questions = readFileIfExists(path.join(modelDir, `${tableId}.questions.md`));
+        if (spec !== null || questions !== null) {
+          tables[tableId] = {};
+          if (spec !== null) tables[tableId].spec = spec;
+          if (questions !== null) tables[tableId].questions = questions;
+        }
       }
     }
   }

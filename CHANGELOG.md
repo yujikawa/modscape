@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.0] - 2026-05-22
+
+### Added
+
+- **Metric nodes** — A new `metrics:` top-level section in `model.yaml` lets you define business KPIs and calculated measures alongside your data model. Each metric has an `id`, `name`, optional `expression` (free-form formula displayed on the node card with truncation), and optional `description`. Metrics appear on the canvas as distinct emerald-green nodes (📐 icon) with an expression preview.
+
+- **Lineage to metrics** — The existing `lineage:` section now accepts a metric ID as the `to` value, enabling data flow arrows from source tables to metric nodes. The CLI validator, `findNodeById`, and `rules.md` have all been updated to recognize metric IDs as valid lineage targets.
+
+- **Metric detail panel with inline editing** — Clicking a metric node opens the detail panel with editable Name, Description, and Expression fields (textarea for expression, monospace font). Changes are persisted to YAML in real-time. A delete button removes the metric and its associated lineage entries in one step.
+
+- **`modscape metric` CLI commands** — New `src/operations/metrics.js` provides full CRUD for metrics. Registered as `modscape metric list | get | add | update | remove`. The `add` command accepts `--id`, `--name`, `--expression`, and `--description`.
+
+- **Metrics in SelectionToolbar, SearchTab, and PathFinderTab** — Selecting a metric node shows it in the top-right SelectionToolbar (ChartLine icon). The right panel Search tab includes metrics in both the domain tree and full-text results. PathFinder accepts metrics as source/target nodes.
+
+- **Add Metric button and keyboard shortcut** — The left ActivityBar has a new Add Metric button (ChartLine + Plus icon). Pressing `M` on the canvas adds a metric at the viewport center. The shortcut guide is updated accordingly.
+
+- **AI skill templates updated** — `src/templates/claude/modeling.md`, `gemini/modscape-modeling/SKILL.md`, and `codex/modscape-modeling/SKILL.md` now include a "Metrics & Lineage" section explaining how to define metrics and auto-generate lineage entries from expression analysis.
+
+- **`rules.md` updated** — The quick reference, root structure, Section 5c (Metrics), CLI operations table, and flag reference all document the new `metrics:` key and `modscape metric` commands.
+
+### Removed
+
+- **`## Spec Directory` customization removed** — The `modscape-spec.custom.md` setting that allowed overriding the permanent spec storage path (e.g. `Spec directory: docs/specs`) has been removed. The spec directory is now fixed at `.modscape/specs`. This was removed because `modscape spec dev` and `modscape spec open` always read from the hardcoded path, so a custom path would cause the CLI commands to silently diverge from the AI skill output. All skill templates (Claude / Gemini / Codex), README (EN / JA), and `modscape-spec.custom.md.example` have been updated accordingly.
+
 ## [3.5.1] - 2026-05-21
 
 ### Added

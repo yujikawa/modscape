@@ -5,7 +5,7 @@ description: Merge the work-scoped YAML back into the main model, sync permanent
 
 # Spec Archive
 
-Merge the work-scoped YAML back into the main model, then sync permanent table specs in the spec directory (default: `.modscape/specs`, configurable via `modscape-spec.custom.md`).
+Merge the work-scoped YAML back into the main model, then sync permanent table specs in `.modscape/specs`.
 
 ## Instructions
 
@@ -41,11 +41,16 @@ modscape summary <file> --json
    - **Downstream Impact — Context Only** tables: listed under `### Downstream Impact — Context Only`
    - If `design.md` does not exist or has no `## Affected Tables` section: treat all tables in `spec-model.yaml` as Direct Impact (backwards compatible).
 
-2.5. **Resolve spec directory (`SPEC_DIR`)**:
-   - If `.modscape/modscape-spec.custom.md` exists and has a `## Spec Directory` section:
-     - Extract the value (pattern: `Spec directory: <path>`)
-     - Set `SPEC_DIR = <path>` (use this path for all spec file operations in Steps 3–5)
-   - Otherwise: `SPEC_DIR = .modscape/specs`
+2.5. **Resolve model slug (`MODEL_SLUG`)** — used to determine the subdirectory within `.modscape/specs`:
+
+   Per-table permanent specs are stored at `.modscape/specs/<MODEL_SLUG>/<table-id>.md`.
+
+   **Normal path** (main YAML exists): for each main YAML path in `spec-config.yaml`, derive the slug with `path.parse(filePath).name`.
+   - Example: `models/main-model1.yaml` → `MODEL_SLUG = main-model1`
+   - If multiple main YAMLs exist, use the slug of each respective YAML when writing specs for its tables.
+
+   **Greenfield path**: derive slug from the output path the user specified in step 3 below.
+   - Example: user chooses `analytics/model.yaml` → `MODEL_SLUG = model`
 
 ### Step 1: Dry-run — show merge preview and confirm
 
@@ -106,20 +111,14 @@ modscape summary <file> --json
 
 ### Step 3: Sync permanent table specs
 
-7. **Migrate old flat-file specs (if any)**:
-   For each affected table, check whether `<SPEC_DIR>/<table-id>.md` exists as a plain file (old format).
-   If found, move it into the new directory format before proceeding:
-   ```bash
-   mkdir -p <SPEC_DIR>/<table-id>
-   mv <SPEC_DIR>/<table-id>.md <SPEC_DIR>/<table-id>/spec.md
-   ```
-
 8. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 
    For each table in **Direct Impact** or **Downstream Impact — Implement**:
 
-   a. Check whether `<SPEC_DIR>/<table-id>/spec.md` exists.
-      - If **not**: create a new file using the format below (also create the directory).
+   Determine the output path: `.modscape/specs/<MODEL_SLUG>/<table-id>.md`
+
+   a. Check whether the target file exists.
+      - If **not**: create a new file using the format below.
       - If **exists**: update only the relevant sections (Overview, Business Context, Business Rules, Known Issues); preserve unrelated content.
 
    b. Append a Changelog entry:
@@ -129,14 +128,14 @@ modscape summary <file> --json
 
 9. **Changelog only for Downstream Impact — Context Only tables**:
    - Do **not** perform a full spec sync for these tables.
-   - Only append a Changelog entry to `<SPEC_DIR>/<table-id>/spec.md` (create file and directory with minimal content if absent):
+   - Only append a Changelog entry to `.modscape/specs/<MODEL_SLUG>/<table-id>.md` (create with minimal content if absent):
      - Append: `- <YYYY-MM-DD>: Referenced in downstream lineage; no structural change required (SDD: <name>)`
 
 ### Step 4: Merge questions into _questions.yaml
 
 10. If `.modscape/changes/<name>/questions.md` exists:
 
-    Read `.modscape/changes/<name>/questions.md` as a YAML list and `<SPEC_DIR>/_questions.yaml`.
+    Read `.modscape/changes/<name>/questions.md` as a YAML list and `.modscape/specs/_questions.yaml`.
 
     For each entry in `questions.md`:
     - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
@@ -150,7 +149,7 @@ modscape summary <file> --json
 
 If `.modscape/changes/<name>/glossary.md` exists:
 
-    Read `.modscape/changes/<name>/glossary.md` and `<SPEC_DIR>/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
+    Read `.modscape/changes/<name>/glossary.md` and `.modscape/specs/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
 
     **For each term entry in `glossary.md`:**
     - Parse: `id`, `definition`, and optional fields (`label`, `tables`, `columns`)
@@ -167,7 +166,7 @@ If `.modscape/changes/<name>/glossary.md` exists:
 
 ### Step 5: Update `_context.yaml`
 
-11. Read or create `<SPEC_DIR>/_context.yaml`.
+11. Read or create `.modscape/specs/_context.yaml`.
 
     `_context.yaml` stores only **cross-project architectural decisions** — NOT Q&A (those are in `_questions.yaml`).
 
@@ -232,9 +231,9 @@ Usage: `/modscape:spec:archive <name> [path/to/master.yaml]`
 ✅ Archive complete.
 
 **Synced specs:**
-- Created: `specs/<table-id>/spec.md` ...
-- Updated: `specs/<table-id>/spec.md` ...
-- Changelog only: `specs/<table-id>/spec.md` ...
+- Created: `specs/<MODEL_SLUG>/<table-id>.md` ...
+- Updated: `specs/<MODEL_SLUG>/<table-id>.md` ...
+- Changelog only: `specs/<MODEL_SLUG>/<table-id>.md` ...
 
 **Questions merged:**
 - `_questions.yaml`: <n> entries added from `questions.md` (or: no questions.md found)
@@ -256,7 +255,7 @@ Tables without specs: <list or "none">
 🎉 All work for this spec is complete!
 ---
 
-## `specs/<table-id>/spec.md` Format
+## `specs/<MODEL_SLUG>/<table-id>.md` Format
 
 ```markdown
 # <table-id>

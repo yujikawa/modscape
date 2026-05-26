@@ -15,6 +15,7 @@ import { useStore } from '../store/useStore'
 import { useShallow } from 'zustand/react/shallow'
 import TableCard from './TableCard'
 import ConsumerCard from './ConsumerCard'
+import MetricCard from './MetricCard'
 import { yamlToElements } from '../lib/cytoscapeElements'
 import { ER_HIGHLIGHT, LINEAGE_BASE, LINEAGE_HIGHLIGHT } from '../lib/colors'
 import type { Schema } from '../types/schema'
@@ -201,6 +202,29 @@ function buildCytoscapeStyle(theme: 'dark' | 'light', lowZoom = false) {
         'border-color': lowZoom ? 'data(typeColor)' : '#000',
         width: 220,
         height: 70,
+        ...(lowZoom ? {
+          label: 'data(label)',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          color: '#ffffff',
+          'font-size': 11,
+          'font-weight': 'bold',
+          'text-wrap': 'ellipsis',
+          'text-max-width': '200px',
+        } : {}),
+      },
+    },
+    // Metric nodes (DOM overlay, transparent at normal zoom like consumer nodes)
+    {
+      selector: 'node.metric-node',
+      style: {
+        shape: 'round-rectangle',
+        'background-opacity': lowZoom ? 0.85 : 0,
+        'background-color': lowZoom ? 'data(typeColor)' : '#000',
+        'border-width': lowZoom ? 2 : 0,
+        'border-color': lowZoom ? 'data(typeColor)' : '#000',
+        width: 220,
+        height: 56,
         ...(lowZoom ? {
           label: 'data(label)',
           'text-valign': 'center',
@@ -681,6 +705,7 @@ interface CytoscapeCanvasProps {
   onAddTableAt: (x: number, y: number) => void
   onAddDomainAt: (x: number, y: number) => void
   onAddConsumerAt: (x: number, y: number) => void
+  onAddMetricAt: (x: number, y: number) => void
   onAddAnnotationAt: (x: number, y: number) => void
   onFitView: (fitFn: () => void) => void
   onFocusNode: (focusFn: (id: string) => void) => void
@@ -697,6 +722,7 @@ export default function CytoscapeCanvas({
   onAddTableAt,
   onAddDomainAt,
   onAddConsumerAt,
+  onAddMetricAt,
   onAddAnnotationAt,
   onFitView,
   onFocusNode,
@@ -773,6 +799,7 @@ export default function CytoscapeCanvas({
     domains: Schema['domains']
     annotations: Schema['annotations']
     consumers: Schema['consumers']
+    metrics: Schema['metrics']
   } | null>(null)
   const onNodeClickRef = useRef(onNodeClick)
   const onEdgeCreatedRef = useRef(onEdgeCreated)
@@ -809,7 +836,8 @@ export default function CytoscapeCanvas({
       cy.nodes().forEach((node: CyInstance) => {
         const table = node.data('table')
         const consumer = node.data('consumer')
-        if (!table && !consumer) return
+        const metric = node.data('metric')
+        if (!table && !consumer && !metric) return
         const id: string = node.id()
         const root = rootMapRef.current.get(id)
         if (!root) return
@@ -836,13 +864,26 @@ export default function CytoscapeCanvas({
         const currentConnectMode = useStore.getState().connectMode
         const isPendingSource = connectPendingSourceRef.current === id
         const isConnectMode = !!currentConnectMode
-        if (consumer) {
+        if (metric) {
+          root.render(
+            <MetricCard
+              metric={metric}
+              isSelected={isSelected}
+              isDimmed={isDimmed}
+              theme={themeRef.current}
+              isConnectMode={isConnectMode}
+              isPendingSource={isPendingSource}
+            />
+          )
+        } else if (consumer) {
           root.render(
             <ConsumerCard
               consumer={consumer}
               isSelected={isSelected}
               isDimmed={isDimmed}
               theme={themeRef.current}
+              isConnectMode={isConnectMode}
+              isPendingSource={isPendingSource}
             />
           )
         } else {
@@ -1199,7 +1240,8 @@ export default function CytoscapeCanvas({
       (schema.relationships ?? null) === (prev.relationships ?? null) &&
       (schema.domains ?? null) === (prev.domains ?? null) &&
       (schema.annotations ?? null) === (prev.annotations ?? null) &&
-      (schema.consumers ?? null) === (prev.consumers ?? null)
+      (schema.consumers ?? null) === (prev.consumers ?? null) &&
+      (schema.metrics ?? null) === (prev.metrics ?? null)
 
     prevSchemaStructRef.current = {
       tables: schema.tables,
@@ -1208,6 +1250,7 @@ export default function CytoscapeCanvas({
       domains: schema.domains,
       annotations: schema.annotations,
       consumers: schema.consumers,
+      metrics: schema.metrics,
     }
 
     if (onlyLayoutChanged) {
@@ -1283,9 +1326,10 @@ export default function CytoscapeCanvas({
         // cytoscape-dom-node's 'add' handler finds data.dom already set.
         const isTableNode = !!elDef.data.table
         const isUsecaseNode = !!elDef.data.consumer
+        const isMetricNode = !!elDef.data.metric
         let domContainer: HTMLDivElement | null = null
         let elToAdd = elDef
-        if (isTableNode || isUsecaseNode) {
+        if (isTableNode || isUsecaseNode || isMetricNode) {
           domContainer = document.createElement('div')
           domContainer.style.cssText = 'position:absolute;box-sizing:border-box;min-width:220px;'
 
@@ -1388,7 +1432,7 @@ export default function CytoscapeCanvas({
           elToAdd = { ...elDef, data: { ...elDef.data, dom: domContainer } }
         }
         cy.add(elToAdd)
-        if ((isTableNode || isUsecaseNode) && domContainer) {
+        if ((isTableNode || isUsecaseNode || isMetricNode) && domContainer) {
           const root = createRoot(domContainer)
           rootMapRef.current.set(id, root)
           domContainerMapRef.current.set(id, domContainer)
@@ -1798,12 +1842,13 @@ export default function CytoscapeCanvas({
         return
       }
 
-      if (key === 't' || key === 'd' || key === 'c' || key === 's') {
+      if (key === 't' || key === 'd' || key === 'c' || key === 'm' || key === 's') {
         e.preventDefault()
         const center = screenToCanvas(window.innerWidth / 2, window.innerHeight / 2)
         if (key === 't') onAddTableAt(center.x - 160, center.y - 125)
         else if (key === 'd') onAddDomainAt(center.x - 300, center.y - 200)
         else if (key === 'c') onAddConsumerAt(center.x - 80, center.y - 30)
+        else if (key === 'm') onAddMetricAt(center.x - 110, center.y - 45)
         else onAddAnnotationAt(center.x - 60, center.y - 40)
         return
       }
@@ -1821,7 +1866,7 @@ export default function CytoscapeCanvas({
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [screenToCanvas, onAddTableAt, onAddDomainAt, onAddConsumerAt, onAddAnnotationAt])
+  }, [screenToCanvas, onAddTableAt, onAddDomainAt, onAddConsumerAt, onAddMetricAt, onAddAnnotationAt])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>

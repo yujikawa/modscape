@@ -33,6 +33,7 @@ function normalizeV2(data: any): Schema {
     lineage: Array.isArray(data.lineage) ? data.lineage : [],
     domains: Array.isArray(data.domains) ? data.domains : [],
     consumers: Array.isArray(data.consumers) ? data.consumers : [],
+    metrics: Array.isArray(data.metrics) ? data.metrics : [],
     annotations: Array.isArray(data.annotations)
       ? data.annotations.map((a: any) => ({
           ...a,

@@ -11,12 +11,12 @@
 ## QUICK REFERENCE (read this first)
 
 ```
-ROOT KEYS      version | imports | domains | tables | relationships | lineage | annotations | layout | consumers
+ROOT KEYS      version | imports | domains | tables | relationships | lineage | annotations | layout | consumers | metrics
 COORDINATES    ONLY in `layout`. NEVER inside tables or domains.
 LINEAGE        Use top-level `lineage` section (not relationships, not table.lineage.upstream).
-               lineage.to can reference either a table ID or a consumer ID.
+               lineage.to can reference a table ID, a consumer ID, or a metric ID.
 DOMAIN         Declare a table's domain membership in `domains.members`. NOT in layout.
-IDs            Every object (table, domain, annotation, consumer) needs a unique `id`.
+IDs            Every object (table, domain, annotation, consumer, metric) needs a unique `id`.
 sampleData     Plain data rows only (no header row). At least 3 realistic data rows.
 Grid           All x/y values must be multiples of 40.
 ```
@@ -37,6 +37,7 @@ lineage:       # (array) data lineage edges — OPTIONAL
 annotations:   # (array) sticky notes / callouts — OPTIONAL
 layout:        # (object) ALL coordinates — REQUIRED if any objects exist
 consumers:     # (array) downstream consumers (BI dashboards, ML models, apps) — OPTIONAL
+metrics:       # (array) business metric definitions — OPTIONAL
 ```
 
 **MUST NOT** add any other top-level keys. They will be ignored or cause errors.
@@ -306,7 +307,7 @@ domains:
     description: "..."      # optional
     display:
       color: "rgba(59, 130, 246, 0.1)"  # optional. rgba recommended.
-    members:                # REQUIRED. List of table or consumer IDs inside this domain.
+    members:                # REQUIRED. List of table, consumer, or metric IDs inside this domain.
       - fct_orders
       - dim_customers
 ```
@@ -375,7 +376,7 @@ consumers:
 - `id` and `name` are **REQUIRED**. All other fields are optional.
 - Add a `layout` entry for each consumer (same as tables — absolute coordinates or relative inside a domain).
 - To connect a consumer with lineage, set `lineage.to` to the consumer's `id`. The `lineage.from` must be a table ID.
-- Consumers can be added to domain `members` lists just like tables.
+- Consumers can be added to domain `members` lists just like tables. Metrics can also be added to domain `members`.
 
 ```yaml
 # Example: lineage from mart to a consumer
@@ -389,6 +390,46 @@ domains:
     name: "BI Dashboards"
     members: [revenue_dashboard, ops_dashboard]
 ```
+
+---
+
+## 5c. Metrics
+
+Metrics represent business KPIs and calculated measures derived from your data model. They appear as distinct nodes on the canvas and receive lineage edges from the tables that feed them.
+
+```yaml
+metrics:
+  - id: revenue_per_user       # REQUIRED. Unique ID. Used in lineage and layout.
+    name: "Revenue per User"   # REQUIRED. Display name.
+    expression: "SUM(fct_orders.amount) / COUNT(DISTINCT dim_customers.customer_id)"  # optional. Calculation formula.
+    description: "Average revenue generated per unique customer."  # optional
+```
+
+**Field rules:**
+- `id` and `name` are **REQUIRED**. All other fields are optional.
+- `expression` is free-form text (SQL, pseudocode, or business formula). It is displayed on the node card and in the detail panel.
+- Add a `layout` entry for each metric (absolute canvas coordinates, same as standalone tables).
+- To show which tables feed a metric, set `lineage.from` to the table ID and `lineage.to` to the metric's `id`.
+- Metric IDs must be unique across all tables, consumers, and metrics.
+
+```yaml
+# Example: lineage from tables to a metric
+lineage:
+  - id: lin_orders_to_rpu
+    from: fct_orders
+    to: revenue_per_user   # metric ID
+  - id: lin_customers_to_rpu
+    from: dim_customers
+    to: revenue_per_user
+```
+
+**When to use metrics vs consumers:**
+- Use `consumers` for downstream systems that *consume* data (dashboards, ML models, apps).
+- Use `metrics` for business KPIs and calculated measures that are *derived from* data.
+
+**AI agent behavior:**
+- When the user defines a metric with an `expression`, analyze which table columns are referenced and generate corresponding `lineage` entries automatically.
+- Place metrics to the right of the tables that feed them (downstream position in the lineage flow).
 
 ---
 
@@ -796,6 +837,7 @@ Use the built-in mutation commands to **add, update, or remove individual entiti
 | `domain member` | `add` `remove` |
 | `annotation` | `list` `add` `update` `remove` |
 | `consumer` | `list` `get` `add` `update` `remove` |
+| `metric` | `list` `get` `add` `update` `remove` |
 | `summary` | (model overview) |
 
 ### 12-2. Recommended AI Agent Flow
@@ -819,6 +861,7 @@ modscape lineage list model.yaml --from <tableId> --recursive --json  # downstre
 modscape lineage list model.yaml --from <tableId> --recursive --depth <n> --json  # limit depth
 modscape annotation list model.yaml --json
 modscape consumer list model.yaml --json
+modscape metric list model.yaml --json
 modscape column list model.yaml --table <tableId> --json
 ```
 
@@ -889,8 +932,8 @@ modscape domain add model.yaml \
 
 **domain member add / remove**
 ```bash
-modscape domain member add model.yaml --domain <domainId> --id <tableId|consumerId> [--json]
-modscape domain member remove model.yaml --domain <domainId> --id <tableId|consumerId> [--json]
+modscape domain member add model.yaml --domain <domainId> --id <tableId|consumerId|metricId> [--json]
+modscape domain member remove model.yaml --domain <domainId> --id <tableId|consumerId|metricId> [--json]
 ```
 
 **consumer list / get / add / update / remove**
@@ -903,6 +946,18 @@ modscape consumer add model.yaml \
 modscape consumer update model.yaml --id <id> \
   [--name <name>] [--description <text>] [--icon <icon>] [--color <color>] [--url <url>] [--json]
 modscape consumer remove model.yaml --id <id> [--json]
+```
+
+**metric list / get / add / update / remove**
+```bash
+modscape metric list model.yaml [--json]
+modscape metric get model.yaml --id <id> [--json]
+modscape metric add model.yaml \
+  --id <id> --name <name> \
+  [--expression <formula>] [--description <text>] [--json]
+modscape metric update model.yaml --id <id> \
+  [--name <name>] [--expression <formula>] [--description <text>] [--json]
+modscape metric remove model.yaml --id <id> [--json]
 ```
 
 **annotation list / add / update / remove**
@@ -1007,7 +1062,7 @@ modscape prune model.yaml --include-isolated # Also detect isolated tables
 modscape prune model.yaml --json             # Machine-readable output
 ```
 
-Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, `domains[].members` entries for non-existent tables.
+Detects: relationships / lineage referencing non-existent tables, layout keys for non-existent IDs, `domains[].members` entries for non-existent tables, consumers, or metrics.
 Default is **dry-run** — always verify the list before adding `--write`.
 
 ### 12-6. Reading Model Information
@@ -1109,7 +1164,7 @@ modscape spec search <keyword> --limit <n>  # Limit results (default: 5)
 - <Known data quality issues or edge cases>
 
 ## Changelog
-- YYYY-MM-DD: 初版 (SDD: <name>)
+- YYYY-MM-DD: Initial version (SDD: <name>)
 ```
 
 Customize SDD behavior by creating `.modscape/modscape-spec.custom.md` (rename from the generated `.example` file).

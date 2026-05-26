@@ -172,13 +172,13 @@ Determine impact category:
 
 | File | Status | Details |
 |---|---|---|
-| design.md | ✅ 更新済み / ✅ 影響なし | <updated section or "No impact"> |
-| spec.md | ✅ 更新済み / ✅ 影響なし | <updated AC or "No impact"> |
+| design.md | ✅ Updated / ✅ No impact | <updated section or "No impact"> |
+| spec.md | ✅ Updated / ✅ No impact | <updated AC or "No impact"> |
 
 **Next step:**
 ```
 
 Then based on impact:
-- Design impact (and design.md already updated) → `design.md を更新しました。引き続き /modscape:spec:implement <name> で実装を続けてください。`
-- Spec impact → spec.md の該当 AC-NNN を更新し、`/modscape:spec:implement <name>` を続けてください。
+- Design impact (and design.md already updated) → `design.md has been updated. Continue with /modscape:spec:implement <name>.`
+- Spec impact → Update the relevant AC-NNN in spec.md, then continue with `/modscape:spec:implement <name>`.
 - No impact → `No design changes needed. Continue with /modscape:spec:implement <name>.`

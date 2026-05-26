@@ -1,6 +1,8 @@
 import type { Schema, Table } from '../types/schema'
 import { CONSUMER_DEFAULT_COLOR } from './colors'
 
+export const METRIC_DEFAULT_COLOR = '#10b981'
+
 // Minimal element definition shape for Cytoscape
 export interface CyElementDefinition {
   data: Record<string, unknown>
@@ -120,9 +122,29 @@ export function yamlToElements(schema: Schema): CyElementDefinition[] {
     })
   })
 
-  // Build set of all node IDs (tables + consumers) for edge validation
+  // Metric nodes
+  const metricIdSet = new Set((schema.metrics ?? []).map(m => m.id))
+  schema.metrics?.forEach((metric, index) => {
+    const layout = schema.layout?.[metric.id]
+    const x = layout?.x ?? (schema.tables.length + (schema.consumers?.length ?? 0) + index) * (TABLE_WIDTH + 40)
+    const y = layout?.y ?? Math.floor(index / GRID_COLS) * (TABLE_HEIGHT + 40)
+
+    elements.push({
+      data: {
+        id: metric.id,
+        metric,
+        domainId: domainByMemberId.get(metric.id) ?? null,
+        typeColor: METRIC_DEFAULT_COLOR,
+        label: metric.name,
+      },
+      position: { x, y },
+      classes: 'metric-node',
+    })
+  })
+
+  // Build set of all node IDs (tables + consumers + metrics) for edge validation
   const tableIdSet = new Set(schema.tables.map(t => t.id))
-  const allNodeIdSet = new Set([...tableIdSet, ...usecaseIdSet])
+  const allNodeIdSet = new Set([...tableIdSet, ...usecaseIdSet, ...metricIdSet])
 
   // Lineage edges
   schema.lineage?.forEach((edge) => {

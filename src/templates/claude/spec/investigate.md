@@ -76,11 +76,11 @@ Format:
 
 ```markdown
 ### Finding: <title> (<YYYY-MM-DD>)
-**調査依頼:** <one-line summary of the request>
-**調査対象:** <files read>
-**発見:** <what was found>
-**影響:** <impact on design / implementation / spec>
-**次のアクション:** <recommended action>
+**Request:** <one-line summary of the request>
+**Files read:** <files read>
+**Finding:** <what was found>
+**Impact:** <impact on design / implementation / spec>
+**Next action:** <recommended action>
 ```
 
 ### Step 7 — Guide next action
