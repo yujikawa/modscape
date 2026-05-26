@@ -145,13 +145,6 @@ export function validateModel(filePath) {
     if (!validLayoutIds.has(id)) {
       warn(`layout.${id}`, `"${id}" not found in tables or domains — orphaned layout entry`);
     }
-    // Grid check: x and y should be multiples of 40 (warning only — auto-layout may produce non-grid coords)
-    if (coords.x !== undefined && coords.x % 40 !== 0) {
-      warn(`layout.${id}.x`, `x should be a multiple of 40 (got ${coords.x})`);
-    }
-    if (coords.y !== undefined && coords.y % 40 !== 0) {
-      warn(`layout.${id}.y`, `y should be a multiple of 40 (got ${coords.y})`);
-    }
   }
 
   return { valid: errors.length === 0, errors, warnings };
