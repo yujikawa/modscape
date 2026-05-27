@@ -102,38 +102,6 @@ describe('T37: v2 YAML normal parse', () => {
   })
 })
 
-// ── T38: v1 YAML のエラー検出 ─────────────────────────────────────────────────
-
-describe('T38: v1 YAML error detection', () => {
-  it('throws for version: "1.0.0"', () => {
-    expect(() => normalizeSchema({ version: '1.0.0', tables: [] }))
-      .toThrow()
-  })
-
-  it('throws for missing version field', () => {
-    expect(() => normalizeSchema({ tables: [] }))
-      .toThrow()
-  })
-
-  it('error message contains "modscape migrate"', () => {
-    try {
-      normalizeSchema({ version: '1.0.0', tables: [] })
-    } catch (e: any) {
-      expect(e.message).toContain('modscape migrate')
-    }
-  })
-
-  it('parseYAML propagates error for v1 YAML string', () => {
-    const yaml = 'version: "1.0.0"\ntables: []\n'
-    expect(() => parseYAML(yaml)).toThrow()
-  })
-
-  it('version "0.9.0" (unknown) also throws', () => {
-    expect(() => normalizeSchema({ version: '0.9.0', tables: [] }))
-      .toThrow()
-  })
-})
-
 // ── T39: v2 正規化ロジック ────────────────────────────────────────────────────
 
 describe('T39: v2 normalization logic', () => {

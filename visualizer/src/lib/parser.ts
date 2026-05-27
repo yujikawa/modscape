@@ -1,25 +1,9 @@
 import yaml from 'js-yaml'
 import type { Schema, ContextYaml, GlossaryYaml, QuestionsYaml } from '../types/schema'
 
-const SUPPORTED_VERSION = '2.0.0'
-
-function detectVersion(data: any): string {
-  return typeof data.version === 'string' ? data.version : '1.0.0'
-}
-
 export function normalizeSchema(data: any): Schema {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid YAML: Root must be an object')
-  }
-
-  const version = detectVersion(data)
-
-  // v1 YAML is not supported — must be migrated first
-  if (version !== SUPPORTED_VERSION) {
-    throw new Error(
-      `This file uses schema v${version}, but schema v${SUPPORTED_VERSION} is required.\n` +
-      `Run: modscape migrate <path>`
-    )
   }
 
   return normalizeV2(data)
