@@ -129,6 +129,7 @@ modscape domain member add/remove <file>
 
 ## Development Rules
 
+- When adding an entry to `CHANGELOG.md`, always update the `version` field in `package.json` to match the new version.
 - After UI changes, always verify `npm run build-ui` succeeds.
 - After visual UI changes, run `npm run test:update` to update snapshots before committing.
 - Keep the YAML schema as stable as possible.
