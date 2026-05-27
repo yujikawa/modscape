@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.1] - 2026-05-27
+
+### Fixed
+
+- **YAML parser no longer rejects files on version mismatch** — The visualizer's `parseYAML` previously threw a hard error when `model.yaml` declared a version other than the exact string `"2.0.0"` (e.g. `"2.1.0"` after the model format bump). Version-based validation has been removed entirely: the parser now attempts to load any structurally valid YAML and only errors if the content itself cannot be parsed. This prevents the UI from becoming unusable whenever the CLI's model format version is incremented.
+
 ## [3.6.0] - 2026-05-22
 
 ### Added
