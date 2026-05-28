@@ -84,7 +84,9 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - `--with-downstream`: recursively collects all downstream tables across all input YAMLs using BFS, producing the union of all downstreams
    - `--record`: automatically records which tables came from which source YAML in `spec-config.yaml`
 
-   When tables are added or removed during design, always update `spec-config.yaml` manually to keep it in sync.
+   When tables are added or removed during design, always update `spec-config.yaml` manually to keep it in sync:
+   - Table added → add its ID to the appropriate `main_yamls[].tables` entry; if the table was previously listed in `tables_to_remove`, remove it from there
+   - Table removed or renamed → remove its old ID from `main_yamls[].tables`; add the old ID to `tables_to_remove` so archive can delete it from the main YAML
    If the target main YAML is unclear, use the first entry and inform the user.
 
 8. Read all existing `specs/*.md` files (if any) to understand current business context.
