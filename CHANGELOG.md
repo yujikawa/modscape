@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.2] - 2026-05-28
+
+### Changed
+
+- **`archive` skill — folder move now happens before convention recording** — The work folder is moved to `.modscape/archives/` (Step 5.5) before the optional project conventions prompt (Step 6). Previously the move was the final step, which made it appear the skill had finished before the conventions confirmation appeared. Applied to all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.6.1] - 2026-05-27
 
 ### Fixed

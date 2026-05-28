@@ -182,7 +182,15 @@ If `.modscape/changes/<name>/glossary.md` exists:
 
     Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.
 
-### Step 5.5: Extract and record project conventions
+### Step 5.5: Move to archives
+
+12. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+    ```bash
+    mkdir -p .modscape/archives
+    mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
+    ```
+
+### Step 6: Extract and record project conventions
 
 Review `design.md`, `spec.md`, and the decisions recorded in `_context.yaml` during this change for any **project-wide conventions** that were established or confirmed.
 
@@ -212,14 +220,6 @@ If confirmed:
 - Avoid duplicating rules already present in the file.
 
 If no conventions are found, or the user declines: skip this step silently.
-
-### Step 6: Move to archives
-
-12. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
-    ```bash
-    mkdir -p .modscape/archives
-    mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>
-    ```
 
 ## COMMAND: /modscape:spec:archive
 
