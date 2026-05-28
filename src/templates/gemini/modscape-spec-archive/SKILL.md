@@ -84,6 +84,7 @@ modscape summary <file> --json
 4. Build and display the merge preview **before** executing any merge:
    - **Tables to add**: IDs in `spec-model.yaml` but not in the main YAML
    - **Tables to update**: IDs in both; list key field changes
+   - **Tables to remove**: IDs listed in `spec-config.yaml → tables_to_remove` (omit row if empty)
    - **No changes**: Context Only tables
 
    Wait for user confirmation (y/N). If declined: stop with "Archive cancelled."
@@ -116,7 +117,34 @@ modscape summary <file> --json
    - If `y` or threshold met: continue to Step 3
    - If no Coverage Policy: skip this step entirely
 
+### Step 2.5: Remove tables from main YAML
+
+Read `tables_to_remove` from `spec-config.yaml`. If the list is empty or absent, skip this step entirely.
+
+If entries exist, display:
+
+```
+The following tables will be permanently removed from <master>.yaml:
+- <table_id>
+- <table_id>
+
+Proceed with deletion? (y/N)
+```
+
+- If confirmed (y/yes): for each ID, run:
+  ```bash
+  modscape table remove <master>.yaml --id <table_id>
+  ```
+  Then validate:
+  ```bash
+  modscape validate <master>.yaml
+  ```
+- If declined (N): skip deletion and output:
+  > ⚠ Deletion skipped. The tables above still exist in the main YAML. Remove them manually or re-run archive.
+
 ### Step 3: Sync permanent table specs
+
+**Language**: Write all spec file content — including changelog entries — in the language specified by `modscape-spec.custom.md` or `rules.custom.md`. If no language is specified in either file, default to English.
 
 8. **Full spec sync for Direct Impact and Downstream Impact — Implement tables**:
 

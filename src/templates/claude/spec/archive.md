@@ -82,6 +82,7 @@ modscape summary <file> --json
    - Read `spec-model.yaml` and compare table IDs against each main YAML listed in `spec-config.yaml`:
      - **Tables to add**: table IDs present in `spec-model.yaml` but not in the main YAML
      - **Tables to update**: table IDs present in both; list key field changes (added/removed columns, updated `physical.strategy`, etc.)
+     - **Tables to remove**: IDs listed in `spec-config.yaml → tables_to_remove` (omit row if empty)
      - **No changes**: Downstream Impact — Context Only tables that will be merged but have no structural changes
 
    Display the preview:
@@ -90,6 +91,7 @@ modscape summary <file> --json
 
    Tables to add:    fct_new_table, stg_source_x
    Tables to update: fct_orders (+2 columns: revenue_net, tax_amount)
+   Tables to remove: old_table_name
    No changes:       dim_customers (Context Only)
 
    Proceed to merge into <master>.yaml? (y/N)
@@ -138,7 +140,34 @@ modscape summary <file> --json
    - If coverage meets the threshold: display `Coverage OK: <actual>% >= <threshold>%` and continue
    - If `modscape-spec.custom.md` does not exist or has no Coverage Policy: skip this step entirely
 
+### Step 2.5: Remove tables from main YAML
+
+Read `tables_to_remove` from `spec-config.yaml`. If the list is empty or absent, skip this step entirely.
+
+If entries exist, display:
+
+```
+The following tables will be permanently removed from <master>.yaml:
+- <table_id>
+- <table_id>
+
+Proceed with deletion? (y/N)
+```
+
+- If confirmed (y/yes): for each ID, run:
+  ```bash
+  modscape table remove <master>.yaml --id <table_id>
+  ```
+  Then validate:
+  ```bash
+  modscape validate <master>.yaml
+  ```
+- If declined (N): skip deletion and output:
+  > ⚠ Deletion skipped. The tables above still exist in the main YAML. Remove them manually or re-run archive.
+
 ### Step 3: Sync permanent table specs
+
+**Language**: Write all spec file content — including changelog entries — in the language specified by `modscape-spec.custom.md` or `rules.custom.md`. If no language is specified in either file, default to English.
 
 8. Use the **affected tables classification** built in step 2 above.
 

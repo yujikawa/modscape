@@ -88,8 +88,8 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - `--record`: automatically records which tables came from which source YAML in `spec-config.yaml`
 
    When tables are added or removed during design, always update `spec-config.yaml` manually to keep it in sync:
-   - Table added → add its ID to the appropriate `main_yamls[].tables` entry
-   - Table removed → remove its ID from whichever `main_yamls[].tables` entry contains it
+   - Table added → add its ID to the appropriate `main_yamls[].tables` entry; if the table was previously listed in `tables_to_remove`, remove it from there
+   - Table removed or renamed → remove its old ID from `main_yamls[].tables`; add the old ID to `tables_to_remove` so archive can delete it from the main YAML
    If the target main YAML is unclear, use the first entry and inform the user.
 
    If Data Sources are unclear, skip this step — `spec-model.yaml` was already scaffolded as `tables: []` by `modscape spec new`.

@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - **`archive` skill — folder move now happens before convention recording** — The work folder is moved to `.modscape/archives/` (Step 5.5) before the optional project conventions prompt (Step 6). Previously the move was the final step, which made it appear the skill had finished before the conventions confirmation appeared. Applied to all three AI platforms (Claude / Gemini / Codex).
 
+- **`archive` skill — table deletion support** — When `spec-config.yaml` contains a `tables_to_remove` list, the archive skill now shows the affected table IDs in the merge preview and prompts for confirmation before running `modscape table remove` on each one (Step 2.5). This handles cases where a spec renames or removes a table that already exists in the main YAML. Applied to all three AI platforms (Claude / Gemini / Codex).
+
+- **`design` skill — `tables_to_remove` sync rules** — When a table is removed or renamed during design, its old ID is now recorded in `spec-config.yaml → tables_to_remove` so archive can delete it from the main YAML. Conversely, if a previously-removed table is re-added, its ID is removed from `tables_to_remove`. Applied to all three AI platforms (Claude / Gemini / Codex).
+
 ## [3.6.1] - 2026-05-27
 
 ### Fixed
