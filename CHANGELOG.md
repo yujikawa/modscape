@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.0] - 2026-06-09
+
+### Changed
+
+- **`design` skill — one-table-per-invocation mode** — `/modscape:spec:design` now processes exactly one table per invocation instead of the entire spec in a single session. The skill checks which tables already have a `design/<table-id>.md` file and picks the next undesigned table. When all tables are done it outputs a completion message. This keeps each session's context small regardless of table count. Applied to Claude and Gemini platforms.
+
+- **`implement` skill — one-task-per-invocation mode** — `/modscape:spec:implement` now implements exactly one task per invocation and exits. After completing a task it marks the checkbox and instructs the user to run the command again for the next task. Applied to Claude and Gemini platforms.
+
+- **`design` skill — Implementation Details split into per-table files** — Table-specific implementation details (expressions, filter conditions, validation SQL, test patterns) are no longer written to `design.md`. Instead each table's details are stored in `changes/<name>/design/<table-id>.md`. `design.md` now contains only table-agnostic content: Design Decisions and Affected Tables. This keeps `design.md` small and stable across all invocations.
+
+- **`implement` skill — reads `design/<table-id>.md` for implementation details** — When implementing a table, the skill reads `design/<table-id>.md` for table-specific details, falling back to `design.md`'s `## Implementation Details` section for backward compatibility with older specs.
+
+- **`implement` skill — Context Only skip list reads from `## Affected Tables`** — The skip list is now built from the flat `## Affected Tables` table in `design.md` (rows where Impact = `Downstream — Context Only`), replacing the old `### Downstream Impact — Context Only` subsection approach.
+
+- **`design-format.md` — `## Implementation Details` section removed** — The `## Implementation Details` section has been removed from the `design.md` format template. A new `design-table-format.md` template has been added for per-table `design/<table-id>.md` files.
+
+- **`modscape spec new` scaffold — `design.md` initial content updated** — The scaffolded `design.md` now uses the new flat `## Affected Tables` table format instead of the old `### Direct Impact` / `### Indirect Impact` subsection structure.
+
+### Added
+
+- **`spec dev` viewer — Design tab sub-tabs** — When `design/<table-id>.md` files exist, the Design tab in the spec viewer shows a sub-tab bar with an Overview sub-tab (for `design.md`) and one sub-tab per table. Clicking a table sub-tab loads that table's implementation details in the iframe. The server exposes two new endpoints: `GET /api/spec/design-tables` (lists available table design files) and `GET /api/spec/design/:tableId` (serves a table's design file as HTML).
+
 ## [3.6.2] - 2026-05-28
 
 ### Changed

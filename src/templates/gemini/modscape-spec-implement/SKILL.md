@@ -43,8 +43,8 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
      > `changes/<name>/tasks.md` not found. Run `@modscape-spec-design <name>` first to generate the task list.
 
 3. **Build the Context Only skip list** from `design.md`:
-   - If `.modscape/changes/<name>/design.md` exists: read the `### Downstream Impact — Context Only` section and extract all table IDs listed there into a skip list.
-   - If `design.md` does not exist or has no such section: the skip list is empty — all tables are treated as implementation targets (backwards compatible).
+   - If `.modscape/changes/<name>/design.md` exists: read the `## Affected Tables` table and extract all table IDs whose Impact column value is `Downstream — Context Only` into a skip list.
+   - If `design.md` does not exist or has no matching rows: the skip list is empty — all tables are treated as implementation targets (backwards compatible).
 
 4. Check for pending tasks (`- [ ]`).
    - If all tasks are complete (`- [x]`): tell the user:
@@ -56,6 +56,9 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
    **Staging / Core / Mart tasks:**
    - If the table ID for this task is in the **Context Only skip list**: output `⏭️ Skipping \`<id>\` (Context Only)` and move to the next task without generating any code.
    - Otherwise: read the corresponding table definition from `.modscape/changes/<name>/spec-model.yaml` (the work-scoped YAML, NOT the main model.yaml)
+   - Read implementation details for the table:
+     1. **Preferred**: read `changes/<name>/design/<table-id>.md` if it exists — this contains table-specific expressions, filters, validation SQL, and test patterns.
+     2. **Fallback**: if `design/<table-id>.md` does not exist, look for `### <table-id>` under `## Implementation Details` in `design.md` (backwards compatible with older specs).
    - Generate implementation code for the target tool (dbt, SQLMesh, etc.)
    - Follow the dependency order defined in `lineage` — always generate upstream tables first
    - Place generated files in the appropriate location (e.g., `models/staging/`, `models/core/`, `models/mart/`)
@@ -113,8 +116,8 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
 
    > ⚠️ **Human review required before running**: The AI generates this query as a starting point following PII-safety rules, but **the human must review the query before executing it** to verify no PII columns are inadvertently included. AI cannot know which columns contain PII in your specific environment. Never run without reviewing.
 
-8. After each task, confirm with the user before proceeding:
-   > Task complete. Ready to move on to the next task?
+8. **One-task-per-invocation**: After completing the task, update the checkbox and stop. Output the completion message and guide the user to run again:
+   > ✅ Task complete. Run `@modscape-spec-implement <name>` again to implement the next task.
 
 ## Code Generation Guidelines
 
@@ -181,7 +184,7 @@ When the user explicitly requests a modification during the implementation sessi
 
 **Update sequence (all modifications):**
 
-1. **Update `design.md`** — update the relevant table section in `## Implementation Details` (create the section if it does not exist).
+1. **Update `design/<table-id>.md`** — update the relevant Implementation Details in `changes/<name>/design/<table-id>.md` (create the file if it does not exist, using the format in `.modscape/formats/design-table-format.md`).
 2. **Update `spec-model.yaml`** — apply changes with mutation CLI and run validate:
    ```bash
    modscape column update .modscape/changes/<name>/spec-model.yaml --table <id> --column <col-id> --type <new-type>

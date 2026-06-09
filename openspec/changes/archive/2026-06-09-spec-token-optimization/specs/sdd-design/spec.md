@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: spec.md と既存specを読み込んで spec-model.yaml を設計する
 AIスキル `/modscape:spec:design <name>` は `changes/<name>/spec.md`・`specs/*.md`（既存の恒久テーブルspec）を読み込み、影響テーブルを自動特定して `changes/<name>/spec-model.yaml`（作業用YAML）を設計・更新しなければならない（SHALL）。本番のmodel.yaml（HR.yaml等）は直接変更してはならない（SHALL NOT）。
@@ -67,13 +67,6 @@ tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.m
 1. 差分（追加・削除・維持）をユーザーに提示する
 2. ユーザーの確認を得てからマージ実行する
 
-マージルール:
-- 旧 `[x]` かつ新 `spec-model.yaml` に存在 → `[x]` を維持
-- 新 `spec-model.yaml` に追加されたテーブル → `[ ]` で追加
-- `spec-model.yaml` から削除されたテーブル → `tasks.md` からも除去
-
-`tasks.md` が存在しない、または完了済みタスクが 0 件の場合は上書き生成する（既存動作）。
-
 **spec-model.yaml 変更後の AC 整合確認（必須）:**
 スキルは `spec-model.yaml` を変更した後、必ず以下を確認しなければならない（SHALL）:
 1. `spec.md` の `## Acceptance Criteria` を読み込み、変更されたテーブル・列に関連する AC を特定する
@@ -83,17 +76,6 @@ tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.m
 
 **変更後の波及確認レポート（必須）:**
 スキルは設計完了時に波及確認レポートを出力しなければならない（SHALL）。
-
-タスクは以下のフェーズ構成で分類しなければならない（SHALL）:
-- Phase 1: Staging（依存なしのテーブル）
-- Phase 2: Core（1段上流のテーブル）
-- Phase 3: Mart / 集計（最下流のテーブル）
-- Phase 4: Tests（各テーブルのキーカラムに対するテスト）
-
-各タスクには以下を含めなければならない（SHALL）:
-- テーブルID（バッククォートで表記）
-- materialization 種別（`implementation.materialization` または `appearance.type` から推定）
-- 上流依存テーブル（`←` で表記）
 
 #### Scenario: 初回実行で design.md と対象テーブルの design/<table-id>.md を生成する
 - **WHEN** `changes/<name>/design/` ディレクトリが空の状態で `/modscape:spec:design <name>` を実行する
@@ -111,32 +93,14 @@ tasks.md の Phase 4 テストタスクを生成する際、スキルは `spec.m
 - **WHEN** テーブルに変換式やフィルター条件が存在する状態で設計が完了する
 - **THEN** `design/<table-id>.md` の `## Implementation Details` セクションに当該テーブルの変換式・フィルター条件・検証 SQL が記載される
 
-#### Scenario: tasks.md に完了済みタスクがある状態で再実行するとマージ確認が出る
-- **WHEN** `changes/<name>/tasks.md` に `[x]` が 1 件以上ある状態で `/modscape:spec:design <name>` を再実行する
-- **THEN** AIは差分（追加・削除・維持）を表示し、「続けますか？」と確認してからマージ実行する
-
-#### Scenario: tasks.md の完了済みタスクが再実行後も保持される
-- **WHEN** 設計変更で新テーブルが追加された後に spec:design を再実行し、ユーザーがマージを承認する
-- **THEN** 既存の `[x]` タスクは維持され、新テーブルのタスクが `[ ]` として追加される
-
-#### Scenario: 削除されたテーブルのタスクが除去される
-- **WHEN** 設計変更でテーブルが `spec-model.yaml` から削除された後に spec:design を再実行し、ユーザーがマージを承認する
-- **THEN** そのテーブルに対応するタスクが `tasks.md` から除去される
-
 #### Scenario: spec-model.yaml 変更後に AC 矛盾を検出して自動修正する
 - **WHEN** `/modscape:spec:design <name>` 実行中に `fct_orders` へ `revenue_net` 列を追加し、`spec.md` に「`fct_orders` は `amount` 列のみを持つ」という AC が存在する
 - **THEN** AIはその AC を特定し、`spec.md` を修正して `revenue_net` 列を AC に反映する
-
-#### Scenario: AC に影響がない場合は更新せずレポートに記録する
-- **WHEN** `/modscape:spec:design <name>` 実行中に `stg_raw_sales` のパーティションキーを変更したが、`spec.md` の AC にパーティションキーへの言及がない
-- **THEN** `spec.md` は変更されず、波及確認レポートに `spec.md: ✅ 影響なし` と記載される
 
 ## ADDED Requirements
 
 ### Requirement: design フェーズで発見した用語を glossary.md に記録する
 design スキルはテーブル定義・ビジネスルールの文脈で登場したプロジェクト固有のビジネス用語を `.modscape/changes/<name>/glossary.md` に記録しなければならない（SHALL）。
-
-用語の記録は design 完了後のステップとして実行する。`glossary.md` が存在しない場合は新規作成する。
 
 #### Scenario: design 完了後に用語が glossary.md に記録される
 - **WHEN** design スキルが完了し、テーブル設計の文脈でプロジェクト固有の用語が登場していた

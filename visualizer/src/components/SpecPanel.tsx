@@ -9,6 +9,11 @@ interface SpecTab {
   available: boolean
 }
 
+interface DesignTable {
+  id: string
+  file: string
+}
+
 const DEFAULT_W = 760
 const DEFAULT_H = 560
 const MIN_W = 400
@@ -22,6 +27,8 @@ export default function SpecPanel() {
 
   const [tabs, setTabs] = useState<SpecTab[]>([])
   const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [designTables, setDesignTables] = useState<DesignTable[]>([])
+  const [activeDesignTable, setActiveDesignTable] = useState<string>('overview')
   const [copied, setCopied] = useState(false)
 
   const copySpecName = useCallback(() => {
@@ -101,6 +108,14 @@ export default function SpecPanel() {
   }, [specName])
 
   useEffect(() => {
+    if (activeTab !== 'design') return
+    fetch('/api/spec/design-tables')
+      .then(r => r.json())
+      .then((data: DesignTable[]) => setDesignTables(data))
+      .catch(() => {})
+  }, [activeTab])
+
+  useEffect(() => {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
     const ws = new WebSocket(`${proto}://${location.host}`)
     ws.onmessage = (e) => {
@@ -112,6 +127,12 @@ export default function SpecPanel() {
             .then(r => r.json())
             .then((data: SpecTab[]) => setTabs(data))
             .catch(() => {})
+          if (activeTab === 'design') {
+            fetch('/api/spec/design-tables')
+              .then(r => r.json())
+              .then((data: DesignTable[]) => setDesignTables(data))
+              .catch(() => {})
+          }
         }
       } catch {}
     }
@@ -121,7 +142,11 @@ export default function SpecPanel() {
   if (!isSpecPanelOpen) return null
 
   const activeTabData = tabs.find(t => t.id === activeTab)
-  const iframeSrc = activeTabData?.available ? `/api/spec/${activeTabData.file}?theme=${theme}` : null
+  const iframeSrc = activeTabData?.available
+    ? activeTab === 'design' && activeDesignTable !== 'overview'
+      ? `/api/spec/design/${activeDesignTable}?theme=${theme}`
+      : `/api/spec/${activeTabData.file}?theme=${theme}`
+    : null
 
   const isDark = theme === 'dark'
   const bg = isDark ? '#0f172a' : '#ffffff'
@@ -224,6 +249,44 @@ export default function SpecPanel() {
           </button>
         ))}
       </div>
+
+      {/* Design sub-tab bar — shown only when Design tab is active and per-table files exist */}
+      {activeTab === 'design' && designTables.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: isDark ? '#0a1628' : '#f0f4f8',
+          borderBottom: `1px solid ${tabBorderB}`,
+          padding: '0 12px',
+          flexShrink: 0,
+          gap: 2,
+          overflowX: 'auto',
+        }}>
+          {[{ id: 'overview', label: 'Overview' }, ...designTables.map(t => ({ id: t.id, label: t.id }))].map(sub => (
+            <button
+              key={sub.id}
+              onMouseDown={e => e.stopPropagation()}
+              onClick={() => setActiveDesignTable(sub.id)}
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                fontWeight: 500,
+                background: 'none',
+                border: 'none',
+                borderBottom: `2px solid ${activeDesignTable === sub.id ? '#8b5cf6' : 'transparent'}`,
+                color: activeDesignTable === sub.id
+                  ? '#8b5cf6'
+                  : (isDark ? '#64748b' : '#94a3b8'),
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'color 0.15s, border-color 0.15s',
+              }}
+            >
+              {sub.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Content */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
