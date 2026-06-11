@@ -221,7 +221,7 @@ Proceed with deletion? (y/N)
     Read `.modscape/changes/<name>/glossary.md` and `.modscape/specs/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
 
     **For each term entry in `glossary.md`:**
-    - Parse: `id`, `definition`, and optional fields (`label`, `tables`, `columns`)
+    - Parse: `id`, `definition`, and optional fields (`label`, `ids`, `columns`)
     - Check if the `id` already exists in `_glossary.yaml`:
       - **Not registered** → append a new entry under `terms:` with `change: <name>`
       - **Already registered** → update `change` field only; do NOT overwrite `definition` (preserve manual edits)
@@ -247,6 +247,7 @@ Proceed with deletion? (y/N)
         rationale: "<why this decision was made>"  # optional but recommended
         date: <YYYY-MM-DD>
         change: <name>
+        ids: [<affected-entity-ids>]  # Step 2 の Affected Tables の ID リスト。空の場合は省略
       ```
 
     Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.

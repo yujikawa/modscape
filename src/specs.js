@@ -90,7 +90,7 @@ function renderQACards(questions) {
       badge(q.status || 'open', statusClass),
       q.date ? badge(q.date, 'badge-date') : '',
       q.change ? badge('Change: ' + q.change, 'badge-change') : '',
-      q.table ? badge(q.table, 'badge-table') : '',
+      q.ids?.length ? q.ids.map(id => badge(id, 'badge-table')).join(' ') : '',
     ].filter(Boolean).join(' ');
     const answerBlock = q.answer
       ? `<div class="field-block"><div class="field-label">Answer</div><div class="answer-box">${esc(q.answer)}</div></div>`
@@ -126,7 +126,7 @@ function renderGlossaryCards(terms) {
       </div>
       ${meta ? `<div class="card-meta">${meta}</div>` : ''}
       <div class="field-block"><div class="field-label">Definition</div><div class="field-value">${esc(t.definition || '')}</div></div>
-      ${t.tables && t.tables.length ? `<div class="field-block"><div class="field-label">Related Tables</div>${chips(t.tables)}</div>` : ''}
+      ${t.ids && t.ids.length ? `<div class="field-block"><div class="field-label">Related Tables</div>${chips(t.ids)}</div>` : ''}
       ${t.columns && t.columns.length ? `<div class="field-block"><div class="field-label">Related Columns</div>${chips(t.columns)}</div>` : ''}
     </div>`;
   }).join('');

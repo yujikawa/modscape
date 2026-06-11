@@ -1,15 +1,17 @@
 ## ADDED Requirements
 
 ### Requirement: _questions.yaml ファイルのスキーマ定義
-`.modscape/specs/_questions.yaml` を Q&A の一元管理ファイルとして定義する。ファイルは `questions:` リストを持ち、各エントリは id・question・status フィールドを必須とし、answer・assumption・table・date・change を任意とする。
+`.modscape/specs/_questions.yaml` を Q&A の一元管理ファイルとして定義する。ファイルは `questions:` リストを持ち、各エントリは id・question・status フィールドを必須とし、answer・assumption・ids・date・change を任意とする。
+
+`ids` フィールドはこのQ&Aが参照するエンティティID（テーブル・リレーション等）のリストとする。
 
 #### Scenario: 有効な _questions.yaml の読み込み
 - **WHEN** `_questions.yaml` が正しい構造で存在する
 - **THEN** `parseQuestionsYaml` がエントリリストを返す
 
-#### Scenario: table フィールドによるフィルタリング
-- **WHEN** `table: fct_orders` が指定されたエントリが存在する
-- **THEN** テーブル ID で絞り込み検索ができる
+#### Scenario: ids フィールドによるフィルタリング
+- **WHEN** `ids: [fct_orders]` が指定されたエントリが存在する
+- **THEN** エンティティID `fct_orders` で絞り込み検索ができる
 
 #### Scenario: status フィールドによる状態管理
 - **WHEN** エントリの status が `answered` / `open` / `assumed` のいずれかである
@@ -27,8 +29,14 @@
 - **THEN** 既存ファイルは変更されない
 
 ### Requirement: TypeScript 型定義の追加
-`visualizer/src/types/schema.ts` に `QuestionEntry` および `QuestionsYaml` 型を追加する。
+`visualizer/src/types/schema.ts` に `QuestionEntry` および `QuestionsYaml` 型を追加する。`QuestionEntry.ids` は `string[]` 型のオプションフィールドとする。
 
 #### Scenario: 型定義が正しく import できる
 - **WHEN** `QuestionEntry` / `QuestionsYaml` を import する
 - **THEN** TypeScript コンパイルエラーが発生しない
+
+## REMOVED Requirements
+
+### Requirement: `questions[].table` フィールド（単数）
+**Reason**: `ids`（複数形・任意エンティティ対応）に統一。
+**Migration**: `table: fct_orders` → `ids: [fct_orders]` にリネームする。

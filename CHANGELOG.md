@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 
 - **`spec dev` viewer — Design tab sub-tabs** — When `design/<table-id>.md` files exist, the Design tab in the spec viewer shows a sub-tab bar with an Overview sub-tab (for `design.md`) and one sub-tab per table. Clicking a table sub-tab loads that table's implementation details in the iframe. The server exposes two new endpoints: `GET /api/spec/design-tables` (lists available table design files) and `GET /api/spec/design/:tableId` (serves a table's design file as HTML).
 
+- **Entity reference field unified to `ids`** — `_glossary.yaml` terms and `_questions.yaml` questions now use a single `ids: [...]` field (string array) to reference related entities, replacing the former `tables` (array) and `table` (string) fields. The `ids` field accepts any entity ID — tables, relationships, domains, metrics — making the schema forward-compatible. The `archive` skill (Claude / Gemini / Codex) auto-populates `decisions[].ids` in `_context.yaml` from the Affected Tables listed in Step 2. Visualizer TypeScript types (`GlossaryTerm`, `QuestionEntry`) and UI rendering in `src/specs.js` updated accordingly.
+
 ## [3.6.2] - 2026-05-28
 
 ### Changed

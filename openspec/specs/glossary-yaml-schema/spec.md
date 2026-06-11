@@ -2,14 +2,16 @@
 
 ### Requirement: `_glossary.yaml` でプロジェクト共通の用語集を管理する
 
-`.modscape/specs/_glossary.yaml` はプロジェクト横断の用語定義を保持するファイルとする。各エントリは一意の `id`（kebab-case）と `definition` を必須とし、`label`（日本語名等）・`tables`・`columns`・`change`・`date` はオプションとする。
+`.modscape/specs/_glossary.yaml` はプロジェクト横断の用語定義を保持するファイルとする。各エントリは一意の `id`（kebab-case）と `definition` を必須とし、`label`（日本語名等）・`ids`・`columns`・`change`・`date` はオプションとする。
+
+`ids` フィールドはこの用語が参照するエンティティID（テーブル・リレーション・ドメイン・メトリクス等）のリストとする。
 
 ```yaml
 terms:
   - id: net_revenue
     label: "純売上"
     definition: "discount_amount控除後・税抜きの売上金額"
-    tables: [fct_orders, mart_daily_revenue]
+    ids: [fct_orders, mart_daily_revenue]
     columns: [fct_orders.net_revenue]
     change: revenue-pipeline-v2
     date: "2026-02-10"
@@ -23,6 +25,10 @@ terms:
 - **WHEN** `.modscape/specs/_glossary.yaml` が存在しない
 - **THEN** パーサーは `{ terms: [] }` を返し、エラーを投げない
 
+#### Scenario: ids フィールドで任意エンティティを参照する
+- **WHEN** `ids: [fct_orders, rel_orders_customers]` を持つエントリが `_glossary.yaml` に存在する
+- **THEN** パーサーはそのエントリを有効な `GlossaryTerm` として返す
+
 ### Requirement: `modscape init --sdd` で `_glossary.yaml` 空テンプレートを生成する
 
 `modscape init --sdd` 実行時、`_context.yaml` と並んで `.modscape/specs/_glossary.yaml` の空テンプレートを生成する。ファイルが既に存在する場合は上書き確認を行う（`safeWriteFile` の既存挙動と同じ）。
@@ -34,3 +40,9 @@ terms:
 #### Scenario: 既存ファイルはスキップされる
 - **WHEN** `modscape init --sdd` を実行し、`_glossary.yaml` が既に存在する
 - **THEN** ファイルを上書きせずスキップメッセージを表示する
+
+## REMOVED Requirements
+
+### Requirement: `terms[].tables` フィールド
+**Reason**: `ids` に統一。テーブル以外のエンティティ参照にも対応するため。
+**Migration**: `tables: [foo, bar]` → `ids: [foo, bar]` にリネームする。
