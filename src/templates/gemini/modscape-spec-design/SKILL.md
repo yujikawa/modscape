@@ -110,7 +110,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 10. **Surface known open questions** (first run only):
 
-   Check `.modscape/specs/_questions.yaml` for entries with `status: open` or `status: assumed` that reference any Direct Impact table ID (via the `table` field or question text).
+   Check `.modscape/specs/_questions.yaml` for entries with `status: open` or `status: assumed` that reference any Direct Impact table ID (via the `ids` field or question text).
    - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
      ```markdown
      ## Known Open Questions (from specs/_questions.yaml)

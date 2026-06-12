@@ -167,7 +167,7 @@ Proceed with deletion? (y/N)
 
     For each entry in `questions.md`:
     - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
-    - Append the entry to `_questions.yaml` as-is (all fields are already present: `id`, `question`, `status`, `answer`, `assumption`, `table`, `date`, `change`)
+    - Append the entry to `_questions.yaml` as-is (all fields are already present: `id`, `question`, `status`, `answer`, `assumption`, `ids`, `date`, `change`)
 
     After merging, delete `.modscape/changes/<name>/questions.md`.
 
@@ -206,7 +206,7 @@ If `.modscape/changes/<name>/glossary.md` exists:
         rationale: "<why this decision was made>"  # optional
         date: <YYYY-MM-DD>
         change: <name>
-        ids: [<affected-entity-ids>]  # Step 2 の Affected Tables の ID リスト。空の場合は省略
+        ids: [<model-id>]  # model-id: any id defined in model.yaml (table, relationship, domain, metric). Use Affected Tables from Step 2. Omit if empty.
       ```
 
     Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.

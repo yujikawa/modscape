@@ -71,7 +71,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
      question: "<what needs investigation>"
      status: open         # or: assumed (if you proceed with an assumption)
      assumption: "<what you assumed>"   # only if status: assumed
-     table: <table-id>
+     ids: [<model-id>]  # model-id: any id defined in model.yaml (table, relationship, domain, metric). Omit if not applicable.
      date: <YYYY-MM-DD>
      change: <name>
    ```
@@ -89,7 +89,7 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
      question: "<specific question: what would an analyst get wrong without knowing this?>"
      status: open
      source: ai-detected
-     table: <table-id>
+     ids: [<model-id>]  # model-id: any id defined in model.yaml (table, relationship, domain, metric). Omit if not applicable.
      date: <YYYY-MM-DD>
      change: <name>
      investigation:
