@@ -51,6 +51,15 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
    **Staging / Core / Mart tasks:**
    - If the table ID for this task is in the **Context Only skip list**: output `⏭️ Skipping \`<id>\` (Context Only)` and move to the next task without generating any code.
    - Otherwise: read the corresponding table definition from `.modscape/changes/<name>/spec-model.yaml` (the work-scoped YAML, NOT the main model.yaml)
+   - Load knowledge-base context for the target table:
+     ```bash
+     modscape spec context --ids <table-id> --json
+     ```
+     If the command returns empty or `.modscape/specs/` does not exist, skip and continue.
+     Apply returned knowledge to code generation:
+     - `rules`: reflect filter conditions, NULL handling, and JOIN constraints directly in generated SQL; add `-- NOTE:` comment when `counter_case` is present
+     - `decisions`: apply as architectural constraints (grain, calculation basis, SCD patterns)
+     - `terms`: resolve business term → column/filter/calculation mappings
    - Read implementation details for the table:
      1. **Preferred**: read `changes/<name>/design/<table-id>.md` if it exists — this contains table-specific expressions, filters, validation SQL, and test patterns.
      2. **Fallback**: if `design/<table-id>.md` does not exist, look for `### <table-id>` under `## Implementation Details` in `design.md` (backwards compatible with older specs).

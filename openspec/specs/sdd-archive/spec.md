@@ -150,3 +150,39 @@ archiveスキルが `glossary.md` を `_glossary.yaml` にマージする際、�
 #### Scenario: 既存エントリの更新時も ids フィールドが保持される
 - **WHEN** 既存の `_glossary.yaml` エントリ（`ids: [fct_orders]`）に対して同一IDの用語が `glossary.md` に存在する
 - **THEN** マージ後も `ids` フィールドが正しく保持される
+
+---
+
+## ADDED Requirements
+
+### Requirement: archive 時に知識ベースへの収録内容をキュレーションする
+
+`modscape:spec:archive` スキルは、`_context.yaml`・`_glossary.yaml`・`_questions.yaml` へのエントリ書き込み時に、以下のキュレーション基準を適用しなければならない（SHALL）。
+
+**収録するもの（データ分析知識）:**
+- フィルター不変条件（「このカラムには必ずこの条件が要る」）
+- NULL / フラグの実際の意味
+- JOIN時のファンアウト・粒度の罠
+- タイムゾーン・通貨・単位の変換ルール
+- ビジネス用語の定義（SQLレベルで表現できるもの）
+- 判断が割れる局面での根拠（`why` フィールド）と反例（`counter_case` フィールド）
+
+**除外するもの（ツール/組織/運用情報）:**
+- 実装ツールの選択（「dbtを使う」「SQLMeshを使う」）
+- 組織の担当・更新頻度・SLA
+- インフラ・デプロイ手順
+- `ids` が付けられない（どのエンティティにも紐づかない）抽象的な決定
+
+スキルは全エントリに対して対象テーブルIDを示す `ids` フィールドを付与しなければならない（SHALL）。複数テーブルに適用されるルールには `scope: global` を付与しなければならない（SHALL）。
+
+#### Scenario: データ分析知識のみが収録される
+- **WHEN** archive 実行時に、実装ツール選択の決定と、NULLの意味を示すフィルター条件の決定が混在する
+- **THEN** NULLの意味を示すフィルター条件のみが `_context.yaml` に書き込まれ、実装ツール選択の決定は除外される
+
+#### Scenario: 収録エントリに ids が付与される
+- **WHEN** `fct_orders` に関するビジネスルールを archive で `_context.yaml` に書き込む
+- **THEN** エントリに `ids: [fct_orders]` が付与される
+
+#### Scenario: 複数テーブルに適用されるルールに scope: global を付与する
+- **WHEN** タイムゾーン変換ルールなど全テーブルに適用されるルールを archive で書き込む
+- **THEN** エントリに `scope: global` が付与される

@@ -25,6 +25,8 @@ questions:
     status: answered
     date: 2026-02-15
     change: revenue-pipeline-v2
+    scope: global
+    ids: [fct_orders, mart_daily_revenue]
 
   - id: Q-004
     question: "fct_orders の order_amount は税込みか税抜きか？"

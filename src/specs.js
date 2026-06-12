@@ -622,6 +622,80 @@ export async function buildSpecs(outDir = 'dist/specs') {
   console.log(`\n  ✅ Build complete! → ${outDir}/\n`);
 }
 
+// ── spec context command ──────────────────────────────────────────────────────
+
+export function runContextGet(ids, opts = {}) {
+  const contextData = loadContext();
+  const glossaryData = loadGlossary();
+  const questionsData = loadQuestions();
+
+  const idSet = new Set(ids);
+
+  const decisions = (contextData?.decisions ?? [])
+    .filter(d => d.scope === 'global' || (Array.isArray(d.ids) && d.ids.some(id => idSet.has(id))))
+    .map(({ id, summary, ids: dIds, scope }) => ({ id, summary, ...(scope ? { scope } : {}), ...(dIds ? { ids: dIds } : {}) }));
+
+  const rules = (questionsData?.questions ?? [])
+    .filter(q =>
+      (q.status === 'answered' || q.status === 'assumed') &&
+      (q.scope === 'global' || (Array.isArray(q.ids) && q.ids.some(id => idSet.has(id))))
+    )
+    .map(({ id, question, answer, assumption, ids: qIds, scope, why, counter_case }) => ({
+      id,
+      question,
+      rule: answer ?? assumption ?? '',
+      ...(why ? { why } : {}),
+      ...(counter_case ? { counter_case } : {}),
+      ...(scope ? { scope } : {}),
+      ...(qIds ? { applies_to: qIds } : {}),
+    }));
+
+  const terms = (glossaryData?.terms ?? [])
+    .filter(t => !Array.isArray(t.ids) || t.ids.length === 0 || t.ids.some(id => idSet.has(id)))
+    .map(({ id, label, definition, ids: tIds, columns }) => ({
+      id,
+      label,
+      definition,
+      ...(tIds?.length ? { ids: tIds } : {}),
+      ...(columns?.length ? { columns } : {}),
+    }));
+
+  if (opts.json) {
+    console.log(JSON.stringify({ for_ids: ids, decisions, rules, terms }, null, 2));
+    return;
+  }
+
+  if (decisions.length === 0 && rules.length === 0 && terms.length === 0) {
+    console.log(`  No context found for: ${ids.join(', ')}`);
+    return;
+  }
+
+  console.log(`\n  Context for: ${ids.join(', ')}\n`);
+  if (decisions.length > 0) {
+    console.log('  ## Decisions');
+    decisions.forEach(d => {
+      console.log(`  [${d.id}] ${d.summary}`);
+    });
+    console.log('');
+  }
+  if (rules.length > 0) {
+    console.log('  ## Rules');
+    rules.forEach(r => {
+      console.log(`  [${r.id}] ${r.question}`);
+      console.log(`    → ${r.rule}`);
+      if (r.counter_case) console.log(`    ⚠ Counter case: ${r.counter_case}`);
+    });
+    console.log('');
+  }
+  if (terms.length > 0) {
+    console.log('  ## Terms');
+    terms.forEach(t => {
+      console.log(`  [${t.id}] ${t.label}: ${t.definition}`);
+    });
+    console.log('');
+  }
+}
+
 function buildStaticBrowserHtml(specIndex, contextData, glossaryData, questionsData) {
   const html = buildBrowserHtml(specIndex, contextData, glossaryData, questionsData);
   return html

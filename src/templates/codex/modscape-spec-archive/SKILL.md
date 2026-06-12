@@ -165,7 +165,14 @@ Proceed with deletion? (y/N)
 
     Read `.modscape/changes/<name>/questions.md` as a YAML list and `.modscape/specs/_questions.yaml`.
 
-    For each entry in `questions.md`:
+    **Curation — include only data analysis knowledge:**
+    Each entry must pass ALL of the following before being written:
+    - `status` is `answered` or `assumed` (open questions are not yet knowledge)
+    - `ids` contains at least one entity ID, OR `scope: global` is set
+    - The answer/assumption describes a **data interpretation rule** — filter conditions, NULL semantics, timezone/unit conversions, join traps, business term definitions, or judgment rationale
+    - Do NOT write entries about: implementation tool choices, team ownership, update schedules, SLA, or deployment procedures
+
+    For each entry in `questions.md` that passes curation:
     - Check if the same Q-NNN ID already exists in `_questions.yaml` (skip if duplicate)
     - Append the entry to `_questions.yaml` as-is (all fields are already present: `id`, `question`, `status`, `answer`, `assumption`, `ids`, `date`, `change`)
 
@@ -178,6 +185,9 @@ Proceed with deletion? (y/N)
 If `.modscape/changes/<name>/glossary.md` exists:
 
     Read `.modscape/changes/<name>/glossary.md` and `.modscape/specs/_glossary.yaml` (create `_glossary.yaml` if it does not exist).
+
+    **Curation — include only data analysis knowledge:**
+    Each term must have a `definition` that describes what the term means in terms of data (columns, filters, calculations, or business semantics expressible in queries). Do NOT write terms that only describe organizational roles, process ownership, or tooling.
 
     **For each term entry in `glossary.md`:**
     - Parse: `id`, `definition`, and optional fields (`label`, `ids`, `columns`)
@@ -198,15 +208,23 @@ If `.modscape/changes/<name>/glossary.md` exists:
 
     `_context.yaml` stores only **cross-project architectural decisions** — NOT Q&A (those are in `_questions.yaml`).
 
+    **Curation — include only data analysis knowledge:**
+    - Include: filter invariants, grain definitions, calculation standards (tax/currency/timezone basis), SCD patterns, join rules, NULL semantics, and any decision where knowing the rationale helps resolve future data ambiguity
+    - Include a `rationale` field when the decision involves a tradeoff
+    - Do NOT include: implementation tool choices, team ownership, update schedules, SLA, or deployment procedures
+    - Every decision MUST have either `ids: [<entity-ids>]` OR `scope: global`. Decisions that cannot be tagged must NOT be written.
+    - For global rules (timezone basis, currency basis, etc.): set `scope: global`
+
     For significant cross-project decisions surfaced during this change:
     - Append to `decisions` list:
       ```yaml
       - id: D-NNN
         summary: "<one-line summary>"
-        rationale: "<why this decision was made>"  # optional
+        rationale: "<why this decision was made>"  # recommended for ambiguous tradeoffs
         date: <YYYY-MM-DD>
         change: <name>
-        ids: [<model-id>]  # model-id: any id defined in model.yaml (table, relationship, domain, metric). Use Affected Tables from Step 2. Omit if empty.
+        ids: [<model-id>]  # from Affected Tables in Step 2; omit if scope: global
+        scope: global      # only for rules that apply across all tables
       ```
 
     Do NOT write `questions`, `tables.*`, or any schema fields to `_context.yaml`.

@@ -116,3 +116,25 @@ AIスキル `/modscape:spec:implement <name>` は `.modscape/changes/<name>/task
 #### Scenario: implement セッション終了時のsaveヒント表示
 - **WHEN** `/modscape:spec:implement <name>` の出力が完了する（完了・中断問わず）
 - **THEN** 出力の末尾に「作業を中断する場合は `/modscape:spec:save <name>` を実行してください」というヒントを表示する
+
+---
+
+## ADDED Requirements
+
+### Requirement: spec:implement スキルは対象テーブルの知識ベースをCLIで取得する
+
+`/modscape:spec:implement <name>` スキルは各タスク処理前に対象テーブルIDを特定し、`modscape spec context` CLIコマンドを使って関連知識を取得しなければならない（SHALL）。
+
+取得した知識（decisions・rules・terms）をコード生成の参照情報として使用しなければならない（SHALL）。
+
+```
+modscape spec context --ids <table-id> --json
+```
+
+#### Scenario: 各タスク処理前に対象テーブルの知識を取得する
+- **WHEN** `fct_orders` のタスクを処理する前に `/modscape:spec:implement <name>` を実行する
+- **THEN** スキルは `modscape spec context --ids fct_orders --json` を実行し、返却された decisions/rules/terms をコード生成に利用する
+
+#### Scenario: CLI から取得した知識をコード生成に適用する
+- **WHEN** `modscape spec context --ids fct_orders --json` が `status='cancelled' を除外する` ルールを返す
+- **THEN** 生成されたSQLにそのフィルター条件が反映される

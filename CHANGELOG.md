@@ -26,6 +26,10 @@ All notable changes to this project will be documented in this file.
 
 - **Entity reference field unified to `ids`** — `_glossary.yaml` terms and `_questions.yaml` questions now use a single `ids: [...]` field (string array) to reference related entities, replacing the former `tables` (array) and `table` (string) fields. The `ids` field accepts any entity ID — tables, relationships, domains, metrics — making the schema forward-compatible. The `archive` skill (Claude / Gemini / Codex) auto-populates `decisions[].ids` in `_context.yaml` from the Affected Tables listed in Step 2. Visualizer TypeScript types (`GlossaryTerm`, `QuestionEntry`) and UI rendering in `src/specs.js` updated accordingly.
 
+- **`modscape spec context` CLI command** — New `modscape spec context --ids <id1>,<id2>,... [--json]` command retrieves knowledge-base entries relevant to the specified entity IDs from all three SDD knowledge files (`_context.yaml`, `_glossary.yaml`, `_questions.yaml`) in a single call. Decisions matching by `ids` or tagged `scope: global`, answered/assumed Q&A rules, and glossary terms are returned with provenance fields (`change`, `date`) stripped. Enables AI agents to load only the context needed for the tables they are working on, reducing token usage. The `codegen` and `spec:implement` skills (Claude / Codex / Gemini) now call this command per table instead of reading all three files in full.
+
+- **SDD knowledge-base curation rules** — The `archive` skill (Claude / Codex / Gemini) now applies curation rules before writing to `_questions.yaml`, `_glossary.yaml`, and `_context.yaml`. Only data analysis knowledge is written: filter invariants, NULL/flag semantics, timezone and unit conversion rules, JOIN grain traps, business term definitions, and decision rationale. Tool choices, team ownership, update schedules, SLA, and deployment details are excluded. Every entry must carry `ids` or `scope: global`; entries that cannot be tagged to any entity are not written.
+
 ## [3.6.2] - 2026-05-28
 
 ### Changed
