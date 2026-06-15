@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.0] - 2026-06-09
+
+### Changed
+
+- **`design` skill — one-table-per-invocation mode** — `/modscape:spec:design` now processes exactly one table per invocation instead of the entire spec in a single session. The skill checks which tables already have a `design/<table-id>.md` file and picks the next undesigned table. When all tables are done it outputs a completion message. This keeps each session's context small regardless of table count. Applied to Claude and Gemini platforms.
+
+- **`implement` skill — one-task-per-invocation mode** — `/modscape:spec:implement` now implements exactly one task per invocation and exits. After completing a task it marks the checkbox and instructs the user to run the command again for the next task. Applied to Claude and Gemini platforms.
+
+- **`design` skill — Implementation Details split into per-table files** — Table-specific implementation details (expressions, filter conditions, validation SQL, test patterns) are no longer written to `design.md`. Instead each table's details are stored in `changes/<name>/design/<table-id>.md`. `design.md` now contains only table-agnostic content: Design Decisions and Affected Tables. This keeps `design.md` small and stable across all invocations.
+
+- **`implement` skill — reads `design/<table-id>.md` for implementation details** — When implementing a table, the skill reads `design/<table-id>.md` for table-specific details, falling back to `design.md`'s `## Implementation Details` section for backward compatibility with older specs.
+
+- **`implement` skill — Context Only skip list reads from `## Affected Tables`** — The skip list is now built from the flat `## Affected Tables` table in `design.md` (rows where Impact = `Downstream — Context Only`), replacing the old `### Downstream Impact — Context Only` subsection approach.
+
+- **`design-format.md` — `## Implementation Details` section removed** — The `## Implementation Details` section has been removed from the `design.md` format template. A new `design-table-format.md` template has been added for per-table `design/<table-id>.md` files.
+
+- **`modscape spec new` scaffold — `design.md` initial content updated** — The scaffolded `design.md` now uses the new flat `## Affected Tables` table format instead of the old `### Direct Impact` / `### Indirect Impact` subsection structure.
+
+### Added
+
+- **`spec dev` viewer — Design tab sub-tabs** — When `design/<table-id>.md` files exist, the Design tab in the spec viewer shows a sub-tab bar with an Overview sub-tab (for `design.md`) and one sub-tab per table. Clicking a table sub-tab loads that table's implementation details in the iframe. The server exposes two new endpoints: `GET /api/spec/design-tables` (lists available table design files) and `GET /api/spec/design/:tableId` (serves a table's design file as HTML).
+
+- **Entity reference field unified to `ids`** — `_glossary.yaml` terms and `_questions.yaml` questions now use a single `ids: [...]` field (string array) to reference related entities, replacing the former `tables` (array) and `table` (string) fields. The `ids` field accepts any entity ID — tables, relationships, domains, metrics — making the schema forward-compatible. The `archive` skill (Claude / Gemini / Codex) auto-populates `decisions[].ids` in `_context.yaml` from the Affected Tables listed in Step 2. Visualizer TypeScript types (`GlossaryTerm`, `QuestionEntry`) and UI rendering in `src/specs.js` updated accordingly.
+
+- **`modscape spec context` CLI command** — New `modscape spec context --ids <id1>,<id2>,... [--json]` command retrieves knowledge-base entries relevant to the specified entity IDs from all three SDD knowledge files (`_context.yaml`, `_glossary.yaml`, `_questions.yaml`) in a single call. Decisions matching by `ids` or tagged `scope: global`, answered/assumed Q&A rules, and glossary terms are returned with provenance fields (`change`, `date`) stripped. Enables AI agents to load only the context needed for the tables they are working on, reducing token usage. The `codegen` and `spec:implement` skills (Claude / Codex / Gemini) now call this command per table instead of reading all three files in full.
+
+- **SDD knowledge-base curation rules** — The `archive` skill (Claude / Codex / Gemini) now applies curation rules before writing to `_questions.yaml`, `_glossary.yaml`, and `_context.yaml`. Only data analysis knowledge is written: filter invariants, NULL/flag semantics, timezone and unit conversion rules, JOIN grain traps, business term definitions, and decision rationale. Tool choices, team ownership, update schedules, SLA, and deployment details are excluded. Every entry must carry `ids` or `scope: global`; entries that cannot be tagged to any entity are not written.
+
 ## [3.6.2] - 2026-05-28
 
 ### Changed

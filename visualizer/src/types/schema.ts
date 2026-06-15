@@ -189,7 +189,7 @@ export interface QuestionEntry {
   status: QuestionStatus;
   answer?: string;
   assumption?: string;
-  table?: string;
+  ids?: string[];
   date?: string;
   change?: string;
 }
@@ -204,7 +204,7 @@ export interface GlossaryTerm {
   id: string;
   definition: string;
   label?: string;
-  tables?: string[];
+  ids?: string[];
   columns?: string[];
   change?: string;
   date?: string;

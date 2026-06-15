@@ -39,21 +39,6 @@
 
 ---
 
-## Implementation Details
-
-<!-- Document details at a level that lets an implementer work from this file alone. -->
-<!-- Supplement spec-model.yaml with human-readable transformation expressions, validation SQL, and test patterns. -->
-<!-- Always include these when transformation expressions or validation SQL exist. -->
-
-### `<table-id>`
-
-- **Expression**: `<expression detail (e.g., CAST(raw_amount AS DECIMAL(18,2)) * fx_rate)>`
-- **Filter condition**: `<WHERE clause condition (e.g., WHERE status != 'cancelled')>`
-- **Validation SQL**: `<SQL to verify acceptance criteria (e.g., SELECT COUNT(*) FROM <table> WHERE amount IS NULL → 0 rows)>`
-- **Test pattern**: `<PK/FK test approach (e.g., order_id is unique + not_null, customer_id has referential integrity to dim_customers)>`
-
----
-
 ## Findings
 
 ### Requires Model Change

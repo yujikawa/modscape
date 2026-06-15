@@ -90,10 +90,33 @@ export async function startSpecDevServer(specName) {
     res.json(tabs);
   });
 
+  app.get('/api/spec/design-tables', (_req, res) => {
+    const designDir = path.join(specDir, 'design');
+    if (!fs.existsSync(designDir)) return res.json([]);
+    try {
+      const files = fs.readdirSync(designDir).filter(f => f.endsWith('.md'));
+      const tables = files.map(f => ({ id: f.replace(/\.md$/, ''), file: `design/${f}` }));
+      res.json(tables);
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
+  app.get('/api/spec/design/:tableId', (req, res) => {
+    const tableId = req.params.tableId;
+    const mdPath = path.resolve(specDir, 'design', `${tableId}.md`);
+    if (!mdPath.startsWith(specDir + path.sep)) return res.status(403).send('Forbidden');
+    if (!fs.existsSync(mdPath)) return res.status(404).send('Not found');
+    try {
+      const content = fs.readFileSync(mdPath, 'utf8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(mdToHtml(content));
+    } catch (e) { res.status(500).send(e.message); }
+  });
+
   app.get('/api/spec/:file', (req, res) => {
     const file = req.params.file;
     if (!file.endsWith('.html')) return res.status(400).send('Only .html files are served here');
-    const htmlPath = path.join(specDir, file);
+    const htmlPath = path.resolve(specDir, file);
+    if (!htmlPath.startsWith(specDir + path.sep)) return res.status(403).send('Forbidden');
     if (fs.existsSync(htmlPath)) {
       try {
         const content = fs.readFileSync(htmlPath, 'utf8');
@@ -128,7 +151,7 @@ export async function startSpecDevServer(specName) {
     res.status(404).send('Not Found');
   });
 
-  server.listen(5173, () => {
+  server.listen(5173, '127.0.0.1', () => {
     console.log(`\n  🚀 Modscape Spec Viewer: http://localhost:5173`);
     console.log(`  📁 Spec: .modscape/changes/${resolvedSpecName}/`);
     open('http://localhost:5173');
@@ -262,7 +285,7 @@ export function specNew(name) {
   // design.md
   writeIfNotExists(
     path.join(dir, 'design.md'),
-    `# Design: ${name}\n\n## Design Decisions\n\n## Affected Tables\n\n### Direct Impact\n\n### Indirect Impact\n\n## Findings\n\n### Requires Model Change\n\n### Implementation Notes\n`
+    `# Design: ${name}\n\n## Design Decisions\n\n## Affected Tables\n\n> ⚠️ This classification is an AI proposal. Edit directly if incorrect.\n\n| Table | Impact | Details |\n|-------|--------|---------|\n\n## Findings\n\n### Requires Model Change\n\n### Implementation Notes\n`
   );
 
   // tasks.md

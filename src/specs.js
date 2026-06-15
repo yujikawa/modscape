@@ -90,7 +90,7 @@ function renderQACards(questions) {
       badge(q.status || 'open', statusClass),
       q.date ? badge(q.date, 'badge-date') : '',
       q.change ? badge('Change: ' + q.change, 'badge-change') : '',
-      q.table ? badge(q.table, 'badge-table') : '',
+      q.ids?.length ? q.ids.map(id => badge(id, 'badge-table')).join(' ') : '',
     ].filter(Boolean).join(' ');
     const answerBlock = q.answer
       ? `<div class="field-block"><div class="field-label">Answer</div><div class="answer-box">${esc(q.answer)}</div></div>`
@@ -126,7 +126,7 @@ function renderGlossaryCards(terms) {
       </div>
       ${meta ? `<div class="card-meta">${meta}</div>` : ''}
       <div class="field-block"><div class="field-label">Definition</div><div class="field-value">${esc(t.definition || '')}</div></div>
-      ${t.tables && t.tables.length ? `<div class="field-block"><div class="field-label">Related Tables</div>${chips(t.tables)}</div>` : ''}
+      ${t.ids && t.ids.length ? `<div class="field-block"><div class="field-label">Related Tables</div>${chips(t.ids)}</div>` : ''}
       ${t.columns && t.columns.length ? `<div class="field-block"><div class="field-label">Related Columns</div>${chips(t.columns)}</div>` : ''}
     </div>`;
   }).join('');
@@ -156,9 +156,9 @@ function buildBrowserHtml(specIndex, contextData, glossaryData, questionsData) {
     const items = tables.map(t => {
       const hasHtml = !!(tableFiles[t]?.html);
       const hasMd = !!(tableFiles[t]?.md);
-      return `<li><a class="nav-item" href="#" data-type="spec" data-slug="${modelSlug}" data-table="${t}" data-has-html="${hasHtml}" data-has-md="${hasMd}">${t}</a></li>`;
+      return `<li><a class="nav-item" href="#" data-type="spec" data-slug="${esc(modelSlug)}" data-table="${esc(t)}" data-has-html="${hasHtml}" data-has-md="${hasMd}">${esc(t)}</a></li>`;
     }).join('');
-    return `<div class="nav-group"><div class="nav-group-label"><span>📂</span>${modelSlug}</div><ul>${items}</ul></div>`;
+    return `<div class="nav-group"><div class="nav-group-label"><span>📂</span>${esc(modelSlug)}</div><ul>${items}</ul></div>`;
   }).join('') || '<p class="spec-tree-empty">No specs found</p>';
 
   const specCount = (specIndex || []).reduce((n, g) => n + (g.tables || []).length, 0);
@@ -519,8 +519,12 @@ export async function startSpecOpenServer() {
 
   app.get('/api/table-spec/:modelSlug/:tableId', (req, res) => {
     const { modelSlug, tableId } = req.params;
-    const htmlPath = path.join(baseDir, modelSlug, `${tableId}.html`);
-    const mdPath = path.join(baseDir, modelSlug, `${tableId}.md`);
+    const htmlPath = path.resolve(baseDir, modelSlug, `${tableId}.html`);
+    const mdPath = path.resolve(baseDir, modelSlug, `${tableId}.md`);
+    const guard = baseDir + path.sep;
+    if (!htmlPath.startsWith(guard) || !mdPath.startsWith(guard)) {
+      return res.status(403).send('Forbidden');
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (fs.existsSync(htmlPath)) return res.send(fs.readFileSync(htmlPath, 'utf8'));
     if (fs.existsSync(mdPath)) return res.send(mdToHtml(fs.readFileSync(mdPath, 'utf8')));
@@ -549,7 +553,7 @@ export async function startSpecOpenServer() {
     res.send(buildBrowserHtml(augmented, contextData, glossaryData, questionsData));
   });
 
-  server.listen(5174, () => {
+  server.listen(5174, '127.0.0.1', () => {
     console.log(`\n  🚀 Modscape Spec Browser: http://localhost:5174`);
     if (!fs.existsSync(baseDir)) console.warn(`  ⚠️  .modscape/specs/ not found`);
     open('http://localhost:5174');
@@ -620,6 +624,80 @@ export async function buildSpecs(outDir = 'dist/specs') {
   fs.writeFileSync(path.join(absoluteOutDir, 'index.html'), staticHtml, 'utf8');
   console.log(`  ✅ index.html`);
   console.log(`\n  ✅ Build complete! → ${outDir}/\n`);
+}
+
+// ── spec context command ──────────────────────────────────────────────────────
+
+export function runContextGet(ids, opts = {}) {
+  const contextData = loadContext();
+  const glossaryData = loadGlossary();
+  const questionsData = loadQuestions();
+
+  const idSet = new Set(ids);
+
+  const decisions = (contextData?.decisions ?? [])
+    .filter(d => d.scope === 'global' || (Array.isArray(d.ids) && d.ids.some(id => idSet.has(id))))
+    .map(({ id, summary, ids: dIds, scope }) => ({ id, summary, ...(scope ? { scope } : {}), ...(dIds ? { ids: dIds } : {}) }));
+
+  const rules = (questionsData?.questions ?? [])
+    .filter(q =>
+      (q.status === 'answered' || q.status === 'assumed') &&
+      (q.scope === 'global' || (Array.isArray(q.ids) && q.ids.some(id => idSet.has(id))))
+    )
+    .map(({ id, question, answer, assumption, ids: qIds, scope, why, counter_case }) => ({
+      id,
+      question,
+      rule: answer ?? assumption ?? '',
+      ...(why ? { why } : {}),
+      ...(counter_case ? { counter_case } : {}),
+      ...(scope ? { scope } : {}),
+      ...(qIds ? { applies_to: qIds } : {}),
+    }));
+
+  const terms = (glossaryData?.terms ?? [])
+    .filter(t => !Array.isArray(t.ids) || t.ids.length === 0 || t.ids.some(id => idSet.has(id)))
+    .map(({ id, label, definition, ids: tIds, columns }) => ({
+      id,
+      label,
+      definition,
+      ...(tIds?.length ? { ids: tIds } : {}),
+      ...(columns?.length ? { columns } : {}),
+    }));
+
+  if (opts.json) {
+    console.log(JSON.stringify({ for_ids: ids, decisions, rules, terms }, null, 2));
+    return;
+  }
+
+  if (decisions.length === 0 && rules.length === 0 && terms.length === 0) {
+    console.log(`  No context found for: ${ids.join(', ')}`);
+    return;
+  }
+
+  console.log(`\n  Context for: ${ids.join(', ')}\n`);
+  if (decisions.length > 0) {
+    console.log('  ## Decisions');
+    decisions.forEach(d => {
+      console.log(`  [${d.id}] ${d.summary}`);
+    });
+    console.log('');
+  }
+  if (rules.length > 0) {
+    console.log('  ## Rules');
+    rules.forEach(r => {
+      console.log(`  [${r.id}] ${r.question}`);
+      console.log(`    → ${r.rule}`);
+      if (r.counter_case) console.log(`    ⚠ Counter case: ${r.counter_case}`);
+    });
+    console.log('');
+  }
+  if (terms.length > 0) {
+    console.log('  ## Terms');
+    terms.forEach(t => {
+      console.log(`  [${t.id}] ${t.label}: ${t.definition}`);
+    });
+    console.log('');
+  }
 }
 
 function buildStaticBrowserHtml(specIndex, contextData, glossaryData, questionsData) {

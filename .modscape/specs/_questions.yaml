@@ -1,5 +1,5 @@
 # .modscape/specs/_questions.yaml
-# All Q&A from SDD interactions. Use the 'table' field for table-specific questions.
+# All Q&A from SDD interactions. Use the 'ids' field for entity-specific questions.
 # status: open | answered | assumed
 
 questions:
@@ -7,7 +7,7 @@ questions:
     question: "fct_orders に含まれるキャンセル注文はどう扱うか？"
     answer: "status = 'cancelled' のレコードは集計から除外する。ただし返品（status = 'returned'）は fct_returns で別管理するため fct_orders には残す。"
     status: answered
-    table: fct_orders
+    ids: [fct_orders]
     date: 2026-01-20
     change: retail-analytics-initial
 
@@ -15,7 +15,7 @@ questions:
     question: "dim_customers の customer_segment はいつ更新されるか？"
     answer: "マーケティング部門が四半期ごとに RFM 分析を再実行して更新する。更新タイミングは毎四半期末の翌営業日。"
     status: answered
-    table: dim_customers
+    ids: [dim_customers]
     date: 2026-03-10
     change: customer-segmentation
 
@@ -25,18 +25,20 @@ questions:
     status: answered
     date: 2026-02-15
     change: revenue-pipeline-v2
+    scope: global
+    ids: [fct_orders, mart_daily_revenue]
 
   - id: Q-004
     question: "fct_orders の order_amount は税込みか税抜きか？"
     assumption: "税抜き金額として処理する（net_revenue の定義と整合させるため）"
     status: assumed
-    table: fct_orders
+    ids: [fct_orders]
     date: 2026-04-20
     change: retail-analytics-initial
 
   - id: Q-005
     question: "dim_customers に非アクティブ顧客は含めるか？"
     status: open
-    table: dim_customers
+    ids: [dim_customers]
     date: 2026-04-20
     change: customer-segmentation

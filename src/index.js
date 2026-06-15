@@ -21,7 +21,7 @@ import { runLint, runLintMulti } from './lint.js';
 import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
 import { specNew, specList, startSpecDevServer } from './spec.js';
-import { startSpecOpenServer, buildSpecs } from './specs.js';
+import { startSpecOpenServer, buildSpecs, runContextGet } from './specs.js';
 import { runSearch } from './search.js';
 import { updateProject } from './update.js';
 
@@ -264,5 +264,14 @@ specCommand
     runSearch(keyword, opts);
   });
 
+specCommand
+  .command('context')
+  .description('Get knowledge-base context for specified entity IDs from _context.yaml, _glossary.yaml, and _questions.yaml')
+  .requiredOption('--ids <ids>', 'comma-separated list of entity IDs (e.g. fct_orders,dim_customers)')
+  .option('--json', 'output as JSON')
+  .action((opts) => {
+    const ids = opts.ids.split(',').map(s => s.trim()).filter(Boolean);
+    runContextGet(ids, { json: opts.json });
+  });
 
 program.parse();

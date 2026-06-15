@@ -1,17 +1,21 @@
 decisions:
   - id: D-001
-    summary: "Data Vault → Star Schema の変換はdbt で行い、Raw Vault への直接クエリは禁止"
+    summary: "Raw Vault への直接クエリは禁止。Star Schema への変換は必ずdbt 経由で行う"
     date: 2026-01-15
     change: retail-analytics-initial
+    scope: global
   - id: D-002
     summary: "fct_orders の粒度は order_id × product_key（注文明細単位）。注文ヘッダー集計は mart 層で行う"
     date: 2026-01-15
     change: retail-analytics-initial
+    ids: [fct_orders]
   - id: D-003
     summary: "net_revenue は discount_amount 控除後の税抜き金額。税込みの gross_revenue は mart 層のみで保持"
     date: 2026-02-10
     change: revenue-pipeline-v2
+    ids: [fct_orders, mart_daily_revenue]
   - id: D-004
     summary: "dim_customers の SCD Type2 における current_flag は is_current カラムで管理。valid_to が NULL の場合が現在レコード"
     date: 2026-03-05
     change: customer-segmentation
+    ids: [dim_customers]

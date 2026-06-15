@@ -203,7 +203,7 @@ function generateContextSections(context) {
     for (const t of context.glossary) {
       md += `### ${t.id}${t.label ? ` (${t.label})` : ''}\n\n`;
       md += `${t.definition}\n\n`;
-      if (t.tables?.length) md += `*Tables: ${t.tables.join(', ')}*\n\n`;
+      if (t.ids?.length) md += `*Tables: ${t.ids.join(', ')}*\n\n`;
       if (t.columns?.length) md += `*Columns: ${t.columns.join(', ')}*\n\n`;
     }
   }
@@ -223,7 +223,7 @@ function generateContextSections(context) {
       const status = q.status ?? (q.answer ? 'answered' : 'open');
       md += `### ${q.id}: ${q.question}\n\n`;
       md += `*Status: ${status}*`;
-      if (q.table) md += ` · *Table: ${q.table}*`;
+      if (q.ids?.length) md += ` · *Table: ${q.ids.join(', ')}*`;
       md += '\n\n';
       if (q.answer) {
         md += `**Answer:** ${q.answer}\n\n`;

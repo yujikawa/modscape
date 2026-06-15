@@ -41,18 +41,20 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - If it **does not exist**: this is a first run — extract relevant tables from the main YAML (step 5).
    - If it **exists**: this may be a re-run or continuation — skip the extract step and proceed with the existing work YAML.
 
-4. **Check for existing design file** at `.modscape/changes/<name>/design.md`.
-   - If it **does not exist**: this is a **first run** — proceed to step 5.
-   - If it **exists**: this is a **continuation**. Resume the design session:
-     1. If `### Requires Model Change` in `## Findings` has entries: **process these first** — apply the model changes to `changes/<name>/spec-model.yaml` using mutation CLI commands, then run `modscape validate`. Clear processed entries from `### Requires Model Change` after applying.
-     2. Show the current state:
-        ```bash
-        modscape summary .modscape/changes/<name>/spec-model.yaml --json
-        ```
-        Display a brief summary: table count, table IDs, and any unresolved questions from `.modscape/changes/<name>/questions.md`.
-     3. Ask the user what they want to continue with:
-        > Design is in progress (N tables: `<id1>`, `<id2>`, ...). What would you like to add or change? When satisfied with the design, run `/modscape:spec:tasks <name>` to generate implementation tasks.
-     4. Wait for user input, then proceed to step 12 to apply requested changes. Skip steps 5–11 (first-run only steps).
+4. **One-table-per-invocation mode** — determine what to do this invocation:
+
+   **Case A — `design.md` does not exist** (first run):
+   - Proceed to step 5 to initialize the model and write `design.md`.
+   - After initialization, design the **first** Direct Impact table as this invocation's target table (steps 12–15.5).
+
+   **Case B — `design.md` exists** (subsequent runs):
+   - If `### Requires Model Change` in `## Findings` has entries: apply those model changes first using mutation CLI commands, then run `modscape validate`. Clear processed entries.
+   - List all Direct Impact and Downstream — Implement tables from `## Affected Tables` in `design.md`.
+   - Check `changes/<name>/design/` directory to see which table IDs already have a `.md` file.
+   - Find the **first table without a `design/<table-id>.md` file** — this is the target for this invocation. Skip steps 5–11.
+   - If **all tables already have a `design/<table-id>.md` file**:
+     > ✅ All tables are designed (`design/` is complete). Run `/modscape:spec:tasks <name>` to generate implementation tasks.
+     Stop here.
 
 5. **Resolve main YAMLs** (first run only):
 
@@ -106,7 +108,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
 10. **Surface known open questions** (first run only):
 
-   Check `.modscape/specs/_questions.yaml` for entries with `status: open` or `status: assumed` that reference any Direct Impact table ID (via the `table` field or question text).
+   Check `.modscape/specs/_questions.yaml` for entries with `status: open` or `status: assumed` that reference any Direct Impact table ID (via the `ids` field or question text).
    - If matching questions exist: insert their Q-NNN IDs (not the full question text) into `design.md` under `## Known Open Questions`:
      ```markdown
      ## Known Open Questions (from changes/<name>/questions.md)
@@ -178,10 +180,16 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - **No contradiction**: Note in the ripple-effect report as `spec.md: ✅ No impact`.
    - **spec.md does not exist**: Skip silently.
 
-15. Write `.modscape/changes/<name>/design.md` using the format below.
-    - On first run: create with design decisions and affected tables. Initialize `## Findings` with empty subsections.
-    - On re-run: preserve `## Findings` content; update `## Design Decisions`, `## Affected Tables`, and `## Implementation Details` only.
-    - **`## Implementation Details` writing rules**: For every table that has a transformation expression (`expression`), filter condition (`filter_key`/`WHERE`), validation SQL, or test pattern, create a `### <table-id>` section and document it. Aim for a level of detail that allows an implementer to implement from `design.md` alone.
+15. Write `.modscape/changes/<name>/design.md` — **table-agnostic content only**.
+    - On first run: create using the format in `.modscape/formats/design-format.md`. Populate `## Design Decisions` and `## Affected Tables`. Initialize `## Findings` with empty subsections.
+    - On re-run: preserve `## Findings`; update `## Design Decisions` and `## Affected Tables` only.
+    - **Do NOT write `## Implementation Details` to `design.md`** — table-specific details go to `design/<table-id>.md` (step 15.5).
+
+15.5. Write **`changes/<name>/design/<table-id>.md`** for the current invocation's target table.
+    - Create the `design/` directory if it does not exist.
+    - Read the format template from `.modscape/formats/design-table-format.md`.
+    - Document the table-specific details: transformation expressions, filter conditions, validation SQL, and test patterns.
+    - Omit sections for which no detail exists — the file may be empty except for the heading if the table has no transformation logic.
 
 16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
 
@@ -268,8 +276,8 @@ Read that file before writing `design.md` and use it as the template.
 
 **Next steps:**
 ```
-/modscape:spec:design <name>     # continue iterating on the design
-/modscape:spec:tasks <name>      # satisfied with the design? generate implementation tasks
+/modscape:spec:design <name>     # design the next table (one table per invocation)
+/modscape:spec:tasks <name>      # all tables designed? generate implementation tasks
 /modscape:spec:review <name>     # review design status
 ```
 
