@@ -156,9 +156,9 @@ function buildBrowserHtml(specIndex, contextData, glossaryData, questionsData) {
     const items = tables.map(t => {
       const hasHtml = !!(tableFiles[t]?.html);
       const hasMd = !!(tableFiles[t]?.md);
-      return `<li><a class="nav-item" href="#" data-type="spec" data-slug="${modelSlug}" data-table="${t}" data-has-html="${hasHtml}" data-has-md="${hasMd}">${t}</a></li>`;
+      return `<li><a class="nav-item" href="#" data-type="spec" data-slug="${esc(modelSlug)}" data-table="${esc(t)}" data-has-html="${hasHtml}" data-has-md="${hasMd}">${esc(t)}</a></li>`;
     }).join('');
-    return `<div class="nav-group"><div class="nav-group-label"><span>📂</span>${modelSlug}</div><ul>${items}</ul></div>`;
+    return `<div class="nav-group"><div class="nav-group-label"><span>📂</span>${esc(modelSlug)}</div><ul>${items}</ul></div>`;
   }).join('') || '<p class="spec-tree-empty">No specs found</p>';
 
   const specCount = (specIndex || []).reduce((n, g) => n + (g.tables || []).length, 0);
@@ -519,8 +519,12 @@ export async function startSpecOpenServer() {
 
   app.get('/api/table-spec/:modelSlug/:tableId', (req, res) => {
     const { modelSlug, tableId } = req.params;
-    const htmlPath = path.join(baseDir, modelSlug, `${tableId}.html`);
-    const mdPath = path.join(baseDir, modelSlug, `${tableId}.md`);
+    const htmlPath = path.resolve(baseDir, modelSlug, `${tableId}.html`);
+    const mdPath = path.resolve(baseDir, modelSlug, `${tableId}.md`);
+    const guard = baseDir + path.sep;
+    if (!htmlPath.startsWith(guard) || !mdPath.startsWith(guard)) {
+      return res.status(403).send('Forbidden');
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (fs.existsSync(htmlPath)) return res.send(fs.readFileSync(htmlPath, 'utf8'));
     if (fs.existsSync(mdPath)) return res.send(mdToHtml(fs.readFileSync(mdPath, 'utf8')));
@@ -549,7 +553,7 @@ export async function startSpecOpenServer() {
     res.send(buildBrowserHtml(augmented, contextData, glossaryData, questionsData));
   });
 
-  server.listen(5174, () => {
+  server.listen(5174, '127.0.0.1', () => {
     console.log(`\n  🚀 Modscape Spec Browser: http://localhost:5174`);
     if (!fs.existsSync(baseDir)) console.warn(`  ⚠️  .modscape/specs/ not found`);
     open('http://localhost:5174');

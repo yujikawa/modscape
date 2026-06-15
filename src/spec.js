@@ -102,7 +102,8 @@ export async function startSpecDevServer(specName) {
 
   app.get('/api/spec/design/:tableId', (req, res) => {
     const tableId = req.params.tableId;
-    const mdPath = path.join(specDir, 'design', `${tableId}.md`);
+    const mdPath = path.resolve(specDir, 'design', `${tableId}.md`);
+    if (!mdPath.startsWith(specDir + path.sep)) return res.status(403).send('Forbidden');
     if (!fs.existsSync(mdPath)) return res.status(404).send('Not found');
     try {
       const content = fs.readFileSync(mdPath, 'utf8');
@@ -114,7 +115,8 @@ export async function startSpecDevServer(specName) {
   app.get('/api/spec/:file', (req, res) => {
     const file = req.params.file;
     if (!file.endsWith('.html')) return res.status(400).send('Only .html files are served here');
-    const htmlPath = path.join(specDir, file);
+    const htmlPath = path.resolve(specDir, file);
+    if (!htmlPath.startsWith(specDir + path.sep)) return res.status(403).send('Forbidden');
     if (fs.existsSync(htmlPath)) {
       try {
         const content = fs.readFileSync(htmlPath, 'utf8');
@@ -149,7 +151,7 @@ export async function startSpecDevServer(specName) {
     res.status(404).send('Not Found');
   });
 
-  server.listen(5173, () => {
+  server.listen(5173, '127.0.0.1', () => {
     console.log(`\n  🚀 Modscape Spec Viewer: http://localhost:5173`);
     console.log(`  📁 Spec: .modscape/changes/${resolvedSpecName}/`);
     open('http://localhost:5173');

@@ -107,7 +107,7 @@ export async function startDevServer(paths, _visualizerPath) {
     res.status(404).send('Not Found');
   });
 
-  server.listen(5173, () => {
+  server.listen(5173, '127.0.0.1', () => {
     console.log(`\n  🚀 Modscape Visualizer: http://localhost:5173`);
     console.log(`  👀 Watching: ${inputPaths.join(', ')}`);
     open('http://localhost:5173');
