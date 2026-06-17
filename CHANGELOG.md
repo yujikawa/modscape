@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- **`spec dev` — Design tab navigation changed from sub-tabs to sidebar list** — When `design/<table-id>.md` files exist, the Design tab previously showed a horizontally-scrolling sub-tab bar that became difficult to use with many tables. It now shows a 150 px fixed-width sidebar list on the left with Overview at the top (separated by a divider) and each table ID below. The selected item is highlighted with a blue left border and background. The sidebar scrolls vertically independently of the iframe content area.
+- **`spec dev` — Design tab navigation changed from sub-tabs to dropdown selector** — When `design/<table-id>.md` files exist, the Design tab previously showed a horizontally-scrolling sub-tab bar that became difficult to use with many tables. It now shows a compact dropdown (`<select>`) in a toolbar row at the top of the content area. Overview appears as the first option followed by each table ID. The iframe below occupies the full width of the panel.
 
 ## [3.7.0] - 2026-06-09
 

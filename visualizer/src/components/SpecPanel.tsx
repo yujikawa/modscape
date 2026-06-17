@@ -256,59 +256,35 @@ export default function SpecPanel() {
         ))}
       </div>
 
-      {/* Content area: sidebar + iframe for Design tab, full iframe otherwise */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Design sidebar — shown only when Design tab is active and per-table files exist */}
+      {/* Content area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Design table selector — shown only when Design tab is active and per-table files exist */}
         {showDesignSidebar && (
           <div style={{
-            width: 150,
             flexShrink: 0,
-            overflowY: 'auto',
-            borderRight: `1px solid ${border}`,
+            padding: '6px 12px',
+            borderBottom: `1px solid ${border}`,
             backgroundColor: isDark ? '#0a1628' : '#f8fafc',
-            paddingTop: 4,
-            paddingBottom: 4,
           }}>
-            {sidebarItems.map((item, idx) => {
-              const isActive = activeDesignTable === item.id
-              const isDivider = idx === 1
-              return (
-                <div key={item.id}>
-                  {isDivider && (
-                    <div style={{ height: 1, backgroundColor: border, margin: '4px 0' }} />
-                  )}
-                  <button
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={() => setActiveDesignTable(item.id)}
-                    title={item.label}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '6px 12px',
-                      fontSize: 11,
-                      fontWeight: isActive ? 600 : 400,
-                      background: isActive
-                        ? (isDark ? '#1e3a5f' : '#eff6ff')
-                        : 'none',
-                      border: 'none',
-                      borderLeft: `2px solid ${isActive ? '#3b82f6' : 'transparent'}`,
-                      color: isActive
-                        ? '#3b82f6'
-                        : (isDark ? '#64748b' : '#94a3b8'),
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      transition: 'color 0.15s, background 0.15s',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                </div>
-              )
-            })}
+            <select
+              value={activeDesignTable}
+              onChange={e => setActiveDesignTable(e.target.value)}
+              onMouseDown={e => e.stopPropagation()}
+              style={{
+                fontSize: 12,
+                padding: '3px 8px',
+                borderRadius: 5,
+                border: `1px solid ${border}`,
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                color: isDark ? '#94a3b8' : '#334155',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              {sidebarItems.map(item => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
           </div>
         )}
 
