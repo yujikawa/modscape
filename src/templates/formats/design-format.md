@@ -39,6 +39,17 @@
 
 ---
 
+## Design Progress
+
+*(Populated automatically on first run. Update Status as each table is designed.)*
+
+| Table | Type | Status |
+|-------|------|--------|
+| `<table-id>` | Direct Impact | ⏳ Pending |
+| `<table-id>` | Downstream — Implement | ⏳ Pending |
+
+---
+
 ## Findings
 
 ### Requires Model Change

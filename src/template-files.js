@@ -27,7 +27,7 @@ export async function writeRules(writeFn) {
  */
 export async function writeAgentTemplates(agents, sdd, writeFn, formatWriteFn = writeFn) {
   if (sdd) {
-    for (const fmt of ['spec-format', 'design-format', 'glossary-format', 'questions-format', 'tasks-format']) {
+    for (const fmt of ['spec-format', 'design-format', 'design-table-format', 'glossary-format', 'questions-format', 'tasks-format']) {
       await formatWriteFn(`.modscape/formats/${fmt}.md`, tpl('formats', `${fmt}.md`));
     }
   }

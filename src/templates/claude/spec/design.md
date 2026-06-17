@@ -45,16 +45,28 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
 
    **Case A — `design.md` does not exist** (first run):
    - Proceed to step 5 to initialize the model and write `design.md`.
-   - After initialization, design the **first** Direct Impact table as this invocation's target table (steps 12–15.5).
+   - After initialization, generate stub files for ALL affected tables (step 15.5a), then design the **first** Direct Impact table in detail (steps 12–15.5b).
 
    **Case B — `design.md` exists** (subsequent runs):
    - If `### Requires Model Change` in `## Findings` has entries: apply those model changes first using mutation CLI commands, then run `modscape validate`. Clear processed entries.
-   - List all Direct Impact and Downstream — Implement tables from `## Affected Tables` in `design.md`.
-   - Check `changes/<name>/design/` directory to see which table IDs already have a `.md` file.
-   - Find the **first table without a `design/<table-id>.md` file** — this is the target for this invocation. Skip steps 5–11.
-   - If **all tables already have a `design/<table-id>.md` file**:
+   - **Check `## Design Progress` in `design.md`** for the first table with `⏳ Pending` status — that is the target for this invocation.
+     - **Fallback**: If `## Design Progress` does not exist (older `design.md`), fall back to checking which table IDs lack a `design/<table-id>.md` file. Then add the `## Design Progress` section to `design.md` based on current file state before continuing.
+   - If **all tables in `## Design Progress` are `✅ Designed`**:
      > ✅ All tables are designed (`design/` is complete). Run `/modscape:spec:tasks <name>` to generate implementation tasks.
      Stop here.
+
+4.5. **Conversation-driven table add/remove** — if the user explicitly requests to add or remove a table from the design scope during the conversation:
+
+   **Add a table:**
+   - Add the table to `## Affected Tables` in `design.md` with the appropriate Impact type.
+   - Add a `⏳ Pending` row to `## Design Progress` in `design.md`.
+   - Generate a stub `design/<table-id>.md` for it (same format as step 15.5a).
+   - Update `spec-config.yaml`: add the table ID to the appropriate `main_yamls[].tables` entry (remove from `tables_to_remove` if present).
+
+   **Remove a table:**
+   - Remove the table from `## Affected Tables` and `## Design Progress` in `design.md`.
+   - Update `spec-config.yaml`: remove the table ID from `main_yamls[].tables`; add the old ID to `tables_to_remove` if it existed in the main YAML.
+   - The stub/design file `design/<table-id>.md` is left in place; inform the user they may delete it manually if desired.
 
 5. **Resolve main YAMLs** (first run only):
 
@@ -181,15 +193,34 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    - **spec.md does not exist**: Skip silently.
 
 15. Write `.modscape/changes/<name>/design.md` — **table-agnostic content only**.
-    - On first run: create using the format in `.modscape/formats/design-format.md`. Populate `## Design Decisions` and `## Affected Tables`. Initialize `## Findings` with empty subsections.
-    - On re-run: preserve `## Findings`; update `## Design Decisions` and `## Affected Tables` only.
+    - On first run: create using the format in `.modscape/formats/design-format.md`. Populate `## Design Decisions`, `## Affected Tables`, and `## Design Progress`. Initialize `## Findings` with empty subsections.
+    - On re-run: preserve `## Findings`; update `## Design Decisions` and `## Affected Tables` only. Do NOT overwrite `## Design Progress` — it is updated in step 15.5b.
     - **Do NOT write `## Implementation Details` to `design.md`** — table-specific details go to `design/<table-id>.md` (step 15.5).
 
-15.5. Write **`changes/<name>/design/<table-id>.md`** for the current invocation's target table.
-    - Create the `design/` directory if it does not exist.
-    - Read the format template from `.modscape/formats/design-table-format.md`.
-    - Document the table-specific details: transformation expressions, filter conditions, validation SQL, and test patterns.
-    - Omit sections for which no detail exists — the file may be empty except for the heading if the table has no transformation logic.
+15.5a. **Generate stub files for ALL remaining tables** (Case A — first run only):
+
+   After writing `design.md`, create a stub `design/<table-id>.md` for **every** table listed in `## Affected Tables` whose type is **Direct Impact** or **Downstream — Implement**. Exclude Context Only tables.
+
+   For each table:
+   1. Run `modscape table get .modscape/changes/<name>/spec-model.yaml --id <table-id> --json` to get table metadata.
+   2. Read the format template from `.modscape/formats/design-table-format.md`.
+   3. Write a stub file to `changes/<name>/design/<table-id>.md` with:
+      - The Pending banner (`> ⏳ **Pending design** — run...`) at the top.
+      - `## Table Overview` with Type and Kind filled in from the model.
+      - `## Columns` table populated from the model's column list (name, type, FK indicator).
+      - `## Implementation Details` with TBD placeholders.
+   4. Create the `design/` directory if it does not exist.
+
+   **Do NOT** overwrite the stub for the current invocation's target table — that table will be written with full detail in step 15.5b.
+
+15.5b. **Write full design for the current invocation's target table**:
+
+   - Read the format template from `.modscape/formats/design-table-format.md`.
+   - Overwrite `changes/<name>/design/<table-id>.md` (replacing its stub) with full detail:
+     - Remove the Pending banner.
+     - Document the table-specific details: transformation expressions, filter conditions, validation SQL, and test patterns.
+     - Omit sections for which no detail exists — the file may be lean if the table has no transformation logic.
+   - Update `## Design Progress` in `design.md`: change the target table's Status from `⏳ Pending` to `✅ Designed`.
 
 16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
 
@@ -204,7 +235,7 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
    Record every question that shaped the design — answered questions are just as important for traceability as open ones.
 
    If there are unresolved questions (`status: open` or `status: assumed`) at the end of design, output:
-    > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to implementation with `/modscape:spec:implement <name>`.
+    > ⚠ There are **N** unresolved questions (Q-NNN, ...). Answer them with `modscape spec answer <id> "<answer>"`, or proceed to tasks with `/modscape:spec:tasks <name>`.
 
 18.5. **Proactive Tacit Knowledge Detection** — Review `spec-model.yaml` and the design conversation for signals that would cause an **analyst using this data product to draw wrong conclusions**. For each signal found, add a question to `questions.md` with `status: open` and `source: ai-detected`:
 
@@ -251,7 +282,7 @@ Read that file before writing `design.md` and use it as the template.
 
 ## Next Step
 
-**Always output the following at the end, without exception. Build the review summary from the actual state of `.modscape/changes/<name>/questions.md` and `design.md`:**
+**Always output the following at the end, without exception. Build the review summary from the actual state of `.modscape/changes/<name>/questions.md`, `design.md`, and the `design/` directory:**
 
 ---
 ✅ Design updated. `spec-model.yaml` and `design.md` are current.
@@ -263,6 +294,16 @@ Read that file before writing `design.md` and use it as the template.
 | spec.md | ✅ No impact / ✅ Updated | <AC number and content changed, or "No impact"> |
 | design.md | ✅ Updated | <summary of updates> |
 | spec-model.yaml | ✅ Updated | <changed tables and summary of changes> |
+
+## Design Progress
+
+| Table | Type | Status |
+|-------|------|--------|
+| `<table-id>` | Direct Impact | ✅ Designed |
+| `<table-id>` | Direct Impact | ⏳ Pending |
+| `<table-id>` | Downstream — Implement | ⏳ Pending |
+
+Designed **N/M** tables. Next: `<next-pending-table-id>`
 
 ## Review Checkpoint
 

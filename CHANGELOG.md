@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.1] - 2026-06-17
+
+### Changed
+
+- **`design` skill — all affected table stubs generated on first run** — On the first invocation of `/modscape:spec:design`, the skill now creates stub `design/<table-id>.md` files for **all** Direct Impact and Downstream — Implement tables at once (previously only the first table's file was created). Each stub is pre-filled with `## Table Overview` (type/kind) and a `## Columns` table sourced from `spec-model.yaml`, with implementation details marked TBD. A `> ⏳ Pending design` banner indicates the file is not yet detailed. The first table is still fully designed in the same invocation.
+
+- **`design` skill — `## Design Progress` table in `design.md`** — `design.md` now includes a `## Design Progress` section that tracks per-table status (`⏳ Pending` / `✅ Designed`). This section is the authoritative source for determining which table to design next; the old "check if `design/<table-id>.md` exists" heuristic is replaced by reading this table. Older `design.md` files without this section fall back to the file-existence check and then add the section automatically. Applied to Claude, Gemini, and Codex platforms.
+
+- **`design` skill — conversation-driven table add/remove** — Users can now ask to add or remove a table from the design scope mid-conversation. Adding a table appends it to `## Affected Tables` and `## Design Progress`, generates a stub file, and updates `spec-config.yaml`. Removing a table clears it from both sections and updates `spec-config.yaml`; the stub file is left in place for manual deletion.
+
+- **`design` skill — Next Step shows progress summary** — The mandatory Next Step output now includes a `## Design Progress` table and a "Designed N/M tables. Next: `<table-id>`" summary line so users always know how many tables remain and what to run next.
+
+- **`design` skill — unresolved questions next-step corrected** — The message shown when unresolved questions exist previously directed users to run `/modscape:spec:implement`. It now correctly points to `/modscape:spec:tasks`. Applied to Claude, Gemini, and Codex platforms.
+
+- **`design-table-format.md` — updated with stub sections** — The per-table design format template now includes `> ⏳ Pending design` banner, `## Table Overview`, and `## Columns` sections in addition to `## Implementation Details`. This template is now installed by `modscape init --sdd` (previously it was not included in the install step).
+
+- **`design-format.md` — `## Design Progress` section added** — The `design.md` format template now includes a `## Design Progress` Markdown table between `## Affected Tables` and `## Findings`.
+
+### Fixed
+
+- **`spec dev` — Design tab navigation changed from sub-tabs to sidebar list** — When `design/<table-id>.md` files exist, the Design tab previously showed a horizontally-scrolling sub-tab bar that became difficult to use with many tables. It now shows a 150 px fixed-width sidebar list on the left with Overview at the top (separated by a divider) and each table ID below. The selected item is highlighted with a blue left border and background. The sidebar scrolls vertically independently of the iframe content area.
+
 ## [3.7.0] - 2026-06-09
 
 ### Changed
