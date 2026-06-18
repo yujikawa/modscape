@@ -57,7 +57,10 @@ Generate an implementation task list from `spec-model.yaml` and write it to `.mo
      1. Present the diff (additions, keeps, removals) to the user and confirm before executing the merge.
      2. Merge rules: existing `[x]` tasks present in the new `spec-model.yaml` → keep `[x]`. New tables → add as `[ ]`. Removed tables → delete from tasks.md.
 
-8. Update `Status` in `.modscape/changes/<name>/spec.md` from `design` to `tasks` (if spec.md exists).
+8. Set the phase by running:
+   ```bash
+   modscape spec set-phase <name> tasks
+   ```
 
 ## tasks.md Format
 

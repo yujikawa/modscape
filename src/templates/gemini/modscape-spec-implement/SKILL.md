@@ -46,12 +46,19 @@ Implement pending tasks from `.modscape/changes/<name>/tasks.md` one by one.
    - If `.modscape/changes/<name>/design.md` exists: read the `## Affected Tables` table and extract all table IDs whose Impact column value is `Downstream — Context Only` into a skip list.
    - If `design.md` does not exist or has no matching rows: the skip list is empty — all tables are treated as implementation targets (backwards compatible).
 
-4. Check for pending tasks (`- [ ]`).
+4. Set the phase if not already `implement`:
+   ```bash
+   modscape spec get <name> --json
+   ```
+   - If `phase` is not `implement`: run `modscape spec set-phase <name> implement`
+   - If `phase` is already `implement`: skip
+
+5. Check for pending tasks (`- [ ]`).
    - If all tasks are complete (`- [x]`): tell the user:
      > All tasks are complete. Run `@modscape-spec-archive <name>` to sync the permanent table specs.
    - Otherwise: find the first pending task and proceed.
 
-5. For each pending task, in phase order:
+6. For each pending task, in phase order:
 
    **Staging / Core / Mart tasks:**
    - If the table ID for this task is in the **Context Only skip list**: output `⏭️ Skipping \`<id>\` (Context Only)` and move to the next task without generating any code.

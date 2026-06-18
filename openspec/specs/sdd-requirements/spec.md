@@ -79,3 +79,21 @@ requirements スキルは会話で登場したプロジェクト固有のビジ�
 #### Scenario: requirements セッション終了時のsaveヒント表示
 - **WHEN** `/modscape:spec:requirements <name>` の出力が完了する
 - **THEN** 出力の末尾に「作業を中断する場合は `/modscape:spec:save <name>` を実行してください」というヒントを表示する
+
+---
+
+## ADDED Requirements
+
+### Requirement: requirements 完了時に phase を requirements に更新する
+
+`requirements` スキルは `spec.md` の生成・更新が完了した時点で `modscape spec set-phase <name> requirements` を実行し、`spec-config.yaml` のフェーズを `requirements` に更新しなければならない（SHALL）。
+
+`changes/<name>/` フォルダを新規作成した直後に `spec-config.yaml` が生成されるため、その後 `set-phase` を呼び出す順序を守らなければならない（SHALL）。
+
+#### Scenario: requirements 完了時に phase が requirements に設定される
+- **WHEN** `/modscape:spec:requirements` で `spec.md` の生成が完了する
+- **THEN** `modscape spec set-phase <name> requirements` が実行され、`spec-config.yaml` の `phase` が `requirements` に更新される
+
+#### Scenario: 既存 spec.md を更新した場合も phase を requirements に設定する
+- **WHEN** 既存の `spec.md` を更新して requirements スキルが完了する
+- **THEN** `modscape spec set-phase <name> requirements` が実行される

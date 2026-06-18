@@ -82,7 +82,10 @@ Gather business requirements interactively and generate `.modscape/changes/<name
 
 9. Write the requirements to `.modscape/changes/<name>/spec.md`.
 
-10. Set `Status: requirements` in the spec file.
+10. Set the phase by running:
+   ```bash
+   modscape spec set-phase <name> requirements
+   ```
 
 10.5. Review the conversation for any business or data terms that were introduced or defined.
 

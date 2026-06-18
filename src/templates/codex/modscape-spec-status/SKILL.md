@@ -36,19 +36,20 @@ modscape summary <file> --json
    - If not: tell the user:
      > `changes/<name>/` not found. Run `/modscape:spec:requirements` to start a new spec.
 
-3. Check which files exist in `.modscape/changes/<name>/`:
-   - `spec.md`
-   - `spec-config.yaml`
-   - `spec-model.yaml`
-   - `design.md`
-   - `tasks.md`
+3. Get the current status via CLI:
+   ```bash
+   modscape spec get <name> --json
+   ```
+   This returns `phase`, `title`, `taskProgress`, `openQuestions`, and `files`.
 
-4. Determine the current phase based on what exists and task progress:
-   - No `spec.md` → `not started`
-   - `spec.md` only → `requirements`
-   - `spec-model.yaml` + `design.md` + `tasks.md` exist → check tasks
-     - Any `- [ ]` remaining → `implement`
-     - All complete → `ready to archive`
+4. Determine the current phase from the `phase` field:
+   - Use the `phase` value directly if it is not `null`.
+   - If `phase` is `null` (not yet set), fall back to file-existence inference:
+     - `files` does not include `spec.md` → `not started`
+     - `files` includes `spec.md` only → `requirements`
+     - `files` includes `tasks.md` → check `taskProgress`:
+       - Any remaining (`done < total`) → `implement`
+       - All complete → `ready to archive`
 
 5. If `tasks.md` exists, count tasks:
    - Total tasks: count all `- [ ]` and `- [x]` lines

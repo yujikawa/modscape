@@ -150,9 +150,20 @@ Determine impact category:
 **Next step:**
 ```
 
-Then based on impact:
-- Design impact (and design.md already updated in Step 4.5) → `design.md has been updated. Continue with /modscape:spec:implement <name>.`
-- Spec impact → Update the relevant AC-NNN in spec.md, then continue with `/modscape:spec:implement <name>`.
-- No impact → `No design changes needed. Continue with /modscape:spec:implement <name>.`
+After recording the answer, determine the next step as follows:
+
+1. Check if other open/assumed questions remain in `.modscape/changes/<name>/questions.md` (entries still marked `- [ ]`).
+   - If yes → `There are <n> open questions remaining. Continue with /modscape:spec:answer <name>.`
+
+2. If no open questions remain, get the current phase:
+   ```bash
+   modscape spec get <name> --json
+   ```
+   Use the `phase` field to determine the next step:
+   - `requirements` → `Continue with /modscape:spec:design <name>.`
+   - `design` → `Continue with /modscape:spec:tasks <name>.`
+   - `tasks` or `implement` → `Continue with /modscape:spec:implement <name>.`
+   - `done` → `This spec is already archived.`
+   - `null` (phase not set) → `Run /modscape:spec:status <name> to check the current state.`
 
 ## COMMAND: /modscape:spec:answer

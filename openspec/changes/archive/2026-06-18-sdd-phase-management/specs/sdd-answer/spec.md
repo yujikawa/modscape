@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Q-NNN への対話的回答記録ができる
 AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質問をユーザーに提示し、回答を対話的に収集して `changes/<name>/questions.md` に記録しなければならない（SHALL）。
@@ -8,6 +8,7 @@ AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質�
 - ユーザーの回答を受け取り、曖昧・不完全な場合は追加ヒアリングを行う
 - 整理した回答を `questions.md` の該当エントリに `**A:** <回答>` として追記し、チェックを `[x]` にする
 - **回答内容が `design.md` の設計判断（テーブル設計・カラム定義・JOIN 条件・変換式等）に影響するかを判断し、影響する場合は `design.md` の該当セクションを更新してから `questions.md` のステータスを更新する**
+- **回答記録後、`modscape spec get <name> --json` を呼び出して現在の `phase` を確認し、フェーズに応じた Next step を案内する**
 
 **design.md 更新の必須化:**
 スキルは `questions.md` に回答を記録する前に、以下を行わなければならない（SHALL）:
@@ -15,6 +16,15 @@ AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質�
 2. 影響する場合 → `design.md` の該当セクション（`## Design Decisions` または `## Implementation Details`）を更新し、波及確認レポートに「design.md: ✅ 更新済み」と記載する
 3. 影響しない場合 → 波及確認レポートに「design.md: ✅ 影響なし」と記載する
 4. その後 `questions.md` のステータスを更新する
+
+**Next step 案内（フェーズ対応）:**
+回答記録後、`modscape spec get <name> --json` で取得した `phase` に基づいて Next step を決定しなければならない（SHALL）:
+- `questions.md` に他に未回答の質問がある → `/modscape:spec:answer <name>` を案内する
+- `phase: requirements` → `/modscape:spec:design <name>` を案内する
+- `phase: design` → `/modscape:spec:tasks <name>` を案内する
+- `phase: tasks` → `/modscape:spec:implement <name>` を案内する
+- `phase: implement` → `/modscape:spec:implement <name>` を案内する
+- `phase: null`（未設定）→ `/modscape:spec:status <name>` で確認を促す
 
 スキルは `<name>` が省略された場合、アクティブな change を自動推定しなければならない（SHALL）:
 - アクティブな change が 1 つ → 自動選択
@@ -59,33 +69,10 @@ AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質�
 - **WHEN** 存在しない `<name>` または Q-NNN で実行する
 - **THEN** AIは適切なエラーメッセージを表示する
 
----
+#### Scenario: Next step がフェーズに基づいて変わる（requirements フェーズ）
+- **WHEN** `phase: requirements` の spec で回答記録が完了し、未回答質問がない
+- **THEN** Next step として `/modscape:spec:design <name>` を案内する（implement ではない）
 
-## MODIFIED Requirements
-
-### Requirement: answer スキルが Next step をフェーズに基づいて案内する
-
-`answer` スキルは回答記録完了後（Step 7）に `modscape spec get <name> --json` を実行してフェーズを取得し、現在のフェーズに応じた正しい Next step を案内しなければならない（SHALL）。
-
-| フェーズ | Next step の案内 |
-|---|---|
-| `requirements` | `/modscape:spec:design <name>` を実行してください |
-| `design` | `/modscape:spec:design <name>` を実行して設計を続けてください |
-| `tasks` | `/modscape:spec:implement <name>` を実行してください |
-| `implement` | `/modscape:spec:implement <name>` を実行して実装を続けてください |
-| `done` | `/modscape:spec:archive <name>` 済みです |
-| `null`（フォールバック） | `/modscape:spec:status <name>` で現在の状態を確認してください |
-
-`phase` が `null` の場合（`spec-config.yaml` に `phase` フィールドがない既存 spec）は、`modscape spec get` の `taskProgress` と `files` をもとに従来のフォールバック判定を行わなければならない（SHALL）。
-
-#### Scenario: design フェーズ中に answer を実行すると Next step が design 継続になる
-- **WHEN** `spec-config.yaml` の `phase` が `design` の spec で answer を実行し、回答を記録する
-- **THEN** 「次は `/modscape:spec:design <name>` を実行して設計を続けてください」と案内する
-
-#### Scenario: tasks フェーズ中に answer を実行すると Next step が implement になる
-- **WHEN** `spec-config.yaml` の `phase` が `tasks` の spec で answer を実行し、回答を記録する
-- **THEN** 「次は `/modscape:spec:implement <name>` を実行してください」と案内する
-
-#### Scenario: phase が null の場合はフォールバック判定を行う
-- **WHEN** `spec-config.yaml` に `phase` フィールドがない既存 spec で answer を実行する
-- **THEN** `modscape spec get` の `taskProgress` と `files` を使って従来の判定ロジックで Next step を案内する
+#### Scenario: Next step — 未回答質問が残っている場合
+- **WHEN** 回答記録後に `questions.md` に他に未回答質問が残っている
+- **THEN** Next step として `/modscape:spec:answer <name>` を案内し、残り件数を示す

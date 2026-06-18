@@ -32,3 +32,21 @@ AIスキル `/modscape:spec:design <name>` は設計完了後に `model.yaml` �
 #### Scenario: lineage が未定義の場合に案内メッセージを表示する
 - **WHEN** model.yaml に lineage セクションが存在しない状態で設計が完了する
 - **THEN** AIは「model.yaml に lineage が定義されていません。lineage を追加してから再度実行してください」と案内する
+
+---
+
+## ADDED Requirements
+
+### Requirement: tasks.md 生成完了時に phase を tasks に更新する
+
+`design` スキル（tasks.md 生成を担当）は `tasks.md` を新規生成または更新完了した時点で `modscape spec set-phase <name> tasks` を実行し、`spec-config.yaml` のフェーズを `tasks` に更新しなければならない（SHALL）。
+
+このフェーズ更新は `design` スキルの責務として実行される（`design` スキルが `tasks.md` を生成するため）。
+
+#### Scenario: tasks.md 生成完了時に phase が tasks に設定される
+- **WHEN** `/modscape:spec:design <name>` が `tasks.md` を生成・更新して完了する
+- **THEN** `modscape spec set-phase <name> tasks` が実行され、`spec-config.yaml` の `phase` が `tasks` に更新される
+
+#### Scenario: tasks.md をマージ確認後に生成した場合も phase を tasks に設定する
+- **WHEN** `tasks.md` の既存タスクとのマージをユーザーが承認した後に `tasks.md` の生成が完了する
+- **THEN** `modscape spec set-phase <name> tasks` が実行される

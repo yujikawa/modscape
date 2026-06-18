@@ -58,5 +58,3 @@
 `<dbt | SQLMesh | Spark SQL | plain SQL>`
 
 ---
-
-> **Status:** `requirements`

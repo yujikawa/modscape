@@ -20,7 +20,7 @@ import { runCoverage } from './coverage.js';
 import { runLint, runLintMulti } from './lint.js';
 import { runPrune } from './prune.js';
 import { migrateModel } from './migrate.js';
-import { specNew, specList, startSpecDevServer } from './spec.js';
+import { specNew, specList, specGet, specSetPhase, startSpecDevServer } from './spec.js';
 import { startSpecOpenServer, buildSpecs, runContextGet } from './specs.js';
 import { runSearch } from './search.js';
 import { updateProject } from './update.js';
@@ -229,6 +229,24 @@ specCommand
   .argument('<name>', 'kebab-case name for the spec (e.g. monthly-sales-summary)')
   .action((name) => {
     specNew(name);
+  });
+
+specCommand
+  .command('get')
+  .description('Get current status of a spec (phase, task progress, open questions)')
+  .argument('<name>', 'spec name')
+  .option('--json', 'output as JSON')
+  .action((name, opts) => {
+    specGet(name, opts);
+  });
+
+specCommand
+  .command('set-phase')
+  .description('Set the phase of a spec (requirements | design | tasks | implement | done)')
+  .argument('<name>', 'spec name')
+  .argument('<phase>', 'phase value')
+  .action((name, phase) => {
+    specSetPhase(name, phase);
   });
 
 specCommand

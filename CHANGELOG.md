@@ -20,6 +20,22 @@ All notable changes to this project will be documented in this file.
 
 - **`design-format.md` — `## Design Progress` section added** — The `design.md` format template now includes a `## Design Progress` Markdown table between `## Affected Tables` and `## Findings`.
 
+### Added
+
+- **`modscape spec get <name> [--json]`** — New CLI command that returns the current state of a spec work folder as a single JSON object: `phase`, `title`, `taskProgress` (done/total), `openQuestions`, and `files`. Skills call this at startup to read the authoritative phase instead of inferring it from file existence.
+
+- **`modscape spec set-phase <name> <phase>`** — New CLI command that writes the `phase` field to `spec-config.yaml`. Accepts `requirements` / `design` / `tasks` / `implement` / `done`; rejects any other value with an error listing valid options. Each SDD skill calls this at the end of its session to advance the phase.
+
+- **SDD phase tracking via `spec-config.yaml`** — `spec-config.yaml` now carries a `phase` field as the single source of truth for where a spec is in the workflow. Previously each skill inferred the phase from which files existed on disk, but because `modscape spec new` creates all files as stubs upfront, this heuristic was unreliable. The `requirements` / `design` / `tasks` / `implement` skills now write the phase on completion; `spec-config.yaml` files without a `phase` field fall back to the legacy heuristic.
+
+### Changed
+
+- **`modscape spec list` — phase column added** — The list output now shows `[<phase>]` next to each spec name (e.g., `• monthly-sales  [design]  [3/8 tasks]`). Specs without a `phase` field show `[-]`. The `--json` output includes a `phase` key in each entry.
+
+- **`answer` skill — Next step is now phase-aware** — Previously the skill always directed users to `/modscape:spec:implement` after recording an answer, regardless of the current workflow phase. It now calls `modscape spec get --json`, checks for remaining open questions first, and routes to the correct next skill based on `phase` (`requirements` → `design`, `design` → `tasks`, `tasks`/`implement` → `implement`). Applied to Claude, Gemini, and Codex platforms.
+
+- **`status` skill — phase read from `spec-config.yaml` via CLI** — The skill now calls `modscape spec get <name> --json` and uses the returned `phase` field directly instead of inferring the phase from file existence. The legacy file-existence fallback is retained when `phase` is `null`. Applied to Claude, Gemini, and Codex platforms.
+
 ### Fixed
 
 - **`spec dev` — Design tab navigation changed from sub-tabs to dropdown selector** — When `design/<table-id>.md` files exist, the Design tab previously showed a horizontally-scrolling sub-tab bar that became difficult to use with many tables. It now shows a compact dropdown (`<select>`) in a toolbar row at the top of the content area. Overview appears as the first option followed by each table ID. The iframe below occupies the full width of the panel.

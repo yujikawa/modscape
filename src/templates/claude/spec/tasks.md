@@ -57,7 +57,10 @@ Generate an implementation task list from `spec-model.yaml` and write it to `.mo
 
    Use the table ID as the task identifier key. If an ID changes, treat it as a remove + add.
 
-8. Update `Status` in `.modscape/changes/<name>/spec.md` from `design` to `tasks` (if spec.md exists).
+8. Set the phase by running:
+   ```bash
+   modscape spec set-phase <name> tasks
+   ```
 
 ## tasks.md Format
 

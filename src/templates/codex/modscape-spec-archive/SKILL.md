@@ -231,7 +231,12 @@ If `.modscape/changes/<name>/glossary.md` exists:
 
 ### Step 5.5: Move to archives
 
-12. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+12. Set the phase to `done` before moving:
+    ```bash
+    modscape spec set-phase <name> done
+    ```
+
+13. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
     ```bash
     mkdir -p .modscape/archives
     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>

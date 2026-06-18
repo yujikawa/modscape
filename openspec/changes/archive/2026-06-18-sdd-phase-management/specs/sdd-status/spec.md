@@ -1,11 +1,13 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: statusコマンド
 システムは `/modscape:spec:status <name>` コマンドを提供しなければならない（SHALL）。現在のフェーズ・ファイル存在状況・タスク進捗を表示し、**`session.md` が存在する場合は前回のセッション内容を表示し**、**現在の状態から次に実行すべきアクションを1つ明示する**。
 
+フェーズ判定は `modscape spec get <name> --json` の `phase` フィールドを使用しなければならない（SHALL）。`phase` が `null`（未設定）の場合のみ、tasks.md のチェックボックス数によるフォールバック判定を行う。
+
 #### Scenario: 基本的なステータス表示
 - **WHEN** `/modscape:spec:status fct_orders` を実行する
-- **THEN** フェーズ・ファイル一覧・タスク進捗を表示する
+- **THEN** `modscape spec get fct_orders --json` を呼び出し、返却された `phase` をフェーズ表示に使用する
 
 #### Scenario: session.md が存在する場合
 - **WHEN** `.modscape/changes/<name>/session.md` が存在する状態で status を実行する
@@ -25,32 +27,12 @@
 
 #### Scenario: 次のアクションの提示 — 通常フロー
 - **WHEN** Findingsも未回答質問もない通常状態
-- **THEN** spec.md→design.md→tasks.md→implement→archive の順でフェーズに応じた次コマンドを1つ提示する
+- **THEN** `phase` フィールドの値に基づいて次コマンドを1つ提示する（requirements→design、design→tasks、tasks→implement、implement→check/archive）
 
 #### Scenario: 全タスク完了時
 - **WHEN** `tasks.md` の全タスクが `[x]` 完了している
 - **THEN** 「次にやること」として `/modscape:spec:check <name>` を提示し、続けて `/modscape:spec:archive <name>` も案内する
 
----
-
-## MODIFIED Requirements
-
-### Requirement: status スキルがフェーズを spec-config.yaml から取得する
-
-`status` スキルは現在のフェーズを判定する際に `modscape spec get <name> --json` を実行し、返却された `phase` フィールドを使用しなければならない（SHALL）。ファイル存在チェックによるフェーズ推測は `phase` フィールドが利用可能な場合に使用してはならない（SHALL NOT）。
-
-`phase` が `null` の場合（`spec-config.yaml` に `phase` フィールドがない既存 spec）は、従来のファイル存在ベースのフォールバック判定を維持しなければならない（SHALL）。
-
-フォールバック優先順位（`phase: null` 時のみ）:
-1. `tasks.md` に `[ ]` が存在する → implement フェーズと判定
-2. `tasks.md` が存在する → tasks フェーズと判定
-3. `design.md` が存在する → design フェーズと判定
-4. それ以外 → requirements フェーズと判定
-
-#### Scenario: phase フィールドがある場合に CLI からフェーズを取得する
-- **WHEN** `spec-config.yaml` に `phase: implement` が設定されている spec で status を実行する
-- **THEN** スキルは `modscape spec get <name> --json` を実行し、`phase: implement` を使って「次にやること」を判定する
-
-#### Scenario: phase が null の場合にファイル存在ベースでフォールバックする
-- **WHEN** `spec-config.yaml` に `phase` フィールドがない既存 spec で status を実行する
-- **THEN** スキルは `tasks.md` / `design.md` のファイル存在とタスク完了状況でフェーズを推定する
+#### Scenario: phase が未設定（フォールバック）
+- **WHEN** `modscape spec get` が `phase: null` を返す
+- **THEN** tasks.md のチェックボックス数で進捗を判定し、フェーズを推定して表示する

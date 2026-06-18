@@ -211,7 +211,10 @@ Design the data model based on `spec.md` and update `changes/<name>/spec-model.y
      - Omit sections for which no detail exists — the file may be lean if the table has no transformation logic.
    - Update `## Design Progress` in `design.md`: change the target table's Status from `⏳ Pending` to `✅ Designed`.
 
-16. Update `Status` in `.modscape/changes/<name>/spec.md` to `design` if not already set.
+16. Set the phase by running:
+   ```bash
+   modscape spec set-phase <name> design
+   ```
 
 18. Review the **entire design conversation** and append question entries to `.modscape/changes/<name>/questions.md` (create if it does not exist) for all of the following:
 

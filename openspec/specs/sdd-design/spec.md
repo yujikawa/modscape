@@ -159,3 +159,21 @@ design スキルは既存テーブルを変更する場合、影響範囲を `mo
 #### Scenario: design セッション終了時のsaveヒント表示
 - **WHEN** `/modscape:spec:design <name>` の出力が完了する
 - **THEN** 出力の末尾に「作業を中断する場合は `/modscape:spec:save <name>` を実行してください」というヒントを表示する
+
+---
+
+## ADDED Requirements
+
+### Requirement: design 完了時に phase を design に更新する
+
+`design` スキルは全テーブルの設計が完了した時点で `modscape spec set-phase <name> design` を実行し、`spec-config.yaml` のフェーズを `design` に更新しなければならない（SHALL）。
+
+1テーブルだけ処理して終了する場合（1テーブル=1呼び出しモード）は、最後のテーブルが完了した時のみ `set-phase` を実行する。途中で終了した場合は実行しない（SHALL NOT）。
+
+#### Scenario: 全テーブル設計完了時に phase が design に設定される
+- **WHEN** `/modscape:spec:design <name>` を実行し、最後の未設計テーブルの設計が完了する
+- **THEN** `modscape spec set-phase <name> design` が実行され、`spec-config.yaml` の `phase` が `design` に更新される
+
+#### Scenario: 途中で設計を終了した場合は phase を変更しない
+- **WHEN** 設計対象テーブルが残っている状態で `/modscape:spec:design <name>` が終了する
+- **THEN** `modscape spec set-phase` は実行されず、`phase` は変更されない
