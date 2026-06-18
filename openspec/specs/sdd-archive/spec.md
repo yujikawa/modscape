@@ -186,3 +186,19 @@ archiveスキルが `glossary.md` を `_glossary.yaml` にマージする際、�
 #### Scenario: 複数テーブルに適用されるルールに scope: global を付与する
 - **WHEN** タイムゾーン変換ルールなど全テーブルに適用されるルールを archive で書き込む
 - **THEN** エントリに `scope: global` が付与される
+
+---
+
+## ADDED Requirements
+
+### Requirement: archive 完了時に phase を done に更新する
+
+`archive` スキルは作業フォルダを `.modscape/archives/` に移動する直前に `modscape spec set-phase <name> done` を実行し、`spec-config.yaml` のフェーズを `done` に更新しなければならない（SHALL）。
+
+#### Scenario: archive 完了時に phase が done に設定される
+- **WHEN** `/modscape:spec:archive <name>` が正常に完了しフォルダをアーカイブに移動する
+- **THEN** `modscape spec set-phase <name> done` が実行され、`spec-config.yaml` の `phase` が `done` に更新される
+
+#### Scenario: archive がキャンセルされた場合は phase を変更しない
+- **WHEN** dry-run 確認でユーザーが N を選択して archive をキャンセルする
+- **THEN** `modscape spec set-phase` は実行されず、`phase` は変更されない

@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.8.0] - 2026-06-18
+
+### Changed
+
+- **`tasks` skill — simplified tasks.md format** — Removed materialization type notation (`[table]`, `[incremental]`, etc.) and `← upstream` references from generated tasks. Phase names are now chosen by the AI based on the role of each group of tables instead of being hardcoded as "Staging / Core / Mart". Added explicit exclusion of `consumers` nodes from phase assignment. Dropped the mandatory "Phase N: Tests" section (users may append test tasks manually). Applied to Claude, Codex, and Gemini platforms.
+
+- **`design` skill — all affected table stubs generated on first run** — On the first invocation of `/modscape:spec:design`, the skill now creates stub `design/<table-id>.md` files for **all** Direct Impact and Downstream — Implement tables at once (previously only the first table's file was created). Each stub is pre-filled with `## Table Overview` (type/kind) and a `## Columns` table sourced from `spec-model.yaml`, with implementation details marked TBD. A `> ⏳ Pending design` banner indicates the file is not yet detailed. The first table is still fully designed in the same invocation.
+
+- **`design` skill — `## Design Progress` table in `design.md`** — `design.md` now includes a `## Design Progress` section that tracks per-table status (`⏳ Pending` / `✅ Designed`). This section is the authoritative source for determining which table to design next; the old "check if `design/<table-id>.md` exists" heuristic is replaced by reading this table. Older `design.md` files without this section fall back to the file-existence check and then add the section automatically. Applied to Claude, Gemini, and Codex platforms.
+
+- **`design` skill — conversation-driven table add/remove** — Users can now ask to add or remove a table from the design scope mid-conversation. Adding a table appends it to `## Affected Tables` and `## Design Progress`, generates a stub file, and updates `spec-config.yaml`. Removing a table clears it from both sections and updates `spec-config.yaml`; the stub file is left in place for manual deletion.
+
+- **`design` skill — Next Step shows progress summary** — The mandatory Next Step output now includes a `## Design Progress` table and a "Designed N/M tables. Next: `<table-id>`" summary line so users always know how many tables remain and what to run next.
+
+- **`design` skill — unresolved questions next-step corrected** — The message shown when unresolved questions exist previously directed users to run `/modscape:spec:implement`. It now correctly points to `/modscape:spec:tasks`. Applied to Claude, Gemini, and Codex platforms.
+
+- **`design-table-format.md` — updated with stub sections** — The per-table design format template now includes `> ⏳ Pending design` banner, `## Table Overview`, and `## Columns` sections in addition to `## Implementation Details`. This template is now installed by `modscape init --sdd` (previously it was not included in the install step).
+
+- **`design-format.md` — `## Design Progress` section added** — The `design.md` format template now includes a `## Design Progress` Markdown table between `## Affected Tables` and `## Findings`.
+
+### Added
+
+- **`modscape spec get <name> [--json]`** — New CLI command that returns the current state of a spec work folder as a single JSON object: `phase`, `title`, `taskProgress` (done/total), `openQuestions`, and `files`. Skills call this at startup to read the authoritative phase instead of inferring it from file existence.
+
+- **`modscape spec set-phase <name> <phase>`** — New CLI command that writes the `phase` field to `spec-config.yaml`. Accepts `requirements` / `design` / `tasks` / `implement` / `done`; rejects any other value with an error listing valid options. Each SDD skill calls this at the end of its session to advance the phase.
+
+- **SDD phase tracking via `spec-config.yaml`** — `spec-config.yaml` now carries a `phase` field as the single source of truth for where a spec is in the workflow. Previously each skill inferred the phase from which files existed on disk, but because `modscape spec new` creates all files as stubs upfront, this heuristic was unreliable. The `requirements` / `design` / `tasks` / `implement` skills now write the phase on completion; `spec-config.yaml` files without a `phase` field fall back to the legacy heuristic.
+
+### Changed
+
+- **`modscape spec list` — phase column added** — The list output now shows `[<phase>]` next to each spec name (e.g., `• monthly-sales  [design]  [3/8 tasks]`). Specs without a `phase` field show `[-]`. The `--json` output includes a `phase` key in each entry.
+
+- **`answer` skill — Next step is now phase-aware** — Previously the skill always directed users to `/modscape:spec:implement` after recording an answer, regardless of the current workflow phase. It now calls `modscape spec get --json`, checks for remaining open questions first, and routes to the correct next skill based on `phase` (`requirements` → `design`, `design` → `tasks`, `tasks`/`implement` → `implement`). Applied to Claude, Gemini, and Codex platforms.
+
+- **`status` skill — phase read from `spec-config.yaml` via CLI** — The skill now calls `modscape spec get <name> --json` and uses the returned `phase` field directly instead of inferring the phase from file existence. The legacy file-existence fallback is retained when `phase` is `null`. Applied to Claude, Gemini, and Codex platforms.
+
+### Fixed
+
+- **`spec dev` — Design tab navigation changed from sub-tabs to dropdown selector** — When `design/<table-id>.md` files exist, the Design tab previously showed a horizontally-scrolling sub-tab bar that became difficult to use with many tables. It now shows a compact dropdown (`<select>`) in a toolbar row at the top of the content area. Overview appears as the first option followed by each table ID. The iframe below occupies the full width of the panel.
+
 ## [3.7.0] - 2026-06-09
 
 ### Changed

@@ -1,5 +1,20 @@
 # `<table-id>`
 
+> ⏳ **Pending design** — run the design skill again to detail this table.
+
+## Table Overview
+
+- **Type:** <Direct Impact | Downstream — Implement>
+- **Kind:** <fact | dimension | staging | mart | ...>
+
+## Columns
+
+| Column | Type | FK? | Notes |
+|--------|------|-----|-------|
+| `<column>` | `<type>` | | |
+
+---
+
 ## Implementation Details
 
 <!-- Document table-specific details at a level that lets an implementer work from this file alone. -->

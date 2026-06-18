@@ -138,3 +138,21 @@ modscape spec context --ids <table-id> --json
 #### Scenario: CLI から取得した知識をコード生成に適用する
 - **WHEN** `modscape spec context --ids fct_orders --json` が `status='cancelled' を除外する` ルールを返す
 - **THEN** 生成されたSQLにそのフィルター条件が反映される
+
+---
+
+## ADDED Requirements
+
+### Requirement: implement 初回実行時に phase を implement に更新する
+
+`implement` スキルは最初のタスクを処理する前（初回呼び出し時のみ）に `modscape spec set-phase <name> implement` を実行し、`spec-config.yaml` のフェーズを `implement` に更新しなければならない（SHALL）。
+
+初回かどうかの判定: `modscape spec get <name> --json` の `phase` が `implement` でない場合を初回とみなす。
+
+#### Scenario: 初回 implement 実行時に phase が implement に設定される
+- **WHEN** `spec-config.yaml` の `phase` が `tasks` の状態で `/modscape:spec:implement <name>` を初めて実行する
+- **THEN** `modscape spec set-phase <name> implement` が実行され、タスク処理が開始される
+
+#### Scenario: 既に implement フェーズの場合は set-phase をスキップする
+- **WHEN** `spec-config.yaml` の `phase` が既に `implement` の状態で `/modscape:spec:implement <name>` を再実行する
+- **THEN** `modscape spec set-phase` は実行されず、次の未完了タスクから処理を再開する

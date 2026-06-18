@@ -283,7 +283,12 @@ Proceed with deletion? (y/N)
 
 ### Step 5.5: Move to archives
 
-15. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
+15. Set the phase to `done` before moving:
+    ```bash
+    modscape spec set-phase <name> done
+    ```
+
+16. Move the work folder to `.modscape/archives/YYYY-MM-DD-<name>/` (today's date):
     ```bash
     mkdir -p .modscape/archives
     mv .modscape/changes/<name> .modscape/archives/YYYY-MM-DD-<name>

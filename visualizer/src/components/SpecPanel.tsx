@@ -154,6 +154,12 @@ export default function SpecPanel() {
   const tabBarBg = isDark ? '#0f172a' : '#f8fafc'
   const tabBorderB = isDark ? '#1e293b' : '#e2e8f0'
 
+  // Design tab sidebar items
+  const showDesignSidebar = activeTab === 'design' && designTables.length > 0
+  const sidebarItems = showDesignSidebar
+    ? [{ id: 'overview', label: 'Overview' }, ...designTables.map(t => ({ id: t.id, label: t.id }))]
+    : []
+
   return (
     <div
       style={{
@@ -250,60 +256,55 @@ export default function SpecPanel() {
         ))}
       </div>
 
-      {/* Design sub-tab bar — shown only when Design tab is active and per-table files exist */}
-      {activeTab === 'design' && designTables.length > 0 && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          backgroundColor: isDark ? '#0a1628' : '#f0f4f8',
-          borderBottom: `1px solid ${tabBorderB}`,
-          padding: '0 12px',
-          flexShrink: 0,
-          gap: 2,
-          overflowX: 'auto',
-        }}>
-          {[{ id: 'overview', label: 'Overview' }, ...designTables.map(t => ({ id: t.id, label: t.id }))].map(sub => (
-            <button
-              key={sub.id}
+      {/* Content area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Design table selector — shown only when Design tab is active and per-table files exist */}
+        {showDesignSidebar && (
+          <div style={{
+            flexShrink: 0,
+            padding: '6px 12px',
+            borderBottom: `1px solid ${border}`,
+            backgroundColor: isDark ? '#0a1628' : '#f8fafc',
+          }}>
+            <select
+              value={activeDesignTable}
+              onChange={e => setActiveDesignTable(e.target.value)}
               onMouseDown={e => e.stopPropagation()}
-              onClick={() => setActiveDesignTable(sub.id)}
               style={{
-                padding: '4px 10px',
-                fontSize: 11,
-                fontWeight: 500,
-                background: 'none',
-                border: 'none',
-                borderBottom: `2px solid ${activeDesignTable === sub.id ? '#8b5cf6' : 'transparent'}`,
-                color: activeDesignTable === sub.id
-                  ? '#8b5cf6'
-                  : (isDark ? '#64748b' : '#94a3b8'),
+                fontSize: 12,
+                padding: '3px 8px',
+                borderRadius: 5,
+                border: `1px solid ${border}`,
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                color: isDark ? '#94a3b8' : '#334155',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'color 0.15s, border-color 0.15s',
+                outline: 'none',
               }}
             >
-              {sub.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Content */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        {iframeSrc ? (
-          <iframe
-            ref={iframeRef}
-            src={iframeSrc}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title={activeTab ?? 'spec'}
-          />
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: isDark ? '#475569' : '#94a3b8' }}>
-            {tabs.length === 0
-              ? 'HTMLファイルが見つかりません。/modscape:spec:requirements を実行してください。'
-              : 'このタブのファイルはまだ生成されていません。'}
+              {sidebarItems.map(item => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
           </div>
         )}
+
+        {/* iframe */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          {iframeSrc ? (
+            <iframe
+              ref={iframeRef}
+              src={iframeSrc}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              title={activeTab ?? 'spec'}
+            />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: isDark ? '#475569' : '#94a3b8' }}>
+              {tabs.length === 0
+                ? 'HTMLファイルが見つかりません。/modscape:spec:requirements を実行してください。'
+                : 'このタブのファイルはまだ生成されていません。'}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Resize handle (bottom-right corner) */}

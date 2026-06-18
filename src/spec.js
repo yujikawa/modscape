@@ -192,6 +192,55 @@ function writeIfNotExists(filePath, content) {
   return true;
 }
 
+const VALID_PHASES = ['requirements', 'design', 'tasks', 'implement', 'done'];
+
+function readSpecConfigPhase(dir) {
+  const configPath = path.join(dir, 'spec-config.yaml');
+  if (!fs.existsSync(configPath)) return null;
+  try {
+    const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
+    return config?.phase ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function readSpecEntry(name) {
+  const dir = path.join(CHANGES_DIR, name);
+  const specMdPath = path.join(dir, 'spec.md');
+  const tasksMdPath = path.join(dir, 'tasks.md');
+  const questionsMdPath = path.join(dir, 'questions.md');
+
+  const phase = readSpecConfigPhase(dir);
+
+  const title = (() => {
+    if (!fs.existsSync(specMdPath)) return null;
+    const content = fs.readFileSync(specMdPath, 'utf8');
+    const m = content.match(/^#\s+(.+)/m);
+    return m ? m[1].trim() : null;
+  })();
+
+  const taskProgress = (() => {
+    if (!fs.existsSync(tasksMdPath)) return null;
+    const content = fs.readFileSync(tasksMdPath, 'utf8');
+    const done = (content.match(/- \[x\]/gi) || []).length;
+    const total = done + (content.match(/- \[ \]/g) || []).length;
+    return { done, total };
+  })();
+
+  const openQuestions = (() => {
+    if (!fs.existsSync(questionsMdPath)) return 0;
+    const content = fs.readFileSync(questionsMdPath, 'utf8');
+    return (content.match(/- \[ \]/g) || []).length;
+  })();
+
+  const files = ['spec.md', 'spec-config.yaml', 'spec-model.yaml', 'design.md', 'tasks.md', 'questions.md'].filter(
+    f => fs.existsSync(path.join(dir, f))
+  );
+
+  return { name, phase, title, taskProgress, openQuestions, files };
+}
+
 export function specList(opts = {}) {
   if (!fs.existsSync(CHANGES_DIR)) {
     if (opts.json) { console.log(JSON.stringify([])); return; }
@@ -209,32 +258,7 @@ export function specList(opts = {}) {
     return;
   }
 
-  const specs = entries.map(name => {
-    const dir = path.join(CHANGES_DIR, name);
-    const specMdPath = path.join(dir, 'spec.md');
-    const tasksMdPath = path.join(dir, 'tasks.md');
-
-    const title = (() => {
-      if (!fs.existsSync(specMdPath)) return null;
-      const content = fs.readFileSync(specMdPath, 'utf8');
-      const m = content.match(/^#\s+(.+)/m);
-      return m ? m[1].trim() : null;
-    })();
-
-    const taskProgress = (() => {
-      if (!fs.existsSync(tasksMdPath)) return null;
-      const content = fs.readFileSync(tasksMdPath, 'utf8');
-      const done = (content.match(/- \[x\]/gi) || []).length;
-      const total = done + (content.match(/- \[ \]/g) || []).length;
-      return { done, total };
-    })();
-
-    const docs = ['spec.md', 'design.md', 'tasks.md', 'questions.md'].filter(
-      f => fs.existsSync(path.join(dir, f))
-    );
-
-    return { name, title, docs, taskProgress };
-  });
+  const specs = entries.map(name => readSpecEntry(name));
 
   if (opts.json) {
     console.log(JSON.stringify(specs, null, 2));
@@ -244,13 +268,53 @@ export function specList(opts = {}) {
   console.log(`\n  Specs in ${CHANGES_DIR}/\n`);
   for (const s of specs) {
     const label = s.title ? `${s.name}  (${s.title})` : s.name;
+    const phase = s.phase ? `  [${s.phase}]` : '  [-]';
     const progress = s.taskProgress
       ? `  [${s.taskProgress.done}/${s.taskProgress.total} tasks]`
       : '';
-    const docs = s.docs.length ? `  docs: ${s.docs.join(', ')}` : '';
-    console.log(`  • ${label}${progress}${docs}`);
+    console.log(`  • ${label}${phase}${progress}`);
   }
   console.log('');
+}
+
+export function specGet(name, opts = {}) {
+  const dir = path.join(CHANGES_DIR, name);
+  if (!fs.existsSync(dir)) {
+    console.error(`  ❌ .modscape/changes/${name}/ not found.`);
+    process.exit(1);
+  }
+  const entry = readSpecEntry(name);
+  if (opts.json) {
+    console.log(JSON.stringify(entry, null, 2));
+    return;
+  }
+  console.log(`\n  Spec: ${entry.name}`);
+  console.log(`  Phase:    ${entry.phase ?? '-'}`);
+  console.log(`  Title:    ${entry.title ?? '-'}`);
+  if (entry.taskProgress) {
+    console.log(`  Tasks:    ${entry.taskProgress.done}/${entry.taskProgress.total} complete`);
+  }
+  console.log(`  Questions (open): ${entry.openQuestions}`);
+  console.log(`  Files:    ${entry.files.join(', ')}`);
+  console.log('');
+}
+
+export function specSetPhase(name, phase) {
+  if (!VALID_PHASES.includes(phase)) {
+    console.error(`  ❌ Invalid phase: "${phase}"`);
+    console.error(`  Valid values: ${VALID_PHASES.join(' | ')}`);
+    process.exit(1);
+  }
+  const dir = path.join(CHANGES_DIR, name);
+  const configPath = path.join(dir, 'spec-config.yaml');
+  if (!fs.existsSync(configPath)) {
+    console.error(`  ❌ spec-config.yaml not found in .modscape/changes/${name}/`);
+    process.exit(1);
+  }
+  const config = yaml.load(fs.readFileSync(configPath, 'utf8')) ?? {};
+  config.phase = phase;
+  fs.writeFileSync(configPath, yaml.dump(config, { lineWidth: -1 }), 'utf8');
+  console.log(`  ✅ ${name}: phase → ${phase}`);
 }
 
 export function specNew(name) {

@@ -58,3 +58,34 @@ AIスキル `/modscape:spec:answer <name> <id>` は、指定した Q-NNN の質�
 #### Scenario: changes フォルダが存在しない場合はエラーを表示する
 - **WHEN** 存在しない `<name>` または Q-NNN で実行する
 - **THEN** AIは適切なエラーメッセージを表示する
+
+---
+
+## MODIFIED Requirements
+
+### Requirement: answer スキルが Next step をフェーズに基づいて案内する
+
+`answer` スキルは回答記録完了後（Step 7）に `modscape spec get <name> --json` を実行してフェーズを取得し、現在のフェーズに応じた正しい Next step を案内しなければならない（SHALL）。
+
+| フェーズ | Next step の案内 |
+|---|---|
+| `requirements` | `/modscape:spec:design <name>` を実行してください |
+| `design` | `/modscape:spec:design <name>` を実行して設計を続けてください |
+| `tasks` | `/modscape:spec:implement <name>` を実行してください |
+| `implement` | `/modscape:spec:implement <name>` を実行して実装を続けてください |
+| `done` | `/modscape:spec:archive <name>` 済みです |
+| `null`（フォールバック） | `/modscape:spec:status <name>` で現在の状態を確認してください |
+
+`phase` が `null` の場合（`spec-config.yaml` に `phase` フィールドがない既存 spec）は、`modscape spec get` の `taskProgress` と `files` をもとに従来のフォールバック判定を行わなければならない（SHALL）。
+
+#### Scenario: design フェーズ中に answer を実行すると Next step が design 継続になる
+- **WHEN** `spec-config.yaml` の `phase` が `design` の spec で answer を実行し、回答を記録する
+- **THEN** 「次は `/modscape:spec:design <name>` を実行して設計を続けてください」と案内する
+
+#### Scenario: tasks フェーズ中に answer を実行すると Next step が implement になる
+- **WHEN** `spec-config.yaml` の `phase` が `tasks` の spec で answer を実行し、回答を記録する
+- **THEN** 「次は `/modscape:spec:implement <name>` を実行してください」と案内する
+
+#### Scenario: phase が null の場合はフォールバック判定を行う
+- **WHEN** `spec-config.yaml` に `phase` フィールドがない既存 spec で answer を実行する
+- **THEN** `modscape spec get` の `taskProgress` と `files` を使って従来の判定ロジックで Next step を案内する
