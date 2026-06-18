@@ -29,25 +29,21 @@ Generate an implementation task list from `spec-model.yaml` and write it to `.mo
 2. Read `.modscape/changes/<name>/spec-model.yaml` (default path) or the path provided by the user.
 
 3. **Build the Context Only skip list** from `design.md`:
-   - If `.modscape/changes/<name>/design.md` exists: read it and extract all table IDs listed under `### Downstream Impact — Context Only` into a skip list.
-   - If `design.md` does not exist or has no such section: the skip list is empty — all tables are treated as implementation targets.
+   - If `.modscape/changes/<name>/design.md` exists: read the Affected Tables section and extract all table IDs with "Downstream — Context Only" in the Impact column into a skip list.
+   - If `design.md` does not exist or has no such entries: the skip list is empty — all tables are treated as implementation targets.
 
 4. Check that `lineage` is defined.
    - If `lineage` is missing or empty: stop and tell the user:
      > No `lineage` entries found in `spec-model.yaml`. Run `@modscape-spec-design` to add lineage before generating tasks.
 
-5. Build a dependency graph from `lineage` entries (`from` → `to`), then topologically sort all tables.
+5. Build a dependency graph from `lineage` entries (`from` → `to`).
+   - Only include nodes that exist in `tables`. Exclude `consumers` and any node not in `tables`.
 
-6. Assign each table to a phase based on its depth in the dependency graph. **Skip any table in the Context Only skip list** — do not assign it to any phase:
-   - **Phase 1 — Staging**: tables with no upstream dependencies (leaf sources)
-   - **Phase 2 — Core**: tables that depend only on Phase 1 tables (facts, dimensions, hubs, links, satellites)
-   - **Phase 3 — Mart**: tables furthest downstream (mart type, or aggregated outputs)
-   - **Phase 4 — Tests**: one test task per table (not in skip list) that has a primary key column or foreign key column
+6. Group tables into phases based on their position in the dependency graph (upstream tables first). Name each phase in a way that clearly describes the role of tables it contains — choose names that match the spec's context (e.g., "Staging", "Core", "Mart", "Reference Data", "Intermediate"). If `.modscape/modscape-spec.custom.md` specifies phase names or structure, follow those instructions instead.
+   - **Skip any table in the Context Only skip list** — do not assign it to any phase.
 
-   For each task, include:
+   For each task, include only:
    - Table ID in backticks
-   - Materialization type in brackets (from `physical.strategy` or inferred from `conceptual.kind`)
-   - Upstream dependencies with `←` notation (omit for Phase 1)
 
 7. **Write `.modscape/changes/<name>/tasks.md`** — behavior depends on the current state of the file:
 

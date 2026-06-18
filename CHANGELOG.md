@@ -2,9 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.7.1] - 2026-06-17
+## [3.8.0] - 2026-06-18
 
 ### Changed
+
+- **`tasks` skill — tasks.md フォーマットを簡略化** — `[table]` / `[incremental]` 等の materialization 表記と `← upstream` 記法を tasks.md から削除した。Phase名は AI がテーブルの役割を読み取って自然な名前を付けるように変更（旧: "Staging/Core/Mart" ハードコード）。`consumers` ノードがフェーズに混入しないよう除外指示を追加。Phase 4: Tests セクションの強制生成を廃止（任意追記に変更）。Claude・Codex・Gemini の 3 プラットフォームに適用。
 
 - **`design` skill — all affected table stubs generated on first run** — On the first invocation of `/modscape:spec:design`, the skill now creates stub `design/<table-id>.md` files for **all** Direct Impact and Downstream — Implement tables at once (previously only the first table's file was created). Each stub is pre-filled with `## Table Overview` (type/kind) and a `## Columns` table sourced from `spec-model.yaml`, with implementation details marked TBD. A `> ⏳ Pending design` banner indicates the file is not yet detailed. The first table is still fully designed in the same invocation.
 

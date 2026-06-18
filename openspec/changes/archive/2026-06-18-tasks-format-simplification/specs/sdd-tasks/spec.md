@@ -43,20 +43,6 @@ AIスキル `/modscape:spec:tasks <name>` は `spec-model.yaml` の `domains` �
 - **WHEN** lineage に `consumers` のノードが含まれている spec-model.yaml でタスクを生成する
 - **THEN** consumers ノードは tasks.md のいずれのフェーズにも出力されない
 
-### Requirement: tasks.md 生成完了時に phase を tasks に更新する
-
-`tasks` スキルは `tasks.md` を新規生成または更新完了した時点で `modscape spec set-phase <name> tasks` を実行し、`spec-config.yaml` のフェーズを `tasks` に更新しなければならない（SHALL）。
-
-#### Scenario: tasks.md 生成完了時に phase が tasks に設定される
-
-- **WHEN** `/modscape:spec:tasks <name>` が `tasks.md` を生成・更新して完了する
-- **THEN** `modscape spec set-phase <name> tasks` が実行され、`spec-config.yaml` の `phase` が `tasks` に更新される
-
-#### Scenario: tasks.md をマージ確認後に生成した場合も phase を tasks に設定する
-
-- **WHEN** `tasks.md` の既存タスクとのマージをユーザーが承認した後に `tasks.md` の生成が完了する
-- **THEN** `modscape spec set-phase <name> tasks` が実行される
-
 ## REMOVED Requirements
 
 ### Requirement: タスク行に materialization 種別を含める
