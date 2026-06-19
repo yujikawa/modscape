@@ -611,7 +611,7 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
     ```
     スキルとカスタマイズテンプレートがインストールされ、`.modscape/changes/` と `.modscape/specs/` ディレクトリが作成されます。
 
-2.  **要件定義** — `/modscape:spec:requirements` を実行してパイプラインの仕様を対話的に定義します:
+2.  **要件定義** — `/modscape:spec:requirements` を実行してパイプラインの仕様を対話的に定義します（軽微な変更は `/modscape:spec:requirements-lite` も利用可能 — 後述）:
     - AIが `modscape spec new <name>` で作業フォルダを scaffold（`spec-config.yaml`・`spec-model.yaml`・`design.md`・`tasks.md`・`questions.md` を生成）
     - ゴール、ステークホルダー、データソース、受け入れ条件、ターゲットツールを収集
     - **受け入れ条件には連番 ID（`AC-001`, `AC-002`, ...）が自動付与されます**（トレーサビリティ確保）
@@ -621,21 +621,23 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
     - 未解決の調査事項は `questions.md` に `Q-NNN` エントリとして記録
     - `.modscape/changes/<name>/spec.md` に出力
 
-3.  **モデル設計** — `/modscape:spec:design <name>` を実行します:
+3.  **モデル設計** — `/modscape:spec:design <name>` を実行します（1回につき1テーブル）:
     - `spec.md` をもとに関連テーブルを自動特定し、`modscape extract` でmain-model.yamlから `changes/<name>/spec-model.yaml` を生成
-    - `specs/<table-id>/questions.md` から Direct Impact テーブルに関連する未解決 `Q-NNN` を `design.md` に参照挿入
+    - 初回実行時に全影響テーブルのスタブ `design/<table-id>.md` を一括生成し、最初の Direct Impact テーブルを詳細設計
+    - 再実行するたびに次の未設計テーブルを処理；`design.md` の `## Design Progress` でテーブルごとの状態（`⏳ Pending` / `✅ Designed`）を管理
     - `modscape spec search` で過去アーカイブを検索し、関連する過去 SDD を `design.md` に記録
-    - どのテーブルが `main-model.yaml` に属するかを `spec-config.yaml` に記録
-    - 新規テーブルを `changes/<name>/spec-model.yaml` に追加設計（`main-model.yaml` は触らない）
-    - `design.md`（設計判断）と `tasks.md`（実装チェックリスト）を生成
-    - **Phase 4 テストタスクに `[→ AC-NNN]` アノテーションを付与**し、手動検証が必要な AC には `[手動検証]` フラグを付ける
-    - **再実行可能**: 気づきを `design.md` の `### Requires Model Change` に追記し、再実行でmodelとtasksを更新
-    - **暗黙知の能動的検出**: モデルレベルの兆候（ステータス/フラグカラムの値未文書化・クロスシステムJOINキーの同一性・想定されたGrain・日付の語義）を検出し、PII-safe な調査クエリ付きで `questions.md` に自動記録
-    - 設計完了後に **Review Checkpoint**（未解決質問・仮定・ACカバレッジ）を出力
+    - **再実行可能**: 気づきを `design.md` の `### Requires Model Change` に追記し、再実行でモデル変更をインラインで適用
+    - **暗黙知の能動的検出**: モデルレベルの兆候を検出し、PII-safe な調査クエリ付きで `questions.md` に自動記録
+    - 出力: `design.md`、各テーブルの `design/<table-id>.md`
 
-4.  **実装** — `/modscape:spec:implement <name>` を実行してタスクを順に処理し、dbt / SQLMesh のコードを生成してチェックを更新します。コード生成中に発見した分析者誤解リスク（予期しない行数・不明なステータスコード・混在するID形式など）も `ai-detected` 質問として調査クエリ付きで自動記録
+4.  **タスク生成** — `/modscape:spec:tasks <name>` を実行します:
+    - `spec-model.yaml` のリネージ情報から依存グラフを構築
+    - テーブルを依存順に名前付きフェーズへグループ化し `tasks.md` を生成
+    - 出力: `.modscape/changes/<name>/tasks.md`
 
-5.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
+5.  **実装** — `/modscape:spec:implement <name>` を実行してタスクを1件ずつ処理し、dbt / SQLMesh のコードを生成してチェックを更新します。コード生成中に発見した分析者誤解リスクも `ai-detected` 質問として調査クエリ付きで自動記録。実装中に発覚した問題（カラム名の誤り・JOINキーの相違など）はセッションを離れずにインラインで修正できます
+
+6.  **アーカイブ** — `/modscape:spec:archive <name>` を実行して恒久テーブル仕様書を同期します:
     - **dry-run プレビューを先に表示**: 追加・更新（変更カラム）・変更なしのテーブルを ID 単位でサマリー表示し、確認後にマージを実行
     - `spec-config.yaml` を参照し、テーブルごとに対応するmain-model.yamlにマージ
     - 影響テーブルごとに `.modscape/specs/<model-slug>/<table-id>.md` を生成・更新（Overview・Business Context・Business Rules・Known Issues・Usage Guide・Changelog）
@@ -690,47 +692,68 @@ SDD はパスAの上に構造化されたワークフローを追加し、ビジ
 アーカイブが進むと、Markdown の spec が `.modscape/specs/<model-slug>/` に蓄積されます。以下のコマンドで閲覧できます。
 
 ```bash
-# アクティブな spec フォルダの一覧を表示（名前・タイトル・進捗・ドキュメント状況）
+# アクティブなスペックフォルダの一覧をフェーズ・進捗付きで表示
 modscape spec list
 modscape spec list --json
 
-# 作業中の変更を SDD ビューアで表示 (dev サーバー)
+# スペックの現在状態を取得（フェーズ・タスク進捗・未解決質問数・ファイル一覧）
+modscape spec get <name>
+modscape spec get <name> --json
+
+# スペックのフェーズを設定（requirements | design | tasks | implement | done）
+modscape spec set-phase <name> <phase>
+
+# 変更中のスペックのインタラクティブビューアを起動（dev サーバー）
 modscape spec dev <name>
 
-# .modscape/specs/ 内の永久 spec をブラウザで閲覧 (ポート 5174 でライブリロード)
+# .modscape/specs/ 内の恒久スペックをすべてブラウズ（ポート5174でライブリロード dev サーバー）
 modscape spec open
 
-# 静的 spec ブラウザをビルド (デフォルト: dist/specs/)
+# 静的スペックブラウザをビルド（サーバー不要・デフォルトは dist/specs/）
 modscape spec build
 modscape spec build ./public/specs
+
+# 指定エンティティIDの知識ベースコンテキストを取得
+modscape spec context --ids <id1>,<id2>,...
+modscape spec context --ids <id1>,<id2>,... --json
 ```
 
-- `spec dev <name>` — `.modscape/changes/<name>/` の SDD ビューアを起動します（旧 `modscape dev --spec` フラグ相当）。
-- `spec open` — `.modscape/specs/` 専用のブラウザを起動します。左ペインにモデルスラグ別テーブル一覧、右ペインに `.md` spec をスタイル付きHTMLとして表示します。
-- `spec build` — `dist/specs/index.html` と全 spec ファイルを静的生成します。サーバー不要で単独動作します。
+- `spec list` — `.modscape/changes/` 配下のアクティブスペックをフェーズ・タスク進捗付きで一覧表示（例: `• monthly-sales  [design]  [3/8 tasks]`）。
+- `spec get <name>` — スペックの現在フェーズ・タスク進捗・未解決質問数・ファイル一覧をJSONで返す。
+- `spec set-phase <name> <phase>` — `spec-config.yaml` の `phase` フィールドを書き込む。各SDDスキルがセッション終了時に自動的に呼び出すが、手動で上書きすることも可能。
+- `spec dev <name>` — `.modscape/changes/<name>/` 用の SDD ビューアを起動。旧 `modscape dev --spec` フラグと同等。
+- `spec open` — `.modscape/specs/` 専用ブラウザを起動。左ペインがモデルスラッグのグループ表示、右ペインが `.md` spec の HTML レンダリング。
+- `spec build` — `dist/specs/index.html` を生成しすべてのスペックをコピー。サーバー不要で動作。
+- `spec context` — 指定エンティティIDに関連する `_context.yaml`・`_glossary.yaml`・`_questions.yaml` のエントリを1回のコールで取得。`implement` スキルや `codegen` スキルが必要なコンテキストだけを読み込む際に使用。
 
 ### SDDワークフロー
 
 ```
-requirements → design → implement → archive
-                 ↑↓          ↑
-             (再実行)    (amend)
-         → check（任意）↗
+requirements ──┐
+               ├──→ design (×N) → tasks → implement (×N) → archive
+requirements-lite ──┘   ↑↓                   ↑
+                    (再実行)           (インライン修正)
+               → check（任意）↗
 ```
+
+`requirements-lite` は requirements → design → tasks を1回で完結させます。カラム追加・テーブルリネーム・型変更など、フルインタビューが過剰になる軽微な変更に使用してください。実行後はそのまま `implement` に進めます。
 
 | スキル | コマンド | やること | 主な出力 |
 |--------|---------|---------|---------|
 | 一括生成 | `/modscape:spec:generate [files...]` | 既存の model.yaml・SQL・Python ファイルから恒久 spec を一括生成 — 既存 PJ の SDD 導入時に使用 | `<model-slug>/<id>.md` |
 | 要件定義 | `/modscape:spec:requirements` | ゴール・AC・Q&Aを対話的に収集；ビジネスコンテキスト（発生条件・プロセスフロー・ドメインルール）を能動的にヒアリング；暗黙知の兆候を調査クエリ付きで自動記録 | `spec.md` |
-| 設計 | `/modscape:spec:design <name>` | 影響テーブルの特定、モデル・タスクリスト生成；分析誤解リスクを PII-safe 調査クエリ付きで自動記録 | `design.md`, `tasks.md` |
-| 実装 | `/modscape:spec:implement <name>` | タスクを順に処理・コード生成；実装中に検出した分析誤解リスクを自動記録 | `tasks.md`（更新） |
-| アーカイブ | `/modscape:spec:archive <name>` | 本番マージ・spec永続化 | `<model-slug>/<id>.md`, `_questions.yaml`, `_glossary.yaml`, `_context.yaml` |
-| チェック | `/modscape:spec:check <name>` | 実装前の品質チェック：整合性 + go/no-go 判断（任意） | — |
-| 修正 | `/modscape:spec:amend <name>` | 実装中の問題を成果物に反映（任意） | — |
+| 要件定義（ライト） | `/modscape:spec:requirements-lite` | 軽微なスキーマ変更向けの軽量エントリポイント（カラム追加・テーブルリネーム・型変更など）。requirements → design → tasks を1回で完結。フル SDD と同一のフォルダ・ファイル構成を生成するが中身は簡素。実行後すぐに `implement` へ進める。 | `spec.md`, `design.md`, `design/<id>.md`, `tasks.md` |
+| 設計 | `/modscape:spec:design <name>` | 1回につき1テーブル：影響テーブルの特定・全スタブの初回一括生成・テーブルを順次詳細設計；Design Progress でステータス管理；分析誤解リスクを PII-safe 調査クエリ付きで自動記録 | `design.md`, `design/<id>.md` |
+| タスク生成 | `/modscape:spec:tasks <name>` | `spec-model.yaml` のリネージから依存グラフを構築し、テーブルを名前付きフェーズにグループ化して `tasks.md` を生成 | `tasks.md` |
+| 実装 | `/modscape:spec:implement <name>` | 1回につき1タスク：コード生成・チェックボックス更新；実装中の問題はセッションを離れずインライン修正；分析誤解リスクを自動記録 | `tasks.md`（更新） |
+| アーカイブ | `/modscape:spec:archive <name>` | dry-run プレビュー後に本番マージ・spec永続化・作業フォルダをアーカイブへ移動 | `<model-slug>/<id>.md`, `_questions.yaml`, `_glossary.yaml`, `_context.yaml` |
+| チェック | `/modscape:spec:check <name>` | SSOT 駆動の整合性チェック（spec-model.yaml を真とする）+ go/no-go 判断：未解決質問・仮定・ACカバレッジ（任意） | — |
+| 調査 | `/modscape:spec:investigate <name>` | ユーザー起点の静的調査：リポジトリファイルを読み込み、結果を `design.md → ## Findings` に記録（任意） | — |
 | 検索 | `/modscape:spec:search <keyword>` | 過去アーカイブを横断検索（任意） | — |
-| 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答・設計影響を評価；`investigation.result` が記入済みの場合はクエリ結果を解釈して `finding` を記入（任意） | — |
-| メモ | `/modscape:spec:note [table-id]` | 会話・Slack・会議で得た知識をテーブル名だけで恒久 spec に追記（パスの知識不要）。入力内容に応じてセクションを自動判定（Business Rules・Known Issues・Usage Guide など）。アクティブなワークフロー不要（任意） | — |
-| セッション保存 | `/modscape:spec:save <name>` | 現在のセッション状態（決定事項・未解決事項・次のアクション）を `session.md` に保存して後で再開できるようにする（任意） | `session.md` |
+| 回答 | `/modscape:spec:answer <name> <id>` | Q-NNN に回答；`investigation.result` が記入済みの場合はクエリ結果を解釈して `finding` を記入（任意） | — |
+| メモ | `/modscape:spec:note [table-id]` | 会話・Slack・会議で得た知識をテーブル名だけで恒久 spec に追記（パスの知識不要）。セクションを自動判定（任意） | — |
+| ステータス | `/modscape:spec:status <name>` | 現在のフェーズ・タスク進捗・次のコマンドを確認。`detail` で引き継ぎ用の詳細表示（任意） | — |
+| セッション保存 | `/modscape:spec:save <name>` | 現在のセッション状態（決定事項・未解決事項・次のアクション）を `session.md` に保存（任意） | `session.md` |
 
 **例: 月次売上サマリーパイプラインを設計する場合**
 

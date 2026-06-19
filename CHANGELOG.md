@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.9.0] - 2026-06-19
+
+### Added
+
+- **`requirements-lite` skill — lightweight SDD entry point for minor schema changes** — New skill `/modscape:spec:requirements-lite` compresses the `requirements → design → tasks` workflow into a single invocation. Intended for small, well-understood changes such as adding a column, renaming a table, or changing a type — cases where the full requirements interview (stakeholders, acceptance criteria, business context elicitation) would be disproportionate overhead. The user decides which mode to use; the skill does not auto-detect complexity. It produces the same folder structure and file set as full SDD (`spec.md`, `design.md`, `design/<id>.md`, `tasks.md`, `spec-model.yaml`, `spec-config.yaml`), with thinner content in each: `spec.md` contains only a `## Background` section (no AC, no stakeholders), `design.md` records only the mutations applied and the Affected Tables list (no downstream analysis), `design/<id>.md` contains the column list with change annotations (no deep implementation details), and `tasks.md` has a single `Phase 1: Changes` phase. After the skill completes, `/modscape:spec:implement` and `/modscape:spec:archive` run unchanged. Applied to Claude, Gemini, and Codex platforms.
+
 ## [3.8.0] - 2026-06-18
 
 ### Changed

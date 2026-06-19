@@ -187,7 +187,7 @@ Skill file locations:
 - **Codex** — `src/templates/codex/modscape-spec-*/SKILL.md`
 
 Current SDD skills (all three platforms must stay in sync):
-`generate`, `requirements`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `search`, `answer`, `check`, `note`, `save`, `load`, `help`
+`generate`, `requirements`, `requirements-lite`, `design`, `tasks`, `implement`, `archive`, `status`, `amend`, `search`, `answer`, `check`, `note`, `save`, `load`, `help`
 
 **When adding a new SDD skill:**
 1. Add template files for all three agents (Claude / Gemini / Codex).
