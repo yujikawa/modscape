@@ -5,7 +5,7 @@ import { MODEL_FORMAT_VERSION } from './model-format-version.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const SPEC_SKILL_NAMES = ['generate', 'requirements', 'requirements-lite', 'design', 'tasks', 'implement', 'archive', 'status', 'search', 'answer', 'check', 'note', 'investigate', 'help'];
+export const SPEC_SKILL_NAMES = ['generate', 'requirements', 'requirements-lite', 'explore', 'design', 'tasks', 'implement', 'archive', 'status', 'search', 'answer', 'check', 'note', 'investigate', 'help'];
 
 function tpl(...parts) {
   return fs.readFileSync(path.join(__dirname, 'templates', ...parts), 'utf8');
