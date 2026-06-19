@@ -1,9 +1,11 @@
 import path from 'path';
 import { readYaml, writeYaml, findTableById, resolveImports } from '../model-utils.js';
 
-export function listLineages(filePath) {
+export function listLineages(filePath, { involves } = {}) {
   const data = readYaml(filePath);
-  return data.lineage || [];
+  const entries = data.lineage || [];
+  if (involves) return entries.filter(e => e.from === involves || e.to === involves);
+  return entries;
 }
 
 export function listDownstreamLineages(entries, fromId, { recursive = false, depth = Infinity } = {}) {

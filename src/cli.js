@@ -305,10 +305,11 @@ export function lineageCommand() {
     .option('--from <tableId>', 'filter by upstream table ID')
     .option('--recursive', 'recursively collect all downstream entries (requires --from)')
     .option('--depth <n>', 'maximum recursion depth (requires --recursive)', (v) => parseInt(v, 10))
+    .option('--involves <tableId>', 'filter entries where from or to matches this table ID')
     .option('--json', 'output as JSON')
     .action((file, opts) => {
       run(opts.json, () => {
-        const all = listLineages(file);
+        const all = listLineages(file, { involves: opts.involves });
         let entries;
         if (opts.from) {
           entries = listDownstreamLineages(all, opts.from, {

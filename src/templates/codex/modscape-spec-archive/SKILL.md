@@ -79,6 +79,8 @@ modscape summary <file> --json
    - **Tables to update**: IDs in both; list key field changes
    - **Tables to remove**: IDs listed in `spec-config.yaml → tables_to_remove` (omit row if empty)
    - **No changes**: Context Only tables
+   - **Lineage to replace**: count lineage entries in the main YAML where both `from` and `to` are owned tables in `spec-model.yaml` (isImported !== true) — these will be deleted and replaced by spec-model's lineage (omit row if 0)
+   - **Lineage to remove**: explicit deletions from `spec-config.yaml → lineage_to_remove` (omit row if empty)
 
    Wait for user confirmation (y/N). If declined: stop with "Archive cancelled."
 
@@ -87,12 +89,12 @@ modscape summary <file> --json
 5. For each main YAML listed in `spec-config.yaml`, extract only the tables assigned to it and merge:
    ```bash
    modscape extract .modscape/changes/<name>/spec-model.yaml --tables <ids-for-this-yaml> --output /tmp/spec-slice.yaml
-   modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch
+   modscape merge <master>.yaml /tmp/spec-slice.yaml --output <master>.yaml --patch --replace-owned-lineage
    ```
 
    If `spec-config.yaml` has only one main YAML, merge the entire work YAML directly:
    ```bash
-   modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch
+   modscape merge <master>.yaml .modscape/changes/<name>/spec-model.yaml --output <master>.yaml --patch --replace-owned-lineage
    ```
 
 6. Check the merge output for duplicate table ID warnings and report them.
@@ -110,9 +112,22 @@ modscape summary <file> --json
    - If `y` or threshold met: continue to Step 3
    - If no Coverage Policy: skip this step entirely
 
-### Step 2.5: Remove tables from main YAML
+### Step 2.5: Remove lineage and tables from main YAML
 
-Read `tables_to_remove` from `spec-config.yaml`. If the list is empty or absent, skip this step entirely.
+#### 2.5a: Explicit lineage removal (`lineage_to_remove`)
+
+Read `lineage_to_remove` from `spec-config.yaml`. If the list is empty or absent, skip this sub-step entirely.
+
+For each ID in `lineage_to_remove`, run:
+```bash
+modscape lineage remove <master>.yaml --id <lineage_id>
+```
+If the ID does not exist, display a warning and continue (do not abort):
+> ⚠ lineage_to_remove: `<lineage_id>` not found in `<master>.yaml` — skipped.
+
+#### 2.5b: Remove tables and their lineage (`tables_to_remove`)
+
+Read `tables_to_remove` from `spec-config.yaml`. If the list is empty or absent, skip this sub-step entirely.
 
 If entries exist, display:
 
@@ -124,8 +139,12 @@ The following tables will be permanently removed from <master>.yaml:
 Proceed with deletion? (y/N)
 ```
 
-- If confirmed (y/yes): for each ID, run:
+- If confirmed (y/yes): for each ID, first remove all lineage involving that table, then remove the table:
   ```bash
+  LINEAGE_IDS=$(modscape lineage list <master>.yaml --involves <table_id> --json | jq -r '.[].id // empty')
+  for LID in $LINEAGE_IDS; do
+    modscape lineage remove <master>.yaml --id $LID
+  done
   modscape table remove <master>.yaml --id <table_id>
   ```
   Then validate:
