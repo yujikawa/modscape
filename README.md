@@ -623,7 +623,7 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    ```
    Installs skills and a customization template. Creates `.modscape/changes/` and `.modscape/specs/` directories.
 
-2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec:
+2. **Define requirements** — run `/modscape:spec:requirements` to interactively capture the pipeline spec (or `/modscape:spec:requirements-lite` for minor changes — see below):
    - AI scaffolds the work folder: `modscape spec new <name>` (creates `spec-config.yaml`, `spec-model.yaml`, `design.md`, `tasks.md`, `questions.md`)
    - Collects goal, stakeholders, data sources, acceptance criteria, and target tool
    - **Acceptance Criteria are automatically assigned sequential IDs** (`AC-001`, `AC-002`, ...) for traceability
@@ -633,21 +633,25 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
    - Unresolved items are recorded as `Q-NNN` entries in `questions.md`
    - Output: `.modscape/changes/<name>/spec.md`
 
-3. **Design the model** — run `/modscape:spec:design <name>`:
+3. **Design the model** — run `/modscape:spec:design <name>` (one table per invocation):
    - Reads `spec.md` and existing `specs/<table-id>/spec.md` to auto-identify affected tables
    - Surfaces unresolved `Q-NNN` questions from `specs/<table-id>/questions.md` related to Direct Impact tables
    - Searches past archives for related designs via `modscape spec search`
    - Runs `modscape extract` to pull relevant tables from main-model.yaml into `changes/<name>/spec-model.yaml`
-   - Records which tables belong to `main-model.yaml` in `spec-config.yaml`
-   - Generates `design.md` (design decisions) and `tasks.md` (implementation checklist)
-   - **Phase 4 test tasks include `[→ AC-NNN]` annotations** linking each test to its acceptance criterion; ACs that require manual verification are flagged as `[手動検証]`
-   - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to update model and tasks
+   - On first run, generates stub `design/<table-id>.md` files for all affected tables at once, then designs the first Direct Impact table in detail
+   - Re-run to design each subsequent table; `## Design Progress` in `design.md` tracks per-table status (`⏳ Pending` / `✅ Designed`)
+   - **Re-runnable**: add findings under `### Requires Model Change` in `design.md`, re-run to apply model mutations inline
    - **Proactive Tacit Knowledge Detection**: flags model-level signals (undocumented status/flag columns, cross-system JOIN key equivalence, assumed grain, date semantics) and auto-writes `ai-detected` questions with PII-safe investigation queries to `questions.md`
-   - Outputs a **Review Checkpoint** summary (open questions, assumptions, AC coverage) at the end
+   - Output: `design.md`, `design/<table-id>.md` (one file per affected table)
 
-4. **Implement** — run `/modscape:spec:implement <name>` to work through tasks one by one, generating dbt / SQLMesh code and updating checkboxes; also flags analyst-misleading signals discovered during code generation (unexpected row counts, unknown status codes, mixed-format IDs) as `ai-detected` questions with investigation queries
+4. **Generate task list** — run `/modscape:spec:tasks <name>`:
+   - Reads `spec-model.yaml` and builds a dependency graph from lineage entries
+   - Groups tables into named phases (upstream first) and writes `tasks.md`
+   - Output: `.modscape/changes/<name>/tasks.md`
 
-5. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
+5. **Implement** — run `/modscape:spec:implement <name>` (one task per invocation) to generate dbt / SQLMesh code and update checkboxes; flags analyst-misleading signals discovered during code generation (unexpected row counts, unknown status codes, mixed-format IDs) as `ai-detected` questions with investigation queries; inline spec fixes (wrong column name, broken JOIN key, etc.) are handled without leaving the implement session
+
+6. **Archive** — run `/modscape:spec:archive <name>` to sync permanent table specs:
    - **Dry-run preview first**: displays tables to add / update (with changed fields) / unchanged, and asks for confirmation before merging
    - Merges `changes/<name>/spec-model.yaml` into the correct main-model.yaml per `spec-config.yaml`
    - Generates / updates `.modscape/specs/<model-slug>/<table-id>.md` for each affected table (Overview, Business Context, Business Rules, Known Issues, Usage Guide, Changelog)
@@ -685,11 +689,13 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 
 > **Tip**: Run `/modscape:spec:status <name>` at any time to check the current phase, task progress, and the next recommended command. Add `detail` for a narrative view suitable for handoff: `/modscape:spec:status <name> detail`.
 
-> **Save your session**: Run `/modscape:spec:save <name>` before ending a work session during requirements, design, or amend. The saved state (decisions made, open questions, next action) is shown the next time you run `/modscape:spec:status <name>`.
+> **Save your session**: Run `/modscape:spec:save <name>` before ending a work session. The saved state (decisions made, open questions, next action) is shown the next time you run `/modscape:spec:status <name>`.
 
-> **Pre-implement quality check**: Run `/modscape:spec:check <name>` before implementing. Part 1 checks cross-artifact consistency (spec ↔ design ↔ model ↔ tasks); Part 2 evaluates go/no-go readiness — open questions, assumptions, AC coverage, and low-confidence downstream classifications. Does not block implementation.
+> **Pre-implement quality check**: Run `/modscape:spec:check <name>` before implementing. Validates cross-artifact consistency (spec-model.yaml as the source of truth) and evaluates go/no-go readiness — open questions, assumptions, and AC coverage. Does not block implementation.
 
-> **Fix issues mid-implementation**: Run `/modscape:spec:amend <name>` whenever you discover a problem (wrong column name, broken JOIN key, unexpected NULL, etc.). Paste the error or describe the issue in free text — the AI updates `spec.md`, `design.md`, `tasks.md`, and/or `questions.md` as needed. Completed tasks are always preserved.
+> **Fix issues mid-implementation**: Stay in the `/modscape:spec:implement <name>` session and describe the problem. The inline fix flow updates `design.md` → `spec-model.yaml` → `tasks.md` in one pass without leaving the session. Completed tasks are always preserved.
+
+> **Investigate a topic**: Run `/modscape:spec:investigate <name>` to perform a static analysis of repo files (SQL, dbt models, spec artifacts). Findings are recorded in `design.md → ## Findings` and can trigger the inline fix flow in `/modscape:spec:implement`.
 
 > **Search past work**: Run `/modscape:spec:search <keyword>` (or `modscape spec search <keyword>`) to search past archives and permanent specs for similar designs and patterns. Use `--limit <n>` to control result count (default: 5). Add `--json` for machine-readable output.
 
@@ -702,9 +708,16 @@ SDD adds a structured workflow on top of Path A, guiding you from business requi
 After archiving changes, Markdown specs accumulate in `.modscape/specs/<model-slug>/`. Use these commands to browse them:
 
 ```bash
-# List all active spec folders with status (name, title, progress, docs)
+# List all active spec folders with status (name, phase, task progress)
 modscape spec list
 modscape spec list --json
+
+# Get current status of a spec as JSON (phase, task progress, open questions, files)
+modscape spec get <name>
+modscape spec get <name> --json
+
+# Advance the phase of a spec (requirements | design | tasks | implement | done)
+modscape spec set-phase <name> <phase>
 
 # Start an interactive spec viewer for a change in progress (dev server)
 modscape spec dev <name>
@@ -715,33 +728,47 @@ modscape spec open
 # Build a static spec browser (no server required, defaults to dist/specs/)
 modscape spec build
 modscape spec build ./public/specs
+
+# Retrieve knowledge-base context for specific entity IDs
+modscape spec context --ids <id1>,<id2>,...
+modscape spec context --ids <id1>,<id2>,... --json
 ```
 
+- `spec list` — lists active specs under `.modscape/changes/` with phase and task progress (e.g. `• monthly-sales  [design]  [3/8 tasks]`).
+- `spec get <name>` — returns the current phase, task progress, open question count, and file inventory for a spec as JSON.
+- `spec set-phase <name> <phase>` — writes the `phase` field to `spec-config.yaml`. Each SDD skill calls this at the end of its session; human override is also supported.
 - `spec dev <name>` — launches the SDD viewer for `.modscape/changes/<name>/`, equivalent to the former `modscape dev --spec` flag.
 - `spec open` — starts a dedicated browser for `.modscape/specs/`. Left pane shows model-slug groups; right pane renders `.md` specs as styled HTML.
 - `spec build` — generates `dist/specs/index.html` and copies all spec files. Works without a server.
+- `spec context` — retrieves relevant entries from `_context.yaml`, `_glossary.yaml`, and `_questions.yaml` for the given entity IDs in a single call. Used by `implement` and `codegen` skills to load only needed context.
 
 ### SDD Workflow
 
 ```
-requirements → design → implement → archive
-                 ↑↓          ↑
-             (re-run)    (amend)
-         → check (optional) ↗
+requirements ──┐
+               ├──→ design (×N) → tasks → implement (×N) → archive
+requirements-lite ──┘   ↑↓                   ↑
+                    (re-run)           (inline fix)
+               → check (optional) ↗
 ```
+
+`requirements-lite` compresses requirements → design → tasks into a single invocation. Use it for small, well-understood changes (column add, table rename, type change) where the full interview workflow would be disproportionate. After running `requirements-lite`, proceed directly to `implement`.
 
 | Skill | Command | What it does | Main output |
 |-------|---------|-------------|-------------|
 | Generate | `/modscape:spec:generate [files...]` | Bootstrap permanent specs for all tables from existing model.yaml, SQL, or Python files | `<model-slug>/<id>.md` |
 | Requirements | `/modscape:spec:requirements` | Collect goal, stakeholders, ACs, Q&As interactively; elicit business context (data occurrence conditions, process flows, domain rules); auto-detect tacit knowledge gaps | `spec.md` |
-| Design | `/modscape:spec:design <name>` | Identify affected tables, generate model & task list; auto-detect analyst-misleading signals with PII-safe investigation queries | `design.md`, `tasks.md` |
-| Implement | `/modscape:spec:implement <name>` | Work through tasks, generate dbt / SQLMesh code; flag analyst-misleading signals found during code generation | `tasks.md` (updated) |
-| Archive | `/modscape:spec:archive <name>` | Merge to main model, persist permanent specs | `<model-slug>/<id>.md`, `_questions.yaml`, `_glossary.yaml`, `_context.yaml` |
-| Check | `/modscape:spec:check <name>` | Pre-implement quality check: consistency + go/no-go readiness (optional) | — |
-| Amend | `/modscape:spec:amend <name>` | Patch artifacts when issues are found mid-implementation (optional) | — |
+| Requirements Lite | `/modscape:spec:requirements-lite` | Lightweight entry point for minor schema changes (column add, table rename, type change): compresses requirements → design → tasks into a single invocation. Produces the same folder and file structure as full SDD with thinner content. Proceed to `implement` immediately after. | `spec.md`, `design.md`, `design/<id>.md`, `tasks.md` |
+| Design | `/modscape:spec:design <name>` | One table per invocation: identify affected tables, generate per-table `design/<id>.md` stubs on first run, then design each table in detail; track progress via `## Design Progress`; auto-detect analyst-misleading signals | `design.md`, `design/<id>.md` |
+| Tasks | `/modscape:spec:tasks <name>` | Build dependency graph from `spec-model.yaml` lineage, group tables into named phases, generate `tasks.md` | `tasks.md` |
+| Implement | `/modscape:spec:implement <name>` | One task per invocation: generate dbt / SQLMesh code, update checkboxes; inline spec fixes without leaving the session; flag analyst-misleading signals found during code generation | `tasks.md` (updated) |
+| Archive | `/modscape:spec:archive <name>` | Dry-run preview first; merge to main model; persist permanent specs; move work folder to archives | `<model-slug>/<id>.md`, `_questions.yaml`, `_glossary.yaml`, `_context.yaml` |
+| Check | `/modscape:spec:check <name>` | SSOT-driven consistency check (spec-model.yaml as default truth) + go/no-go readiness: open questions, assumptions, AC coverage (optional) | — |
+| Investigate | `/modscape:spec:investigate <name>` | User-initiated static investigation: reads repo files and records findings in `design.md → ## Findings` (optional) | — |
 | Search | `/modscape:spec:search <keyword>` | Search past archives for similar designs (optional) | — |
 | Answer | `/modscape:spec:answer <name> <id>` | Answer a Q-NNN question; when `investigation.result` is filled in, analyzes the query results and writes `finding` (optional) | — |
 | Note | `/modscape:spec:note [table-id]` | Append free-form knowledge (from a conversation, Slack, or meeting) to a permanent table spec — finds the file by table ID, no path knowledge needed. Maps input to the right section (Business Rules, Known Issues, Usage Guide, etc.). No active workflow required (optional) | — |
+| Status | `/modscape:spec:status <name>` | Show current phase, task progress, and next recommended command. Add `detail` for a narrative view suitable for handoff (optional) | — |
 | Save | `/modscape:spec:save <name>` | Save the current session state (decisions, open questions, next action) to `session.md` for later resumption (optional) | `session.md` |
 
 **Example: designing a monthly sales summary pipeline**

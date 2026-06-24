@@ -124,6 +124,7 @@ program
   .argument('<paths...>', 'YAML files or directories to merge')
   .option('-o, --output <path>', 'output file path', 'merged.yaml')
   .option('-p, --patch', 'Patch mode: preserve first file\'s table order, upsert subsequent files in-place')
+  .option('--replace-owned-lineage', 'Remove within-scope lineage (both ends in patch owned tables) from base before merging (requires --patch)')
   .action((paths, options) => {
     mergeModels(paths, options);
   });

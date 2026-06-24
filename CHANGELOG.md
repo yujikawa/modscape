@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.9.0] - 2026-06-19
+
+### Added
+
+- **Archive lineage replacement — stale lineage paths are now replaced during `spec:archive`** — `modscape merge --patch` gains a new `--replace-owned-lineage` flag. When set, the merge detects all "owned" tables in the patch YAML (`isImported !== true`) and, before applying the upsert, removes any lineage entry in the base model where both `from` and `to` are owned tables. Cross-boundary lineage (only one end is owned) is preserved. The `archive` skill now always passes this flag, so intermediate-table insertion and lineage rerouting cases are handled correctly without leaving stale paths behind. `modscape lineage list` gains a `--involves <tableId>` filter that returns entries where `from` or `to` matches the given ID. The `archive` skill uses this in the `tables_to_remove` step to clean up orphaned lineage before removing the table. `spec-config.yaml` also supports a new `lineage_to_remove` list for explicit deletion of lineage entries that fall outside the automatic scope. All three archive skill templates (Claude, Codex, Gemini) are updated. Covered by `tests/lineage-replace.test.mjs` (13 tests).
+
+- **`explore` skill — pre-requirements exploration mode for SDD** — New skill `/modscape:spec:explore` provides a conversational entry point for situations where the user does not yet know what to build. Unlike `requirements`, which assumes a known task and runs a structured interview, `explore` acts as a thinking partner: it reads the actual schema via modscape CLI (`table list`, `table get`, `lineage list`, `summary`) and follows the conversation wherever it goes — vague ideas, refactoring concerns, "is there a better way?" questions all work as starting points. When direction becomes clear, the skill recommends the appropriate handoff: `@modscape-spec-requirements-lite` for small targeted changes, or `@modscape-spec-requirements` for new pipelines and complex changes. The skill generates no files; its output is clarity. Applied to Claude, Gemini, and Codex platforms.
+
+- **`requirements-lite` skill — lightweight SDD entry point for minor schema changes** — New skill `/modscape:spec:requirements-lite` compresses the `requirements → design → tasks` workflow into a single invocation. Intended for small, well-understood changes such as adding a column, renaming a table, or changing a type — cases where the full requirements interview (stakeholders, acceptance criteria, business context elicitation) would be disproportionate overhead. The user decides which mode to use; the skill does not auto-detect complexity. It produces the same folder structure and file set as full SDD (`spec.md`, `design.md`, `design/<id>.md`, `tasks.md`, `spec-model.yaml`, `spec-config.yaml`), with thinner content in each: `spec.md` contains only a `## Background` section (no AC, no stakeholders), `design.md` records only the mutations applied and the Affected Tables list (no downstream analysis), `design/<id>.md` contains the column list with change annotations (no deep implementation details), and `tasks.md` has a single `Phase 1: Changes` phase. After the skill completes, `/modscape:spec:implement` and `/modscape:spec:archive` run unchanged. Applied to Claude, Gemini, and Codex platforms.
+
 ## [3.8.0] - 2026-06-18
 
 ### Changed

@@ -27,7 +27,7 @@ export function mergeModels(inputs, options) {
   }
 
   if (options.patch) {
-    return mergeModelsPatched(allFiles, outputPath);
+    return mergeModelsPatched(allFiles, outputPath, { replaceOwnedLineage: !!options.replaceOwnedLineage });
   }
 
   const mergedTables = [];
@@ -151,7 +151,7 @@ export function mergeModels(inputs, options) {
  * Patch mode: first file is the base. Subsequent files upsert into the base,
  * preserving the base file's array order (tables stay in place, no delete+add diffs).
  */
-function mergeModelsPatched(allFiles, outputPath) {
+function mergeModelsPatched(allFiles, outputPath, options = {}) {
   // Load base (first file)
   let base;
   try {
@@ -168,8 +168,8 @@ function mergeModelsPatched(allFiles, outputPath) {
   const relationships = [...(base.relationships || [])];
   const relIndex = new Map(relationships.map((r, i) => [r.id, i]).filter(([id]) => id));
 
-  const lineages = [...(base.lineage || [])];
-  const lineageIndex = new Map(lineages.map((l, i) => [l.id, i]).filter(([id]) => id));
+  let lineages = [...(base.lineage || [])];
+  let lineageIndex = new Map(lineages.map((l, i) => [l.id, i]).filter(([id]) => id));
 
   const annotations = [...(base.annotations || [])];
   const annotationIndex = new Map(annotations.map((a, i) => [a.id, i]).filter(([id]) => id));
@@ -183,6 +183,23 @@ function mergeModelsPatched(allFiles, outputPath) {
   const layout = { ...(base.layout || {}) };
 
   let version = base.version;
+
+  // Collect owned table IDs from all patch files before processing
+  if (options.replaceOwnedLineage) {
+    const ownedTableIds = new Set();
+    for (const filePath of allFiles.slice(1)) {
+      try {
+        const patch = yaml.load(fs.readFileSync(filePath, 'utf8')) || {};
+        for (const table of patch.tables || []) {
+          if (!table.isImported) ownedTableIds.add(table.id);
+        }
+      } catch (_) { /* handled below per-file */ }
+    }
+    // Remove within-scope lineage (both from and to are owned) from base
+    lineages = lineages.filter(l => !(ownedTableIds.has(l.from) && ownedTableIds.has(l.to)));
+    // Rebuild lineageIndex after deletion
+    lineageIndex = new Map(lineages.map((l, i) => [l.id, i]).filter(([id]) => id));
+  }
 
   for (const filePath of allFiles.slice(1)) {
     let patch;
