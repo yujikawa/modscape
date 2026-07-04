@@ -7,6 +7,7 @@ import { startDevServer } from './dev.js';
 import { build } from './build.js';
 import { initProject } from './init.js';
 import { exportModel } from './export.js';
+import { exportOsi } from './export-osi.js';
 import { createModel } from './create.js';
 import { importDbt } from './import-dbt.js';
 import { syncDbt } from './sync-dbt.js';
@@ -85,12 +86,19 @@ program
 
 program
   .command('export')
-  .description('Export YAML models to Mermaid-compatible Markdown documentation')
+  .description('Export YAML models to Markdown documentation or OSI format')
   .argument('<paths...>', 'paths to YAML model files or directories')
+  .option('-f, --format <format>', 'output format: "md" (default) or "osi"', 'md')
   .option('-o, --output <path>', 'output file or directory')
   .option('--with-context [specs-dir]', 'merge SDD context (decisions, Q&A, glossary, table specs); defaults to .modscape/specs; expects <MODEL_SLUG>/<table-id>.md layout')
   .action((paths, options) => {
-    exportModel(paths, options);
+    if (options.format === 'osi') {
+      for (const inputPath of paths) {
+        exportOsi(inputPath, options);
+      }
+    } else {
+      exportModel(paths, options);
+    }
   });
 
 const dbtCommand = program

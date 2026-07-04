@@ -1,0 +1,729 @@
+version: 0.2.0.dev0
+semantic_model:
+  - name: 1-retail-analytics
+    datasets:
+      - name: hub_customer
+        source: hub_customer
+        description: Customer Hub
+        primary_key:
+          - customer_hk
+        fields:
+          - name: customer_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_hk
+            description: Customer Hash Key
+          - name: customer_bk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_bk
+            description: Customer ID (BK)
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: record_source
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: record_source
+            description: Record Source
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"hub","domain":"raw_vault"}'
+      - name: hub_product
+        source: hub_product
+        description: Product Hub
+        primary_key:
+          - product_hk
+        fields:
+          - name: product_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_hk
+            description: Product Hash Key
+          - name: product_bk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_bk
+            description: SKU (BK)
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: record_source
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: record_source
+            description: Record Source
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"hub","domain":"raw_vault"}'
+      - name: hub_order
+        source: hub_order
+        description: Order Hub
+        primary_key:
+          - order_hk
+        fields:
+          - name: order_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_hk
+            description: Order Hash Key
+          - name: order_bk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_bk
+            description: Order Number (BK)
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: record_source
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: record_source
+            description: Record Source
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"hub","domain":"raw_vault"}'
+      - name: lnk_order_line
+        source: lnk_order_line
+        description: Order Line
+        primary_key:
+          - lnk_hk
+        fields:
+          - name: lnk_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: lnk_hk
+            description: Link Hash Key
+          - name: order_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_hk
+            description: Order Hash Key
+          - name: customer_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_hk
+            description: Customer Hash Key
+          - name: product_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_hk
+            description: Product Hash Key
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: record_source
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: record_source
+            description: Record Source
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"link","domain":"raw_vault"}'
+      - name: sat_customer_profile
+        source: sat_customer_profile
+        description: Customer Profile
+        primary_key:
+          - load_dts
+        fields:
+          - name: customer_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_hk
+            description: Customer Hash Key
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: hash_diff
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: hash_diff
+            description: Hash Diff
+          - name: full_name
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: full_name
+            description: Full Name
+          - name: email
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: email
+            description: Email
+          - name: country_code
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: country_code
+            description: Country Code
+          - name: segment
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: segment
+            description: Customer Segment
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"satellite","domain":"raw_vault"}'
+      - name: sat_product_details
+        source: sat_product_details
+        description: Product Details
+        primary_key:
+          - load_dts
+        fields:
+          - name: product_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_hk
+            description: Product Hash Key
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: hash_diff
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: hash_diff
+            description: Hash Diff
+          - name: product_name
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_name
+            description: Product Name
+          - name: category
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: category
+            description: Category
+          - name: brand
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: brand
+            description: Brand
+          - name: unit_cost
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: unit_cost
+            description: Unit Cost
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"satellite","domain":"raw_vault"}'
+      - name: sat_order_header
+        source: sat_order_header
+        description: Order Header
+        primary_key:
+          - load_dts
+        fields:
+          - name: order_hk
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_hk
+            description: Order Hash Key
+          - name: load_dts
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: load_dts
+            description: Load Date
+          - name: hash_diff
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: hash_diff
+            description: Hash Diff
+          - name: order_date
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_date
+            description: Order Date
+          - name: quantity
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: quantity
+            description: Quantity
+          - name: unit_price
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: unit_price
+            description: Unit Price
+          - name: discount_amount
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: discount_amount
+            description: Discount Amount
+          - name: net_revenue
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: net_revenue
+            description: Net Revenue
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"satellite","domain":"raw_vault"}'
+      - name: dim_customers
+        source: dim_customers
+        description: Customers
+        primary_key:
+          - customer_key
+        fields:
+          - name: customer_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_key
+            description: Customer Key
+          - name: customer_id
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_id
+            description: Customer ID (BK)
+          - name: full_name
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: full_name
+            description: Full Name
+          - name: email
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: email
+            description: Email
+          - name: country_code
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: country_code
+            description: Country Code
+          - name: segment
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: segment
+            description: Customer Segment
+          - name: is_current
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: is_current
+            description: Is Current
+          - name: valid_from
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: valid_from
+            description: Valid From
+          - name: valid_to
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: valid_to
+            description: Valid To
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"dimension","domain":"star_schema"}'
+      - name: dim_products
+        source: dim_products
+        description: Products
+        primary_key:
+          - product_key
+        fields:
+          - name: product_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_key
+            description: Product Key
+          - name: product_id
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_id
+            description: SKU (BK)
+          - name: product_name
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_name
+            description: Product Name
+          - name: category
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: category
+            description: Category
+          - name: brand
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: brand
+            description: Brand
+          - name: unit_cost
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: unit_cost
+            description: Unit Cost
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"dimension","domain":"star_schema"}'
+      - name: fct_orders
+        source: fct_orders
+        description: Orders
+        primary_key:
+          - order_id
+        fields:
+          - name: order_id
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_id
+            description: Order ID
+          - name: customer_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: customer_key
+            description: Customer Key
+          - name: product_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_key
+            description: Product Key
+          - name: date_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: date_key
+            description: Date Key
+          - name: order_date
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_date
+            description: Order Date
+          - name: quantity
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: quantity
+            description: Quantity
+          - name: unit_price
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: unit_price
+            description: Unit Price
+          - name: net_revenue
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: net_revenue
+            description: Net Revenue
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"fact","domain":"star_schema"}'
+      - name: mart_daily_revenue
+        source: mart_daily_revenue
+        description: Daily Revenue
+        primary_key:
+          - date_key
+          - category
+          - country_code
+        fields:
+          - name: date_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: date_key
+            description: Date Key
+          - name: category
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: category
+            description: Category
+          - name: country_code
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: country_code
+            description: Country Code
+          - name: gross_revenue
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: gross_revenue
+            description: Gross Revenue
+          - name: order_count
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: order_count
+            description: Order Count
+          - name: units_sold
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: units_sold
+            description: Units Sold
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"mart","domain":"mart"}'
+      - name: mart_product_performance
+        source: mart_product_performance
+        description: Product Performance
+        primary_key:
+          - month_key
+          - product_key
+        fields:
+          - name: month_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: month_key
+            description: Month Key
+          - name: product_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: product_key
+            description: Product Key
+          - name: total_revenue
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: total_revenue
+            description: Total Revenue
+          - name: total_units
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: total_units
+            description: Total Units
+          - name: revenue_rank
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: revenue_rank
+            description: Revenue Rank
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"mart","domain":"mart"}'
+      - name: dim_dates
+        source: dim_dates
+        description: Calendar
+        primary_key:
+          - date_key
+        fields:
+          - name: date_key
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: date_key
+            description: Date Key
+          - name: date_value
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: date_value
+            description: Date
+          - name: year
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: year
+            description: Year
+          - name: quarter
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: quarter
+            description: Quarter
+          - name: month
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: month
+            description: Month
+          - name: month_name
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: month_name
+            description: Month Name
+          - name: week_of_year
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: week_of_year
+            description: Week of Year
+          - name: day_of_week
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: day_of_week
+            description: Day of Week
+          - name: is_weekend
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: is_weekend
+            description: Is Weekend
+          - name: fiscal_year
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: fiscal_year
+            description: Fiscal Year
+          - name: fiscal_quarter
+            expression:
+              dialects:
+                - dialect: ANSI_SQL
+                  expression: fiscal_quarter
+            description: Fiscal Quarter
+        custom_extensions:
+          - vendor_name: modscape
+            data: '{"kind":"dimension","domain":"star_schema"}'
+    relationships:
+      - name: rel-lnk_order_line.order_hk-hub_order.order_hk
+        from: lnk_order_line
+        to: hub_order
+        from_columns:
+          - order_hk
+        to_columns:
+          - order_hk
+      - name: rel-lnk_order_line.customer_hk-hub_customer.customer_hk
+        from: lnk_order_line
+        to: hub_customer
+        from_columns:
+          - customer_hk
+        to_columns:
+          - customer_hk
+      - name: rel-lnk_order_line.product_hk-hub_product.product_hk
+        from: lnk_order_line
+        to: hub_product
+        from_columns:
+          - product_hk
+        to_columns:
+          - product_hk
+      - name: rel-sat_customer_profile.customer_hk-hub_customer.customer_hk
+        from: sat_customer_profile
+        to: hub_customer
+        from_columns:
+          - customer_hk
+        to_columns:
+          - customer_hk
+      - name: rel-sat_product_details.product_hk-hub_product.product_hk
+        from: sat_product_details
+        to: hub_product
+        from_columns:
+          - product_hk
+        to_columns:
+          - product_hk
+      - name: rel-sat_order_header.order_hk-hub_order.order_hk
+        from: sat_order_header
+        to: hub_order
+        from_columns:
+          - order_hk
+        to_columns:
+          - order_hk
+      - name: rel-fct_orders.customer_key-dim_customers.customer_key
+        from: fct_orders
+        to: dim_customers
+        from_columns:
+          - customer_key
+        to_columns:
+          - customer_key
+      - name: rel-fct_orders.product_key-dim_products.product_key
+        from: fct_orders
+        to: dim_products
+        from_columns:
+          - product_key
+        to_columns:
+          - product_key
+      - name: rel-fct_orders.date_key-dim_dates.date_key
+        from: fct_orders
+        to: dim_dates
+        from_columns:
+          - date_key
+        to_columns:
+          - date_key
+    metrics:
+      - name: Gross Revenue MTD
+        expression:
+          dialects:
+            - dialect: ANSI_SQL
+              expression: RUNNING_SUM(SUM([Gross Revenue]))
+        description: Month-to-date gross revenue. Running total filtered to current month in Tableau.
+      - name: Avg Order Value
+        expression:
+          dialects:
+            - dialect: ANSI_SQL
+              expression: SUM([Net Revenue]) / COUNTD([Order ID])
+        description: Average revenue per order. Excludes cancelled orders.
+      - name: Units Sold
+        expression:
+          dialects:
+            - dialect: ANSI_SQL
+              expression: SUM([Quantity])
+        description: Total quantity of items sold in the selected period.
+      - name: Revenue per Customer
+        expression:
+          dialects:
+            - dialect: ANSI_SQL
+              expression: SUM([Net Revenue]) / COUNTD([Customer Key])
+        description: Net revenue divided by number of unique paying customers.
+      - name: Category Revenue Share
+        expression:
+          dialects:
+            - dialect: ANSI_SQL
+              expression: SUM([Gross Revenue]) / TOTAL(SUM([Gross Revenue]))
+        description: Revenue share of each category vs total. Tableau table calculation.
