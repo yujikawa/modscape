@@ -334,6 +334,35 @@ modscape export ./models --with-context
 modscape export ./models --with-context ./path/to/specs
 ```
 
+### Export to OSI (Open Semantic Interchange)
+
+Export your Modscape model to [OSI format](https://github.com/open-semantic-interchange/OSI), a vendor-neutral semantic model standard for BI and AI platforms.
+
+```bash
+modscape export --format osi model.yaml
+
+# Specify output path
+modscape export --format osi model.yaml --output model.osi.yaml
+```
+
+OSI output can then be converted to platform-specific formats using the [OSI converters](https://github.com/open-semantic-interchange/OSI/tree/main/converters) (Tableau, Databricks, GoodData, Salesforce, etc.).
+
+```
+Modscape YAML
+     ↓  modscape export --format osi
+   OSI YAML
+     ↓  OSI converters
+  Tableau / Databricks / GoodData / ...
+```
+
+**What is converted:**
+- `tables` → `datasets` (physical name as source, conceptual name as description)
+- `columns` → `fields` (expression set to `ANSI_SQL` dialect)
+- `relationships` → `relationships`
+- `metrics` → `metrics` (expression set to `ANSI_SQL` dialect)
+- `domains` and entity `kind` → preserved in `custom_extensions.modscape`
+- `imports` are resolved and merged before conversion
+
 ---
 
 ## dbt Integration

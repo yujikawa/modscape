@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.10.0] - 2026-07-04
+
+### Added
+
+- **OSI export — `modscape export --format osi`** — New export format that converts a Modscape YAML model to [Open Semantic Interchange (OSI)](https://github.com/open-semantic-interchange/OSI) format, a vendor-neutral semantic model standard for BI and AI platforms. The command outputs an `<name>.osi.yaml` file conforming to OSI schema `0.2.0.dev0`. Mapping: `tables` → `datasets` (physical name as `source`, conceptual name as `description`); `columns` → `fields` with `expression.dialects[].dialect: ANSI_SQL`; `relationships` → `relationships`; `metrics` → `metrics` with `expression.dialects[].dialect: ANSI_SQL`. Modscape-specific metadata (`kind`, `domain`) is preserved in `custom_extensions[].vendor_name: modscape` as a JSON string in the `data` field. `imports:` references are resolved and merged before conversion so the output is a single self-contained file. `display` and `sampleData` fields are intentionally dropped as they have no OSI equivalent. The target OSI version is declared as a single constant (`OSI_VERSION`) in `src/export-osi.js` for easy tracking when the OSI spec advances. An `--output` flag allows specifying the output path; the default is `<input-basename>.osi.yaml` in the same directory. Covered by 9 Playwright CLI tests in `tests/export-osi.spec.ts`.
+
 ## [3.9.0] - 2026-06-19
 
 ### Added

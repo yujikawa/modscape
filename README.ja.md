@@ -332,6 +332,35 @@ modscape export ./models --with-context
 modscape export ./models --with-context ./path/to/specs
 ```
 
+### OSI形式へのエクスポート (Open Semantic Interchange)
+
+Modscapeのモデルを[OSI形式](https://github.com/open-semantic-interchange/OSI)に変換します。OSIはBI・AIプラットフォーム向けのベンダー非依存なセマンティックモデル標準です。
+
+```bash
+modscape export --format osi model.yaml
+
+# 出力先を指定する場合
+modscape export --format osi model.yaml --output model.osi.yaml
+```
+
+OSI出力は[OSIコンバーター](https://github.com/open-semantic-interchange/OSI/tree/main/converters)を使ってTableau・Databricks・GoodData・Salesforceなどのプラットフォーム固有の形式に変換できます。
+
+```
+Modscape YAML
+     ↓  modscape export --format osi
+   OSI YAML
+     ↓  OSIコンバーター
+  Tableau / Databricks / GoodData / ...
+```
+
+**変換される項目:**
+- `tables` → `datasets`（physical nameをsourceに、conceptual nameをdescriptionに）
+- `columns` → `fields`（expressionは`ANSI_SQL`方言で固定）
+- `relationships` → `relationships`
+- `metrics` → `metrics`（expressionは`ANSI_SQL`方言で固定）
+- `domains`およびエンティティの`kind` → `custom_extensions.modscape`に保存
+- `imports`は変換前に解決・マージされる
+
 ---
 
 ## dbt連携
