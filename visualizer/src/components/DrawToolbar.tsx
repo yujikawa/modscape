@@ -49,7 +49,7 @@ const DrawToolbar = ({
 
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 py-3 px-1.5 rounded-xl border shadow-2xl backdrop-blur-md z-[45] ${
+      className={`absolute top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 py-3 px-1.5 rounded-xl border shadow-2xl backdrop-blur-md z-45 ${
         theme === 'dark'
           ? 'bg-slate-900/90 border-slate-700/60'
           : 'bg-white/90 border-slate-200/80'
@@ -85,7 +85,7 @@ const DrawToolbar = ({
           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
         />
         <span
-          className="w-4 h-4 rounded-full border-2 border-white/40 shadow"
+          className="w-4 h-4 rounded-full border-2 border-white/40 shadow-sm"
           style={{ backgroundColor: color }}
         />
       </label>
@@ -101,7 +101,7 @@ const DrawToolbar = ({
           max={64}
           value={lineWidth}
           onChange={e => setLineWidth(Math.max(1, Math.min(64, Number(e.target.value))))}
-          className={`w-9 h-7 text-center text-xs font-bold rounded-lg border outline-none focus:ring-2 focus:ring-blue-500/40 ${
+          className={`w-9 h-7 text-center text-xs font-bold rounded-lg border outline-hidden focus:ring-2 focus:ring-blue-500/40 ${
             theme === 'dark'
               ? 'bg-slate-800 border-slate-700 text-slate-200'
               : 'bg-slate-50 border-slate-200 text-slate-700'

@@ -39,7 +39,7 @@ const NoteSearchTab = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search notes..."
-          className={`w-full pl-9 pr-4 py-2 rounded-md text-sm transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+          className={`w-full pl-9 pr-4 py-2 rounded-md text-sm transition-all shadow-xs focus:outline-hidden focus:ring-1 focus:ring-blue-500/50 ${
             theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
           }`}
         />
@@ -59,7 +59,7 @@ const NoteSearchTab = () => {
             className={`w-full p-3 text-left rounded-lg border transition-all group relative ${
               theme === 'dark' 
                 ? 'bg-slate-800/40 border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/60' 
-                : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 shadow-sm'
+                : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 shadow-xs'
             }`}
           >
             <div className="flex items-center gap-2 mb-1.5">

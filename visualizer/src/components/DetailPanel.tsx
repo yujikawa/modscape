@@ -337,7 +337,7 @@ const DetailPanel = memo(() => {
                           });
                         }
                       }}
-                      className={`flex-1 border rounded text-xs p-2 outline-none ${
+                      className={`flex-1 border rounded text-xs p-2 outline-hidden ${
                         theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-900'
                       }`}
                     >
@@ -358,13 +358,13 @@ const DetailPanel = memo(() => {
                           const absY = (parentLayout?.y ?? 0) + (targetLayout?.y ?? 0) + (annotation.offset?.y ?? 0);
                           updateAnnotation(annotation.id, { target: undefined, offset: { x: absX, y: absY } });
                         }}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded border border-red-100"
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-sm border border-red-100"
                         title="Unbind Target"
                       >
                         <Unlink size={14} />
                       </button>
                     ) : (
-                      <div className="p-2 text-slate-300 border border-slate-100 rounded">
+                      <div className="p-2 text-slate-300 border border-slate-100 rounded-sm">
                         <LinkIcon size={14} />
                       </div>
                     )}
@@ -381,13 +381,13 @@ const DetailPanel = memo(() => {
                       type="color"
                       value={annotation.display?.color || (theme === 'dark' ? '#334155' : '#fef3c7')}
                       onChange={(e) => updateAnnotation(annotation.id, { display: { ...annotation.display, color: e.target.value } })}
-                      className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent"
+                      className="w-8 h-8 p-0 border-none rounded-sm cursor-pointer bg-transparent"
                     />
                     <input
                       value={annotation.display?.color || ''}
                       onChange={(e) => updateAnnotation(annotation.id, { display: { ...annotation.display, color: e.target.value || undefined } })}
                       placeholder="e.g. #fef3c7"
-                      className={`flex-1 border rounded text-[10px] p-1.5 outline-none font-mono ${
+                      className={`flex-1 border rounded text-[10px] p-1.5 outline-hidden font-mono ${
                         theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-900'
                       }`}
                     />
@@ -451,7 +451,7 @@ const DetailPanel = memo(() => {
               <input
                 value={metric.name}
                 onChange={(e) => updateMetric(metric.id, { name: e.target.value })}
-                className={`w-full border rounded text-sm p-2 outline-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                className={`w-full border rounded-sm text-sm p-2 outline-hidden ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
 
@@ -463,7 +463,7 @@ const DetailPanel = memo(() => {
                 onChange={(e) => updateMetric(metric.id, { description: e.target.value || undefined })}
                 rows={3}
                 placeholder="What this metric measures..."
-                className={`w-full border rounded text-sm p-2 outline-none resize-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                className={`w-full border rounded-sm text-sm p-2 outline-hidden resize-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
 
@@ -475,7 +475,7 @@ const DetailPanel = memo(() => {
                 onChange={(e) => updateMetric(metric.id, { expression: e.target.value || undefined })}
                 rows={4}
                 placeholder="SUM(fct_orders.amount) / COUNT(DISTINCT customer_id)"
-                className={`w-full border rounded text-sm p-2 outline-none resize-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                className={`w-full border rounded-sm text-sm p-2 outline-hidden resize-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
 
@@ -485,10 +485,10 @@ const DetailPanel = memo(() => {
               <select
                 value={schema?.domains?.find(d => d.members.includes(metric.id))?.id || ''}
                 onChange={(e) => assignTableToDomain(metric.id, e.target.value || null)}
-                className={`w-full border rounded text-sm p-2 outline-none transition-colors ${
+                className={`w-full border rounded text-sm p-2 outline-hidden transition-colors ${
                   theme === 'dark'
                     ? 'bg-slate-800 border-slate-700 text-slate-200'
-                    : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-900 shadow-xs'
                 }`}
               >
                 <option value="">- No Domain -</option>
@@ -546,7 +546,7 @@ const DetailPanel = memo(() => {
               <input
                 value={consumer.name}
                 onChange={(e) => updateConsumer(consumer.id, { name: e.target.value })}
-                className={`w-full border rounded text-sm p-2 outline-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                className={`w-full border rounded-sm text-sm p-2 outline-hidden ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
 
@@ -558,7 +558,7 @@ const DetailPanel = memo(() => {
                 onChange={(e) => updateConsumer(consumer.id, { description: e.target.value || undefined })}
                 rows={3}
                 placeholder="Purpose of this consumer..."
-                className={`w-full border rounded text-sm p-2 outline-none resize-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                className={`w-full border rounded-sm text-sm p-2 outline-hidden resize-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
 
@@ -569,7 +569,7 @@ const DetailPanel = memo(() => {
                 value={consumer.url || ''}
                 onChange={(e) => updateConsumer(consumer.id, { url: e.target.value || undefined })}
                 placeholder="https://..."
-                className={`w-full border rounded text-sm p-2 outline-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                className={`w-full border rounded-sm text-sm p-2 outline-hidden font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
               />
             </section>
 
@@ -581,7 +581,7 @@ const DetailPanel = memo(() => {
                   value={consumer.display?.icon || ''}
                   onChange={(e) => updateConsumer(consumer.id, { display: { ...consumer.display, icon: e.target.value || undefined } })}
                   placeholder="🔗"
-                  className={`w-full border rounded text-sm p-2 outline-none ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                  className={`w-full border rounded-sm text-sm p-2 outline-hidden ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
                 />
               </section>
 
@@ -593,13 +593,13 @@ const DetailPanel = memo(() => {
                     type="color"
                     value={consumer.display?.color || CONSUMER_DEFAULT_COLOR}
                     onChange={(e) => updateConsumer(consumer.id, { display: { ...consumer.display, color: e.target.value } })}
-                    className="w-8 h-8 p-0 border-none rounded cursor-pointer bg-transparent"
+                    className="w-8 h-8 p-0 border-none rounded-sm cursor-pointer bg-transparent"
                   />
                   <input
                     value={consumer.display?.color || ''}
                     onChange={(e) => updateConsumer(consumer.id, { display: { ...consumer.display, color: e.target.value || undefined } })}
                     placeholder="#a78bfa"
-                    className={`flex-1 border rounded text-[10px] p-1.5 outline-none font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
+                    className={`flex-1 border rounded-sm text-[10px] p-1.5 outline-hidden font-mono ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
                   />
                 </div>
               </section>
@@ -611,10 +611,10 @@ const DetailPanel = memo(() => {
               <select
                 value={schema?.domains?.find(d => d.members.includes(consumer.id))?.id || ''}
                 onChange={(e) => assignTableToDomain(consumer.id, e.target.value || null)}
-                className={`w-full border rounded text-sm p-2 outline-none transition-colors ${
+                className={`w-full border rounded text-sm p-2 outline-hidden transition-colors ${
                   theme === 'dark'
                     ? 'bg-slate-800 border-slate-700 text-slate-200'
-                    : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-900 shadow-xs'
                 }`}
               >
                 <option value="">- No Domain -</option>
@@ -766,10 +766,10 @@ const DetailPanel = memo(() => {
                 <select 
                   value={relationship.type || 'one-to-many'}
                   onChange={(e) => updateRelationship(index, { type: e.target.value as any })}
-                  className={`w-full border rounded text-sm p-2.5 outline-none transition-colors ${
+                  className={`w-full border rounded text-sm p-2.5 outline-hidden transition-colors ${
                     theme === 'dark' 
                       ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-blue-500' 
-                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-xs'
                   }`}
                 >
                   <option value="one-to-one">1:1 (one-to-one)</option>
@@ -805,7 +805,7 @@ const DetailPanel = memo(() => {
                       <div className="text-[10px] text-slate-500 uppercase">From Table</div>
                       <div className="flex items-baseline gap-1.5">
                         <div className={`text-sm font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{relationship.from.table}</div>
-                        <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>{fromCard}</div>
+                        <div className={`text-xs font-bold px-1.5 py-0.5 rounded-sm ${theme === 'dark' ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>{fromCard}</div>
                       </div>
                       <div className="text-[10px] text-slate-500">Column: {relationship.from.column && relationship.from.column.length > 0 ? relationship.from.column.join(', ') : '(Table level)'}</div>
                     </div>
@@ -814,7 +814,7 @@ const DetailPanel = memo(() => {
                       <div className="text-[10px] text-slate-500 uppercase">To Table</div>
                       <div className="flex items-baseline gap-1.5">
                         <div className={`text-sm font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{relationship.to.table}</div>
-                        <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>{toCard}</div>
+                        <div className={`text-xs font-bold px-1.5 py-0.5 rounded-sm ${theme === 'dark' ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>{toCard}</div>
                       </div>
                       <div className="text-[10px] text-slate-500">Column: {relationship.to.column && relationship.to.column.length > 0 ? relationship.to.column.join(', ') : '(Table level)'}</div>
                     </div>
@@ -958,10 +958,10 @@ const DetailPanel = memo(() => {
                   value={domain.display?.color || ''}
                   onChange={(e) => updateDomain(domain.id, { display: { ...domain.display, color: e.target.value || undefined } })}
                   placeholder="e.g. #3b82f6 or rgba(...)"
-                  className={`border rounded font-mono text-sm p-2 outline-none flex-1 transition-colors ${
+                  className={`border rounded font-mono text-sm p-2 outline-hidden flex-1 transition-colors ${
                     theme === 'dark'
                       ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
-                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-xs'
                   }`}
                 />
               </div>
@@ -1226,7 +1226,7 @@ const DetailPanel = memo(() => {
             value={table!.conceptual?.kind || ''}
             onChange={(e) => handleUpdateTable({ conceptual: { ...table!.conceptual, kind: (e.target.value || undefined) as any } })}
             placeholder="Kind"
-            className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors w-28 ${
+            className={`border rounded text-[10px] px-2 py-1 outline-hidden transition-colors w-28 ${
               theme === 'dark'
                 ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                 : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
@@ -1249,7 +1249,7 @@ const DetailPanel = memo(() => {
               const val = e.target.value;
               handleUpdateTable({ logical: { ...table!.logical, scd: val ? { ...(table!.logical?.scd || {}), type: val } : undefined } });
             }}
-            className={`border rounded text-[10px] px-2 py-1 outline-none transition-colors ${
+            className={`border rounded text-[10px] px-2 py-1 outline-hidden transition-colors ${
               theme === 'dark'
                 ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                 : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
@@ -1275,7 +1275,7 @@ const DetailPanel = memo(() => {
               placeholder="Icon"
               title="Display Icon (emoji)"
               maxLength={4}
-              className={`border rounded text-[13px] px-2 py-1 outline-none transition-colors w-14 text-center ${
+              className={`border rounded text-[13px] px-2 py-1 outline-hidden transition-colors w-14 text-center ${
                 theme === 'dark'
                   ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
                   : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400'
@@ -1296,7 +1296,7 @@ const DetailPanel = memo(() => {
                 value={table!.display?.color || ''}
                 onChange={(e) => handleUpdateTable({ display: { ...table!.display, color: e.target.value || undefined } })}
                 placeholder={typeConfig?.color || '#334155'}
-                className={`border rounded text-[10px] px-2 py-1 outline-none font-mono w-24 ${
+                className={`border rounded text-[10px] px-2 py-1 outline-hidden font-mono w-24 ${
                   theme === 'dark'
                     ? 'bg-slate-800 border-slate-700 text-slate-300'
                     : 'bg-white border-slate-200 text-slate-900'
@@ -1316,7 +1316,7 @@ const DetailPanel = memo(() => {
               value={activeTab}
               onChange={(e) => { e.stopPropagation(); setActiveTab(e.target.value); }}
               onMouseDown={(e) => e.stopPropagation()}
-              className={`w-full border rounded text-[12px] px-2 py-1.5 outline-none cursor-pointer ${
+              className={`w-full border rounded text-[12px] px-2 py-1.5 outline-hidden cursor-pointer ${
                 theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
               }`}
             >
@@ -1393,10 +1393,10 @@ const DetailPanel = memo(() => {
               <select 
                 value={schema?.domains?.find(d => d.members.includes(table!.id))?.id || ''}
                 onChange={(e) => assignTableToDomain(table!.id, e.target.value || null)}
-                className={`w-full border rounded text-sm p-2 outline-none transition-colors ${
+                className={`w-full border rounded text-sm p-2 outline-hidden transition-colors ${
                   theme === 'dark' 
                     ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-blue-500' 
-                    : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-xs'
                 }`}
               >
                 <option value="">- No Domain -</option>
@@ -1450,17 +1450,17 @@ const DetailPanel = memo(() => {
                   value={table!.logical?.name || ''}
                   onChange={(e) => handleUpdateTable({ logical: { ...table!.logical, name: e.target.value || undefined } })}
                   placeholder={table!.conceptual?.name ?? table!.id}
-                  className={`w-full border rounded text-sm p-2 outline-none transition-colors ${
+                  className={`w-full border rounded text-sm p-2 outline-hidden transition-colors ${
                     theme === 'dark'
                       ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-blue-500'
-                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-xs'
                   }`}
                 />
               </section>
               
               <div className="flex justify-between items-center">
                 <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Logical Schema (Columns)</h3>
-                <button onClick={handleAddColumn} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs transition-colors shadow-md shadow-blue-500/20 font-medium">
+                <button onClick={handleAddColumn} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-xs transition-colors shadow-md shadow-blue-500/20 font-medium">
                   <Plus size={14} /> Add Column
                 </button>
               </div>
@@ -1492,7 +1492,7 @@ const DetailPanel = memo(() => {
                               value={col.name ?? ''}
                               onChange={(e) => handleUpdateColumn(col.id, { name: e.target.value })}
                               onBlur={(e) => { if (!e.target.value) handleUpdateColumn(col.id, { name: col.id }) }}
-                              className={`bg-transparent border-none w-full outline-none p-1 rounded font-medium transition-colors ${
+                              className={`bg-transparent border-none w-full outline-hidden p-1 rounded font-medium transition-colors ${
                                 theme === 'dark' ? 'text-white focus:bg-slate-800' : 'text-slate-900 focus:bg-slate-50'
                               }`}
                             />
@@ -1507,7 +1507,7 @@ const DetailPanel = memo(() => {
                               onChange={() => { if (error) setError(null) }}
                               title="Column ID"
                               style={{ fontSize: '10px', fontFamily: 'monospace' }}
-                              className={`bg-transparent border-none w-full outline-none px-1 rounded transition-colors ${
+                              className={`bg-transparent border-none w-full outline-hidden px-1 rounded transition-colors ${
                                 theme === 'dark' ? 'text-slate-500 focus:bg-slate-800' : 'text-slate-400 focus:bg-slate-50'
                               }`}
                             />
@@ -1531,7 +1531,7 @@ const DetailPanel = memo(() => {
                             onChange={(e) => handleUpdateColumn(col.id, { additivity: (e.target.value || undefined) as any })}
                             title="Additivity (for Measures)"
                             style={{ fontSize: '10px' }}
-                            className={`border rounded outline-none transition-colors ${
+                            className={`border rounded outline-hidden transition-colors ${
                               theme === 'dark'
                                 ? 'bg-slate-800 border-slate-700 text-slate-400'
                                 : 'bg-white border-slate-200 text-slate-600'
@@ -1550,7 +1550,7 @@ const DetailPanel = memo(() => {
                           onChange={(e) => handleUpdateColumn(col.id, { type: e.target.value })}
                           onBlur={(e) => { if (!e.target.value) handleUpdateColumn(col.id, { type: 'String' }) }}
                           placeholder="Type..."
-                          className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
+                          className={`bg-transparent border-none font-mono text-[11px] w-full outline-hidden p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-400 focus:bg-slate-800' : 'text-slate-500 focus:bg-slate-50'
                           }`}
                         />
@@ -1560,7 +1560,7 @@ const DetailPanel = memo(() => {
                           value={col.description || ''}
                           onChange={(e) => handleUpdateColumn(col.id, { description: e.target.value })}
                           placeholder="Description..."
-                          className={`bg-transparent border-none text-[11px] w-full outline-none p-1 rounded transition-colors ${
+                          className={`bg-transparent border-none text-[11px] w-full outline-hidden p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-500 focus:bg-slate-800' : 'text-slate-400 focus:bg-slate-50'
                           }`}
                         />
@@ -1587,10 +1587,10 @@ const DetailPanel = memo(() => {
                   value={table!.physical?.name || ''}
                   onChange={(e) => handleUpdateTable({ physical: { ...table!.physical, name: e.target.value || undefined } })}
                   placeholder={table!.id}
-                  className={`w-full border rounded font-mono text-sm p-2 outline-none transition-colors ${
+                  className={`w-full border rounded font-mono text-sm p-2 outline-hidden transition-colors ${
                     theme === 'dark'
                       ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-blue-500'
-                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-900 focus:ring-blue-400 focus:border-blue-400 shadow-xs'
                   }`}
                 />
               </section>
@@ -1623,7 +1623,7 @@ const DetailPanel = memo(() => {
                           value={col.physical?.name ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { name: e.target.value })}
                           placeholder={col.name?.toLowerCase()?.replace(/ /g, '_')}
-                          className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
+                          className={`bg-transparent border-none font-mono text-[11px] w-full outline-hidden p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-blue-400 focus:bg-slate-800' : 'text-blue-600 focus:bg-slate-50'
                           }`}
                         />
@@ -1633,7 +1633,7 @@ const DetailPanel = memo(() => {
                           value={col.physical?.type ?? ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { type: e.target.value })}
                           placeholder={col.type?.toUpperCase()}
-                          className={`bg-transparent border-none font-mono text-[11px] w-full outline-none p-1 rounded transition-colors ${
+                          className={`bg-transparent border-none font-mono text-[11px] w-full outline-hidden p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-400 focus:bg-slate-800' : 'text-slate-500 focus:bg-slate-50'
                           }`}
                         />
@@ -1643,7 +1643,7 @@ const DetailPanel = memo(() => {
                           value={col.physical?.constraints?.join(', ') || ''}
                           onChange={(e) => handleUpdatePhysicalColumn(col.id, { constraints: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                           placeholder="e.g. NOT NULL"
-                          className={`bg-transparent border-none text-[11px] w-full outline-none p-1 rounded transition-colors ${
+                          className={`bg-transparent border-none text-[11px] w-full outline-hidden p-1 rounded transition-colors ${
                             theme === 'dark' ? 'text-slate-500 focus:bg-slate-800' : 'text-slate-400 focus:bg-slate-50'
                           }`}
                         />
@@ -1858,7 +1858,7 @@ const DetailPanel = memo(() => {
                             <input 
                               value={String(row[colIndex] ?? '')}
                               onChange={(e) => handleUpdateSampleCell(rowIndex, colIndex, e.target.value)}
-                              className={`w-full bg-transparent border-none p-3 outline-none font-mono transition-colors ${
+                              className={`w-full bg-transparent border-none p-3 outline-hidden font-mono transition-colors ${
                                 theme === 'dark' ? 'focus:bg-slate-800 text-slate-300' : 'focus:bg-blue-50 text-slate-700'
                               }`}
                             />
@@ -1893,7 +1893,7 @@ const DetailPanel = memo(() => {
               <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Metadata</h3>
               <button
                 onClick={() => setMetadataEntries(prev => [...prev, { key: '', value: '' }])}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-white bg-emerald-600 hover:bg-emerald-700 rounded text-xs font-medium shadow-md shadow-emerald-500/20 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-white bg-emerald-600 hover:bg-emerald-700 rounded-sm text-xs font-medium shadow-md shadow-emerald-500/20 transition-colors"
               >
                 <Plus size={13} /> Add Field
               </button>
@@ -1929,13 +1929,13 @@ const DetailPanel = memo(() => {
                           setMetadataEntries(next)
                           saveEntries(next)
                         }}
-                        className={`flex-1 min-w-0 bg-transparent border rounded px-2 py-1 text-xs font-mono outline-none transition-colors ${
+                        className={`flex-1 min-w-0 bg-transparent border rounded px-2 py-1 text-xs font-mono outline-hidden transition-colors ${
                           theme === 'dark'
                             ? 'border-slate-700 text-slate-200 placeholder-slate-600 focus:border-blue-500'
                             : 'border-slate-300 text-slate-700 placeholder-slate-400 focus:border-blue-400'
                         }`}
                       />
-                      <span className={`text-xs flex-shrink-0 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>:</span>
+                      <span className={`text-xs shrink-0 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>:</span>
                       <input
                         placeholder="value"
                         value={entry.value}
@@ -1944,7 +1944,7 @@ const DetailPanel = memo(() => {
                           setMetadataEntries(next)
                           saveEntries(next)
                         }}
-                        className={`flex-[2] min-w-0 bg-transparent border rounded px-2 py-1 text-xs font-mono outline-none transition-colors ${
+                        className={`flex-2 min-w-0 bg-transparent border rounded px-2 py-1 text-xs font-mono outline-hidden transition-colors ${
                           theme === 'dark'
                             ? 'border-slate-700 text-slate-300 placeholder-slate-600 focus:border-blue-500'
                             : 'border-slate-300 text-slate-700 placeholder-slate-400 focus:border-blue-400'
@@ -1956,7 +1956,7 @@ const DetailPanel = memo(() => {
                           setMetadataEntries(next)
                           saveEntries(next)
                         }}
-                        className="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        className="text-slate-400 hover:text-red-500 transition-colors shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>

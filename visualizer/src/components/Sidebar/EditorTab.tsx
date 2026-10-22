@@ -247,7 +247,7 @@ const EditorTab = () => {
         )}
 
         {error && (
-          <div className="absolute bottom-4 left-4 right-4 p-3 bg-red-900/90 border border-red-500/50 rounded-md text-red-100 text-xs flex gap-2 items-start z-10 shadow-2xl backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2">
+          <div className="absolute bottom-4 left-4 right-4 p-3 bg-red-900/90 border border-red-500/50 rounded-md text-red-100 text-xs flex gap-2 items-start z-10 shadow-2xl backdrop-blur-xs animate-in fade-in slide-in-from-bottom-2">
             <AlertCircle size={14} className="shrink-0 mt-0.5 text-red-400" />
             <span>{error}</span>
           </div>

@@ -87,7 +87,7 @@ const EntitiesTab = memo(() => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search entities..."
-          className={`w-full pl-9 pr-4 py-2 rounded-md text-sm transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+          className={`w-full pl-9 pr-4 py-2 rounded-md text-sm transition-all shadow-xs focus:outline-hidden focus:ring-1 focus:ring-blue-500/50 ${
             theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
           }`}
         />
