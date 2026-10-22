@@ -19,7 +19,7 @@ const FileSelector = () => {
         <select
           value={activeSlug}
           onChange={(e) => setCurrentModel(e.target.value)}
-          className={`w-full pl-9 pr-8 py-2 rounded-md text-sm appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all shadow-sm cursor-pointer ${
+          className={`w-full pl-9 pr-8 py-2 rounded-md text-sm appearance-none focus:outline-hidden focus:ring-1 focus:ring-blue-500/50 transition-all shadow-xs cursor-pointer ${
             theme === 'dark' 
               ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-750' 
               : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50 shadow-slate-200/50'

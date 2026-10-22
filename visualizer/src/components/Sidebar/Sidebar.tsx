@@ -22,7 +22,7 @@ const Sidebar = memo(() => {
 
   return (
     <div
-      className={`relative h-full flex flex-row border-r transition-all duration-300 ease-in-out shadow-2xl z-[60] ${
+      className={`relative h-full flex flex-row border-r transition-all duration-300 ease-in-out shadow-2xl z-60 ${
         isSidebarOpen ? 'w-[456px]' : 'w-14'
       } ${
         theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
@@ -45,7 +45,7 @@ const Sidebar = memo(() => {
             <img src={logo} alt="Modscape Logo" className="w-5 h-5 rounded-md" />
             <h1 className={`text-base font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Modscape</h1>
             {isCliMode && (
-              <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-bold rounded uppercase ml-1 animate-pulse" title="Connected & Syncing">
+              <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-bold rounded-sm uppercase ml-1 animate-pulse" title="Connected & Syncing">
                 Live
               </span>
             )}
@@ -65,7 +65,7 @@ const Sidebar = memo(() => {
               onClick={() => setActiveTab('yaml')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 safeTab === 'yaml'
-                  ? (theme === 'dark' ? 'bg-slate-700 text-blue-400 shadow-lg' : 'bg-white text-blue-600 shadow-sm')
+                  ? (theme === 'dark' ? 'bg-slate-700 text-blue-400 shadow-lg' : 'bg-white text-blue-600 shadow-xs')
                   : 'text-slate-500 hover:text-slate-400'
               }`}
             >
@@ -76,7 +76,7 @@ const Sidebar = memo(() => {
               onClick={() => setActiveTab('stats')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 safeTab === 'stats'
-                  ? (theme === 'dark' ? 'bg-slate-700 text-blue-400 shadow-lg' : 'bg-white text-blue-600 shadow-sm')
+                  ? (theme === 'dark' ? 'bg-slate-700 text-blue-400 shadow-lg' : 'bg-white text-blue-600 shadow-xs')
                   : 'text-slate-500 hover:text-slate-400'
               }`}
             >
@@ -99,7 +99,7 @@ const Sidebar = memo(() => {
           theme === 'dark' ? 'border-slate-800 bg-slate-950/20' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <p className="text-[10px] text-slate-500 font-medium px-1">
-            Modscape v3.10.0
+            Modscape v3.10.1
           </p>
         </div>
       </div>

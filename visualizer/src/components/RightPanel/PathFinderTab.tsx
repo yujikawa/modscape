@@ -106,7 +106,7 @@ const PathFinderTab = () => {
   }
 
   const toggleBase = `flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all`
-  const toggleActive = `bg-blue-600 text-white shadow`
+  const toggleActive = `bg-blue-600 text-white shadow-sm`
   const toggleInactive = theme === 'dark'
     ? `text-slate-400 hover:text-slate-200`
     : `text-slate-500 hover:text-slate-700`
@@ -147,7 +147,7 @@ const PathFinderTab = () => {
     const selectedNode = value ? allNodes.find(n => n.id === value) : null
     const displayValue = selectedNode ? selectedNode.name : query
 
-    const inputClass = `w-full pl-2 pr-7 py-2 rounded-md text-sm border shadow-sm focus:ring-1 focus:ring-blue-500/50 outline-none ${
+    const inputClass = `w-full pl-2 pr-7 py-2 rounded-md text-sm border shadow-xs focus:ring-1 focus:ring-blue-500/50 outline-hidden ${
       theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
     }`
     const dropdownClass = `absolute z-50 w-full mt-1 rounded-md border shadow-lg max-h-56 overflow-y-auto ${
@@ -334,7 +334,7 @@ const PathFinderTab = () => {
                 <div className="relative pl-4 space-y-0">
                   <div className="absolute left-1 top-2 bottom-2 w-0.5 bg-slate-200 dark:bg-slate-800" />
                   <div className="relative mb-4">
-                    <div className="absolute -left-[15px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900" />
+                    <div className="absolute left-[-15px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900" />
                     <button onClick={() => setFocusNodeId(fromId)} className="text-xs font-bold hover:text-blue-500 transition-colors flex items-center gap-1.5">
                       <NodeIcon kind={allNodes.find(n => n.id === fromId)?.kind ?? 'table'} />
                       {allNodes.find(n => n.id === fromId)?.name}
@@ -358,7 +358,7 @@ const PathFinderTab = () => {
                         </span>
                       </div>
                       <div className="relative">
-                        <div className="absolute -left-[15px] top-1 w-2.5 h-2.5 rounded-full bg-slate-400 border-2 border-white dark:border-slate-900" />
+                        <div className="absolute left-[-15px] top-1 w-2.5 h-2.5 rounded-full bg-slate-400 border-2 border-white dark:border-slate-900" />
                         <button onClick={() => setFocusNodeId(step.to)} className="text-xs font-bold hover:text-blue-500 transition-colors flex items-center gap-1.5">
                           <NodeIcon kind={allNodes.find(n => n.id === step.to)?.kind ?? 'table'} />
                           {allNodes.find(n => n.id === step.to)?.name}

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.10.1] - 2026-10-22
+
+### Security
+
+- **Dependency security updates** — Resolved all `npm audit` findings in both the CLI and the visualizer. CLI: `js-yaml` 4.3.2 (quadratic CPU consumption in merge keys / `!!omap`), and transitive `express` dependencies `proxy-addr` 2.0.8 (IP spoofing via IPv4-mapped IPv6), `body-parser` 2.3.0 and `qs` 6.16.1 (DoS). The minimum `js-yaml` version in `package.json` is raised to `^4.3.2` so that npm consumers also receive the patched release. Visualizer: `vite` 7.3.7, `vitest` 4.1.12, `postcss` 8.5.31, `js-yaml` 4.3.2, plus transitive `esbuild`, `nanoid`, `brace-expansion`, `browserslist` and `source-map-js` updates.
+
+### Changed
+
+- **Visualizer migrated to Tailwind CSS v4** — The remaining advisories (`braces`, `micromatch`, `postcss-selector-parser`) came only through Tailwind CSS v3, so the visualizer is upgraded to `tailwindcss` 4.3.3 with `@tailwindcss/postcss` (`autoprefixer` and `tailwind.config.js` are removed). Utility classes renamed in v4 were migrated with the official upgrade tool (e.g. `outline-none` → `outline-hidden`, `shadow-sm` → `shadow-xs`), and compatibility base styles keep the v3 defaults for border color, placeholder color and button cursor. No visual or behavioral changes are intended; existing E2E visual snapshots pass unchanged.
+
 ## [3.10.0] - 2026-07-04
 
 ### Added

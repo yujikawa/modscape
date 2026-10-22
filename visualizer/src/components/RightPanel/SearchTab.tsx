@@ -154,7 +154,7 @@ const SearchTab = memo(() => {
   const cardClass =
     theme === 'dark'
       ? 'bg-slate-800/40 border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/60'
-      : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 shadow-sm'
+      : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 shadow-xs'
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden p-4">
@@ -167,7 +167,7 @@ const SearchTab = memo(() => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tables and columns..."
-          className={`w-full pl-9 pr-4 py-2 rounded-md text-sm transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+          className={`w-full pl-9 pr-4 py-2 rounded-md text-sm transition-all shadow-xs focus:outline-hidden focus:ring-1 focus:ring-blue-500/50 ${
             theme === 'dark'
               ? 'bg-slate-800 border-slate-700 text-slate-100'
               : 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
@@ -213,7 +213,7 @@ const SearchTab = memo(() => {
                   {!isCollapsed && (
                     <div className={`ml-4 mt-1 space-y-0.5 border-l pl-2 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-100'}`}>
                       {(d as any).tables.map((t: Table) => (
-                        <button key={t.id} onClick={() => handleFocus(t.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}>
+                        <button key={t.id} onClick={() => handleFocus(t.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded-sm border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}>
                           <span className="flex flex-col min-w-0">
                             <span className="truncate">{t.conceptual?.name ?? t.id}</span>
                             {(t.conceptual?.name ?? t.id) !== t.id && <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>}
@@ -246,7 +246,7 @@ const SearchTab = memo(() => {
                 {!collapsedDomains.has('unassigned') && (
                   <div className={`ml-4 mt-1 space-y-0.5 border-l pl-2 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-100'}`}>
                     {treeData.unassigned.map(t => (
-                      <button key={t.id} onClick={() => handleFocus(t.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}>
+                      <button key={t.id} onClick={() => handleFocus(t.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded-sm border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}>
                         <span className="flex flex-col min-w-0">
                           <span className="truncate">{t.conceptual?.name ?? t.id}</span>
                           {(t.conceptual?.name ?? t.id) !== t.id && <span className="truncate font-mono text-[9px] opacity-50">{t.id}</span>}
@@ -277,7 +277,7 @@ const SearchTab = memo(() => {
                 {!collapsedDomains.has('consumers') && (
                   <div className={`ml-4 mt-1 space-y-0.5 border-l pl-2 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-100'}`}>
                     {treeData.consumers.map(u => (
-                      <button key={u.id} onClick={() => handleFocus(u.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-violet-50 text-slate-500 hover:text-violet-600'}`}>
+                      <button key={u.id} onClick={() => handleFocus(u.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded-sm border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-violet-50 text-slate-500 hover:text-violet-600'}`}>
                         <span className="flex flex-col min-w-0">
                           <span className="truncate">{u.name}</span>
                           {u.name !== u.id && <span className="truncate font-mono text-[9px] opacity-50">{u.id}</span>}
@@ -308,7 +308,7 @@ const SearchTab = memo(() => {
                 {!collapsedDomains.has('metrics') && (
                   <div className={`ml-4 mt-1 space-y-0.5 border-l pl-2 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-100'}`}>
                     {treeData.metrics.map(m => (
-                      <button key={m.id} onClick={() => handleFocus(m.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'}`}>
+                      <button key={m.id} onClick={() => handleFocus(m.id)} className={`w-full flex items-center justify-between group p-1.5 text-xs rounded-sm border border-transparent transition-all text-left ${theme === 'dark' ? 'hover:bg-slate-800/50 text-slate-400 hover:text-slate-200' : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'}`}>
                         <span className="flex flex-col min-w-0">
                           <span className="truncate">{m.name}</span>
                           {m.name !== m.id && <span className="truncate font-mono text-[9px] opacity-50">{m.id}</span>}
@@ -426,7 +426,7 @@ const SearchTab = memo(() => {
                       <p className={`text-[10px] leading-tight truncate font-mono ${textMuted}`}>{m.id}</p>
                     )}
                   </div>
-                  <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide`} style={{ backgroundColor: `${METRIC_DEFAULT_COLOR}20`, color: METRIC_DEFAULT_COLOR, border: `1px solid ${METRIC_DEFAULT_COLOR}40` }}>
+                  <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wide`} style={{ backgroundColor: `${METRIC_DEFAULT_COLOR}20`, color: METRIC_DEFAULT_COLOR, border: `1px solid ${METRIC_DEFAULT_COLOR}40` }}>
                     metric
                   </span>
                 </div>

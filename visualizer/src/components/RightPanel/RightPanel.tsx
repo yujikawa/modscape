@@ -119,7 +119,7 @@ const RightPanel = memo(() => {
   `
 
   const Tooltip = ({ text }: { text: string }) => (
-    <div className="absolute right-14 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[60] border border-slate-700 shadow-xl">
+    <div className="absolute right-14 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-60 border border-slate-700 shadow-xl">
       {text}
       <div className="absolute top-1/2 -right-1 -translate-y-1/2 border-4 border-transparent border-l-slate-800" />
     </div>
@@ -195,7 +195,7 @@ const RightPanel = memo(() => {
 
             {/* Export popup */}
             {isExportOpen && (
-              <div className={`absolute bottom-12 right-0 w-52 rounded-xl border shadow-2xl p-4 z-[70] ${
+              <div className={`absolute bottom-12 right-0 w-52 rounded-xl border shadow-2xl p-4 z-70 ${
                 theme === 'dark'
                   ? 'bg-slate-900 border-slate-700 text-white'
                   : 'bg-white border-slate-200 text-slate-900'
@@ -226,12 +226,12 @@ const RightPanel = memo(() => {
                     <button
                       type="button"
                       onClick={() => setExportTransparent((v) => !v)}
-                      className={`relative w-8 h-4 rounded-full transition-colors p-0 flex-shrink-0 ${
+                      className={`relative w-8 h-4 rounded-full transition-colors p-0 shrink-0 ${
                         exportTransparent ? 'bg-blue-600' : theme === 'dark' ? 'bg-slate-600' : 'bg-slate-300'
                       }`}
                     >
                       <span
-                        className="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform"
+                        className="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform"
                         style={{ left: exportTransparent ? '18px' : '2px' }}
                       />
                     </button>
@@ -257,7 +257,7 @@ const RightPanel = memo(() => {
 
       {/* 2. Content Panel (Left side of the Right Panel) */}
       <div
-        className={`flex flex-col min-w-0 overflow-hidden transition-[opacity] duration-300 sidebar-content relative ${
+        className={`flex flex-col min-w-0 overflow-hidden transition-opacity duration-300 sidebar-content relative ${
           theme === 'dark' ? 'bg-slate-900' : 'bg-white'
         } ${
           isRightPanelOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -265,7 +265,7 @@ const RightPanel = memo(() => {
         style={{ width: isRightPanelOpen ? '400px' : '0px' }}
       >
         {/* Header */}
-        <div className={`p-4 border-b flex items-center justify-between flex-shrink-0 ${
+        <div className={`p-4 border-b flex items-center justify-between shrink-0 ${
           theme === 'dark' ? 'border-slate-800' : 'border-slate-100'
         }`}>
           <h2 className={`text-sm font-bold tracking-tight uppercase ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>

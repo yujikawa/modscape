@@ -95,7 +95,7 @@ const ActivityBar = () => {
   `
 
   const Tooltip = ({ text }: { text: string }) => (
-    <div className="absolute left-14 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[60] border border-slate-700 shadow-xl">
+    <div className="absolute left-14 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-60 border border-slate-700 shadow-xl">
       {text}
       <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-4 border-transparent border-r-slate-800" />
     </div>
@@ -106,7 +106,7 @@ const ActivityBar = () => {
       <span className="text-xs font-medium text-slate-500">{label}</span>
       <div className="flex gap-1">
         {keys.map(k => (
-          <kbd key={k} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-bold font-mono text-slate-600 dark:text-slate-300 min-w-[20px] text-center shadow-sm">
+          <kbd key={k} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm text-[10px] font-bold font-mono text-slate-600 dark:text-slate-300 min-w-[20px] text-center shadow-xs">
             {k}
           </kbd>
         ))}
@@ -217,8 +217,8 @@ const ActivityBar = () => {
 
       {/* Shortcut Guide Modal */}
       {showHelp && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={() => setShowHelp(false)} />
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs" onClick={() => setShowHelp(false)} />
           <div className={`relative w-full max-w-sm shadow-2xl rounded-2xl border p-6 animate-in zoom-in-95 duration-200 ${
             theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
           }`}>
