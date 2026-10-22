@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Upgrade npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - name: Install dependencies
         run: |
@@ -34,4 +34,5 @@ jobs:
         run: npm run build-ui
 
       - name: Publish to NPM
+        timeout-minutes: 10
         run: npm publish --access public --provenance
